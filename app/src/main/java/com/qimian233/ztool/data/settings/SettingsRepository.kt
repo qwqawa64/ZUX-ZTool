@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.settings
 
 import android.app.ActivityManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -31,6 +32,7 @@ class SettingsRepository(
             isEntryDisplayedInSettings = prefsUtils.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
             isShowAllAppsEnabled = prefsUtils.loadBooleanSetting(KEY_SHOW_ALL_APPS, false),
             isHideFromRecentsEnabled = prefsUtils.loadBooleanSetting(KEY_HIDE_FROM_RECENTS, false),
+            isLauncherIconHidden = isLauncherIconHidden(),
             versionName = getVersionName(),
             commitCount = BuildConfig.GIT_COMMIT_COUNT,
             commitHash = BuildConfig.GIT_COMMIT_HASH,
@@ -99,6 +101,45 @@ class SettingsRepository(
 
     fun setAutoCheckUpdateEnabled(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_AUTO_CHECK_UPDATE, enabled)
+    }
+
+    /**
+     * Launcher icon visibility is stored as the enabled state of the manifest
+     * activity-alias [.LAUNCHER_ALIAS_CLASS] — PackageManager persists it across
+     * reboots and app updates, so no preference entry is needed.
+     */
+    fun isLauncherIconHidden(): Boolean {
+        return try {
+            when (context.packageManager.getComponentEnabledSetting(launcherAliasComponent())) {
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER -> true
+                else -> false
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to read launcher alias state: ${e.message}")
+            false
+        }
+    }
+
+    fun setLauncherIconHidden(hidden: Boolean) {
+        val state = if (hidden) {
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        } else {
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        }
+        try {
+            context.packageManager.setComponentEnabledSetting(
+                launcherAliasComponent(),
+                state,
+                PackageManager.DONT_KILL_APP
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to toggle launcher icon: ${e.message}")
+        }
+    }
+
+    private fun launcherAliasComponent(): ComponentName {
+        return ComponentName(context, LAUNCHER_ALIAS_CLASS)
     }
 
     fun setFrontendStyle(style: FrontendStyle) {
@@ -184,6 +225,7 @@ class SettingsRepository(
         private val KEY_SHOW_ALL_APPS = PreferenceKeys.ZTOOL_SETTINGS_SHOW_ALL_APPS.name
         private val KEY_AUTO_CHECK_UPDATE = PreferenceKeys.AUTO_CHECK_UPDATE.name
         private val KEY_HIDE_FROM_RECENTS = PreferenceKeys.HIDE_FROM_RECENTS.name
+        private const val LAUNCHER_ALIAS_CLASS = "com.qimian233.ztool.LauncherAlias"
     }
 
     private fun getVersionName(): String {

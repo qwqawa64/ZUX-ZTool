@@ -1368,6 +1368,11 @@ object SearchIndex {
             titleRes = R.string.page_settings_hide_from_recents
         ),
         appSettings.item(
+            id = "app_settings_hide_launcher_icon",
+            titleRes = R.string.page_settings_hide_launcher_icon,
+            summaryRes = R.string.page_settings_hide_launcher_icon_summary
+        ),
+        appSettings.item(
             id = "app_settings_auto_check_update",
             titleRes = R.string.page_settings_auto_check_update_title
         ),

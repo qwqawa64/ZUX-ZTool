@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.HideSource
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestorePage
 import androidx.compose.material.icons.rounded.Save
@@ -186,6 +187,7 @@ fun SettingsMainRoute(
             onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
             onShowAllAppsChanged = viewModel::setShowAllAppsEnabled,
             onHideFromRecentsChanged = viewModel::setHideFromRecentsEnabled,
+            onHideLauncherIconChanged = viewModel::setLauncherIconHidden,
             onAbout = {
                 showRestoreConfirmDialog = false
                 onOpenAbout()
@@ -318,6 +320,7 @@ private fun SettingsRoute(
     onEntryDisplayChanged: (Boolean) -> Unit,
     onShowAllAppsChanged: (Boolean) -> Unit,
     onHideFromRecentsChanged: (Boolean) -> Unit,
+    onHideLauncherIconChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
@@ -375,6 +378,7 @@ private fun SettingsRoute(
                         onEntryDisplayChanged = onEntryDisplayChanged,
                         onShowAllAppsChanged = onShowAllAppsChanged,
                         onHideFromRecentsChanged = onHideFromRecentsChanged,
+                        onHideLauncherIconChanged = onHideLauncherIconChanged,
                         onDetailedLoggingChanged = onDetailedLoggingChanged,
                         onAbout = onAbout,
                         onExportLogs = onExportLogs,
@@ -402,6 +406,7 @@ private fun settingsSections(
     onEntryDisplayChanged: (Boolean) -> Unit,
     onShowAllAppsChanged: (Boolean) -> Unit,
     onHideFromRecentsChanged: (Boolean) -> Unit,
+    onHideLauncherIconChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
@@ -473,6 +478,14 @@ private fun settingsSections(
                     checked = state.isShowAllAppsEnabled,
                     onCheckedChange = onShowAllAppsChanged,
                     icon = Icons.Rounded.Apps
+                ),
+                SettingItem.Switch(
+                    key = "app_settings_hide_launcher_icon",
+                    title = stringResource(R.string.page_settings_hide_launcher_icon),
+                    summary = stringResource(R.string.page_settings_hide_launcher_icon_summary),
+                    checked = state.isLauncherIconHidden,
+                    onCheckedChange = onHideLauncherIconChanged,
+                    icon = Icons.Rounded.HideSource
                 ),
                 SettingItem.Switch(
                     key = "app_settings_hide_from_recents",

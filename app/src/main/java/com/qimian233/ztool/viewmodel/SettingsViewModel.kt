@@ -79,6 +79,11 @@ class SettingsViewModel(
         repository.setHideFromRecentsEnabled(isEnabled)
     }
 
+    fun setLauncherIconHidden(hidden: Boolean) {
+        _uiState.value = _uiState.value.copy(isLauncherIconHidden = hidden)
+        repository.setLauncherIconHidden(hidden)
+    }
+
     fun setAutoCheckUpdateEnabled(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(isAutoCheckUpdateEnabled = enabled)
         repository.setAutoCheckUpdateEnabled(enabled)
@@ -222,6 +227,7 @@ data class SettingsUiState(
     val isEntryDisplayedInSettings: Boolean = false,
     val isShowAllAppsEnabled: Boolean = false,
     val isHideFromRecentsEnabled: Boolean = false,
+    val isLauncherIconHidden: Boolean = false,
     val showRestoreConfirmDialog: Boolean = false,
     val versionName: String = "",
     val commitCount: Int = 0,
