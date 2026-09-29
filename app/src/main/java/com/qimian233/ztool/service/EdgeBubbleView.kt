@@ -364,13 +364,30 @@ class EdgeBubbleView(
         val corner = dip(PILL_CORNER_DP)
         val dim = if (mode == MODE_HALF) HALF_ALPHA else 1f
 
-        // Backdrop occupies the leading part of the view; the connector extends from
-        // it toward the screen edge (visible only in FULL, where the whole bubble is
-        // pushed off the edge by the connector width).
+        // Backdrop occupies the leading part of the view; the connector STRETCHES from
+        // it to the actual screen edge whenever the bubble is within reach, so the
+        // bubble stays visually attached while pressed/dragged near the edge.
         pillRect.set(0f, 0f, pillSizePx.toFloat(), pillSizePx.toFloat())
-        val connectorRect = RectF(pillRect)
-        if (side == SIDE_LEFT) connectorRect.offset(-connWpx.toFloat(), 0f)
-        else connectorRect.offset(connWpx.toFloat(), 0f)
+        var connectorRect: RectF? = null
+        if (mode == MODE_FULL) {
+            val backdropScreenLeft = layoutParams.x + translationX
+            val backdropScreenRight = backdropScreenLeft + pillSizePx
+            val maxStretch = dip(160f)
+            val gap = when (side) {
+                SIDE_LEFT -> backdropScreenLeft
+                else -> screenWidth - backdropScreenRight
+            }
+            if (gap > 0f && gap <= maxStretch) {
+                connectorRect = RectF(pillRect)
+                if (side == SIDE_LEFT) {
+                    connectorRect.left = -(layoutParams.x + translationX)
+                    connectorRect.right = pillRect.left + dip(8f)
+                } else {
+                    connectorRect.left = pillRect.right - dip(8f)
+                    connectorRect.right = pillRect.right - dip(8f) + gap
+                }
+            }
+        }
 
         shadowPaint.alpha = (255 * dim).toInt()
         connectorPaint.alpha = (255 * dim).toInt()
@@ -378,13 +395,14 @@ class EdgeBubbleView(
         // One shadow for the whole silhouette — a per-shape shadow drawn after the
         // connector darkened most of the connector body.
         val silhouette = RectF(pillRect)
-        if (side == SIDE_LEFT) {
-            silhouette.left = minOf(silhouette.left, connectorRect.left)
-        } else {
-            silhouette.right = maxOf(silhouette.right, connectorRect.right)
+        connectorRect?.let {
+            silhouette.left = minOf(silhouette.left, it.left)
+            silhouette.right = maxOf(silhouette.right, it.right)
         }
         canvas.drawRoundRect(silhouette, corner, corner, shadowPaint)
-        canvas.drawRoundRect(connectorRect, corner, corner, connectorPaint)
+        connectorRect?.let {
+            canvas.drawRoundRect(it, corner, corner, connectorPaint)
+        }
         canvas.drawRoundRect(pillRect, corner, corner, pillPaint)
 
         val icon = appIcon ?: return
