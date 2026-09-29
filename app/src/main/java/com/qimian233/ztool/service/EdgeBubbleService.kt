@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
@@ -12,11 +13,14 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.SystemClock
+import android.provider.Settings
 import android.util.Log
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.FreeformBubbleBridge
+import com.qimian233.ztool.utils.ModulePreferencesUtils
 
 /**
  * Hosts the freeform edge-bubble overlay windows. One [EdgeBubbleView] per minimized
@@ -39,6 +43,23 @@ class EdgeBubbleService : Service() {
         /** Small cooldown after a bubble restore; the hook now nudges restored
          *  bounds 96px inward, clear of the 48px edge-trigger zone. */
         private const val RESTORE_COOLDOWN_MS = 1000L
+
+        /**
+         * Starts the overlay service when the feature switch is on and the overlay
+         * permission is granted. Shared by the frontend switch, app launch, and
+         * [EdgeBubbleBootReceiver] so the enable conditions stay in one place.
+         */
+        fun maybeStart(context: Context): Boolean {
+            if (!ModulePreferencesUtils(context).loadBooleanSetting(
+                    PreferenceKeys.FREEFORM_EDGE_BUBBLE.name, false)) return false
+            if (!Settings.canDrawOverlays(context)) return false
+            return try {
+                context.startForegroundService(Intent(context, EdgeBubbleService::class.java))
+                true
+            } catch (_: Throwable) {
+                false
+            }
+        }
     }
 
     private val bubbles = HashMap<Int, EdgeBubbleView>()
