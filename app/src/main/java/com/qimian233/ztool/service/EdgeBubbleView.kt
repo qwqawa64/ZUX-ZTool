@@ -326,8 +326,10 @@ class EdgeBubbleView(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (dragging) {
                     dragging = false
-                    val windowCenterX = layoutParams.x + width / 2
-                    side = if (windowCenterX < screenWidth / 2) SIDE_LEFT else SIDE_RIGHT
+                    // Side is locked at drag start: crossing the screen midline while
+                    // dragging must NOT flip the dock side (screenMargin anchor would
+                    // jump to the other edge). Release always returns to the origin
+                    // side's anchor.
                     centerY = layoutParams.y + containerHpx / 2
                     listener.onBubbleSettled(taskId, side, centerY.toFloat() / screenHeight)
                     // Snap window x/y back to the FULL anchor while translation
