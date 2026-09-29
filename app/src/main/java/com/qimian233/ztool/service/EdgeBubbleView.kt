@@ -68,10 +68,9 @@ class EdgeBubbleView(
         private const val FLING_VELOCITY_PX = 1000f
         private const val FLING_DISTANCE_PX = 100f
 
-        // Dark rounded backdrop behind the icon, 80% opacity (Oplus alignment).
+        // Dark rounded backdrop behind the icon, 80% opacity; the connector pad uses
+        // the SAME color so backdrop + pad read as one capsule reaching the edge.
         private val BG_COLOR = Color.argb(204, 28, 28, 30)
-        // Lighter grey pad between backdrop and screen edge.
-        private val CONNECTOR_COLOR = Color.argb(217, 168, 168, 170)
     }
 
     private val wm = context.getSystemService(WindowManager::class.java)
@@ -170,7 +169,7 @@ class EdgeBubbleView(
     init {
         setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         pillPaint.color = BG_COLOR
-        connectorPaint.color = CONNECTOR_COLOR
+        connectorPaint.color = BG_COLOR
         // Start fully visible (FULL position); translationX defaults to 0 which is the
         // HALF position, so it must be set explicitly.
         translationX = fullTranslation(side)
