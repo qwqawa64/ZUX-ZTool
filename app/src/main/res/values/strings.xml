@@ -50,6 +50,9 @@
     <string name="page_firstrun_usage_summary">检查是否可以获取使用状态权限。该权限用于添加一视界自定义规则。</string>
     <string name="page_firstrun_overlay_title">悬浮窗</string>
     <string name="page_firstrun_overlay_summary">检查是否可以获取悬浮窗权限。该权限用于显示一视界配置向导。</string>
+    <string name="page_firstrun_autostart_title">自启动</string>
+    <string name="page_firstrun_autostart_summary">点击跳转联想安全中心，允许 ZTool 自启动。重启后功能服务（如小窗气泡）即可自动恢复，无需手动打开应用。仅 ZUX 设备且已获取 Root 时可自动检测状态。</string>
+    <string name="page_firstrun_autostart_open_failed">未能打开联想安全中心，请手动进入安全中心的自启动管理开启</string>
     <!--重启菜单资源值-->
     <string name="page_home_soft_reboot">软重启</string>
     <string name="page_home_reboot">重启</string>

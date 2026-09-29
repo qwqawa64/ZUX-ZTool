@@ -1,12 +1,16 @@
 package com.qimian233.ztool.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.home.FirstrunAgreementRepository
 import com.qimian233.ztool.data.home.FirstrunCheckState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class FirstrunAgreementViewModel(
     private val repository: FirstrunAgreementRepository,
@@ -39,6 +43,21 @@ class FirstrunAgreementViewModel(
 
     fun declineAgreement() {
         _uiState.value = _uiState.value.copy(declined = true)
+    }
+
+    /**
+     * Opens ZUI's auto-start management page: root shell first (lands directly on
+     * the non-exported AutoRun activity), exported intents as fallback. [onResult]
+     * reports whether any launch path succeeded; the check refreshes when the user
+     * returns (resume observer in the route).
+     */
+    fun requestAutoStart(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val launchedViaRoot = repository.openAutoRunPageWithRoot()
+            withContext(Dispatchers.Main) {
+                onResult(if (launchedViaRoot) true else repository.openAutoStartSettingsFallback())
+            }
+        }
     }
 
     init {

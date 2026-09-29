@@ -49,6 +49,9 @@
     <string name="page_firstrun_usage_summary">Check whether Usage Access permission is available. This permission is required when adding customized OneVision rules.</string>
     <string name="page_firstrun_overlay_title">Overlay</string>
     <string name="page_firstrun_overlay_summary">Check whether overlay permission is available. Displaying OneVision wizard needs this permission.</string>
+    <string name="page_firstrun_autostart_title">Auto-start</string>
+    <string name="page_firstrun_autostart_summary">Tap to open Lenovo Security Center and allow ZTool to auto-start. Feature services (e.g. the freeform edge bubble) then revive after reboot without opening the app. State detection requires Root and a ZUX build.</string>
+    <string name="page_firstrun_autostart_open_failed">Could not open Lenovo Security Center; enable auto-start inside it manually</string>
     <string name="page_home_soft_reboot">Soft reboot</string>
     <string name="page_home_reboot">Reboot</string>
     <string name="page_home_bootloader">Reboot to Bootloader</string>

@@ -2,6 +2,7 @@ package com.qimian233.ztool.ui.firstrun
 
 import android.content.Intent
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Numbers
 import androidx.compose.material.icons.rounded.QueryStats
+import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
@@ -73,8 +75,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.home.FirstrunAgreementRepository
@@ -130,10 +135,20 @@ fun FirstrunAgreementRoute(
         ActivityResultContracts.StartActivityForResult()
     ) { viewModel.refreshChecks() }
 
-    LaunchedEffect(currentPageState.value) {
-        if (currentPageState.value == FirstrunPage.Permissions) {
-            viewModel.refreshChecks()
+    // Refresh while the Permissions page is visible: fires on entering the page and
+    // on returning from any permission screen — including safecenter's auto-start
+    // page, which is launched through the root shell and has no result callback.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(currentPageState.value) {
+        val onPermissionsPage = currentPageState.value == FirstrunPage.Permissions
+        if (onPermissionsPage) viewModel.refreshChecks()
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && onPermissionsPage) {
+                viewModel.refreshChecks()
+            }
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     LaunchedEffect(playIntroReveal) {
@@ -263,6 +278,17 @@ fun FirstrunAgreementRoute(
                                     "package:${context.packageName}".toUri()
                                 )
                             )
+                        },
+                        onRequestAutoStart = {
+                            viewModel.requestAutoStart { launched ->
+                                if (!launched) {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.page_firstrun_autostart_open_failed,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
                         },
                         onAgree = { tapAnchor ->
                             viewModel.acceptAgreement()
@@ -478,6 +504,7 @@ private fun PermissionPage(
     onRequestPackages: () -> Unit,
     onRequestUsage: () -> Unit,
     onRequestOverlay: () -> Unit,
+    onRequestAutoStart: () -> Unit,
     onAgree: (Offset) -> Unit,
     onBack: (Offset) -> Unit
 ) {
@@ -510,7 +537,8 @@ private fun PermissionPage(
                 onCheckModule = onCheckModule,
                 onRequestPackages = onRequestPackages,
                 onRequestUsage = onRequestUsage,
-                onRequestOverlay = onRequestOverlay
+                onRequestOverlay = onRequestOverlay,
+                onRequestAutoStart = onRequestAutoStart
             )
 
             StatusBanner(
@@ -583,7 +611,8 @@ private fun ActionRow(
     onCheckModule: () -> Unit,
     onRequestPackages: () -> Unit,
     onRequestUsage: () -> Unit,
-    onRequestOverlay: () -> Unit
+    onRequestOverlay: () -> Unit,
+    onRequestAutoStart: () -> Unit
 ) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -624,6 +653,13 @@ private fun ActionRow(
             checked = state.hasOverlay,
             icon = Icons.AutoMirrored.Rounded.OpenInNew,
             onClick = onRequestOverlay
+        )
+        FirstrunActionCard(
+            title = stringResource(R.string.page_firstrun_autostart_title),
+            summary = stringResource(R.string.page_firstrun_autostart_summary),
+            checked = state.hasAutoStart,
+            icon = Icons.Rounded.RestartAlt,
+            onClick = onRequestAutoStart
         )
     }
 }
