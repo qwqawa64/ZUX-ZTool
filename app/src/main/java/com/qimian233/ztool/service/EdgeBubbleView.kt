@@ -343,7 +343,9 @@ class EdgeBubbleView(
                         start()
                     }
                 } else if (mode == MODE_FULL) {
-                    scheduleHalfHide()
+                    // Every expansion gets the full 600ms showcase before collapsing
+                    // (the default 50ms here made the icon appear to vanish).
+                    scheduleHalfHide(APPEAR_FULL_MS)
                 }
                 return true
             }
