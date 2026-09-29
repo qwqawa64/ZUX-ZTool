@@ -135,6 +135,26 @@ searchable. When adding a row, set its `SettingItem.key` and register a matching
 update both sides in the same change. Decorative-only rows use the `deco_` key prefix.
 `SearchIndexConsistencyTest` enforces this at test time; details in `docs/hook/add_frontend_item.md`.
 
+## Firstrun Schema Discipline
+
+The first-run (OOBE) flow is schema-driven. Every flow page registers an `order` and a
+`schemaVersion` in `app/src/main/java/com/qimian233/ztool/data/home/FirstrunPageSchema.kt`;
+per-page acceptance lives in `FirstrunSchemaRepository` (`noBackupFilesDir`). Maintain
+this as a standing discipline whenever the Firstrun flow is touched:
+
+- **Bump the page's `schemaVersion`** whenever its content or semantics change in a way
+  users must see again (agreement text, verify question, permission list, ...). The next
+  launch replays the flow from Splash, limited to stale pages, and re-records them.
+  Keep `AGREEMENT.schemaVersion` in sync with `协议版本` in `res/raw/agreement.md`.
+- **Adding a page** means: a registry entry (its `order` decides the flow position), a
+  `FirstrunPage` value with its `toFirstrunPage()` mapping and `AnimatedContent` branch
+  in `ui/firstrun/FirstrunAgreementRoute.kt`, and strings in both `values/` and `values-en*/`.
+- **Never persist schema acceptance in SharedPreferences / `PreferenceKeys`**: it must
+  stay out of adb backup and the in-app config export, so a restored backup can never
+  silently skip pages the user never saw.
+- The acceptance store is bookkeeping, not a gate: I/O failures degrade to a replay,
+  never to a crash or a blocked flow.
+
 ## UI And Compose Guidance
 
 The current UI direction is Compose-first. For Compose migration-specific work, also read:

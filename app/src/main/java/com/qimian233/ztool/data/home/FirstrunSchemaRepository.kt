@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.home
 
 import android.content.Context
+import android.util.Log
 import java.io.File
 
 /**
@@ -57,8 +58,10 @@ class FirstrunSchemaRepository(
 
     private fun parseStateFile(): Map<FirstrunPageSchema, Int> {
         if (!stateFile.exists()) return emptyMap()
+        // A failed read degrades to "everything stale" (replay), never a crash.
+        val content = runCatching { stateFile.readText() }.getOrNull() ?: return emptyMap()
         val result = mutableMapOf<FirstrunPageSchema, Int>()
-        stateFile.readText().lineSequence().forEach { line ->
+        content.lineSequence().forEach { line ->
             val trimmed = line.trim()
             if (trimmed.isEmpty()) return@forEach
             val page = FirstrunPageSchema.entries.firstOrNull { it.name == trimmed.substringBefore('=').trim() }
@@ -69,14 +72,19 @@ class FirstrunSchemaRepository(
     }
 
     private fun writeStateFile(state: Map<FirstrunPageSchema, Int>) {
-        stateFile.parentFile?.mkdirs()
-        stateFile.writeText(
-            state.entries.sortedBy { it.key.order }
-                .joinToString("\n") { "${it.key.name}=${it.value}" }
-        )
+        // Acceptance is bookkeeping, not a gate: if the disk rejects the write,
+        // let the flow finish — the pages simply replay on the next launch.
+        runCatching {
+            stateFile.parentFile?.mkdirs()
+            stateFile.writeText(
+                state.entries.sortedBy { it.key.order }
+                    .joinToString("\n") { "${it.key.name}=${it.value}" }
+            )
+        }.onFailure { Log.w(TAG, "Failed to persist firstrun schema state", it) }
     }
 
     private companion object {
+        const val TAG = "FirstrunSchemaRepo"
         const val STATE_FILE_NAME = "firstrun_schema_state.txt"
     }
 }
