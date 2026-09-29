@@ -55,6 +55,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -84,6 +85,7 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.home.FirstrunAgreementRepository
 import com.qimian233.ztool.data.home.FirstrunCheckState
+import com.qimian233.ztool.data.home.FirstrunPageSchema
 import com.qimian233.ztool.data.home.FirstrunSchemaRepository
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolCard
@@ -106,13 +108,15 @@ fun FirstrunAgreementRoute(
     val context = LocalContext.current
     val activity = context as ComponentActivity
     val view = LocalView.current
+    val agreementRepository = remember { AgreementRepository(context) }
+    val schemaRepository = remember { FirstrunSchemaRepository(context, agreementRepository) }
     val viewModel = remember {
             ViewModelProvider(
                 activity,
                 FirstrunAgreementViewModelFactory(
                     repository = FirstrunAgreementRepository(context),
-                    agreementRepository = AgreementRepository(context),
-                    schemaRepository = FirstrunSchemaRepository(context, AgreementRepository(context))
+                    agreementRepository = agreementRepository,
+                    schemaRepository = schemaRepository
                 )
             )[FirstrunAgreementViewModel::class.java]
     }
@@ -123,6 +127,13 @@ fun FirstrunAgreementRoute(
     val revealController = LocalThemeRevealController.current
     val introCoverColor = ztoolRevealCoverColor()
     val gate = remember { ScrollToBottomAgreementGate() }
+    // Pages to replay, frozen once per flow session: acceptance marks written
+    // while the flow runs must not shrink the list under the user's feet.
+    // Splash always opens the flow and is not part of the registry.
+    val replayPages = rememberSaveable(stateSaver = ReplayPagesSaver) {
+        mutableStateOf(deriveReplayPages(agreementDisplayMode, schemaRepository))
+    }
+    val pages = listOf(FirstrunPage.Splash) + replayPages.value
     val currentPageState = rememberSaveable { mutableStateOf(FirstrunPage.Splash) }
     // Hoisted so the user's input survives page switches within the first-run flow.
     val sourceVerifyInput = rememberSaveable { mutableStateOf("") }
@@ -170,13 +181,44 @@ fun FirstrunAgreementRoute(
         onDispose { }
     }
 
+    val navigateBack: (Offset) -> Unit = { tapAnchor ->
+        revealNavigation = true
+        revealController.triggerReveal(
+            onAction = {
+                val index = pages.indexOf(currentPageState.value)
+                if (index <= 0) onAgreementDeclined() else currentPageState.value = pages[index - 1]
+            },
+            onAnimationEnd = { revealNavigation = false },
+            anchor = tapAnchor
+        )
+    }
+
+    /**
+     * Advances to the next replay page, recording the page the user just
+     * passed via [markPage]. On the last page the whole flow is finalized
+     * instead (marks every registered page accepted) and the route closes.
+     */
+    val navigateForward: (Offset, (() -> Unit)?) -> Unit = { tapAnchor, markPage ->
+        revealNavigation = true
+        revealController.triggerReveal(
+            onAction = {
+                markPage?.invoke()
+                val index = pages.indexOf(currentPageState.value)
+                if (index < 0 || index == pages.lastIndex) {
+                    viewModel.completeFirstrun()
+                    onAgreementAccepted()
+                } else {
+                    currentPageState.value = pages[index + 1]
+                }
+            },
+            onAnimationEnd = { revealNavigation = false },
+            anchor = tapAnchor
+        )
+    }
+
     BackHandler(enabled = true) {
-        when (currentPageState.value) {
-            FirstrunPage.Splash -> onAgreementDeclined()
-            FirstrunPage.Agreement -> onAgreementDeclined()
-            FirstrunPage.SourceVerify -> currentPageState.value = FirstrunPage.Agreement
-            FirstrunPage.Permissions -> currentPageState.value = FirstrunPage.SourceVerify
-        }
+        val index = pages.indexOf(currentPageState.value)
+        if (index <= 0) onAgreementDeclined() else currentPageState.value = pages[index - 1]
     }
 
     ZToolPageSurface(modifier = Modifier.fillMaxSize()) {
@@ -191,7 +233,7 @@ fun FirstrunAgreementRoute(
                     if (revealNavigation) {
                         EnterTransition.None togetherWith ExitTransition.None
                     } else {
-                        val forward = targetState.pageOrder() > initialState.pageOrder()
+                        val forward = pages.indexOf(targetState) > pages.indexOf(initialState)
                         val enterDirection = if (forward) {
                             AnimatedContentTransitionScope.SlideDirection.Left
                         } else {
@@ -214,29 +256,17 @@ fun FirstrunAgreementRoute(
             ) { page ->
                 when (page) {
                     FirstrunPage.Splash -> SplashPage(
-                        onStart = { tapAnchor ->
-                            revealNavigation = true
-                            revealController.triggerReveal(
-                                onAction = { currentPageState.value = FirstrunPage.Agreement },
-                                onAnimationEnd = { revealNavigation = false },
-                                anchor = tapAnchor
-                            )
-                        }
+                        onStart = { tapAnchor -> navigateForward(tapAnchor, null) }
                     )
                     FirstrunPage.Agreement -> AgreementPage(
                         showHeader = agreementDisplayMode == FirstrunDisplayMode.FirstRun,
+                        isLastPage = page == pages.last(),
                         markdownText = uiState.agreementMarkdown,
                         pageScrollState = agreementPageScrollState,
                         readScrollState = agreementReadScrollState,
                         firstPageReady = gate.satisfied,
                         onNext = { tapAnchor ->
-                            viewModel.completeAgreementPage()
-                            revealNavigation = true
-                            revealController.triggerReveal(
-                                onAction = { currentPageState.value = FirstrunPage.SourceVerify },
-                                onAnimationEnd = { revealNavigation = false },
-                                anchor = tapAnchor
-                            )
+                            navigateForward(tapAnchor) { viewModel.completeAgreementPage() }
                         },
                         onDisagree = { _ ->
                             viewModel.declineAgreement()
@@ -246,27 +276,16 @@ fun FirstrunAgreementRoute(
                     FirstrunPage.SourceVerify -> SourceVerifyPage(
                         input = sourceVerifyInput.value,
                         onInputChange = { sourceVerifyInput.value = it },
+                        isLastPage = page == pages.last(),
                         onNext = { tapAnchor ->
-                            viewModel.completeSourceVerifyPage()
-                            revealNavigation = true
-                            revealController.triggerReveal(
-                                onAction = { currentPageState.value = FirstrunPage.Permissions },
-                                onAnimationEnd = { revealNavigation = false },
-                                anchor = tapAnchor
-                            )
+                            navigateForward(tapAnchor) { viewModel.completeSourceVerifyPage() }
                         },
-                        onBack = { tapAnchor ->
-                            revealNavigation = true
-                            revealController.triggerReveal(
-                                onAction = { currentPageState.value = FirstrunPage.Agreement },
-                                onAnimationEnd = { revealNavigation = false },
-                                anchor = tapAnchor
-                            )
-                        }
+                        onBack = navigateBack
                     )
                     FirstrunPage.Permissions -> PermissionPage(
                         state = uiState.checkState,
-                        allGranted = uiState.checkState.allGranted && gate.satisfied,
+                        allGranted = uiState.checkState.allGranted,
+                        isLastPage = page == pages.last(),
                         pageScrollState = permissionPageScrollState,
                         onRequestRoot = { viewModel.refreshChecks() },
                         onCheckModule = { viewModel.refreshChecks() },
@@ -293,23 +312,8 @@ fun FirstrunAgreementRoute(
                                 }
                             }
                         },
-                        onAgree = { tapAnchor ->
-                            viewModel.completeFirstrun()
-                            revealNavigation = true
-                            revealController.triggerReveal(
-                                onAction = onAgreementAccepted,
-                                onAnimationEnd = { revealNavigation = false },
-                                anchor = tapAnchor
-                            )
-                        },
-                        onBack = { tapAnchor ->
-                            revealNavigation = true
-                            revealController.triggerReveal(
-                                onAction = { currentPageState.value = FirstrunPage.SourceVerify },
-                                onAnimationEnd = { revealNavigation = false },
-                                anchor = tapAnchor
-                            )
-                        }
+                        onAgree = { tapAnchor -> navigateForward(tapAnchor, null) },
+                        onBack = navigateBack
                     )
                 }
             }
@@ -380,6 +384,7 @@ private fun SplashPage(
 @Composable
 private fun AgreementPage(
     showHeader: Boolean,
+    isLastPage: Boolean,
     markdownText: String,
     pageScrollState: ScrollState,
     readScrollState: ScrollState,
@@ -420,7 +425,9 @@ private fun AgreementPage(
 
         BottomActionBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            nextText = stringResource(R.string.page_firstrun_next_step),
+            nextText = stringResource(
+                if (isLastPage) R.string.page_firstrun_agreement_confirm else R.string.page_firstrun_next_step
+            ),
             nextEnabled = firstPageReady,
             onNext = onNext,
             onDisagree = onDisagree
@@ -432,6 +439,7 @@ private fun AgreementPage(
 private fun SourceVerifyPage(
     input: String,
     onInputChange: (String) -> Unit,
+    isLastPage: Boolean,
     onNext: (Offset) -> Unit,
     onBack: (Offset) -> Unit
 ) {
@@ -488,7 +496,9 @@ private fun SourceVerifyPage(
 
         BottomActionBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            nextText = stringResource(R.string.page_firstrun_next_step),
+            nextText = stringResource(
+                if (isLastPage) R.string.page_firstrun_agreement_confirm else R.string.page_firstrun_next_step
+            ),
             nextEnabled = verified,
             onNext = onNext,
             onDisagree = onBack,
@@ -501,6 +511,7 @@ private fun SourceVerifyPage(
 private fun PermissionPage(
     state: FirstrunCheckState,
     allGranted: Boolean,
+    isLastPage: Boolean,
     pageScrollState: ScrollState,
     onRequestRoot: () -> Unit,
     onCheckModule: () -> Unit,
@@ -556,7 +567,9 @@ private fun PermissionPage(
 
         BottomActionBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            nextText = stringResource(R.string.page_firstrun_agreement_confirm),
+            nextText = stringResource(
+                if (isLastPage) R.string.page_firstrun_agreement_confirm else R.string.page_firstrun_next_step
+            ),
             nextEnabled = allGranted,
             onNext = onAgree,
             onDisagree = onBack,
@@ -785,12 +798,35 @@ private enum class FirstrunPage {
     Permissions
 }
 
-private fun FirstrunPage.pageOrder(): Int = when (this) {
-    FirstrunPage.Splash -> 0
-    FirstrunPage.Agreement -> 1
-    FirstrunPage.SourceVerify -> 2
-    FirstrunPage.Permissions -> 3
+private fun FirstrunPageSchema.toFirstrunPage(): FirstrunPage = when (this) {
+    FirstrunPageSchema.AGREEMENT -> FirstrunPage.Agreement
+    FirstrunPageSchema.SOURCE_VERIFY -> FirstrunPage.SourceVerify
+    FirstrunPageSchema.PERMISSIONS -> FirstrunPage.Permissions
 }
+
+/**
+ * Pages this launch must (re)show, in flow order: everything on a true first
+ * run, otherwise only pages whose accepted schema version is stale (per-page
+ * selective replay). Splash is prepended by the route, not part of the registry.
+ */
+private fun deriveReplayPages(
+    displayMode: FirstrunDisplayMode,
+    schemaRepository: FirstrunSchemaRepository
+): List<FirstrunPage> {
+    val schemaPages = if (displayMode == FirstrunDisplayMode.FirstRun) {
+        FirstrunPageSchema.entries.toList()
+    } else {
+        val accepted = schemaRepository.loadStatus().acceptedVersions
+        FirstrunPageSchema.entries.filter { accepted[it] != it.schemaVersion }
+    }
+    return schemaPages.sortedBy { it.order }.map { it.toFirstrunPage() }
+}
+
+/** Persists the replay list across config changes and process death. */
+private val ReplayPagesSaver = listSaver<List<FirstrunPage>, String>(
+    save = { it.map(FirstrunPage::name) },
+    restore = { names -> names.map(FirstrunPage::valueOf) }
+)
 
 private const val ExpectedRepoName = "ZUX-ZTool"
 
