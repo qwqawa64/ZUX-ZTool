@@ -72,6 +72,8 @@ class EdgeBubbleView(
         private const val COLLAPSE_DP = 16f
         private const val SQUIRCLE_WEIGHT = 3f
         private const val ELEVATION_DP = 3.33f
+        /** Whole-bubble alpha in the collapsed state. */
+        private const val HALF_ALPHA = 0.45f
         private const val SHADOW_COLOR_INT = 0x38000000
 
         val BG_LIGHT = "#f0f0f0".toColorInt()
@@ -385,16 +387,18 @@ class EdgeBubbleView(
 
     override fun onDraw(canvas: Canvas) {
         val ox = containerOriginX()
+        val dim = if (mode == MODE_HALF) HALF_ALPHA else 1f
         // Opaque theme background, drawn only inside the clipped container region.
         containerRect.set(ox, 0f, ox + containerWpx, containerHpx.toFloat())
+        bgPaint.alpha = (255 * dim).toInt()
         canvas.drawRoundRect(
             containerRect, dip(CONTAINER_RADIUS_DP), dip(CONTAINER_RADIUS_DP), bgPaint)
         // Icon: marginStart 38dp (LEFT) / 8dp (RIGHT), 8dp top/bottom.
         val iconStart = ox + (if (side == SIDE_LEFT) screenMarginPx + innerPx else innerPx)
         val icon = appIcon ?: return
-        // Oplus collapsed state shows no icon: it lives in the part that slid
-        // offscreen; fade it entirely whenever we are not FULL.
-        icon.mutate().alpha = if (mode == MODE_HALF) 0 else 255
+        // Collapsed state dims the whole bubble — icon included ("透明度 + 收起图标
+        // + 收起底色"), aligned with the first-collapse behaviour.
+        icon.mutate().alpha = (255 * dim).toInt()
         icon.setBounds(
             iconStart.toInt(), innerPx,
             (iconStart + iconPx).toInt(), (innerPx + iconPx)
