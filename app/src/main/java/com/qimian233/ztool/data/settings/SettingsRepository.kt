@@ -6,6 +6,9 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
@@ -47,19 +50,59 @@ class SettingsRepository(
             context,
             uri,
             FileManager.generateBackupFileName(),
-            ModulePreferencesUtils.getAllSettingsAsJSON(context)
+            buildBackupPayload()
         )
     }
 
     fun restoreConfig(uri: Uri): Boolean {
         val content = FileManager.readConfigWithSAF(context, uri) ?: return false
         Log.d(TAG, "Read config content: $content")
-        ModulePreferencesUtils.restoreConfig(context, content)
+        restoreFromJson(content)
         return true
+    }
+
+    /**
+     * Backup JSON layout (schemaVersion 1): a wrapper object holding the
+     * module config (xposed_module_config) and the app-local theme settings
+     * as two separate sections. Backups without the wrapper are legacy flat
+     * module-config-only files and restore through the legacy path.
+     */
+    private fun buildBackupPayload(): String? {
+        return try {
+            val root = JsonObject()
+            root.addProperty(KEY_SCHEMA_VERSION, BACKUP_SCHEMA_VERSION)
+            root.add(
+                KEY_MODULE_CONFIG,
+                JsonParser.parseString(
+                    ModulePreferencesUtils.getAllSettingsAsJSON(context) ?: "{}"
+                )
+            )
+            root.add(KEY_THEME_SETTINGS, JsonParser.parseString(themePreferences.exportSettingsJson()))
+            GsonBuilder().setPrettyPrinting().create().toJson(root)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to build backup payload", e)
+            null
+        }
+    }
+
+    private fun restoreFromJson(content: String) {
+        val root = runCatching { JsonParser.parseString(content).asJsonObject }.getOrNull()
+        if (root != null && root.has(KEY_MODULE_CONFIG)) {
+            root.get(KEY_MODULE_CONFIG)?.let {
+                ModulePreferencesUtils.restoreConfig(context, it.toString())
+            }
+            root.get(KEY_THEME_SETTINGS)?.let {
+                themePreferences.importSettingsJson(it.toString())
+            }
+        } else {
+            // Legacy flat backup: module config keys only, no theme section.
+            ModulePreferencesUtils.restoreConfig(context, content)
+        }
     }
 
     fun restoreDefaultConfig() {
         prefsUtils.clearAllSettings()
+        themePreferences.deleteAll()
     }
 
     fun setDetailedLoggingEnabled(isEnabled: Boolean) {
@@ -269,6 +312,10 @@ class SettingsRepository(
 
     companion object {
         private const val TAG = "SettingsRepository"
+        private const val KEY_SCHEMA_VERSION = "schemaVersion"
+        private const val BACKUP_SCHEMA_VERSION = 1
+        private const val KEY_MODULE_CONFIG = "moduleConfig"
+        private const val KEY_THEME_SETTINGS = "themeSettings"
         private val KEY_DETAILED_LOGGING = PreferenceKeys.IS_DETAILED_LOGGING.name
         private val KEY_DISPLAY_ENTRY_IN_SETTINGS = PreferenceKeys.ZTOOL_SETTINGS_ENTRY.name
         private val KEY_SHOW_ALL_APPS = PreferenceKeys.ZTOOL_SETTINGS_SHOW_ALL_APPS.name

@@ -2,18 +2,22 @@ package com.qimian233.ztool.data.theme
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
+import com.google.gson.Gson
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
 import com.qimian233.ztool.ui.theme.MaterialPalette
 import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import androidx.core.content.edit
+import java.io.File
 import kotlin.enums.enumEntries
 
 class ThemePreferencesRepository(
     context: Context
 ) {
-    private val prefs = context.applicationContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    private val appContext: Context = context.applicationContext
+    private val prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
     fun loadSettings(): ZToolThemeSettings {
         val legacyPaletteMode = prefs.getString(KEY_MATERIAL_PALETTE_MODE, null)
@@ -114,6 +118,64 @@ class ThemePreferencesRepository(
         }
     }
 
+    /**
+     * Serialize current theme settings for the in-app config backup. Unknown
+     * future fields are tolerated on import via the defaults-merge there.
+     */
+    fun exportSettingsJson(): String {
+        return Gson().toJson(loadSettings())
+    }
+
+    /**
+     * Apply theme settings from a backup. Missing or unknown fields fall back
+     * to defaults; the write fires [observeSettings] listeners so the running
+     * UI picks the restored theme up immediately.
+     */
+    fun importSettingsJson(json: String): Boolean {
+        return try {
+            val defaults = ZToolThemeSettings()
+            val parsed = Gson().fromJson(json, ZToolThemeSettings::class.java) ?: return false
+            saveSettings(
+                defaults.copy(
+                    frontendStyle = parsed.frontendStyle ?: defaults.frontendStyle,
+                    themeMode = parsed.themeMode ?: defaults.themeMode,
+                    materialColorSpec = parsed.materialColorSpec ?: defaults.materialColorSpec,
+                    materialPalette = parsed.materialPalette ?: defaults.materialPalette,
+                    dynamicColorEnabled = parsed.dynamicColorEnabled ?: defaults.dynamicColorEnabled,
+                    amoledBlackEnabled = parsed.amoledBlackEnabled ?: defaults.amoledBlackEnabled,
+                    predictiveBackGestureEnabled = parsed.predictiveBackGestureEnabled
+                        ?: defaults.predictiveBackGestureEnabled,
+                    manualColorEnabled = parsed.manualColorEnabled ?: defaults.manualColorEnabled,
+                    manualSeedColor = parsed.manualSeedColor ?: defaults.manualSeedColor,
+                    enableFloatingBottomBar = parsed.enableFloatingBottomBar
+                        ?: defaults.enableFloatingBottomBar,
+                    enableFloatingBottomBarBlur = parsed.enableFloatingBottomBarBlur
+                        ?: defaults.enableFloatingBottomBarBlur
+                )
+            )
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to import theme settings from backup", e)
+            false
+        }
+    }
+
+    /**
+     * Wipe theme settings entirely so every key falls back to its default on
+     * next read ("restore default config"). Deletes the backing prefs file
+     * after clearing, mirroring [com.qimian233.ztool.utils.ModulePreferencesUtils].
+     */
+    fun deleteAll() {
+        val cleared = prefs.edit().clear().commit()
+        if (cleared) {
+            val prefsFile = File(appContext.filesDir.parentFile, "shared_prefs/$PREF_NAME.xml")
+            if (prefsFile.exists()) {
+                Log.d(TAG, "Deleted theme prefs file: ${prefsFile.delete()}")
+            }
+        }
+        Log.d(TAG, "Cleared theme preferences, success: $cleared")
+    }
+
     private inline fun <reified T : Enum<T>> SharedPreferences.getEnum(
         key: String,
         defaultValue: T
@@ -135,6 +197,7 @@ class ThemePreferencesRepository(
     }
 
     companion object {
+        private const val TAG = "ThemePreferencesRepository"
         private const val PREF_NAME = "ztool_ui_theme_preferences"
         private const val KEY_FRONTEND_STYLE = "frontend_style"
         private const val KEY_THEME_MODE = "theme_mode"

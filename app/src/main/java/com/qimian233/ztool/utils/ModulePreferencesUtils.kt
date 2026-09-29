@@ -11,6 +11,7 @@ import com.qimian233.ztool.ModuleActivationProbe
 import com.qimian233.ztool.XposedServiceBridge
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import java.io.File
+import java.util.TreeMap
 import androidx.core.content.edit
 
 /**
@@ -198,7 +199,7 @@ class ModulePreferencesUtils(
         return try {
             val prefs = modulePreferences
             @Suppress("UNCHECKED_CAST")
-            val allEntries = HashMap(prefs.all) as HashMap<String, Any>
+            val allEntries = TreeMap<String, Any>().apply { putAll(prefs.all as Map<String, Any>) }
             Log.d(TAG, "Successfully read all settings, entries: " + allEntries.size)
             allEntries
         } catch (e: Exception) {
@@ -211,7 +212,7 @@ class ModulePreferencesUtils(
         return try {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             @Suppress("UNCHECKED_CAST")
-            val allEntries = HashMap(prefs.all) as HashMap<String, Any>
+            val allEntries = TreeMap<String, Any>().apply { putAll(prefs.all as Map<String, Any>) }
             Log.d(TAG, "Successfully read local settings, entries: " + allEntries.size)
             allEntries
         } catch (e: Exception) {
@@ -359,20 +360,20 @@ class ModulePreferencesUtils(
             }
         }
 
-        fun jsonToHashMap(jsonString: String): HashMap<String, Any> {
+        fun jsonToHashMap(jsonString: String): Map<String, Any> {
             return try {
                 val gson = Gson()
-                val type = object : TypeToken<HashMap<String, Any>>() {}.type
-                val map: HashMap<String, Any> = gson.fromJson(jsonString, type)
+                val type = object : TypeToken<Map<String, Any>>() {}.type
+                val map: Map<String, Any> = gson.fromJson(jsonString, type)
                 processMapValues(map)
             } catch (e: Exception) {
                 Log.e("JsonToMapConverter", "JSON conversion failed", e)
-                HashMap()
+                emptyMap()
             }
         }
 
-        private fun processMapValues(map: HashMap<String, Any>): HashMap<String, Any> {
-            val processedMap = HashMap<String, Any>()
+        private fun processMapValues(map: Map<String, Any>): Map<String, Any> {
+            val processedMap = TreeMap<String, Any>()
             for ((key, value) in map) {
                 when (value) {
                     is Double -> {
