@@ -122,19 +122,47 @@ class SettingsRepository(
     }
 
     fun setLauncherIconHidden(hidden: Boolean) {
-        val state = if (hidden) {
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-        } else {
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        setComponentState(
+            launcherAliasComponent(),
+            if (hidden) PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            else PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        )
+        // Debug builds also declare LeakCanary's own launcher alias (the "Leaks"
+        // icon) inside this package; leaving it enabled would keep the app visible
+        // after hiding. On show, restore DEFAULT so LeakCanary's
+        // leak_canary_add_launcher_icon flag regains control. The component only
+        // exists in debug builds, hence the declaration check.
+        val leakCanaryAlias = ComponentName(context, LEAKCANARY_LAUNCHER_ALIAS_CLASS)
+        if (isComponentDeclared(leakCanaryAlias)) {
+            setComponentState(
+                leakCanaryAlias,
+                if (hidden) PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                else PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+            )
         }
+    }
+
+    private fun setComponentState(component: ComponentName, state: Int) {
         try {
             context.packageManager.setComponentEnabledSetting(
-                launcherAliasComponent(),
+                component,
                 state,
                 PackageManager.DONT_KILL_APP
             )
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to toggle launcher icon: ${e.message}")
+            Log.w(TAG, "Failed to toggle component ${component.className}: ${e.message}")
+        }
+    }
+
+    private fun isComponentDeclared(component: ComponentName): Boolean {
+        return try {
+            context.packageManager.getActivityInfo(
+                component,
+                PackageManager.MATCH_DISABLED_COMPONENTS
+            )
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
         }
     }
 
@@ -226,6 +254,10 @@ class SettingsRepository(
         private val KEY_AUTO_CHECK_UPDATE = PreferenceKeys.AUTO_CHECK_UPDATE.name
         private val KEY_HIDE_FROM_RECENTS = PreferenceKeys.HIDE_FROM_RECENTS.name
         private const val LAUNCHER_ALIAS_CLASS = "com.qimian233.ztool.LauncherAlias"
+        // LeakCanary (debugImplementation) adds this launcher activity-alias to the
+        // merged manifest; the class is @InternalApi so the name must be hardcoded.
+        private const val LEAKCANARY_LAUNCHER_ALIAS_CLASS =
+            "leakcanary.internal.activity.LeakLauncherActivity"
     }
 
     private fun getVersionName(): String {
