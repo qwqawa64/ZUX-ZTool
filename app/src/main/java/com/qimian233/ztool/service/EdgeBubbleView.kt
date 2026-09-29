@@ -318,12 +318,15 @@ class EdgeBubbleView(
                     side = if (windowCenterX < screenWidth / 2) SIDE_LEFT else SIDE_RIGHT
                     centerY = layoutParams.y + containerHpx / 2
                     listener.onBubbleSettled(taskId, side, centerY.toFloat() / screenHeight)
-                    // Snap window x/y back to the collapsed anchor; translation lands
-                    // on 0 (= HALF on this anchor). Outline re-queries on side change.
+                    // Snap window x/y back to the FULL anchor while translation
+                    // interpolates to halfTranslation — window anchor encodes FULL,
+                    // translation encodes the mode; both must land consistently.
                     val fromX = layoutParams.x.toFloat()
                     val targetX = anchorX(side).toFloat()
                     val fromY = layoutParams.y.toFloat()
                     val targetY = clampY(centerY - containerHpx / 2).toFloat()
+                    val fromT = translationX
+                    val targetT = halfTranslation(side)
                     mode = MODE_HALF
                     modeAnimator?.cancel()
                     snapAnimator?.cancel()
@@ -334,6 +337,7 @@ class EdgeBubbleView(
                             val t = anim.animatedValue as Float
                             layoutParams.x = (fromX + (targetX - fromX) * t).toInt()
                             layoutParams.y = (fromY + (targetY - fromY) * t).toInt()
+                            translationX = fromT + (targetT - fromT) * t
                             postApply()
                         }
                         start()
