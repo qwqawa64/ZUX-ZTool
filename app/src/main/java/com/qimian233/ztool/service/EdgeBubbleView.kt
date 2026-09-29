@@ -326,8 +326,10 @@ class EdgeBubbleView(
                     val fromY = layoutParams.y.toFloat()
                     val targetY = clampY(centerY - containerHpx / 2).toFloat()
                     val fromT = translationX
-                    val targetT = halfTranslation(side)
-                    mode = MODE_HALF
+                    // Window anchor is the FULL position: snap there, show the full
+                    // bubble for 600ms, then the scheduled collapse slides it to HALF.
+                    val targetT = 0f
+                    mode = MODE_FULL
                     modeAnimator?.cancel()
                     snapAnimator?.cancel()
                     snapAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
@@ -342,8 +344,7 @@ class EdgeBubbleView(
                         }
                         start()
                     }
-                    // Full 600ms showcase even after a drag, then collapse.
-                    scheduleHalfHide(APPEAR_FULL_MS + MODE_ANIM_MS)
+                    scheduleHalfHide(APPEAR_FULL_MS)
                 } else if (mode == MODE_FULL) {
                     // Every expansion gets the full 600ms showcase before collapsing
                     // (the default 50ms here made the icon appear to vanish).
