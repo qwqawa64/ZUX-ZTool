@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.home.FirstrunAgreementRepository
 import com.qimian233.ztool.data.home.FirstrunCheckState
+import com.qimian233.ztool.data.home.FirstrunPageSchema
+import com.qimian233.ztool.data.home.FirstrunSchemaRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +16,8 @@ import kotlinx.coroutines.withContext
 
 class FirstrunAgreementViewModel(
     private val repository: FirstrunAgreementRepository,
-    private val agreementRepository: AgreementRepository
+    private val agreementRepository: AgreementRepository,
+    private val schemaRepository: FirstrunSchemaRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(FirstrunAgreementUiState())
     val uiState: StateFlow<FirstrunAgreementUiState> = _uiState.asStateFlow()
@@ -33,12 +36,24 @@ class FirstrunAgreementViewModel(
         }.start()
     }
 
-    fun acceptAgreement() {
-        agreementRepository.markAgreementAccepted()
-        _uiState.value = _uiState.value.copy(
-            accepted = true,
-            acceptedAgreementVersion = agreementRepository.getCurrentAgreementVersion()
-        )
+    /** Records that the user passed the agreement page at its current schema version. */
+    fun completeAgreementPage() {
+        schemaRepository.markPageAccepted(FirstrunPageSchema.AGREEMENT)
+        _uiState.value = _uiState.value.copy(accepted = true)
+    }
+
+    /** Records that the user passed the source-verify page at its current schema version. */
+    fun completeSourceVerifyPage() {
+        schemaRepository.markPageAccepted(FirstrunPageSchema.SOURCE_VERIFY)
+    }
+
+    /**
+     * Final completion (last flow page): records every registered page at its
+     * current schema version, so nothing replays until a schema bumps.
+     */
+    fun completeFirstrun() {
+        schemaRepository.markAllAccepted()
+        _uiState.value = _uiState.value.copy(accepted = true)
     }
 
     fun declineAgreement() {
@@ -63,9 +78,7 @@ class FirstrunAgreementViewModel(
     init {
         _uiState.value = _uiState.value.copy(
             checkState = repository.loadInitialState(),
-            agreementMarkdown = agreementRepository.loadAgreementMarkdown(),
-            agreementVersion = agreementRepository.getCurrentAgreementVersion(),
-            acceptedAgreementVersion = agreementRepository.getAcceptedAgreementVersion()
+            agreementMarkdown = agreementRepository.loadAgreementMarkdown()
         )
     }
 }
@@ -75,7 +88,5 @@ data class FirstrunAgreementUiState(
     val accepted: Boolean = false,
     val declined: Boolean = false,
     val checkState: FirstrunCheckState = FirstrunCheckState(),
-    val agreementMarkdown: String = "",
-    val agreementVersion: String = "",
-    val acceptedAgreementVersion: String? = null
+    val agreementMarkdown: String = ""
 )

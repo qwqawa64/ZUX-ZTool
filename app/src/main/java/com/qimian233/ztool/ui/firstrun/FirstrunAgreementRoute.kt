@@ -84,6 +84,7 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.home.FirstrunAgreementRepository
 import com.qimian233.ztool.data.home.FirstrunCheckState
+import com.qimian233.ztool.data.home.FirstrunSchemaRepository
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolOutlinedTextField
@@ -96,7 +97,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun FirstrunAgreementRoute(
-    agreementDisplayMode: AgreementDisplayMode = AgreementDisplayMode.FirstRun,
+    agreementDisplayMode: FirstrunDisplayMode = FirstrunDisplayMode.FirstRun,
     playIntroReveal: Boolean = false,
     onIntroRevealPlayed: () -> Unit = {},
     onAgreementAccepted: () -> Unit,
@@ -110,7 +111,8 @@ fun FirstrunAgreementRoute(
                 activity,
                 FirstrunAgreementViewModelFactory(
                     repository = FirstrunAgreementRepository(context),
-                    agreementRepository = AgreementRepository(context)
+                    agreementRepository = AgreementRepository(context),
+                    schemaRepository = FirstrunSchemaRepository(context, AgreementRepository(context))
                 )
             )[FirstrunAgreementViewModel::class.java]
     }
@@ -222,13 +224,13 @@ fun FirstrunAgreementRoute(
                         }
                     )
                     FirstrunPage.Agreement -> AgreementPage(
-                        showHeader = agreementDisplayMode == AgreementDisplayMode.FirstRun,
+                        showHeader = agreementDisplayMode == FirstrunDisplayMode.FirstRun,
                         markdownText = uiState.agreementMarkdown,
                         pageScrollState = agreementPageScrollState,
                         readScrollState = agreementReadScrollState,
                         firstPageReady = gate.satisfied,
                         onNext = { tapAnchor ->
-                            viewModel.acceptAgreement()
+                            viewModel.completeAgreementPage()
                             revealNavigation = true
                             revealController.triggerReveal(
                                 onAction = { currentPageState.value = FirstrunPage.SourceVerify },
@@ -245,6 +247,7 @@ fun FirstrunAgreementRoute(
                         input = sourceVerifyInput.value,
                         onInputChange = { sourceVerifyInput.value = it },
                         onNext = { tapAnchor ->
+                            viewModel.completeSourceVerifyPage()
                             revealNavigation = true
                             revealController.triggerReveal(
                                 onAction = { currentPageState.value = FirstrunPage.Permissions },
@@ -291,7 +294,7 @@ fun FirstrunAgreementRoute(
                             }
                         },
                         onAgree = { tapAnchor ->
-                            viewModel.acceptAgreement()
+                            viewModel.completeFirstrun()
                             revealNavigation = true
                             revealController.triggerReveal(
                                 onAction = onAgreementAccepted,
@@ -763,12 +766,13 @@ private fun BottomActionBar(
 
 private class FirstrunAgreementViewModelFactory(
     private val repository: FirstrunAgreementRepository,
-    private val agreementRepository: AgreementRepository
+    private val agreementRepository: AgreementRepository,
+    private val schemaRepository: FirstrunSchemaRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FirstrunAgreementViewModel::class.java)) {
-            return FirstrunAgreementViewModel(repository, agreementRepository) as T
+            return FirstrunAgreementViewModel(repository, agreementRepository, schemaRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

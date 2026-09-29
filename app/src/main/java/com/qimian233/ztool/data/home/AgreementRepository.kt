@@ -29,6 +29,18 @@ class AgreementRepository(context: Context) {
         agreementFile.writeText("$STATE_PREFIX$version")
     }
 
+    fun hasAcceptedAgreement(): Boolean = getAcceptedAgreementVersion() != null
+
+    /**
+     * Migration input for [FirstrunSchemaRepository]: whether the legacy
+     * accepted agreement version covers the packaged markdown, i.e. the user
+     * does not owe an agreement re-read under the legacy versioning scheme.
+     */
+    fun isAcceptedVersionCurrent(): Boolean {
+        val accepted = getAcceptedAgreementVersion() ?: return false
+        return compareVersions(accepted, currentAgreementVersionValue) >= 0
+    }
+
     fun loadAgreementMarkdown(): String {
         return agreementMarkdown
     }
@@ -65,6 +77,20 @@ class AgreementRepository(context: Context) {
         AGREEMENT_VERSION_PATTERN.find(markdown)?.groupValues?.getOrNull(1)?.takeIf { it.isNotBlank() }
             ?.let { return it }
         return DEFAULT_AGREEMENT_VERSION
+    }
+
+    private fun compareVersions(left: String, right: String): Int {
+        val leftParts = left.split('.').map { it.toIntOrNull() ?: 0 }
+        val rightParts = right.split('.').map { it.toIntOrNull() ?: 0 }
+        val maxSize = maxOf(leftParts.size, rightParts.size)
+        for (index in 0 until maxSize) {
+            val leftPart = leftParts.getOrElse(index) { 0 }
+            val rightPart = rightParts.getOrElse(index) { 0 }
+            if (leftPart != rightPart) {
+                return leftPart.compareTo(rightPart)
+            }
+        }
+        return 0
     }
 
     companion object {

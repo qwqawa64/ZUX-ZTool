@@ -40,6 +40,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.qimian233.ztool.service.EdgeBubbleService
 import com.qimian233.ztool.data.home.AgreementRepository
+import com.qimian233.ztool.data.home.FirstrunPageSchema
+import com.qimian233.ztool.data.home.FirstrunSchemaRepository
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.navigation.MainRouteNavHost
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
@@ -55,7 +57,7 @@ import com.qimian233.ztool.ui.components.ZToolNavigationRailItem
 import com.qimian233.ztool.ui.components.ZToolNavigationRailState
 import com.qimian233.ztool.ui.components.collapseNavigationRailOnPointerDown
 import com.qimian233.ztool.ui.components.rememberZToolNavigationRailState
-import com.qimian233.ztool.ui.firstrun.AgreementDisplayMode
+import com.qimian233.ztool.ui.firstrun.FirstrunDisplayMode
 import com.qimian233.ztool.ui.firstrun.FirstrunAgreementRoute
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalEnableFloatingBottomBar
@@ -83,11 +85,12 @@ class MainActivity : ComponentActivity(),
     private var isEnvironmentReady by mutableStateOf(false)
     private var currentRoute by mutableStateOf(MainRoute.Home)
     private var themeSettings by mutableStateOf(ZToolThemeSettings())
-    private var agreementDisplayMode by mutableStateOf<AgreementDisplayMode?>(null)
+    private var firstrunDisplayMode by mutableStateOf<FirstrunDisplayMode?>(null)
     private var firstrunIntroRevealPending by mutableStateOf(false)
     private var lastClickTime = 0L
     private var unregisterThemeSettingsObserver: (() -> Unit)? = null
     private val agreementRepository by lazy { AgreementRepository(this) }
+    private val firstrunSchemaRepository by lazy { FirstrunSchemaRepository(this, agreementRepository) }
 
     private val clickInterval = 300L
 
@@ -104,15 +107,15 @@ class MainActivity : ComponentActivity(),
                 ?.let(MainRoute::fromName)
                 ?: MainRoute.Home
             isEnvironmentReady = savedInstanceState.getBoolean(KEY_ENVIRONMENT_READY, false)
-            agreementDisplayMode = savedInstanceState.getString(KEY_AGREEMENT_DISPLAY_MODE)
-                ?.let(AgreementDisplayMode::valueOf)
+            firstrunDisplayMode = savedInstanceState.getString(KEY_FIRSTRUN_DISPLAY_MODE)
+                ?.let(FirstrunDisplayMode::valueOf)
         }
-        if (agreementDisplayMode == null) {
-            agreementDisplayMode = resolveAgreementDisplayMode()
+        if (firstrunDisplayMode == null) {
+            firstrunDisplayMode = resolveFirstrunDisplayMode()
         }
         // Cold start straight into Firstrun: seed the reveal provider with a
         // full-screen cover so the intro can uncover the welcome page.
-        firstrunIntroRevealPending = savedInstanceState == null && agreementDisplayMode != null
+        firstrunIntroRevealPending = savedInstanceState == null && firstrunDisplayMode != null
 
         val themeRepository = ThemePreferencesRepository(applicationContext)
         themeSettings = themeRepository.loadSettings()
@@ -147,13 +150,13 @@ class MainActivity : ComponentActivity(),
                         onEnvironmentStateChanged = ::onEnvironmentStateChanged,
                         onRouteChanged = ::setCurrentRouteFromHost
                     )
-                    agreementDisplayMode?.let { currentAgreementMode ->
+                    firstrunDisplayMode?.let { currentFirstrunMode ->
                         FirstrunAgreementRoute(
-                            agreementDisplayMode = currentAgreementMode,
+                            agreementDisplayMode = currentFirstrunMode,
                             playIntroReveal = firstrunIntroRevealPending,
                             onIntroRevealPlayed = { firstrunIntroRevealPending = false },
                             onAgreementAccepted = {
-                                agreementDisplayMode = null
+                                firstrunDisplayMode = null
                             },
                             onAgreementDeclined = { finishAffinity() }
                         )
@@ -184,7 +187,7 @@ class MainActivity : ComponentActivity(),
         super.onSaveInstanceState(outState)
         outState.putString(KEY_CURRENT_ROUTE, currentRoute.name)
         outState.putBoolean(KEY_ENVIRONMENT_READY, isEnvironmentReady)
-        agreementDisplayMode?.let { outState.putString(KEY_AGREEMENT_DISPLAY_MODE, it.name) }
+        firstrunDisplayMode?.let { outState.putString(KEY_FIRSTRUN_DISPLAY_MODE, it.name) }
     }
 
     override fun onDestroy() {
@@ -194,26 +197,28 @@ class MainActivity : ComponentActivity(),
         LogServiceManager.clearCallbacks()
     }
 
-    private fun resolveAgreementDisplayMode(): AgreementDisplayMode? {
-        val acceptedVersion = agreementRepository.getAcceptedAgreementVersion()
-            ?: return AgreementDisplayMode.FirstRun
-        return if (compareAgreementVersions(
-                acceptedVersion,
-                agreementRepository.getCurrentAgreementVersion()
-            ) < 0
-        ) {
-            AgreementDisplayMode.UpdateOnly
-        } else {
-            null
+    /**
+     * Decides whether the first-run flow should overlay this launch, based on
+     * the per-page schema registry: FirstRun when nothing was ever accepted,
+     * UpdateOnly when any registered page is stale (accepted below its current
+     * schema version or not accepted at all). Registry bumps hence replay the
+     * whole flow until per-page replay lands.
+     */
+    private fun resolveFirstrunDisplayMode(): FirstrunDisplayMode? {
+        val status = firstrunSchemaRepository.loadStatus()
+        if (!status.everAcceptedAny) return FirstrunDisplayMode.FirstRun
+        val hasStalePage = FirstrunPageSchema.entries.any { page ->
+            status.acceptedVersions[page] != page.schemaVersion
         }
+        return if (hasStalePage) FirstrunDisplayMode.UpdateOnly else null
     }
 
     /**
      * Re-enter the first-run (OOBE) flow, e.g. from the advanced settings
-     * developer entry. The existing agreement acceptance state is kept as-is.
+     * developer entry. The existing acceptance state is kept as-is.
      */
     fun reopenFirstrun() {
-        agreementDisplayMode = AgreementDisplayMode.FirstRun
+        firstrunDisplayMode = FirstrunDisplayMode.FirstRun
     }
 
     override fun onServiceStarted() {
@@ -286,22 +291,8 @@ class MainActivity : ComponentActivity(),
     companion object {
         private const val KEY_CURRENT_ROUTE = "current_route"
         private const val KEY_ENVIRONMENT_READY = "environment_ready"
-        private const val KEY_AGREEMENT_DISPLAY_MODE = "agreement_display_mode"
+        private const val KEY_FIRSTRUN_DISPLAY_MODE = "firstrun_display_mode"
     }
-}
-
-private fun compareAgreementVersions(left: String, right: String): Int {
-    val leftParts = left.split('.').map { it.toIntOrNull() ?: 0 }
-    val rightParts = right.split('.').map { it.toIntOrNull() ?: 0 }
-    val maxSize = maxOf(leftParts.size, rightParts.size)
-    for (index in 0 until maxSize) {
-        val leftPart = leftParts.getOrElse(index) { 0 }
-        val rightPart = rightParts.getOrElse(index) { 0 }
-        if (leftPart != rightPart) {
-            return leftPart.compareTo(rightPart)
-        }
-    }
-    return 0
 }
 
 @Composable
