@@ -100,7 +100,16 @@
         </receiver>
         <activity
             android:name=".MainActivity"
-            android:exported="true" />
+            android:exported="true">
+            <!-- Xposed 模块约定入口：LSPosed 管理器的“启动”菜单优先解析该 category
+                 （AppHelper.getSettingsIntent），保证桌面 alias 被禁用后仍可从 LSPosed 打开，
+                 且优先于 LeakCanary 的 LAUNCHER alias 命中。 -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
+            </intent-filter>
+        </activity>
         <!-- 桌面图标本体。禁用该 alias 即可隐藏桌面图标（PackageManager 组件开关），
              MainActivity 保持 enabled 以便 LSPosed 等外部入口显式拉起。 -->
         <activity-alias

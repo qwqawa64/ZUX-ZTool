@@ -173,6 +173,9 @@ class MainActivity : ComponentActivity(),
         // A freshly launched task is not excluded from recents by default;
         // re-apply the persisted choice before the task gets snapshotted.
         settingsRepo.applyHideFromRecents()
+        // Component states survive app updates; heal the debug-only LeakCanary
+        // alias if "hidden" was enabled on a build that did not manage it yet.
+        settingsRepo.applyLeakCanaryAliasState()
         settingsRepo.cleanupAppLogsIfNeeded()
         settingsRepo.syncLsposedLogs()
     }

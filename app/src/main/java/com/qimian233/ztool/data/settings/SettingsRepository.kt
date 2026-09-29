@@ -127,18 +127,39 @@ class SettingsRepository(
             if (hidden) PackageManager.COMPONENT_ENABLED_STATE_DISABLED
             else PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         )
-        // Debug builds also declare LeakCanary's own launcher alias (the "Leaks"
-        // icon) inside this package; leaving it enabled would keep the app visible
-        // after hiding. On show, restore DEFAULT so LeakCanary's
-        // leak_canary_add_launcher_icon flag regains control. The component only
-        // exists in debug builds, hence the declaration check.
+        syncLeakCanaryAlias(hidden)
+    }
+
+    /**
+     * Debug builds also declare LeakCanary's own launcher alias (the "Leaks" icon)
+     * inside this package; leaving it enabled would keep the app visible after
+     * hiding and let LSPosed's CATEGORY_LAUNCHER fallback resolve to LeakCanary.
+     * On show, restore DEFAULT so LeakCanary's leak_canary_add_launcher_icon flag
+     * regains control. The component only exists in debug builds, hence the
+     * declaration check.
+     */
+    private fun syncLeakCanaryAlias(hidden: Boolean) {
         val leakCanaryAlias = ComponentName(context, LEAKCANARY_LAUNCHER_ALIAS_CLASS)
-        if (isComponentDeclared(leakCanaryAlias)) {
-            setComponentState(
-                leakCanaryAlias,
-                if (hidden) PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                else PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-            )
+        if (!isComponentDeclared(leakCanaryAlias)) {
+            return
+        }
+        setComponentState(
+            leakCanaryAlias,
+            if (hidden) PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            else PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+        )
+    }
+
+    /**
+     * Self-heal after app updates: PackageManager component states survive updates,
+     * so a hidden choice made on an older build may leave the LeakCanary alias
+     * (unknown to that build's toggle code) still enabled. Re-assert it from the
+     * persisted alias state; the user-facing alias is left untouched because
+     * PackageManager itself is its source of truth.
+     */
+    fun applyLeakCanaryAliasState() {
+        if (isLauncherIconHidden()) {
+            syncLeakCanaryAlias(hidden = true)
         }
     }
 
