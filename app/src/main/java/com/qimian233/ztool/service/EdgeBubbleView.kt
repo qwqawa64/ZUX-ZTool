@@ -67,7 +67,7 @@ class EdgeBubbleView(
         // How much of the container hangs offscreen in FULL. Oplus reuses
         // screen_margin here, but that retracts the bubble 30dp when pressed and
         // breaks the "attached to the edge" look — keep the FULL hang small.
-        private const val FULL_HANG_DP = 12f
+        private const val FULL_HANG_DP = 24f
         private const val CONTAINER_RADIUS_DP = 18f
         private const val COLLAPSE_DP = 16f
         private const val SQUIRCLE_WEIGHT = 3f
