@@ -1364,6 +1364,10 @@ object SearchIndex {
             summaryRes = R.string.page_settings_show_all_apps_summary
         ),
         appSettings.item(
+            id = "app_settings_hide_from_recents",
+            titleRes = R.string.page_settings_hide_from_recents
+        ),
+        appSettings.item(
             id = "app_settings_auto_check_update",
             titleRes = R.string.page_settings_auto_check_update_title
         ),

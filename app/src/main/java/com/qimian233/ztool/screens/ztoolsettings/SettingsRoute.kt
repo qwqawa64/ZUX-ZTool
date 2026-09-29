@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SettingsBackupRestore
 import androidx.compose.material.icons.rounded.Update
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -184,6 +185,7 @@ fun SettingsMainRoute(
             onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
             onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
             onShowAllAppsChanged = viewModel::setShowAllAppsEnabled,
+            onHideFromRecentsChanged = viewModel::setHideFromRecentsEnabled,
             onAbout = {
                 showRestoreConfirmDialog = false
                 onOpenAbout()
@@ -315,6 +317,7 @@ private fun SettingsRoute(
     onOpenLanguageSettings: () -> Unit,
     onEntryDisplayChanged: (Boolean) -> Unit,
     onShowAllAppsChanged: (Boolean) -> Unit,
+    onHideFromRecentsChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
@@ -371,6 +374,7 @@ private fun SettingsRoute(
                         onOpenLanguageSettings = onOpenLanguageSettings,
                         onEntryDisplayChanged = onEntryDisplayChanged,
                         onShowAllAppsChanged = onShowAllAppsChanged,
+                        onHideFromRecentsChanged = onHideFromRecentsChanged,
                         onDetailedLoggingChanged = onDetailedLoggingChanged,
                         onAbout = onAbout,
                         onExportLogs = onExportLogs,
@@ -397,6 +401,7 @@ private fun settingsSections(
     onOpenLanguageSettings: () -> Unit,
     onEntryDisplayChanged: (Boolean) -> Unit,
     onShowAllAppsChanged: (Boolean) -> Unit,
+    onHideFromRecentsChanged: (Boolean) -> Unit,
     onDetailedLoggingChanged: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
@@ -468,6 +473,13 @@ private fun settingsSections(
                     checked = state.isShowAllAppsEnabled,
                     onCheckedChange = onShowAllAppsChanged,
                     icon = Icons.Rounded.Apps
+                ),
+                SettingItem.Switch(
+                    key = "app_settings_hide_from_recents",
+                    title = stringResource(R.string.page_settings_hide_from_recents),
+                    checked = state.isHideFromRecentsEnabled,
+                    onCheckedChange = onHideFromRecentsChanged,
+                    icon = Icons.Rounded.VisibilityOff
                 ),
                 SettingItem.Switch(
                     key = "app_settings_auto_check_update",

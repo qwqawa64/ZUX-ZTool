@@ -1,5 +1,6 @@
 package com.qimian233.ztool.data.settings
 
+import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -29,6 +30,7 @@ class SettingsRepository(
             isDetailedLoggingEnabled = prefsUtils.loadBooleanSetting(KEY_DETAILED_LOGGING, false),
             isEntryDisplayedInSettings = prefsUtils.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
             isShowAllAppsEnabled = prefsUtils.loadBooleanSetting(KEY_SHOW_ALL_APPS, false),
+            isHideFromRecentsEnabled = prefsUtils.loadBooleanSetting(KEY_HIDE_FROM_RECENTS, false),
             versionName = getVersionName(),
             commitCount = BuildConfig.GIT_COMMIT_COUNT,
             commitHash = BuildConfig.GIT_COMMIT_HASH,
@@ -68,6 +70,31 @@ class SettingsRepository(
 
     fun setShowAllAppsEnabled(isEnabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_SHOW_ALL_APPS, isEnabled)
+    }
+
+    fun setHideFromRecentsEnabled(isEnabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_HIDE_FROM_RECENTS, isEnabled)
+        setRecentsExclusion(isEnabled)
+    }
+
+    /**
+     * Re-apply the persisted recents-exclusion choice. A task launched from the
+     * launcher icon is not excluded by default, so this must run on every app
+     * start before the task is snapshotted into the overview.
+     */
+    fun applyHideFromRecents() {
+        setRecentsExclusion(prefsUtils.loadBooleanSetting(KEY_HIDE_FROM_RECENTS, false))
+    }
+
+    private fun setRecentsExclusion(hidden: Boolean) {
+        try {
+            val activityManager = context.getSystemService(ActivityManager::class.java)
+            activityManager.getAppTasks().forEach { task ->
+                task.setExcludeFromRecents(hidden)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to set recents exclusion: ${e.message}")
+        }
     }
 
     fun setAutoCheckUpdateEnabled(enabled: Boolean) {
@@ -156,6 +183,7 @@ class SettingsRepository(
         private val KEY_DISPLAY_ENTRY_IN_SETTINGS = PreferenceKeys.ZTOOL_SETTINGS_ENTRY.name
         private val KEY_SHOW_ALL_APPS = PreferenceKeys.ZTOOL_SETTINGS_SHOW_ALL_APPS.name
         private val KEY_AUTO_CHECK_UPDATE = PreferenceKeys.AUTO_CHECK_UPDATE.name
+        private val KEY_HIDE_FROM_RECENTS = PreferenceKeys.HIDE_FROM_RECENTS.name
     }
 
     private fun getVersionName(): String {

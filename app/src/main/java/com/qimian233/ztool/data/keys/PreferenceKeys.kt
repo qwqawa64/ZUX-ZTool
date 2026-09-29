@@ -207,6 +207,8 @@ object PreferenceKeys {
     val IS_DETAILED_LOGGING = BoolKey("isDetailedLogging", false)
     val HALF_WIDTH_PUNCT = BoolKey("half_width_punct", false)
     val AUTO_CHECK_UPDATE = BoolKey("auto_check_update", true)
+    // App-local behavior: exclude ZTool's own tasks from the recents overview
+    val HIDE_FROM_RECENTS = BoolKey("hide_from_recents", false)
     val YIYAN = BoolKey("YiYan", false)
     val IS_SYSTEMUI_PERMISSION_CONFIRMED = BoolKey("isSystemUIPermissionConfirmed", false)
     val IS_CONFIG_UPGRADED = BoolKey("isConfigUpgraded", false)
@@ -350,7 +352,7 @@ object PreferenceKeys {
         DISABLE_ALL_VIRUS_SCANS, DEFAULT_ENABLE_AUTORUN,
         AUTO_ACCEPT_FILE_TRANSFER, BYPASS_SHARE_WARNING,
         DISABLE_NEARBY_SHARE_COUNTDOWN,
-        IS_DETAILED_LOGGING, AUTO_CHECK_UPDATE,
+        IS_DETAILED_LOGGING, AUTO_CHECK_UPDATE, HIDE_FROM_RECENTS,
         YIYAN, IS_SYSTEMUI_PERMISSION_CONFIRMED, IS_CONFIG_UPGRADED,
         HALF_WIDTH_PUNCT,
         SYSTEMUI_REALWATTS_SHOW_VOLTAGE, SYSTEMUI_REALWATTS_SHOW_CURRENT,

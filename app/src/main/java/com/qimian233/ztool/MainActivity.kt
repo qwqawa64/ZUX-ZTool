@@ -170,6 +170,9 @@ class MainActivity : ComponentActivity(),
 
         // Clean up excess logs at startup + sync LSPosed logs
         val settingsRepo = SettingsRepository(applicationContext)
+        // A freshly launched task is not excluded from recents by default;
+        // re-apply the persisted choice before the task gets snapshotted.
+        settingsRepo.applyHideFromRecents()
         settingsRepo.cleanupAppLogsIfNeeded()
         settingsRepo.syncLsposedLogs()
     }
