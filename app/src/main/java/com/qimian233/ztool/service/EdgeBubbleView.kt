@@ -342,6 +342,8 @@ class EdgeBubbleView(
                         }
                         start()
                     }
+                    // Full 600ms showcase even after a drag, then collapse.
+                    scheduleHalfHide(APPEAR_FULL_MS + MODE_ANIM_MS)
                 } else if (mode == MODE_FULL) {
                     // Every expansion gets the full 600ms showcase before collapsing
                     // (the default 50ms here made the icon appear to vanish).
