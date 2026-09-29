@@ -4,7 +4,9 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Outline
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.Handler
@@ -14,21 +16,28 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.view.animation.OvershootInterpolator
 import kotlin.math.abs
+import kotlin.math.min
 
 /**
- * The edge-bubble capsule for one minimized freeform task.
+ * The edge-bubble capsule for one minimized freeform task — 1:1 replica of the Oplus
+ * `FloatHandleView` visual stack (see docs/research/oplus-float-handle-gesture-spec.md
+ * and the oplus-framework-res sources):
  *
- * Geometry: the overlay window is anchored at the screen edge and sized
- * [2*pill - halfPeek] wide, covering both the FULL and HALF positions of the pill
- * (window x can hang offscreen thanks to LAYOUT_NO_LIMITS). FULL↔HALF animates the
- * view's translationX inside the window — pure view-level, no WindowManager calls
- * per frame (updateViewLayout is far too slow for smooth mode switching). Window
- * position changes only while free-dragging.
- *
- * Timing/threshold values follow docs/research/oplus-float-handle-gesture-spec.md.
+ * - Container: `zoom_float_handle_view_relative_layout` — width = icon(48) + 2×inner(8)
+ *   + screenMargin(30) = 94dp, height = icon + 2×inner = 64dp, OPAQUE background
+ *   #f0f0f0 (light) / #444444 (dark), smooth-rounded outline (squircle, weight≈3,
+ *   radius 18dp), clipToOutline, elevation 3.33dp with #38000000 shadows.
+ * - Icon: 48dp, top/bottom margin 8dp; marginStart = screenMargin+inner (38dp) on the
+ *   LEFT side, inner (8dp) on the RIGHT side — the screenMargin part of the container
+ *   always hangs offscreen toward the docked edge (that IS the "connection pad"; there
+ *   is no separate connector view in Oplus).
+ * - FULL: only the screenMargin part offscreen; HALF: all but `collapse` (16dp)
+ *   offscreen, icon invisible. Mode switch animates translationX inside a window wide
+ *   enough for both positions (no per-frame updateViewLayout).
  */
 class EdgeBubbleView(
     context: Context,
@@ -51,60 +60,52 @@ class EdgeBubbleView(
         private const val MODE_FULL = 2
         private const val MODE_HALF = 4
 
-        private const val PILL_CORNER_DP = 16f
-        private const val PILL_SIZE_DP = 75f
-        private const val PILL_INNER_MARGIN_DP = 6f
-        private const val HALF_PEEK_DP = 24f
-        /** Light-grey pad connecting the backdrop to the screen edge (FULL state). */
-        private const val CONNECTOR_W_DP = 24f
-        /** Whole-bubble alpha in HALF state (Oplus "collapsed" dimming). */
-        private const val HALF_ALPHA = 0.45f
-        private const val VERTICAL_LIMIT_DP = 48f
+        // Oplus values (oplus-framework-res + FloatHandleView/FloatHandleUIParams).
+        private const val ICON_SIZE_DP = 48f
+        private const val INNER_MARGIN_DP = 8f
+        private const val SCREEN_MARGIN_DP = 30f
+        private const val CONTAINER_RADIUS_DP = 18f
+        private const val COLLAPSE_DP = 16f
+        private const val SQUIRCLE_WEIGHT = 3f
+        private const val ELEVATION_DP = 3.33f
+        private const val SHADOW_COLOR_INT = 0x38000000.toInt()
+
+        val BG_LIGHT = Color.parseColor("#f0f0f0")
+        val BG_DARK = Color.parseColor("#444444")
+
         private const val HALF_HIDE_DELAY_MS = 50L
         private const val APPEAR_FULL_MS = 600L
-        private const val SNAP_ANIM_MS = 260L
-        private const val MODE_ANIM_MS = 180L
+        private const val MODE_ANIM_MS = 200L
         // Fling thresholds (spec): fast branch and slow-long-distance branch.
         private const val FLING_VELOCITY_PX = 1000f
         private const val FLING_DISTANCE_PX = 100f
-
-        // Dark rounded backdrop behind the icon, 80% opacity; the connector pad uses
-        // the SAME color so backdrop + pad read as one capsule reaching the edge.
-        private val BG_COLOR = Color.argb(204, 28, 28, 30)
     }
 
     private val wm = context.getSystemService(WindowManager::class.java)
     private val mainHandler = Handler(Looper.getMainLooper())
     private val density = context.resources.displayMetrics.density
-    // Full display bounds. maximumWindowMetrics (not currentWindowMetrics!) is required:
-    // when ZTool itself runs inside a freeform window, currentWindowMetrics returns that
-    // small window's bounds and every edge anchor lands mid-screen.
     private val screenWidth: Int
     private val screenHeight: Int
 
     init {
-        val metricsBounds = try {
-            context.getSystemService(WindowManager::class.java)
-                .maximumWindowMetrics.bounds
+        val bounds = try {
+            context.getSystemService(WindowManager::class.java).maximumWindowMetrics.bounds
         } catch (_: Throwable) { null }
-        screenWidth = metricsBounds?.width() ?: context.resources.displayMetrics.widthPixels
-        screenHeight = metricsBounds?.height() ?: context.resources.displayMetrics.heightPixels
+        screenWidth = bounds?.width() ?: context.resources.displayMetrics.widthPixels
+        screenHeight = bounds?.height() ?: context.resources.displayMetrics.heightPixels
     }
 
-    private val pillSizePx = dip(PILL_SIZE_DP).toInt()
-    private val halfPeekPx = dip(HALF_PEEK_DP).toInt()
-    private val connWpx = dip(CONNECTOR_W_DP).toInt()
+    private val iconPx = dip(ICON_SIZE_DP).toInt()
+    private val innerPx = dip(INNER_MARGIN_DP).toInt()
+    private val screenMarginPx = dip(SCREEN_MARGIN_DP).toInt()
+    private val containerWpx = iconPx + innerPx * 2 + screenMarginPx
+    private val containerHpx = iconPx + innerPx * 2
+    private val collapsePx = dip(COLLAPSE_DP).toInt()
+    /** Distance between FULL and HALF window positions along x. */
+    private val modeShiftPx = containerWpx - collapsePx - screenMarginPx
 
-    private val pillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-        // Nearly-invisible fill: only the shadowLayer halo is wanted, cast outward.
-        color = 0x01000000
-        setShadowLayer(dip(6f), 0f, dip(2f), 0x88000000.toInt())
-    }
-    private val connectorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-    private val pillRect = RectF()
-    private var appIcon: Drawable? = null
+    private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val containerRect = RectF()
 
     private var side = if (initialSide == SIDE_RIGHT) SIDE_RIGHT else SIDE_LEFT
     private var mode = MODE_FULL
@@ -118,6 +119,7 @@ class EdgeBubbleView(
     private var removed = false
     private var modeAnimator: ValueAnimator? = null
     private var snapAnimator: ValueAnimator? = null
+    private var appIcon: Drawable? = null
 
     val layoutParams: WindowManager.LayoutParams = WindowManager.LayoutParams().apply {
         type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -126,13 +128,13 @@ class EdgeBubbleView(
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         format = android.graphics.PixelFormat.TRANSLUCENT
-        width = 2 * pillSizePx - halfPeekPx + connWpx
-        height = pillSizePx
+        width = containerWpx + modeShiftPx
+        height = containerHpx
         gravity = Gravity.TOP or Gravity.START
         layoutInDisplayCutoutMode =
             WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         x = anchorX(side)
-        y = clampY(centerY - pillSizePx / 2)
+        y = clampY(centerY - containerHpx / 2)
     }
 
     private val gestureDetector = GestureDetector(
@@ -159,7 +161,6 @@ class EdgeBubbleView(
             }
 
             override fun onLongPress(e: MotionEvent) {
-                // Long press arms free dragging; movement is handled in onTouchEvent.
                 dragging = true
                 parent?.requestDisallowInterceptTouchEvent(true)
             }
@@ -167,13 +168,24 @@ class EdgeBubbleView(
     )
 
     init {
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-        pillPaint.color = BG_COLOR
-        connectorPaint.color = BG_COLOR
-        // Start fully visible (FULL position); translationX defaults to 0 which is the
-        // HALF position, so it must be set explicitly.
-        translationX = fullTranslation(side)
-        // Slide to HALF after a brief fully-visible moment (Oplus appear behaviour).
+        bgPaint.color = if (isDarkTheme()) BG_DARK else BG_LIGHT
+        // Oplus: smooth-rounded outline + elevation + colored shadows + clipToOutline.
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setConvexPath(
+                    squirclePath(
+                        containerOriginX(), 0f,
+                        containerWpx.toFloat(), containerHpx.toFloat()
+                    )
+                )
+            }
+        }
+        clipToOutline = true
+        stateListAnimator = null
+        elevation = dip(ELEVATION_DP)
+        outlineAmbientShadowColor = SHADOW_COLOR_INT
+        outlineSpotShadowColor = SHADOW_COLOR_INT
+        // Window anchor is the FULL position — no initial translation needed.
         scheduleHalfHide(APPEAR_FULL_MS)
     }
 
@@ -186,19 +198,28 @@ class EdgeBubbleView(
 
     private fun dip(v: Float): Float = v * density
 
-    /** Window x anchor: HALF position of the pill for the given side. */
+    /**
+     * Window x anchor = the FULL position (screenMargin part offscreen). HALF is
+     * reached with translation ±modeShift: LEFT slides further out (negative),
+     * RIGHT further in-positive — leaving exactly `collapse` px visible.
+     */
     private fun anchorX(side: Int): Int =
-        if (side == SIDE_LEFT) -(pillSizePx - halfPeekPx) else screenWidth - halfPeekPx
+        if (side == SIDE_LEFT) -(screenMarginPx + modeShiftPx)
+        else screenWidth - (containerWpx - screenMarginPx)
 
-    /** View translation for FULL mode on the given side (connector fits toward edge). */
-    private fun fullTranslation(side: Int): Float {
-        val t = (pillSizePx - halfPeekPx + connWpx).toFloat()
-        return if (side == SIDE_LEFT) t else -t
+    /** View translation for the HALF (collapsed) mode on the given side. */
+    private fun halfTranslation(side: Int): Float {
+        val t = modeShiftPx.toFloat()
+        return if (side == SIDE_LEFT) -t else t
     }
 
+    /** Container origin inside the view for the current side. */
+    private fun containerOriginX(): Float =
+        if (side == SIDE_LEFT) modeShiftPx.toFloat() else 0f
+
     private fun clampY(top: Int): Int {
-        val limit = dip(VERTICAL_LIMIT_DP).toInt()
-        return top.coerceIn(limit, screenHeight - pillSizePx - limit)
+        val limit = dip(8f).toInt()
+        return top.coerceIn(limit, screenHeight - containerHpx - limit)
     }
 
     private fun postApply() {
@@ -209,10 +230,9 @@ class EdgeBubbleView(
         }
     }
 
-    /** Animates the in-window translation between FULL and HALF (cheap, view-level). */
     private fun animateToMode(target: Int) {
         modeAnimator?.cancel()
-        val to = if (target == MODE_FULL) fullTranslation(side) else 0f
+        val to = if (target == MODE_FULL) 0f else halfTranslation(side)
         val from = translationX
         if (from == to) return
         modeAnimator = ValueAnimator.ofFloat(from, to).apply {
@@ -225,7 +245,8 @@ class EdgeBubbleView(
 
     private fun setMode(target: Int, animate: Boolean) {
         mode = target
-        if (animate) animateToMode(target) else translationX = fullTranslation(side)
+        if (animate) animateToMode(target)
+        else translationX = if (target == MODE_FULL) 0f else halfTranslation(side)
     }
 
     private fun scheduleHalfHide(delay: Long = HALF_HIDE_DELAY_MS) {
@@ -234,33 +255,6 @@ class EdgeBubbleView(
                 setMode(MODE_HALF, animate = true)
             }
         }, delay)
-    }
-
-    /** Keeps the window parked at the current edge anchor with the given y. */
-    private fun parkAtEdge(targetSide: Int = side, animateY: Boolean = false) {
-        side = targetSide
-        layoutParams.x = anchorX(side)
-        val targetY = clampY(centerY - pillSizePx / 2)
-        if (!animateY) {
-            layoutParams.y = targetY
-            postApply()
-            return
-        }
-        val fromY = layoutParams.y
-        snapAnimator?.cancel()
-        snapAnimator = ValueAnimator.ofFloat(fromY.toFloat(), targetY.toFloat()).apply {
-            duration = SNAP_ANIM_MS
-            addUpdateListener { anim ->
-                layoutParams.y = (anim.animatedValue as Float).toInt()
-                postApply()
-            }
-            start()
-        }
-    }
-
-    fun expandToFull() {
-        if (removed) return
-        setMode(MODE_FULL, animate = true)
     }
 
     fun release() {
@@ -294,12 +288,9 @@ class EdgeBubbleView(
                 val slop = ViewConfiguration.get(context).scaledTouchSlop
                 if (dragging || dx * dx + dy * dy > slop * slop) {
                     if (!dragging) {
-                        // Bake the current translation into the window position and
-                        // rebase the drag origin, so the drag operates on window
-                        // coordinates only and the pill doesn't jump. Cancel any
-                        // in-flight mode animation first, or it keeps overwriting
-                        // translationX after the bake.
                         modeAnimator?.cancel()
+                        // Bake the current translation into the window position and
+                        // rebase the drag origin.
                         layoutParams.x += translationX.toInt()
                         translationX = 0f
                         postApply()
@@ -320,28 +311,24 @@ class EdgeBubbleView(
                     dragging = false
                     val windowCenterX = layoutParams.x + width / 2
                     side = if (windowCenterX < screenWidth / 2) SIDE_LEFT else SIDE_RIGHT
-                    centerY = layoutParams.y + pillSizePx / 2
+                    centerY = layoutParams.y + containerHpx / 2
                     listener.onBubbleSettled(taskId, side, centerY.toFloat() / screenHeight)
-                    // Snap window x/y back to the edge anchor; translation stays 0,
-                    // which is exactly the HALF position at the anchor.
+                    // Snap window x/y back to the collapsed anchor; translation lands
+                    // on 0 (= HALF on this anchor). Outline re-queries on side change.
                     val fromX = layoutParams.x.toFloat()
                     val targetX = anchorX(side).toFloat()
                     val fromY = layoutParams.y.toFloat()
-                    val targetY = clampY(centerY - pillSizePx / 2).toFloat()
-                    val fromT = translationX
+                    val targetY = clampY(centerY - containerHpx / 2).toFloat()
                     mode = MODE_HALF
                     modeAnimator?.cancel()
                     snapAnimator?.cancel()
                     snapAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-                        duration = SNAP_ANIM_MS
+                        duration = MODE_ANIM_MS
                         interpolator = OvershootInterpolator(0.6f)
                         addUpdateListener { anim ->
                             val t = anim.animatedValue as Float
                             layoutParams.x = (fromX + (targetX - fromX) * t).toInt()
                             layoutParams.y = (fromY + (targetY - fromY) * t).toInt()
-                            // Translation must land on 0 (= HALF at the anchor), or the
-                            // pill stays stuck fully visible after the drag.
-                            translationX = fromT * (1f - t)
                             postApply()
                         }
                         start()
@@ -359,61 +346,52 @@ class EdgeBubbleView(
 
     // region drawing
 
+    /**
+     * Smooth-rounded ("squircle", OplusOutlineAdapter weight≈3) container path —
+     * per-corner cubics whose handle extends past the circle radius along both edges.
+     */
+    private fun squirclePath(l: Float, t: Float, w: Float, h: Float): Path {
+        val r = dip(CONTAINER_RADIUS_DP)
+        val span = min(r * (SQUIRCLE_WEIGHT / 2f), min(w, h) / 2f - 1f)
+        val handle = span * 0.6f
+        val left = l; val top = t; val right = l + w; val bottom = t + h
+        return Path().apply {
+            moveTo(left + span, top)
+            lineTo(right - span, top)
+            cubicTo(right - span + handle, top, right, top + span - handle, right, top + span)
+            lineTo(right, bottom - span)
+            cubicTo(right, bottom - span + handle, right - span + handle, bottom, right - span, bottom)
+            lineTo(left + span, bottom)
+            cubicTo(left + span - handle, bottom, left, bottom - span + handle, left, bottom - span)
+            lineTo(left, top + span)
+            cubicTo(left, top + span - handle, left + span - handle, top, left + span, top)
+            close()
+        }
+    }
+
     override fun onDraw(canvas: Canvas) {
-        val inset = dip(PILL_INNER_MARGIN_DP)
-        val corner = dip(PILL_CORNER_DP)
-        val dim = if (mode == MODE_HALF) HALF_ALPHA else 1f
-
-        // Backdrop occupies the leading part of the view; the connector STRETCHES from
-        // it to the actual screen edge whenever the bubble is within reach, so the
-        // bubble stays visually attached while pressed/dragged near the edge.
-        pillRect.set(0f, 0f, pillSizePx.toFloat(), pillSizePx.toFloat())
-        var connectorRect: RectF? = null
-        if (mode == MODE_FULL) {
-            val backdropScreenLeft = layoutParams.x + translationX
-            val backdropScreenRight = backdropScreenLeft + pillSizePx
-            val maxStretch = dip(160f)
-            val gap = when (side) {
-                SIDE_LEFT -> backdropScreenLeft
-                else -> screenWidth - backdropScreenRight
-            }
-            if (gap > 0f && gap <= maxStretch) {
-                connectorRect = RectF(pillRect)
-                if (side == SIDE_LEFT) {
-                    connectorRect.left = -(layoutParams.x + translationX)
-                    connectorRect.right = pillRect.left + dip(8f)
-                } else {
-                    connectorRect.left = pillRect.right - dip(8f)
-                    connectorRect.right = pillRect.right - dip(8f) + gap
-                }
-            }
-        }
-
-        shadowPaint.alpha = (255 * dim).toInt()
-        connectorPaint.alpha = (255 * dim).toInt()
-        pillPaint.alpha = (255 * dim).toInt()
-        // One shadow for the whole silhouette — a per-shape shadow drawn after the
-        // connector darkened most of the connector body.
-        val silhouette = RectF(pillRect)
-        connectorRect?.let {
-            silhouette.left = minOf(silhouette.left, it.left)
-            silhouette.right = maxOf(silhouette.right, it.right)
-        }
-        canvas.drawRoundRect(silhouette, corner, corner, shadowPaint)
-        connectorRect?.let {
-            canvas.drawRoundRect(it, corner, corner, connectorPaint)
-        }
-        canvas.drawRoundRect(pillRect, corner, corner, pillPaint)
-
+        val ox = containerOriginX()
+        // Opaque theme background, drawn only inside the clipped container region.
+        containerRect.set(ox, 0f, ox + containerWpx, containerHpx.toFloat())
+        canvas.drawRoundRect(
+            containerRect, dip(CONTAINER_RADIUS_DP), dip(CONTAINER_RADIUS_DP), bgPaint)
+        // Icon: marginStart 38dp (LEFT) / 8dp (RIGHT), 8dp top/bottom.
+        val iconStart = ox + (if (side == SIDE_LEFT) screenMarginPx + innerPx else innerPx)
         val icon = appIcon ?: return
-        // Oplus collapsed state shows no icon at all — it slides out with the bubble.
-        val iconAlpha = if (mode == MODE_HALF) 0f else dim
-        icon.mutate().alpha = (255 * iconAlpha).toInt()
+        // Oplus collapsed state shows no icon: it lives in the part that slid
+        // offscreen; fade it entirely whenever we are not FULL.
+        icon.mutate().alpha = if (mode == MODE_HALF) 0 else 255
         icon.setBounds(
-            inset.toInt(), inset.toInt(),
-            (pillSizePx - inset).toInt(), (pillSizePx - inset).toInt()
+            iconStart.toInt(), innerPx,
+            (iconStart + iconPx).toInt(), (innerPx + iconPx).toInt()
         )
         icon.draw(canvas)
+    }
+
+    private fun isDarkTheme(): Boolean {
+        val uiMode = context.resources.configuration.uiMode and
+            android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        return uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
     }
 
     // endregion
