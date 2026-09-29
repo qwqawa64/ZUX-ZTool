@@ -3,7 +3,6 @@ package com.qimian233.ztool.service
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.Paint
 import android.graphics.Path
@@ -19,6 +18,7 @@ import android.view.ViewConfiguration
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.view.animation.OvershootInterpolator
+import androidx.core.graphics.toColorInt
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -64,14 +64,18 @@ class EdgeBubbleView(
         private const val ICON_SIZE_DP = 48f
         private const val INNER_MARGIN_DP = 8f
         private const val SCREEN_MARGIN_DP = 30f
+        // How much of the container hangs offscreen in FULL. Oplus reuses
+        // screen_margin here, but that retracts the bubble 30dp when pressed and
+        // breaks the "attached to the edge" look — keep the FULL hang small.
+        private const val FULL_HANG_DP = 12f
         private const val CONTAINER_RADIUS_DP = 18f
         private const val COLLAPSE_DP = 16f
         private const val SQUIRCLE_WEIGHT = 3f
         private const val ELEVATION_DP = 3.33f
-        private const val SHADOW_COLOR_INT = 0x38000000.toInt()
+        private const val SHADOW_COLOR_INT = 0x38000000
 
-        val BG_LIGHT = Color.parseColor("#f0f0f0")
-        val BG_DARK = Color.parseColor("#444444")
+        val BG_LIGHT = "#f0f0f0".toColorInt()
+        val BG_DARK = "#444444".toColorInt()
 
         private const val HALF_HIDE_DELAY_MS = 50L
         private const val APPEAR_FULL_MS = 600L
@@ -98,11 +102,12 @@ class EdgeBubbleView(
     private val iconPx = dip(ICON_SIZE_DP).toInt()
     private val innerPx = dip(INNER_MARGIN_DP).toInt()
     private val screenMarginPx = dip(SCREEN_MARGIN_DP).toInt()
+    private val fullHangPx = dip(FULL_HANG_DP).toInt()
     private val containerWpx = iconPx + innerPx * 2 + screenMarginPx
     private val containerHpx = iconPx + innerPx * 2
     private val collapsePx = dip(COLLAPSE_DP).toInt()
     /** Distance between FULL and HALF window positions along x. */
-    private val modeShiftPx = containerWpx - collapsePx - screenMarginPx
+    private val modeShiftPx = containerWpx - collapsePx - fullHangPx
 
     private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val containerRect = RectF()
@@ -199,13 +204,13 @@ class EdgeBubbleView(
     private fun dip(v: Float): Float = v * density
 
     /**
-     * Window x anchor = the FULL position (screenMargin part offscreen). HALF is
-     * reached with translation ±modeShift: LEFT slides further out (negative),
-     * RIGHT further in-positive — leaving exactly `collapse` px visible.
+     * Window x anchor = the FULL position (only [FULL_HANG_DP] hangs offscreen).
+     * HALF is reached with translation ±modeShift: LEFT slides further out
+     * (negative), RIGHT further in-positive — leaving exactly `collapse` px visible.
      */
     private fun anchorX(side: Int): Int =
-        if (side == SIDE_LEFT) -(screenMarginPx + modeShiftPx)
-        else screenWidth - (containerWpx - screenMarginPx)
+        if (side == SIDE_LEFT) -(fullHangPx + modeShiftPx)
+        else screenWidth - (containerWpx - fullHangPx)
 
     /** View translation for the HALF (collapsed) mode on the given side. */
     private fun halfTranslation(side: Int): Float {
@@ -354,17 +359,17 @@ class EdgeBubbleView(
         val r = dip(CONTAINER_RADIUS_DP)
         val span = min(r * (SQUIRCLE_WEIGHT / 2f), min(w, h) / 2f - 1f)
         val handle = span * 0.6f
-        val left = l; val top = t; val right = l + w; val bottom = t + h
+        val right = l + w; val bottom = t + h
         return Path().apply {
-            moveTo(left + span, top)
-            lineTo(right - span, top)
-            cubicTo(right - span + handle, top, right, top + span - handle, right, top + span)
+            moveTo(l + span, t)
+            lineTo(right - span, t)
+            cubicTo(right - span + handle, t, right, t + span - handle, right, t + span)
             lineTo(right, bottom - span)
             cubicTo(right, bottom - span + handle, right - span + handle, bottom, right - span, bottom)
-            lineTo(left + span, bottom)
-            cubicTo(left + span - handle, bottom, left, bottom - span + handle, left, bottom - span)
-            lineTo(left, top + span)
-            cubicTo(left, top + span - handle, left + span - handle, top, left + span, top)
+            lineTo(l + span, bottom)
+            cubicTo(l + span - handle, bottom, l, bottom - span + handle, l, bottom - span)
+            lineTo(l, t + span)
+            cubicTo(l, t + span - handle, l + span - handle, t, l + span, t)
             close()
         }
     }
@@ -383,7 +388,7 @@ class EdgeBubbleView(
         icon.mutate().alpha = if (mode == MODE_HALF) 0 else 255
         icon.setBounds(
             iconStart.toInt(), innerPx,
-            (iconStart + iconPx).toInt(), (innerPx + iconPx).toInt()
+            (iconStart + iconPx).toInt(), (innerPx + iconPx)
         )
         icon.draw(canvas)
     }
