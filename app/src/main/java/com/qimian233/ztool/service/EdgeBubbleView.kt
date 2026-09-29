@@ -317,7 +317,10 @@ class EdgeBubbleView(
                         downRawY = event.rawY
                     }
                     dragging = true
-                    layoutParams.x = downWinX + (event.rawX - downRawX).toInt()
+                    // Horizontal position locked to the FULL anchor: the bubble slides
+                    // along its edge vertically only. Side switching is done by the
+                    // user via the window itself, never by dragging across the screen.
+                    layoutParams.x = anchorX(side)
                     layoutParams.y = clampY(downWinY + (event.rawY - downRawY).toInt())
                     postApply()
                 }
