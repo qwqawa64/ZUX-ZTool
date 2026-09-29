@@ -50,7 +50,7 @@
     <string name="page_firstrun_overlay_title">Overlay</string>
     <string name="page_firstrun_overlay_summary">Check whether overlay permission is available. Displaying OneVision wizard needs this permission.</string>
     <string name="page_firstrun_autostart_title">Auto-start</string>
-    <string name="page_firstrun_autostart_summary">Tap to open Lenovo Security Center and allow ZTool to auto-start. Feature services (e.g. the freeform edge bubble) then revive after reboot without opening the app. State detection requires Root and a ZUX build.</string>
+    <string name="page_firstrun_autostart_summary">Tap to open Lenovo Security Center and allow ZTool to auto-start. Feature services (e.g. the freeform edge bubble) then revive after reboot without opening the app.</string>
     <string name="page_firstrun_autostart_open_failed">Could not open Lenovo Security Center; enable auto-start inside it manually</string>
     <string name="page_home_soft_reboot">Soft reboot</string>
     <string name="page_home_reboot">Reboot</string>
@@ -306,6 +306,7 @@
     <string name="settings_zui_force_fixed_title">Force fixed-ratio floating window</string>
     <string name="settings_edge_bubble_title">Floating window edge bubble</string>
     <string name="settings_edge_bubble_summary">Dragging a floating window past the screen edge docks it into a bubble; tap the bubble to restore. Takes effect after a system restart</string>
+    <string name="settings_edge_bubble_hint">Keep ZTool resident in the background</string>
     <string name="edge_bubble_notification_channel">Floating window edge bubble</string>
     <string name="edge_bubble_notification_title">Floating window edge bubble active</string>
     <string name="edge_bubble_notification_text">Keep this service running to show edge bubbles</string>

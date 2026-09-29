@@ -950,7 +950,25 @@ private fun settingsDetailSections(
                             summary = stringResource(R.string.settings_edge_bubble_summary),
                             checked = state.edgeBubbleEnabled,
                             onCheckedChange = onEdgeBubbleChanged
-                        )
+                        ),
+                        if (state.edgeBubbleEnabled) {
+                            SettingItem.Custom(
+                                key = "deco_settings_detail_edge_bubble_hint",
+                                content = {
+                                    Text(
+                                        text = stringResource(R.string.settings_edge_bubble_hint),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = LocalZToolColorScheme.current.onSurfaceVariant,
+                                        modifier = Modifier.padding(
+                                            horizontal = 24.dp,
+                                            vertical = 8.dp
+                                        )
+                                    )
+                                }
+                            )
+                        } else {
+                            null
+                        }
                     )
                 )
             )
