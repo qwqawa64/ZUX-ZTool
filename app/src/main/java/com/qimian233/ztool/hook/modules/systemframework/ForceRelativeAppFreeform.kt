@@ -120,13 +120,24 @@ class ForceRelativeAppFreeform: SystemHookModule() {
             val launchers = resolveLauncherPackages(chain.thisObject) { logger.debug(it) }
 
             // Inject freeform only for cross-app relative launches.
-            // Excluded: same-package self launches and launcher-resolved launches.
+            // Excluded: same-package self launches, launcher-resolved launches,
+            // launches from ZTool itself, and document-picker style intents
+            // (CREATE_DOCUMENT / OPEN_DOCUMENT / OPEN_DOCUMENT_TREE / GET_CONTENT),
+            // which must stay fullscreen for a sane picker UX.
             // NOTE: isTopAppPackage() is NOT usable here — the sender of a genuine
             // relative start (e.g. QQ -> Bilibili deep link) is itself the visible
             // top app, so a top-app check suppresses every classic use case.
+            val isDocumentIntent = intent != null && intent.action in setOf(
+                Intent.ACTION_CREATE_DOCUMENT,
+                Intent.ACTION_OPEN_DOCUMENT,
+                Intent.ACTION_OPEN_DOCUMENT_TREE,
+                Intent.ACTION_GET_CONTENT
+            )
             val isRelativeLaunch = callingPackage != null
                 && callingPackage != targetPackage
                 && callingPackage !in launchers
+                && callingPackage != "com.qimian233.ztool"
+                && !isDocumentIntent
 
             logger.debug(
                 "relative-start check: caller=$callingPackage target=$targetPackage" +
