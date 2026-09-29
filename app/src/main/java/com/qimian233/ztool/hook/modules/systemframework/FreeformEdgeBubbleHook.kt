@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -33,16 +34,16 @@ import java.util.concurrent.ConcurrentHashMap
  *    only complete a moment after system-server start).
  * 2. Execute task minimize/restore inside the WMS global lock via ATMS reflection,
  *    keeping restore-bounds in a server-side map.
- * 3. Pass ZTool's uid through [com.android.server.wm.OvFreeformService.checkPermission]
+ * 3. Pass ZTool's uid through com.android.server.wm.OvFreeformService.checkPermission
  *    so the app can use IOvFreeformService helpers without privileged permissions.
- * 4. Watch freeform task bounds ([com.android.server.wm.WindowContainer.setBounds]) to
+ * 4. Watch freeform task bounds (com.android.server.wm.WindowContainer.setBounds) to
  *    detect a window dragged to the screen edge and broadcast bubble add/remove events.
  *
  * The feature switch is [PreferenceKeys.FREEFORM_EDGE_BUBBLE] (read by
  * [com.qimian233.ztool.hook.base.BaseHookModule.isEnabled]). Toggling it requires a
  * system restart (scope HowToRestart.Reboot).
  */
-@Suppress("PrivateApi", "SdkLintPrivateApi")
+@SuppressLint("PrivateApi", "SdkLintPrivateApi", "BlockedPrivateApi")
 class FreeformEdgeBubbleHook : SystemHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.FREEFORM_EDGE_BUBBLE.name
@@ -193,7 +194,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             val handler = eventPostHandler
             if (handler == null) {
                 val (code, extras) = executeCommand(intent, startedAt)
-                pending.setResultCode(code)
+                pending.resultCode = code
                 if (extras != null) pending.setResultExtras(extras)
                 pending.finish()
                 return
@@ -201,11 +202,11 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             handler.post {
                 try {
                     val (code, extras) = executeCommand(intent, startedAt)
-                    pending.setResultCode(code)
+                    pending.resultCode = code
                     if (extras != null) pending.setResultExtras(extras)
                 } catch (t: Throwable) {
                     logger.error("bridge command crashed", t)
-                    pending.setResultCode(0)
+                    pending.resultCode = 0
                 } finally {
                     pending.finish()
                 }
@@ -300,7 +301,6 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
 
 
     private class AtmsHandles(
-        val atms: Any,
         val globalLock: Any,
         val rootWindowContainer: Any,
         val hideShowController: Any?,
@@ -317,8 +317,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val getBounds: Method,
         val setBounds: Method,
         val moveToFront: Method?,
-        val setLastNonFullscreenBounds: Method?,
-        val getBaseIntent: Method?
+        val setLastNonFullscreenBounds: Method?
     )
 
     private fun resolveAtms(classLoader: ClassLoader): Any {
@@ -374,7 +373,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val taskClass = classLoader.loadClass("com.android.server.wm.Task")
         val hideShow = resolveHideShowController(classLoader, atms)
         return AtmsHandles(
-            atms, globalLock, rwc, hideShow?.first, hideShow?.second, hideShow?.third,
+            globalLock, rwc, hideShow?.first, hideShow?.second, hideShow?.third,
             try { taskClass.getMethod("getRootTask") } catch (_: Throwable) { null },
             try { taskClass.getMethod("setAlwaysOnTop", Boolean::class.javaPrimitiveType) } catch (_: Throwable) { null },
             try { taskClass.getMethod("moveTaskToBack", taskClass) } catch (_: Throwable) { null },
@@ -387,15 +386,14 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             taskClass.getMethod("getBounds"),
             taskClass.getMethod("setBounds", Rect::class.java),
             try { taskClass.getMethod("moveToFront", String::class.java) } catch (_: Throwable) { null },
-            try { taskClass.getMethod("setLastNonFullscreenBounds", Rect::class.java) } catch (_: Throwable) { null },
-            try { taskClass.getMethod("getBaseIntent") } catch (_: Throwable) { null }
+            try { taskClass.getMethod("setLastNonFullscreenBounds", Rect::class.java) } catch (_: Throwable) { null }
         )
     }
 
     /**
-     * Resolves ZUI's native freeform hide/show controller ([OvfWmHideShowController]):
-     * minimize = [bringToBack] (task docks behind home via shell transition, immune to
-     * the freeform bounds clamp), restore = [bringToFront]. Returns null when absent;
+     * Resolves ZUI's native freeform hide/show controller (OvfWmHideShowController):
+     * minimize = bringToBack (task docks behind home via shell transition, immune to
+     * the freeform bounds clamp), restore = bringToFront. Returns null when absent;
      * the plain Task.setBounds path stays as fallback.
      */
     private fun resolveHideShowController(classLoader: ClassLoader, atms: Any): Triple<Any?, Method?, Method?>? {
@@ -449,7 +447,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                 }
             }
             if (manager == null) {
-                logger.info("hideShow resolve failed: no OvfWmFreeformManager; " + steps)
+                logger.info("hideShow resolve failed: no OvfWmFreeformManager; $steps")
                 return null
             }
             var controller: Any? = null
@@ -483,7 +481,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                 }
             }
             if (controller == null) {
-                logger.info("hideShow resolve failed: no controller; " + steps)
+                logger.info("hideShow resolve failed: no controller; $steps")
                 return null
             }
             val toBack = controller.javaClass.getMethod("bringToBack",
@@ -494,7 +492,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                 classLoader.loadClass("com.android.server.wm.TransitionController"),
                 classLoader.loadClass("com.android.server.wm.Transition"))
             hideShowControllerCache = Triple(controller, toBack, toFront)
-            logger.info("hideShow resolved: " + steps)
+            logger.info("hideShow resolved: $steps")
             hideShowControllerCache
         } catch (t: Throwable) {
             logger.debug("resolveHideShowController failed: ${t.message}")
