@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.DataObject
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.RocketLaunch
@@ -71,6 +72,7 @@ import java.util.Locale
 @Composable
 fun SettingsAdvancedRoute(
     onBack: () -> Unit,
+    onOpenPreferenceEditor: () -> Unit = {},
     targetId: String? = null
 ) {
     val context = LocalContext.current
@@ -163,6 +165,7 @@ fun SettingsAdvancedRoute(
             onResetClick = { viewModel.showResetConfirmDialog() },
             onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
             onOpenFirstrun = { activity.reopenFirstrun() },
+            onOpenPreferenceEditor = onOpenPreferenceEditor,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
         )
@@ -180,6 +183,7 @@ private fun SettingsAdvancedScreen(
     onResetClick: () -> Unit,
     onRefreshDexIndex: () -> Unit,
     onOpenFirstrun: () -> Unit,
+    onOpenPreferenceEditor: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
 ) {
@@ -222,7 +226,8 @@ private fun SettingsAdvancedScreen(
                         dexIndexInProgress = dexIndexInProgress,
                         dexIndexSummary = dexIndexSummary,
                         onRefreshDexIndex = onRefreshDexIndex,
-                        onOpenFirstrun = onOpenFirstrun
+                        onOpenFirstrun = onOpenFirstrun,
+                        onOpenPreferenceEditor = onOpenPreferenceEditor
                     ),
                     bottomPadding = 32.dp
                 )
@@ -241,7 +246,8 @@ private fun advancedSettingsSections(
     dexIndexInProgress: Boolean,
     dexIndexSummary: String,
     onRefreshDexIndex: () -> Unit,
-    onOpenFirstrun: () -> Unit
+    onOpenFirstrun: () -> Unit,
+    onOpenPreferenceEditor: () -> Unit
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
@@ -251,6 +257,13 @@ private fun advancedSettingsSections(
     return listOf(
         SettingSection(
             items = listOf(
+                SettingItem.Action(
+                    key = "advanced_preference_editor",
+                    title = stringResource(R.string.preference_editor_title),
+                    summary = stringResource(R.string.preference_editor_summary),
+                    onClick = onOpenPreferenceEditor,
+                    icon = Icons.Rounded.DataObject
+                ),
                 SettingItem.Action(
                     key = "advanced_refresh_dex_index",
                     title = stringResource(R.string.page_settings_refresh_dex_index),

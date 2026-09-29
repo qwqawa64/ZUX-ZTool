@@ -50,6 +50,17 @@ class ModulePreferencesUtils(
             }
         }
 
+    /**
+     * True when [modulePreferences] currently resolves to the LSPosed remote
+     * preferences service rather than a local fallback file.
+     */
+    val isUsingRemotePreferences: Boolean
+        get() = try {
+            ModuleActivationProbe.isModuleActive() && XposedServiceBridge.currentService != null
+        } catch (_: Exception) {
+            false
+        }
+
     // Boolean
 
     fun loadBooleanSetting(featureName: String, defaultValue: Boolean): Boolean {
@@ -185,6 +196,19 @@ class ModulePreferencesUtils(
                 defaultValue
             }
         }
+    }
+
+    /**
+     * Removes a single key from the module preferences (remote when available,
+     * local fallback otherwise). Returns the commit result.
+     */
+    @SuppressLint("ApplySharedPref")
+    fun removeSetting(featureName: String): Boolean {
+        val success = modulePreferences.edit()
+            .remove(featureName)
+            .commit()
+        Log.d(TAG, "Removed $featureName, success: $success")
+        return success
     }
 
     // Batch operations

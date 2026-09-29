@@ -33,6 +33,7 @@ import com.qimian233.ztool.screens.ztoolsettings.SettingsMainRoute
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRoute
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRouteName
 import com.qimian233.ztool.screens.ztoolsettings.advanced.EngineeringCodesRoute
+import com.qimian233.ztool.screens.ztoolsettings.advanced.PreferenceEditorRoute
 import com.qimian233.ztool.screens.ztoolsettings.advanced.SettingsAdvancedRoute
 import com.qimian233.ztool.screens.ztoolsettings.misc.SettingsMiscRoute
 import com.qimian233.ztool.screens.ztoolsettings.theme.ThemeSettingsRoute
@@ -322,6 +323,11 @@ internal fun MainRouteNavHost(
                         }
                     }
                 },
+                onOpenPreferenceEditor = {
+                    navController.navigate(HiddenRoute.SETTINGS_PREFERENCE_EDITOR) {
+                        launchSingleTop = true
+                    }
+                },
                 targetId = backStackEntry.highlightTarget(),
             )
         }
@@ -361,6 +367,25 @@ internal fun MainRouteNavHost(
                 onBack = {
                     if (!navController.popBackStack()) {
                         navController.navigate(MainRoute.Settings.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                targetId = backStackEntry.highlightTarget(),
+            )
+        }
+        composable(
+            route = routeWithTarget(HiddenRoute.SETTINGS_PREFERENCE_EDITOR),
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
+            PreferenceEditorRoute(
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(HiddenRoute.SETTINGS_ADVANCED) {
                             launchSingleTop = true
                         }
                     }
@@ -870,6 +895,7 @@ private fun navigationRouteIndex(rawRoute: String?): Int {
         HiddenRoute.SETTINGS_ADVANCED -> 4
         HiddenRoute.SETTINGS_MISC -> 4
         HiddenRoute.SETTINGS_ENGINEERING_CODES -> 5
+        HiddenRoute.SETTINGS_PREFERENCE_EDITOR -> 5
         else -> 0
     }
 }

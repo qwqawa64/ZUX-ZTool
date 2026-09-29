@@ -25,6 +25,7 @@ internal object HiddenRoute {
     const val SETTINGS_ADVANCED = "SettingsAdvanced"
     const val SETTINGS_MISC = "SettingsMisc"
     const val SETTINGS_ENGINEERING_CODES = "SettingsEngineeringCodes"
+    const val SETTINGS_PREFERENCE_EDITOR = "SettingsPreferenceEditor"
     const val SYSTEM_UI_STATUS_BAR = "feature/system-ui/status-bar"
     const val SYSTEM_UI_LOCK_SCREEN = "feature/system-ui/lock-screen"
     const val SYSTEM_UI_CONTROL_CENTER = "feature/system-ui/control-center"

@@ -1471,6 +1471,11 @@ object SearchIndex {
         ),
 
         advancedSettings.item(
+            id = "advanced_preference_editor",
+            titleRes = R.string.preference_editor_title,
+            summaryRes = R.string.preference_editor_summary
+        ),
+        advancedSettings.item(
             id = "advanced_refresh_dex_index",
             titleRes = R.string.page_settings_refresh_dex_index
         ),
