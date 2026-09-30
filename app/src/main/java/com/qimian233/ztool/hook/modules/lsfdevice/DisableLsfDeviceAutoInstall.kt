@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.lsfdevice
 
+import android.annotation.SuppressLint
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
@@ -21,11 +22,12 @@ import io.github.libxposed.api.XposedModuleInterface
  * Any install request issued by this app is by definition a push-driven
  * silent install, so all matching calls are swallowed unconditionally.
  */
+@SuppressLint("PrivateApi")
 class DisableLsfDeviceAutoInstall : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.DISABLE_LSF_DEVICE_AUTO_INSTALL.name
 
-    override fun getTargetPackages(): Array<out String?>? =
+    override fun getTargetPackages(): Array<out String?> =
         arrayOf(ScopeKeys.LENOVO_DEVICE_SERVICE.packageName)
 
     @Throws(Throwable::class)
@@ -37,9 +39,9 @@ class DisableLsfDeviceAutoInstall : AppHookModule() {
                 "commit",
                 android.content.IntentSender::class.java
             )
-            hookWithId(commit, "lsf_device_install_commit") { chain ->
+            hookWithId(commit, "lsf_device_install_commit") {
                 logger.debug("Blocked PackageInstaller.Session.commit (silent install)")
-                // no-op: swallow the install session commit
+                // no-op: swallow the installation session commit
             }
         } catch (t: Throwable) {
             logger.error("Failed to hook PackageInstaller.Session.commit", t)
@@ -58,7 +60,7 @@ class DisableLsfDeviceAutoInstall : AppHookModule() {
                 Int::class.javaPrimitiveType,
                 String::class.java
             )
-            hookWithId(installPackage, "lsf_device_install_legacy") { chain ->
+            hookWithId(installPackage, "lsf_device_install_legacy") {
                 logger.debug("Blocked PackageManager.installPackage (legacy silent install)")
                 // no-op: swallow the legacy install request
             }
