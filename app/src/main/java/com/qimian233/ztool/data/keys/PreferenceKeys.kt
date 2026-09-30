@@ -194,6 +194,7 @@ object PreferenceKeys {
     val DISABLE_LSF_DEVICE_AUTO_INSTALL = BoolKey("disable_lsf_device_auto_install", false)
     val DISABLE_LSF_DEVICE_APP_LIST_REPORTING =
         BoolKey("disable_lsf_device_app_list_reporting", false)
+    val DISABLE_TAB_PUSHOUT_SDAC = BoolKey("disable_tab_pushout_sdac", false)
 
     val PP_BLOCK_POWER_POLICY_SYNC = BoolKey("pp_block_power_policy_sync", false)
     val PP_BLOCK_GAME_POLICY_UPDATE = BoolKey("pp_block_game_policy_update", false)
@@ -354,7 +355,7 @@ object PreferenceKeys {
         DISABLE_TB_ENGINE_APP_UPDATE, DISABLE_TB_ENGINE_PUSH,
         DISABLE_TB_ENGINE_REPORTING, SIGN_TB_ENGINE_LOCAL_OTA,
         DISABLE_LSF_DEVICE_PUSH, DISABLE_LSF_DEVICE_AUTO_INSTALL,
-        DISABLE_LSF_DEVICE_APP_LIST_REPORTING,
+        DISABLE_LSF_DEVICE_APP_LIST_REPORTING, DISABLE_TAB_PUSHOUT_SDAC,
         PP_BLOCK_POWER_POLICY_SYNC, PP_BLOCK_GAME_POLICY_UPDATE,
         CHARGE_ANIMATION_FIX, DOCUMENTS_UI_BYPASS,
         DESKTOP_LIVE_WALLPAPER,

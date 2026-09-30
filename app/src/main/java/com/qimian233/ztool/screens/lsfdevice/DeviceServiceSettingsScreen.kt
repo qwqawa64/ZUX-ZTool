@@ -83,6 +83,7 @@ fun DeviceServiceSettingsRoute(
             onDisablePushChanged = viewModel::setDisablePush,
             onDisableAutoInstallChanged = viewModel::setDisableAutoInstall,
             onDisableAppListReportingChanged = viewModel::setDisableAppListReporting,
+            onDisableTabPushoutSdacChanged = viewModel::setDisableTabPushoutSdac,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -147,6 +148,7 @@ private fun DeviceServiceSettingsScreen(
     onDisablePushChanged: (Boolean) -> Unit,
     onDisableAutoInstallChanged: (Boolean) -> Unit,
     onDisableAppListReportingChanged: (Boolean) -> Unit,
+    onDisableTabPushoutSdacChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -188,7 +190,8 @@ private fun DeviceServiceSettingsScreen(
                         state = state,
                         onDisablePushChanged = onDisablePushChanged,
                         onDisableAutoInstallChanged = onDisableAutoInstallChanged,
-                        onDisableAppListReportingChanged = onDisableAppListReportingChanged
+                        onDisableAppListReportingChanged = onDisableAppListReportingChanged,
+                        onDisableTabPushoutSdacChanged = onDisableTabPushoutSdacChanged
                     ),
                     bottomPadding = 88.dp,
                     highlightRegistry = highlightRegistry
@@ -203,7 +206,8 @@ private fun deviceServiceSettingsSections(
     state: DeviceServiceSettingsUiState,
     onDisablePushChanged: (Boolean) -> Unit,
     onDisableAutoInstallChanged: (Boolean) -> Unit,
-    onDisableAppListReportingChanged: (Boolean) -> Unit
+    onDisableAppListReportingChanged: (Boolean) -> Unit,
+    onDisableTabPushoutSdacChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -229,6 +233,13 @@ private fun deviceServiceSettingsSections(
                     checked = state.disableAppListReporting,
                     onCheckedChange = onDisableAppListReportingChanged,
                     key = "device_service_disable_app_list_reporting"
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.device_service_disable_tab_pushout_sdac_title),
+                    summary = stringResource(R.string.device_service_disable_tab_pushout_sdac_summary),
+                    checked = state.disableTabPushoutSdac,
+                    onCheckedChange = onDisableTabPushoutSdacChanged,
+                    key = "device_service_disable_tab_pushout_sdac"
                 )
             )
         )

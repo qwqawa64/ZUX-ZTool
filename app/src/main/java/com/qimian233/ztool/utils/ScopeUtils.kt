@@ -61,7 +61,10 @@ object ScopeUtils {
             FeatureDestination.TbEngine -> listOf(ScopeKeys.TB_ENGINE)
             FeatureDestination.ZuiPerformance -> listOf(ScopeKeys.ZUI_PERFORMANCE)
             FeatureDestination.SogouIme -> listOf(ScopeKeys.SOGOU_OEM_IME)
-            FeatureDestination.DeviceService -> listOf(ScopeKeys.LENOVO_DEVICE_SERVICE)
+            FeatureDestination.DeviceService -> listOf(
+                ScopeKeys.LENOVO_DEVICE_SERVICE,
+                ScopeKeys.TAB_PUSHOUT
+            )
         }
     }
 

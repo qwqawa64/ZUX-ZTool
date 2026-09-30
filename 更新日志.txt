@@ -1,3 +1,5 @@
+重做日志等级 UI
+Hook 设备服务 APP
 从 new XSharedPreferences 导入数据
 共享偏好值编辑器（高级功能，不懂勿用）
 优化备份还原 JSON 结构；支持备份主题配置

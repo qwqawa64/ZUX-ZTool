@@ -1133,6 +1133,11 @@ object SearchIndex {
             titleRes = R.string.device_service_disable_app_list_reporting_title,
             summaryRes = R.string.device_service_disable_app_list_reporting_summary
         ),
+        deviceService.item(
+            id = "device_service_disable_tab_pushout_sdac",
+            titleRes = R.string.device_service_disable_tab_pushout_sdac_title,
+            summaryRes = R.string.device_service_disable_tab_pushout_sdac_summary
+        ),
 
         packageInstaller.item(
             id = "package_installer_enable_row_style",

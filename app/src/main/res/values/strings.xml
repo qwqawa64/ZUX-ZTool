@@ -716,6 +716,8 @@
     <string name="device_service_disable_auto_install_summary">拦截 PackageInstaller 静默提交，阻止服务端推送的自动下载安装（含系统预装应用更新），手动安装不受影响</string>
     <string name="device_service_disable_app_list_reporting_title">禁止上报已装应用清单</string>
     <string name="device_service_disable_app_list_reporting_summary">对本应用返回空的已安装应用列表，使其无法收集并上传全部应用（含系统应用）的包名与版本</string>
+    <string name="device_service_disable_tab_pushout_sdac_title">禁用 SDAC 激活注册（设备服务支持）</string>
+    <string name="device_service_disable_tab_pushout_sdac_summary">拦截配套应用“设备服务支持”（com.tblenovo.tabpushout，平板渠道）的保活闹钟与激活注册，阻断向 sdac.lenovo.com 上报设备标识、Wi-Fi 热点列表与区域信息；注册状态是设备服务推送延迟解除的条件之一，禁用后推送保活同样受限</string>
     <string name="sogou_ime_punct_section_title">标点符号</string>
     <string name="system_framework_half_width_punct_summary">中文模式下，列表中的符号强制以半角上屏。默认 #*-+=，与 PC 输入法惯例一致；纯中文标点（。，《》等）不受影响。</string>
     <string name="system_framework_half_width_punct_hint">需要半角输出的符号列表</string>

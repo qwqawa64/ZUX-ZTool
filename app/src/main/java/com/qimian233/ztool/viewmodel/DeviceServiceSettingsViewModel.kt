@@ -35,6 +35,11 @@ class DeviceServiceSettingsViewModel(
         repository.saveDisableAppListReporting(enabled)
     }
 
+    fun setDisableTabPushoutSdac(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableTabPushoutSdac = enabled)
+        repository.saveDisableTabPushoutSdac(enabled)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }
@@ -60,6 +65,7 @@ data class DeviceServiceSettingsUiState(
     val disablePush: Boolean = false,
     val disableAutoInstall: Boolean = false,
     val disableAppListReporting: Boolean = false,
+    val disableTabPushoutSdac: Boolean = false,
     val showRestartDialog: Boolean = false
 )
 

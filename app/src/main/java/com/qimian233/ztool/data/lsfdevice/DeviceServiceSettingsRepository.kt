@@ -20,7 +20,8 @@ class DeviceServiceSettingsRepository(
             disablePush = prefsUtils.loadBooleanSetting(KEY_DISABLE_PUSH, false),
             disableAutoInstall = prefsUtils.loadBooleanSetting(KEY_DISABLE_AUTO_INSTALL, false),
             disableAppListReporting =
-                prefsUtils.loadBooleanSetting(KEY_DISABLE_APP_LIST_REPORTING, false)
+                prefsUtils.loadBooleanSetting(KEY_DISABLE_APP_LIST_REPORTING, false),
+            disableTabPushoutSdac = prefsUtils.loadBooleanSetting(KEY_DISABLE_TAB_PUSHOUT_SDAC, false)
         )
     }
 
@@ -34,6 +35,10 @@ class DeviceServiceSettingsRepository(
 
     fun saveDisableAppListReporting(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_DISABLE_APP_LIST_REPORTING, enabled)
+    }
+
+    fun saveDisableTabPushoutSdac(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_DISABLE_TAB_PUSHOUT_SDAC, enabled)
     }
 
     fun restartScope(): DeviceServiceRestartResult {
@@ -52,5 +57,6 @@ class DeviceServiceSettingsRepository(
         private val KEY_DISABLE_AUTO_INSTALL = PreferenceKeys.DISABLE_LSF_DEVICE_AUTO_INSTALL.name
         private val KEY_DISABLE_APP_LIST_REPORTING =
             PreferenceKeys.DISABLE_LSF_DEVICE_APP_LIST_REPORTING.name
+        private val KEY_DISABLE_TAB_PUSHOUT_SDAC = PreferenceKeys.DISABLE_TAB_PUSHOUT_SDAC.name
     }
 }

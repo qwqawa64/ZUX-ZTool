@@ -20,6 +20,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 import java.util.Locale
 import java.util.WeakHashMap
+import kotlin.math.roundToInt
 
 @SuppressLint("PrivateApi")
 class RecentTaskMemoryViewHook : AppHookModule() {
@@ -99,7 +100,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
             hookWithId(onLayoutMethod, "on_layout") { chain ->
                 chain.proceed()
                 attachMemoryView(chain.thisObject as View)
-                logger.debug("onLayout hook executed successfully")
+                logger.trace("onLayout hook executed successfully")
                 null
             }
 
@@ -166,7 +167,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
         textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
         textView.setTypeface(Typeface.DEFAULT, Typeface.BOLD)
         textView.gravity = Gravity.CENTER
-        textView.setSingleLine(true)
+        textView.isSingleLine = true
         textView.includeFontPadding = false
         textView.setPadding(dp(context, 12), dp(context, 6), dp(context, 12), dp(context, 6))
         textView.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
@@ -194,28 +195,24 @@ class RecentTaskMemoryViewHook : AppHookModule() {
             return
         }
 
-        val params = currentParams
         val topMargin = dp(context, 52)
         val leftMargin = dp(context, 16)
-        if (params.gravity != (Gravity.TOP or Gravity.START)
-            || params.topMargin != topMargin
-            || params.leftMargin != leftMargin
+        if (currentParams.gravity != (Gravity.TOP or Gravity.START)
+            || currentParams.topMargin != topMargin
+            || currentParams.leftMargin != leftMargin
         ) {
-            params.gravity = Gravity.TOP or Gravity.START
-            params.topMargin = topMargin
-            params.leftMargin = leftMargin
-            params.bottomMargin = 0
-            memoryView.layoutParams = params
+            currentParams.gravity = Gravity.TOP or Gravity.START
+            currentParams.topMargin = topMargin
+            currentParams.leftMargin = leftMargin
+            currentParams.bottomMargin = 0
+            memoryView.layoutParams = currentParams
         }
     }
 
     private fun getDragLayer(recentsView: View): ViewGroup? {
         try {
             val containerField = findField(recentsView.javaClass, "mContainer")
-            val container = containerField.get(recentsView)
-            if (container == null) {
-                return null
-            }
+            val container = containerField.get(recentsView) ?: return null
             val getDragLayerMethod = findMethod(container.javaClass, "getDragLayer")
             val dragLayer = getDragLayerMethod.invoke(container)
             return dragLayer as? ViewGroup
@@ -232,10 +229,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
 
     private fun updateMemoryViewVisibility(recentsView: View) {
         try {
-            val dragLayer = getDragLayer(recentsView)
-            if (dragLayer == null) {
-                return
-            }
+            val dragLayer = getDragLayer(recentsView) ?: return
 
             val memoryView = findMemoryView(dragLayer)
             if (memoryView != null) {
@@ -296,11 +290,11 @@ class RecentTaskMemoryViewHook : AppHookModule() {
 
             val memoryInfo = ActivityManager.MemoryInfo()
             activityManager.getMemoryInfo(memoryInfo)
-            val usedMemory = Math.max(0L, memoryInfo.totalMem - memoryInfo.availMem)
+            val usedMemory = 0L.coerceAtLeast(memoryInfo.totalMem - memoryInfo.availMem)
             memoryView.text = getRamFormatterText(
                 context,
                 formatBytesToGigSuffix(usedMemory),
-                getTotalRamInfo(Math.max(0L, memoryInfo.totalMem))
+                getTotalRamInfo(0L.coerceAtLeast(memoryInfo.totalMem))
             )
         } catch (t: Throwable) {
             memoryView.text = getRamUnavailableText(memoryView.context)
@@ -321,13 +315,11 @@ class RecentTaskMemoryViewHook : AppHookModule() {
     }
 
     private fun dp(context: Context, value: Int): Int {
-        return Math.round(
-            TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                value.toFloat(),
-                context.resources.displayMetrics
-            )
-        )
+        return TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            value.toFloat(),
+            context.resources.displayMetrics
+        ).roundToInt()
     }
 
     private fun getRamFormatterText(context: Context, vararg args: Any): String {
@@ -350,10 +342,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
 
     private fun getModuleString(hostContext: Context, resourceName: String, fallback: String): String {
         try {
-            val resources = getModuleResources(hostContext)
-            if (resources == null) {
-                return fallback
-            }
+            val resources = getModuleResources(hostContext) ?: return fallback
 
             @SuppressLint("DiscouragedApi")
             val resId = resources.getIdentifier(resourceName, "string", MODULE_PACKAGE)
@@ -392,7 +381,7 @@ class RecentTaskMemoryViewHook : AppHookModule() {
 
         val guessedRam = guessRamSize(availableMem)
         val expansionSize = getMemoryExpansionSize()
-        if (expansionSize == null || expansionSize.isEmpty() || "0" == expansionSize) {
+        if (expansionSize.isNullOrEmpty() || "0" == expansionSize) {
             logger.info("RAM expansion disabled, return guessed value")
             return guessedRam
         }

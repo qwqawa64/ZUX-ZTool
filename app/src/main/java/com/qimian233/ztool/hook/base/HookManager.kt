@@ -26,6 +26,7 @@ import com.qimian233.ztool.hook.modules.launcher.misc.RecentTaskMemoryViewHook
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDeviceAppListReporting
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDeviceAutoInstall
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDevicePush
+import com.qimian233.ztool.hook.modules.lsfdevice.DisableTabPushoutSdacRegister
 import com.qimian233.ztool.hook.modules.mobiledesktop.AutoAcceptFileTransferHook
 import com.qimian233.ztool.hook.modules.mobiledesktop.BypassShareWarningHook
 import com.qimian233.ztool.hook.modules.mobiledesktop.DisableNearbyShareAutoOffHook
@@ -286,6 +287,7 @@ object HookManager {
         registerHookModule(DisableLsfDevicePush())
         registerHookModule(DisableLsfDeviceAutoInstall())
         registerHookModule(DisableLsfDeviceAppListReporting())
+        registerHookModule(DisableTabPushoutSdacRegister())
 
         registerHookModule(BlockPowerPolicySync())
         registerHookModule(BlockGamePolicyUpdate())
