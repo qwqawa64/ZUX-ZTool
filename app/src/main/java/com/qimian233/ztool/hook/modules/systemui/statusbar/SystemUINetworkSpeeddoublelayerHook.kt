@@ -178,8 +178,8 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
                     val downSpeed = (currentRxBytes - lastRxBytes) / timeDiff
                     val upSpeed = (currentTxBytes - lastTxBytes) / timeDiff
 
-                    // Log debug info
-                    logger.debug(
+                    // High-frequency runtime status log; demoted to VERBOSE to avoid log flooding
+                    logger.trace(
                         String.format(
                             Locale.US,
                             "Successfully updated speed - downSpeed=%d, upSpeed=%d, timeDiff=%d",

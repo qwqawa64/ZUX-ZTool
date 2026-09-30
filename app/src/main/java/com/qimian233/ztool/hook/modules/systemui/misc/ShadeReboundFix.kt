@@ -45,7 +45,7 @@ class ShadeReboundFix : AppHookModule() {
         try {
             val animEnable = featureClass.getDeclaredMethod("animEnable")
             hookWithId(animEnable, "shade_rebound_aosp_fallback") { chain ->
-                logger.debug("QsReboundFeature.animEnable -> false (AOSP fallback)")
+                logger.trace("QsReboundFeature.animEnable -> false (AOSP fallback)")
                 false
             }
             logger.info("ShadeReboundFix installed (AOSP fling fallback)")

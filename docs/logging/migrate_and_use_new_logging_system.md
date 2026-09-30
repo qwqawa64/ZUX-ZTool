@@ -26,6 +26,7 @@ So you don't have to bother about introducing the infrastructure. All you have t
         - Meets an error/unexpected situation such as ClassNotFoundException or NoSuchMethodException, but will not block the intercept chain or hook installation: migrate to `logger.warn`
         - Falls back to another approach, file, location, default value or hook: migrate to `logger.warn`
         - Situation that blocks hook installation or the intercept chain: `logger.error`
+- Runtime status logs that can flood the log (e.g. per-event/per-second state reports such as probe command results, network speed updates, per-invocation flag values): if originally INFO or DEBUG, demote all of them to `logger.verbose` (i.e. `logger.trace` in this codebase)
   
 ## For New Modules
 

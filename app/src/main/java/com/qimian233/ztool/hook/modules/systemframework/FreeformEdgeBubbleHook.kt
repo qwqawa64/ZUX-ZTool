@@ -259,7 +259,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                 }
                 else -> result = 0
             }
-            logger.info(
+            logger.trace(
                 "cmd=${intent.getIntExtra("cmd", -1)} result=$result " +
                     "took=${android.os.SystemClock.elapsedRealtime() - startedAt}ms")
             return Pair(result, extras)
