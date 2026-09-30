@@ -72,7 +72,8 @@ enum class FeatureDestination(
     SafeCenter("feature/safe-center"),
     TbEngine("feature/tb-engine"),
     ZuiPerformance("feature/zui-performance"),
-    SogouIme("feature/sogou-ime")
+    SogouIme("feature/sogou-ime"),
+    DeviceService("feature/device-service")
 }
 
 @Composable
@@ -297,6 +298,14 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 packageName = ScopeKeys.SOGOU_OEM_IME.packageName,
                 destination = FeatureDestination.SogouIme,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.SogouIme)
+            ),
+            featureItem(
+                context = context,
+                nameRes = R.string.device_service_app_name,
+                descriptionRes = R.string.device_service_app_description,
+                packageName = ScopeKeys.LENOVO_DEVICE_SERVICE.packageName,
+                destination = FeatureDestination.DeviceService,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.DeviceService)
             )
         )
     }

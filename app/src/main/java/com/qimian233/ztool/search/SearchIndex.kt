@@ -205,6 +205,16 @@ object SearchIndex {
             isFeatureCard = true,
             featureDestination = FeatureDestination.SogouIme,
             groupTitleRes = R.string.search_group_feature_cards
+        ),
+        SearchEntry(
+            id = "feature_card_device_service",
+            route = FeatureDestination.DeviceService.route,
+            titleRes = R.string.device_service_app_name,
+            summaryRes = R.string.device_service_app_description,
+            requiresPackage = ScopeKeys.LENOVO_DEVICE_SERVICE.packageName,
+            isFeatureCard = true,
+            featureDestination = FeatureDestination.DeviceService,
+            groupTitleRes = R.string.search_group_feature_cards
         )
     )
 
@@ -312,6 +322,12 @@ object SearchIndex {
         route = FeatureDestination.SogouIme.route,
         groupTitleRes = R.string.sogou_ime_app_name,
         requiresPackage = ScopeKeys.SOGOU_OEM_IME.packageName
+    )
+
+    private val deviceService = Screen(
+        route = FeatureDestination.DeviceService.route,
+        groupTitleRes = R.string.device_service_app_name,
+        requiresPackage = ScopeKeys.LENOVO_DEVICE_SERVICE.packageName
     )
 
     private val appSettings = Screen(
@@ -1100,6 +1116,22 @@ object SearchIndex {
         tbEngine.item(
             id = "tb_engine_custom_params",
             titleRes = R.string.system_update_custom_params_title
+        ),
+
+        deviceService.item(
+            id = "device_service_disable_push",
+            titleRes = R.string.device_service_disable_push_title,
+            summaryRes = R.string.device_service_disable_push_summary
+        ),
+        deviceService.item(
+            id = "device_service_disable_auto_install",
+            titleRes = R.string.device_service_disable_auto_install_title,
+            summaryRes = R.string.device_service_disable_auto_install_summary
+        ),
+        deviceService.item(
+            id = "device_service_disable_app_list_reporting",
+            titleRes = R.string.device_service_disable_app_list_reporting_title,
+            summaryRes = R.string.device_service_disable_app_list_reporting_summary
         ),
 
         packageInstaller.item(

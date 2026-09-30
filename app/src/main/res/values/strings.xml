@@ -706,6 +706,16 @@
     <string name="system_framework_half_width_punct_title">强制半角符号输出</string>
     <string name="sogou_ime_app_name">搜狗输入法（联想OEM）</string>
     <string name="sogou_ime_app_description">输入法增强：强制半角符号输出、标点干预等</string>
+
+    <string name="device_service_app_name">设备服务</string>
+    <string name="device_service_app_description">遏制推送保活、静默安装与已装应用清单上报</string>
+    <string name="device_service_setting_title">推送与隐私</string>
+    <string name="device_service_disable_push_title">禁用推送保活</string>
+    <string name="device_service_disable_push_summary">拦截 PushReceiver 与 UpgradeReceiver，阻断每小时自唤醒闹钟和网络触发的推送注册，联想应用通知推送可能失效</string>
+    <string name="device_service_disable_auto_install_title">禁用静默安装</string>
+    <string name="device_service_disable_auto_install_summary">拦截 PackageInstaller 静默提交，阻止服务端推送的自动下载安装（含系统预装应用更新），手动安装不受影响</string>
+    <string name="device_service_disable_app_list_reporting_title">禁止上报已装应用清单</string>
+    <string name="device_service_disable_app_list_reporting_summary">对本应用返回空的已安装应用列表，使其无法收集并上传全部应用（含系统应用）的包名与版本</string>
     <string name="sogou_ime_punct_section_title">标点符号</string>
     <string name="system_framework_half_width_punct_summary">中文模式下，列表中的符号强制以半角上屏。默认 #*-+=，与 PC 输入法惯例一致；纯中文标点（。，《》等）不受影响。</string>
     <string name="system_framework_half_width_punct_hint">需要半角输出的符号列表</string>

@@ -189,6 +189,12 @@ object PreferenceKeys {
     val DISABLE_TB_ENGINE_REPORTING = BoolKey("disable_tbengine_reporting", false)
     val SIGN_TB_ENGINE_LOCAL_OTA = BoolKey("sign_tbengine_local_ota", false)
 
+    // Lenovo device service (com.lenovo.lsf.device) choke switches
+    val DISABLE_LSF_DEVICE_PUSH = BoolKey("disable_lsf_device_push", false)
+    val DISABLE_LSF_DEVICE_AUTO_INSTALL = BoolKey("disable_lsf_device_auto_install", false)
+    val DISABLE_LSF_DEVICE_APP_LIST_REPORTING =
+        BoolKey("disable_lsf_device_app_list_reporting", false)
+
     val PP_BLOCK_POWER_POLICY_SYNC = BoolKey("pp_block_power_policy_sync", false)
     val PP_BLOCK_GAME_POLICY_UPDATE = BoolKey("pp_block_game_policy_update", false)
 
@@ -346,6 +352,8 @@ object PreferenceKeys {
         DISABLE_TB_ENGINE_AUTO_DOWNLOAD, DISABLE_TB_ENGINE_AUTO_INSTALL,
         DISABLE_TB_ENGINE_APP_UPDATE, DISABLE_TB_ENGINE_PUSH,
         DISABLE_TB_ENGINE_REPORTING, SIGN_TB_ENGINE_LOCAL_OTA,
+        DISABLE_LSF_DEVICE_PUSH, DISABLE_LSF_DEVICE_AUTO_INSTALL,
+        DISABLE_LSF_DEVICE_APP_LIST_REPORTING,
         PP_BLOCK_POWER_POLICY_SYNC, PP_BLOCK_GAME_POLICY_UPDATE,
         CHARGE_ANIMATION_FIX, DOCUMENTS_UI_BYPASS,
         DESKTOP_LIVE_WALLPAPER,

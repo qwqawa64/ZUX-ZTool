@@ -29,6 +29,7 @@ import com.qimian233.ztool.screens.safecenter.SafeCenterSettingsRoute
 import com.qimian233.ztool.screens.sogouime.SogouImeSettingsRoute
 import com.qimian233.ztool.screens.pp.ZuiPerformanceSettingsRoute
 import com.qimian233.ztool.screens.tbengine.TbEngineSettingsRoute
+import com.qimian233.ztool.screens.lsfdevice.DeviceServiceSettingsRoute
 import com.qimian233.ztool.screens.ztoolsettings.SettingsMainRoute
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRoute
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRouteName
@@ -693,6 +694,27 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
+            route = routeWithTarget(FeatureDestination.DeviceService.route),
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
+            DeviceServiceSettingsRoute(
+                title = stringResource(R.string.device_service_app_name),
+                packageName = ScopeKeys.LENOVO_DEVICE_SERVICE.packageName,
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                targetId = backStackEntry.highlightTarget(),
+            )
+        }
+        composable(
             route = routeWithTarget(FeatureDestination.SogouIme.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
@@ -889,6 +911,7 @@ private fun navigationRouteIndex(rawRoute: String?): Int {
         FeatureDestination.TbEngine.route -> 2
         FeatureDestination.ZuiPerformance.route -> 2
         FeatureDestination.SogouIme.route -> 2
+        FeatureDestination.DeviceService.route -> 2
         MainRoute.Settings.name -> 3
         HiddenRoute.SETTINGS_THEME -> 4
         HiddenRoute.SETTINGS_ABOUT -> 4

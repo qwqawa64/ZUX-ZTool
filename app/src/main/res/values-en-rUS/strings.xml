@@ -624,6 +624,16 @@
     <string name="system_framework_half_width_punct_title">Force half-width symbol output</string>
     <string name="sogou_ime_app_name">Sogou IME (Lenovo OEM)</string>
     <string name="sogou_ime_app_description">IME enhancements: forced half-width symbol output, punctuation intervention, etc.</string>
+
+    <string name="device_service_app_name">Device Service</string>
+    <string name="device_service_app_description">Curb push keep-alive, silent installs and installed-app list reporting</string>
+    <string name="device_service_setting_title">Push and Privacy</string>
+    <string name="device_service_disable_push_title">Disable push keep-alive</string>
+    <string name="device_service_disable_push_summary">Intercepts PushReceiver and UpgradeReceiver, breaking the hourly self-waking alarm and network-triggered push registration. Lenovo app push notifications may stop working.</string>
+    <string name="device_service_disable_auto_install_title">Disable silent install</string>
+    <string name="device_service_disable_auto_install_summary">Intercepts PackageInstaller commits, blocking server-pushed auto download/install (including preinstalled app updates). Manual installs are unaffected.</string>
+    <string name="device_service_disable_app_list_reporting_title">Block installed-app list reporting</string>
+    <string name="device_service_disable_app_list_reporting_summary">Returns an empty installed-app list to this app so it can no longer collect and upload package names and versions of all apps (system apps included).</string>
     <string name="sogou_ime_punct_section_title">Punctuation</string>
     <string name="system_framework_half_width_punct_summary">In Chinese mode, symbols in the list are always committed half-width. Defaults to #*-+=, matching PC IME conventions; pure CJK punctuation (。，《》 etc.) is unaffected.</string>
     <string name="system_framework_half_width_punct_hint">Symbols to force half-width</string>
