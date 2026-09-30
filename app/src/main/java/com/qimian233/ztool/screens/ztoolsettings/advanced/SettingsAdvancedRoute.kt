@@ -19,6 +19,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.RocketLaunch
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SettingsBackupRestore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -108,6 +109,24 @@ fun SettingsAdvancedRoute(
     val hotReloadStartingString = stringResource(R.string.page_settings_advanced_hot_reload_starting)
     val resetResultSummary = buildResetResultSummary(uiState, context)
     val resetStartingString = stringResource(R.string.page_settings_advanced_reset_starting)
+    val importStartingString = stringResource(R.string.page_settings_advanced_import_starting)
+
+    if (uiState.showImportDialog) {
+        ImportConfirmDialog(
+            onConfirm = {
+                viewModel.performImport(context)
+                Toast.makeText(context, importStartingString, Toast.LENGTH_SHORT).show()
+            },
+            onDismiss = viewModel::dismissImportConfirmDialog
+        )
+    }
+
+    LaunchedEffect(uiState.importResultRes) {
+        uiState.importResultRes?.let { res ->
+            Toast.makeText(context, res, Toast.LENGTH_SHORT).show()
+            viewModel.consumeImportResult()
+        }
+    }
 
     if (uiState.showHotReloadDialog) {
         HotReloadConfirmDialog(
@@ -163,6 +182,7 @@ fun SettingsAdvancedRoute(
             dexIndexSummary = dexIndexSummary,
             onHotReloadClick = { viewModel.showHotReloadConfirmDialog() },
             onResetClick = { viewModel.showResetConfirmDialog() },
+            onImportClick = { viewModel.showImportConfirmDialog() },
             onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
             onOpenFirstrun = { activity.reopenFirstrun() },
             onOpenPreferenceEditor = onOpenPreferenceEditor,
@@ -181,6 +201,7 @@ private fun SettingsAdvancedScreen(
     dexIndexSummary: String,
     onHotReloadClick: () -> Unit,
     onResetClick: () -> Unit,
+    onImportClick: () -> Unit,
     onRefreshDexIndex: () -> Unit,
     onOpenFirstrun: () -> Unit,
     onOpenPreferenceEditor: () -> Unit,
@@ -223,6 +244,7 @@ private fun SettingsAdvancedScreen(
                         resetResultSummary = resetResultSummary,
                         onHotReloadClick = onHotReloadClick,
                         onResetClick = onResetClick,
+                        onImportClick = onImportClick,
                         dexIndexInProgress = dexIndexInProgress,
                         dexIndexSummary = dexIndexSummary,
                         onRefreshDexIndex = onRefreshDexIndex,
@@ -243,6 +265,7 @@ private fun advancedSettingsSections(
     resetResultSummary: String?,
     onHotReloadClick: () -> Unit,
     onResetClick: () -> Unit,
+    onImportClick: () -> Unit,
     dexIndexInProgress: Boolean,
     dexIndexSummary: String,
     onRefreshDexIndex: () -> Unit,
@@ -263,6 +286,24 @@ private fun advancedSettingsSections(
                     summary = stringResource(R.string.preference_editor_summary),
                     onClick = onOpenPreferenceEditor,
                     icon = Icons.Rounded.DataObject
+                ),
+                SettingItem.Action(
+                    key = "advanced_import_xsharedprefs",
+                    title = stringResource(R.string.page_settings_advanced_import_title),
+                    summary = buildImportSummary(inProgress = state.importInProgress),
+                    onClick = onImportClick,
+                    enabled = !state.importInProgress,
+                    icon = if (state.importInProgress) null else Icons.Rounded.SettingsBackupRestore,
+                    trailingContent = if (state.importInProgress) {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .padding(0.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else null
                 ),
                 SettingItem.Action(
                     key = "advanced_refresh_dex_index",
@@ -507,6 +548,40 @@ private fun buildResetResultSummary(
         state.resetResultSucceeded,
         state.resetResultFailed,
         state.resetResultUnsupported
+    )
+}
+
+@Composable
+private fun buildImportSummary(inProgress: Boolean): String {
+    val importInProgressString = stringResource(R.string.page_settings_advanced_import_in_progress)
+    val importDefaultSummary = stringResource(R.string.page_settings_advanced_import_summary)
+    return if (inProgress) importInProgressString else importDefaultSummary
+}
+
+@Composable
+private fun ImportConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.page_settings_advanced_import_confirm_title)) },
+        text = {
+            Text(stringResource(R.string.page_settings_advanced_import_confirm_message))
+        },
+        confirmButton = {
+            ZToolTextButton(
+                onClick = onConfirm,
+                text = stringResource(R.string.common_confirm)
+            )
+        },
+        dismissButton = {
+            ZToolTextButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.common_cancel),
+                isPrimary = false
+            )
+        }
     )
 }
 

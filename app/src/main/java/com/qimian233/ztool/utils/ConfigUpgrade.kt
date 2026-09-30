@@ -10,6 +10,9 @@ import java.io.File
 // previous configuration and saves the new one.
 // Enable this utility only after other parts have finished stripping the PREFIX.
 object ConfigUpgrade {
+    /** Outcome of a manual migration from the old new XSharedPreferences directory. */
+    enum class MigrationResult { SUCCESS, NO_OLD_DATA, FAILED }
+
     private const val TAG = "ConfigUpgrade"
     @SuppressLint("StaticFieldLeak")
     private var mPreferencesUtils: ModulePreferencesUtils? = null
@@ -37,12 +40,12 @@ object ConfigUpgrade {
         }
     }
 
-    private fun upgradeRemotePrefs(context: Context) {
+    private fun upgradeRemotePrefs(context: Context): MigrationResult {
         try {
             var oldDir = getXSharedPreferenceDirectory()
             if (oldDir == null || oldDir.trim().isEmpty()) {
                 Log.i(TAG, "No old XSharedPreferences directory found, skipping remote prefs upgrade.")
-                return
+                return MigrationResult.NO_OLD_DATA
             }
             oldDir = oldDir.trim()
             if (oldDir.contains("\n")) {
@@ -64,7 +67,7 @@ object ConfigUpgrade {
             )
             if (!copyResult.isSuccess || !copyResult.output.contains("DONE")) {
                 Log.e(TAG, "Failed to copy old prefs files: " + copyResult.output)
-                return
+                return MigrationResult.FAILED
             }
             Log.d(TAG, "Copied old config files to shared_prefs")
 
@@ -72,7 +75,7 @@ object ConfigUpgrade {
             val oldSettings = prefs.getAllSettingsFromLocal()
             if (oldSettings.isEmpty()) {
                 Log.i(TAG, "No settings found in old config, skipping remote sync.")
-                return
+                return MigrationResult.NO_OLD_DATA
             }
             Log.d(TAG, "Read " + oldSettings.size + " settings from old config, syncing to RemotePreferences...")
             prefs.writeConfigToSharedPrefs(oldSettings)
@@ -83,11 +86,14 @@ object ConfigUpgrade {
                 prefs.deleteLocalModulePreferences()
                 executor.executeRootCommand("rm -rf " + oldDir, 5)
                 Log.d(TAG, "Remote prefs upgrade completed successfully.")
+                return MigrationResult.SUCCESS
             } else {
                 Log.e(TAG, "Remote prefs sync verification failed, keeping old files.")
+                return MigrationResult.FAILED
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to upgrade remote prefs: ", e)
+            return MigrationResult.FAILED
         }
     }
 
@@ -172,5 +178,23 @@ object ConfigUpgrade {
         } else {
             false
         }
+    }
+
+    // Manual migration entry triggered by the advanced settings screen. Unlike
+    // configUpgrader, the remote prefs migration runs unconditionally (the auto
+    // path skips it once the user has already modified settings), the format
+    // upgrade still runs afterwards, and the isConfigUpgraded flag is always set.
+    fun manualMigrate(context: Context): MigrationResult {
+        mPreferencesUtils = null
+        mCachedXSharedPrefsDir = null
+
+        val result = upgradeRemotePrefs(context)
+        if (result == MigrationResult.SUCCESS) {
+            if (isConfigFormatUpgradeRequired(context)) {
+                upgradeConfigFormat(context)
+            }
+            getPreferencesUtils(context).saveBooleanSetting("isConfigUpgraded", true)
+        }
+        return result
     }
 }

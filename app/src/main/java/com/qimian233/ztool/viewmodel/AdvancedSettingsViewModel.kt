@@ -11,6 +11,7 @@ import com.qimian233.ztool.data.advanced.HotReloadDetail
 import com.qimian233.ztool.data.advanced.PersistentResetDetail
 import com.qimian233.ztool.dexindex.base.DexIndexManager
 import com.qimian233.ztool.dexindex.base.DexIndexProgress
+import com.qimian233.ztool.utils.ConfigUpgrade
 import io.github.libxposed.service.HookedTarget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,7 +52,10 @@ class AdvancedSettingsViewModel(
                 resetDetails = _uiState.value.resetDetails,
                 resetResultSucceeded = _uiState.value.resetResultSucceeded,
                 resetResultFailed = _uiState.value.resetResultFailed,
-                resetResultUnsupported = _uiState.value.resetResultUnsupported
+                resetResultUnsupported = _uiState.value.resetResultUnsupported,
+                importInProgress = _uiState.value.importInProgress,
+                showImportDialog = _uiState.value.showImportDialog,
+                importResultRes = _uiState.value.importResultRes
             )
         }
     }
@@ -158,6 +162,45 @@ class AdvancedSettingsViewModel(
         _dexIndexState.value = _dexIndexState.value.copy(resultRes = null)
     }
 
+    fun showImportConfirmDialog() {
+        _uiState.value = _uiState.value.copy(showImportDialog = true)
+    }
+
+    fun dismissImportConfirmDialog() {
+        _uiState.value = _uiState.value.copy(showImportDialog = false)
+    }
+
+    /** Force one migration pass from the old new XSharedPreferences config (advanced settings). */
+    fun performImport(context: Context) {
+        if (_uiState.value.importInProgress) return
+        _uiState.value = _uiState.value.copy(
+            showImportDialog = false,
+            importInProgress = true,
+            importResultRes = null
+        )
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = try {
+                ConfigUpgrade.manualMigrate(context)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Manual config migration crashed", t)
+                ConfigUpgrade.MigrationResult.FAILED
+            }
+            val resultRes = when (result) {
+                ConfigUpgrade.MigrationResult.SUCCESS -> R.string.page_settings_advanced_import_result_success
+                ConfigUpgrade.MigrationResult.NO_OLD_DATA -> R.string.page_settings_advanced_import_result_no_data
+                ConfigUpgrade.MigrationResult.FAILED -> R.string.page_settings_advanced_import_result_failed
+            }
+            _uiState.value = _uiState.value.copy(
+                importInProgress = false,
+                importResultRes = resultRes
+            )
+        }
+    }
+
+    fun consumeImportResult() {
+        _uiState.value = _uiState.value.copy(importResultRes = null)
+    }
+
     companion object {
         private const val TAG = "AdvancedVM"
     }
@@ -179,7 +222,10 @@ data class AdvancedSettingsUiState(
     val resetDetails: List<PersistentResetDetail> = emptyList(),
     val resetResultSucceeded: Int = 0,
     val resetResultFailed: Int = 0,
-    val resetResultUnsupported: Int = 0
+    val resetResultUnsupported: Int = 0,
+    val importInProgress: Boolean = false,
+    val showImportDialog: Boolean = false,
+    val importResultRes: Int? = null
 )
 
 /** DexKit index progress and result (settings-page manual refresh path). */

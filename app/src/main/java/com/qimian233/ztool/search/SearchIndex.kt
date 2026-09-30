@@ -1476,6 +1476,11 @@ object SearchIndex {
             summaryRes = R.string.preference_editor_summary
         ),
         advancedSettings.item(
+            id = "advanced_import_xsharedprefs",
+            titleRes = R.string.page_settings_advanced_import_title,
+            summaryRes = R.string.page_settings_advanced_import_summary
+        ),
+        advancedSettings.item(
             id = "advanced_refresh_dex_index",
             titleRes = R.string.page_settings_refresh_dex_index
         ),

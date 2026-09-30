@@ -976,6 +976,15 @@
     <string name="page_settings_advanced_api_version">libxposed API 版本</string>
     <string name="page_settings_advanced_open_firstrun_title">打开首次运行向导</string>
     <string name="page_settings_advanced_open_firstrun_summary">重新进入首次运行引导（OOBE），用于开发调试</string>
+    <string name="page_settings_advanced_import_title">从 new XSharedPreferences 导入</string>
+    <string name="page_settings_advanced_import_summary">手动强制触发一次从旧版 new XSharedPreferences 配置到 RemotePreferences 的迁移</string>
+    <string name="page_settings_advanced_import_confirm_title">确认导入旧配置？</string>
+    <string name="page_settings_advanced_import_confirm_message">将从旧版 new XSharedPreferences 目录读取配置并覆盖到当前配置体系，已修改的同名设置会被旧值覆盖。\n\n此操作不可撤销。</string>
+    <string name="page_settings_advanced_import_starting">正在迁移配置…</string>
+    <string name="page_settings_advanced_import_in_progress">迁移进行中…</string>
+    <string name="page_settings_advanced_import_result_success">迁移成功</string>
+    <string name="page_settings_advanced_import_result_no_data">未找到旧版 new XSharedPreferences 配置，无需迁移</string>
+    <string name="page_settings_advanced_import_result_failed">迁移失败，请导出应用日志并检查</string>
     <string name="page_settings_advanced_delete_ota_package_title">删除系统更新包</string>
     <string name="page_settings_advanced_delete_ota_package_summary">删除 UDS 实时连接引擎自动下载到 /data/ota_package 的更新包</string>
     <string name="page_settings_advanced_delete_ota_package_confirm_title">删除系统更新包？</string>

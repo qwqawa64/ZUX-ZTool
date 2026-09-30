@@ -869,6 +869,15 @@
     <string name="page_settings_advanced_api_version">libxposed API version</string>
     <string name="page_settings_advanced_open_firstrun_title">Open first-run wizard</string>
     <string name="page_settings_advanced_open_firstrun_summary">Re-enter the first-run onboarding (OOBE) for development and testing</string>
+    <string name="page_settings_advanced_import_title">Import from new XSharedPreferences</string>
+    <string name="page_settings_advanced_import_summary">Manually force one migration from the legacy new XSharedPreferences config to RemotePreferences</string>
+    <string name="page_settings_advanced_import_confirm_title">Import the legacy config?</string>
+    <string name="page_settings_advanced_import_confirm_message">The config will be read from the legacy new XSharedPreferences directory and applied to the current config system; same-named settings you have modified will be overwritten with the old values.\n\nThis action cannot be undone.</string>
+    <string name="page_settings_advanced_import_starting">Migrating config…</string>
+    <string name="page_settings_advanced_import_in_progress">Migration in progress…</string>
+    <string name="page_settings_advanced_import_result_success">Migration succeeded</string>
+    <string name="page_settings_advanced_import_result_no_data">No legacy new XSharedPreferences config found; nothing to migrate</string>
+    <string name="page_settings_advanced_import_result_failed">Migration failed. Please export the app logs and check</string>
     <string name="page_settings_advanced_delete_ota_package_title">Delete system update package</string>
     <string name="page_settings_advanced_delete_ota_package_summary">Delete update packages automatically downloaded by the UDS Realtime Connection Engine to /data/ota_package</string>
     <string name="page_settings_advanced_delete_ota_package_confirm_title">Delete system update package?</string>
