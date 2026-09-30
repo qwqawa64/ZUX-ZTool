@@ -1,6 +1,8 @@
 package com.qimian233.ztool.hook.base
 
 import android.util.Log
+import com.qimian233.ztool.data.keys.LogLevel
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.hook.HookInit
 import io.github.libxposed.api.XposedInterface
 
@@ -9,75 +11,74 @@ import io.github.libxposed.api.XposedInterface
  *
  * Each [BaseHookModule] subclass uses this via the base class's
  * [logger][BaseHookModule.logger] field, with a Log4j-style six-level API:
- * - `trace` → Android VERBOSE (priority 2), always emitted
- * - `debug` → Android DEBUG (priority 3), gated by the [DEBUG] switch
- * - `info`  → Android INFO (priority 4), always emitted
- * - `warn`  → Android WARN (priority 5), always emitted
- * - `error` → Android ERROR (priority 6), always emitted, optional [Throwable]
- * - `fatal` → Android ASSERT (priority 7), always emitted, optional [Throwable]
+ * - `trace` → Android VERBOSE (priority 2)
+ * - `debug` → Android DEBUG (priority 3)
+ * - `info`  → Android INFO (priority 4)
+ * - `warn`  → Android WARN (priority 5)
+ * - `error` → Android ERROR (priority 6), optional [Throwable]
+ * - `fatal` → Android ASSERT (priority 7), optional [Throwable]
+ *
+ * Emission is threshold-gated: a call is logged only when its level's priority
+ * is greater than or equal to the configured [LogLevel] (read from remote
+ * preferences). The level is refreshed on every log call, throttled by
+ * [LEVEL_REFRESH_INTERVAL_MS], so a level change takes effect across all live
+ * processes within about one second — no scope restart needed.
  *
  * When [error] and [fatal] carry a [Throwable], behavior matches the legacy
- * `logError`: up to 10 stack lines when [DEBUG] is on, first line only when off.
+ * `logError`: up to 10 stack lines when the level is DEBUG or finer, first
+ * line only otherwise.
  *
- * The global [DEBUG] switch and [refreshDebugLoggingEnabled] are kept in the companion.
+ * The global [LEVEL] switch and [refreshLogLevel] are kept in the companion.
  */
 class ModuleLog(
     private val moduleName: String,
     @Volatile var xposed: XposedInterface? = null
 ) {
 
-    /** VERBOSE — always emitted, for lowest-priority diagnostics. */
-    fun trace(msg: String) {
-        xposed?.log(2, TAG, "[$moduleName] $msg")
-    }
+    /** VERBOSE — lowest-priority diagnostics. */
+    fun trace(msg: String) = log(LogLevel.TRACE, msg)
 
-    /** DEBUG — gated by the [DEBUG] switch, for verbose debugging info. */
-    fun debug(msg: String) {
-        if (DEBUG) {
-            xposed?.log(3, TAG, "[$moduleName] $msg")
-        }
-    }
+    /** DEBUG — verbose debugging info. */
+    fun debug(msg: String) = log(LogLevel.DEBUG, msg)
 
-    /** INFO — always emitted, for routine operational logs. */
-    fun info(msg: String) {
-        xposed?.log(4, TAG, "[$moduleName] $msg")
-    }
+    /** INFO — routine operational logs. */
+    fun info(msg: String) = log(LogLevel.INFO, msg)
 
-    /** WARN — always emitted, for warnings. */
-    fun warn(msg: String) {
-        xposed?.log(5, TAG, "[$moduleName] $msg")
-    }
+    /** WARN — warnings. */
+    fun warn(msg: String) = log(LogLevel.WARN, msg)
 
     /**
-     * ERROR — always emitted, for errors.
+     * ERROR — errors.
      *
      * @param msg error description
-     * @param t   optional [Throwable]; when provided, appends the stack (length truncated per [DEBUG])
+     * @param t   optional [Throwable]; when provided, appends the stack (length truncated per [LogLevel.DEBUG])
      */
     fun error(msg: String, t: Throwable? = null) {
         val body = if (t != null) formatWithStack(msg, t) else "[$moduleName] $msg"
-        xposed?.log(6, TAG, body)
+        log(LogLevel.ERROR, body)
     }
 
     /**
-     * FATAL — always emitted, for fatal errors.
+     * FATAL — fatal errors.
      *
      * @param msg error description
      * @param t   optional [Throwable]
      */
     fun fatal(msg: String, t: Throwable? = null) {
         val body = if (t != null) formatWithStack(msg, t) else "[$moduleName] $msg"
-        xposed?.log(7, TAG, body)
+        log(LogLevel.FATAL, body)
     }
 
-    /** Whether debug logging is currently on (convenience query of [DEBUG]). */
-    fun isDebugEnabled(): Boolean = DEBUG
+    private fun log(level: LogLevel, msg: String) {
+        refreshLogLevel()
+        if (LEVEL.priority > level.priority) return
+        xposed?.log(level.priority, TAG, "[$moduleName] $msg")
+    }
 
     private fun formatWithStack(msg: String, t: Throwable): String {
-        refreshDebugLoggingEnabled()
         val sb = StringBuilder("[$moduleName] $msg\n")
         val lines = Log.getStackTraceString(t).split("\n")
-        if (DEBUG) {
+        if (shouldLog(LogLevel.DEBUG)) {
             val max = minOf(lines.size, 10)
             for (i in 0 until max) {
                 if (i > 0) sb.append("\n")
@@ -92,36 +93,44 @@ class ModuleLog(
     companion object {
         private const val TAG = "ZToolXposedModule"
         private const val PREFS_NAME = "xposed_module_config"
-        private const val DEBUG_REFRESH_INTERVAL_MS = 1000L
+        private const val LEVEL_REFRESH_INTERVAL_MS = 1000L
 
-        /** Detailed logging switch. */
+        /** Currently configured threshold level. */
         @Volatile
-        var DEBUG: Boolean = false
+        var LEVEL: LogLevel = LogLevel.DEFAULT
+            private set
         @Volatile
-        private var lastDebugRefreshTime: Long = 0L
+        private var lastLevelRefreshTime: Long = 0L
 
         /**
-         * Refreshes the [DEBUG] switch from remote preferences.
-         * Call frequency is limited by `DEBUG_REFRESH_INTERVAL_MS`.
+         * Refreshes the [LEVEL] threshold from remote preferences.
+         * Call frequency is limited by [LEVEL_REFRESH_INTERVAL_MS].
          */
-        fun refreshDebugLoggingEnabled() {
+        fun refreshLogLevel() {
             val now = System.currentTimeMillis()
-            if (now - lastDebugRefreshTime < DEBUG_REFRESH_INTERVAL_MS) return
+            if (now - lastLevelRefreshTime < LEVEL_REFRESH_INTERVAL_MS) return
             synchronized(this) {
-                if (now - lastDebugRefreshTime >= DEBUG_REFRESH_INTERVAL_MS) {
-                    DEBUG = isDetailedLoggingEnabled()
-                    lastDebugRefreshTime = now
+                if (now - lastLevelRefreshTime >= LEVEL_REFRESH_INTERVAL_MS) {
+                    lastLevelRefreshTime = now
+                    readConfiguredLevel()?.let { LEVEL = it }
                 }
             }
         }
 
-        private fun isDetailedLoggingEnabled(): Boolean {
+        /** Whether a call at [level] passes the currently configured threshold. */
+        fun shouldLog(level: LogLevel): Boolean {
+            refreshLogLevel()
+            return LEVEL.priority <= level.priority
+        }
+
+        private fun readConfiguredLevel(): LogLevel? {
             return try {
                 val xi = HookInit.getXposedInterface()
                 xi?.getRemotePreferences(PREFS_NAME)
-                    ?.getBoolean("isDetailedLogging", false) ?: false
+                    ?.getInt(PreferenceKeys.LOG_LEVEL.name, LogLevel.DEFAULT.priority)
+                    ?.let(LogLevel::fromPriority)
             } catch (_: Throwable) {
-                false
+                null
             }
         }
     }

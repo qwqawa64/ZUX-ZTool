@@ -59,6 +59,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.keys.LogLevel
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
@@ -183,7 +184,7 @@ fun SettingsMainRoute(
                 onOpenThemeSettings()
             },
             onOpenLanguageSettings = { openAppLanguageSettings(context) },
-            onDetailedLoggingChanged = viewModel::setDetailedLoggingEnabled,
+            onLogLevelChanged = viewModel::setLogLevel,
             onEntryDisplayChanged = viewModel::setDisplayEntryInSettings,
             onShowAllAppsChanged = viewModel::setShowAllAppsEnabled,
             onHideFromRecentsChanged = viewModel::setHideFromRecentsEnabled,
@@ -321,7 +322,7 @@ private fun SettingsRoute(
     onShowAllAppsChanged: (Boolean) -> Unit,
     onHideFromRecentsChanged: (Boolean) -> Unit,
     onHideLauncherIconChanged: (Boolean) -> Unit,
-    onDetailedLoggingChanged: (Boolean) -> Unit,
+    onLogLevelChanged: (LogLevel) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
@@ -379,7 +380,7 @@ private fun SettingsRoute(
                         onShowAllAppsChanged = onShowAllAppsChanged,
                         onHideFromRecentsChanged = onHideFromRecentsChanged,
                         onHideLauncherIconChanged = onHideLauncherIconChanged,
-                        onDetailedLoggingChanged = onDetailedLoggingChanged,
+                        onLogLevelChanged = onLogLevelChanged,
                         onAbout = onAbout,
                         onExportLogs = onExportLogs,
                         onDeleteAllLogs = onDeleteAllLogs,
@@ -407,7 +408,7 @@ private fun settingsSections(
     onShowAllAppsChanged: (Boolean) -> Unit,
     onHideFromRecentsChanged: (Boolean) -> Unit,
     onHideLauncherIconChanged: (Boolean) -> Unit,
-    onDetailedLoggingChanged: (Boolean) -> Unit,
+    onLogLevelChanged: (LogLevel) -> Unit,
     onAbout: () -> Unit,
     onExportLogs: () -> Unit,
     onDeleteAllLogs: () -> Unit,
@@ -506,12 +507,14 @@ private fun settingsSections(
         SettingSection(
             title = stringResource(R.string.page_settings_log_settings_title),
             items = listOf(
-                SettingItem.Switch(
-                    key = "app_settings_enable_detailed_logging",
-                    title = stringResource(R.string.page_settings_enable_detailed_logging),
-                    summary = stringResource(R.string.page_settings_enable_detailed_logging_description),
-                    checked = state.isDetailedLoggingEnabled,
-                    onCheckedChange = onDetailedLoggingChanged,
+                SettingItem.Dropdown(
+                    key = "app_settings_log_level",
+                    label = stringResource(R.string.page_settings_log_level),
+                    summary = stringResource(R.string.page_settings_log_level_summary),
+                    value = state.logLevel.name,
+                    options = LogLevel.entries,
+                    optionLabel = { it.name },
+                    onOptionSelected = onLogLevelChanged,
                     icon = Icons.AutoMirrored.Rounded.Article
                 ),
                 SettingItem.Action(

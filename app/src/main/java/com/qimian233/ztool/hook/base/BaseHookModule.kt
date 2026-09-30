@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.base
 
 import android.content.SharedPreferences
 import android.util.Log
+import com.qimian233.ztool.data.keys.LogLevel
 import java.lang.reflect.Executable
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -98,18 +99,17 @@ abstract class BaseHookModule {
     }
 
     fun safeHandleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
-        refreshDebugLoggingEnabled()
         val packageName = param.packageName
         if (!supportsPackage(packageName)) return
         if (!isEnabled()) {
-            if (DEBUG) Log.d(TAG, "module disabled: " + getModuleName())
+            if (ModuleLog.shouldLog(LogLevel.DEBUG)) Log.d(TAG, "module disabled: " + getModuleName())
             return
         }
         try {
-            if (DEBUG) Log.d(TAG, "Executing hook module: " + getModuleName()
+            if (ModuleLog.shouldLog(LogLevel.DEBUG)) Log.d(TAG, "Executing hook module: " + getModuleName()
                     + " for package: " + packageName)
             handleLoadPackage(param)
-            if (DEBUG) Log.d(TAG, "Hook module executed successfully: " + getModuleName())
+            if (ModuleLog.shouldLog(LogLevel.DEBUG)) Log.d(TAG, "Hook module executed successfully: " + getModuleName())
         } catch (t: Throwable) {
             Log.e(TAG, "Error in hook module: " + getModuleName(), t)
         }
@@ -117,15 +117,14 @@ abstract class BaseHookModule {
 
     fun safeHandleSystemServerStarting(
             param: XposedModuleInterface.SystemServerStartingParam) {
-        refreshDebugLoggingEnabled()
         if (!isEnabled()) {
-            if (DEBUG) Log.d(TAG, "module disabled for system server: " + getModuleName())
+            if (ModuleLog.shouldLog(LogLevel.DEBUG)) Log.d(TAG, "module disabled for system server: " + getModuleName())
             return
         }
         try {
-            if (DEBUG) Log.d(TAG, "Executing system server hook module: " + getModuleName())
+            if (ModuleLog.shouldLog(LogLevel.DEBUG)) Log.d(TAG, "Executing system server hook module: " + getModuleName())
             handleSystemServerStarting(param)
-            if (DEBUG) Log.d(TAG, "System server hook module executed successfully: "
+            if (ModuleLog.shouldLog(LogLevel.DEBUG)) Log.d(TAG, "System server hook module executed successfully: "
                     + getModuleName())
         } catch (t: Throwable) {
             Log.e(TAG, "Error in system server hook module: " + getModuleName(), t)
@@ -281,22 +280,6 @@ abstract class BaseHookModule {
 
     companion object {
         private const val TAG = "ZToolXposedModule"
-
-        /**
-         * Detailed logging switch (backward-compatible field; the actual state is managed by [ModuleLog.DEBUG]).
-         * @see refreshDebugLoggingEnabled
-         */
-        @Volatile
-        var DEBUG: Boolean = false
-
-        /**
-         * Refreshes the detailed logging switch.
-         * <p>Delegates to [ModuleLog.refreshDebugLoggingEnabled] and syncs the result to the [DEBUG] field.</p>
-         */
-        fun refreshDebugLoggingEnabled() {
-            ModuleLog.refreshDebugLoggingEnabled()
-            DEBUG = ModuleLog.DEBUG
-        }
     }
 
     /**

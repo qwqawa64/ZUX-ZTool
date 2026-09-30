@@ -13,6 +13,7 @@ import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import com.qimian233.ztool.utils.ModulePreferencesUtils
+import com.qimian233.ztool.data.keys.LogLevel
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
@@ -31,7 +32,9 @@ class SettingsRepository(
     fun loadState(): SettingsUiState {
         val themeSettings = themePreferences.loadSettings()
         return SettingsUiState(
-            isDetailedLoggingEnabled = prefsUtils.loadBooleanSetting(KEY_DETAILED_LOGGING, false),
+            logLevel = LogLevel.fromPriority(
+                prefsUtils.loadIntegerSetting(KEY_LOG_LEVEL, LogLevel.DEFAULT.priority)
+            ),
             isEntryDisplayedInSettings = prefsUtils.loadBooleanSetting(KEY_DISPLAY_ENTRY_IN_SETTINGS, false),
             isShowAllAppsEnabled = prefsUtils.loadBooleanSetting(KEY_SHOW_ALL_APPS, false),
             isHideFromRecentsEnabled = prefsUtils.loadBooleanSetting(KEY_HIDE_FROM_RECENTS, false),
@@ -105,8 +108,8 @@ class SettingsRepository(
         themePreferences.deleteAll()
     }
 
-    fun setDetailedLoggingEnabled(isEnabled: Boolean) {
-        prefsUtils.saveBooleanSetting(KEY_DETAILED_LOGGING, isEnabled)
+    fun setLogLevel(level: LogLevel) {
+        prefsUtils.saveIntegerSetting(KEY_LOG_LEVEL, level.priority)
     }
 
     fun setEntryInSettingsEnabled(isEnabled: Boolean) {
@@ -316,7 +319,7 @@ class SettingsRepository(
         private const val BACKUP_SCHEMA_VERSION = 1
         private const val KEY_MODULE_CONFIG = "moduleConfig"
         private const val KEY_THEME_SETTINGS = "themeSettings"
-        private val KEY_DETAILED_LOGGING = PreferenceKeys.IS_DETAILED_LOGGING.name
+        private val KEY_LOG_LEVEL = PreferenceKeys.LOG_LEVEL.name
         private val KEY_DISPLAY_ENTRY_IN_SETTINGS = PreferenceKeys.ZTOOL_SETTINGS_ENTRY.name
         private val KEY_SHOW_ALL_APPS = PreferenceKeys.ZTOOL_SETTINGS_SHOW_ALL_APPS.name
         private val KEY_AUTO_CHECK_UPDATE = PreferenceKeys.AUTO_CHECK_UPDATE.name

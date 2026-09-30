@@ -94,6 +94,7 @@ sealed interface SettingItem {
         val options: List<T>,
         val optionLabel: (T) -> String,
         val onOptionSelected: (T) -> Unit,
+        val summary: String? = null,
         val icon: ImageVector? = null,
         override val enabled: Boolean = true,
         override val key: String
@@ -493,6 +494,7 @@ private fun <T> ZToolPopupMenuSettingItem(
         options = item.options,
         optionLabel = item.optionLabel,
         onOptionSelected = item.onOptionSelected,
+        summary = item.summary,
         enabled = item.enabled,
         icon = item.icon,
         modifier = modifier

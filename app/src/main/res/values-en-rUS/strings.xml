@@ -156,8 +156,8 @@
     <string name="page_settings_delete_logs_confirmation">Are you sure you want to delete all logs? This cannot be undone.</string>
     <string name="common_lsposed_log_sync_failed">Failed to sync LSPosed logs. Please check root permission.</string>
     <string name="page_settings_title">Settings</string>
-    <string name="page_settings_enable_detailed_logging">Detailed logging</string>
-    <string name="page_settings_enable_detailed_logging_description">Enable this when reporting issues. Restart the scope after changing this switch.</string>
+    <string name="page_settings_log_level">Log level</string>
+    <string name="page_settings_log_level_summary">Set the log level to TRACE when reporting issues</string>
     <string name="page_settings_backup_and_restore">Backup and restore</string>
     <string name="page_settings_refresh_dex_index">Refresh DexKit index</string>
     <string name="page_settings_dex_index_last_indexed_at">Last indexed: %1$s</string>

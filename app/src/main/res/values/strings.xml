@@ -169,8 +169,8 @@
 
     <!--设置页资源值-->
     <string name="page_settings_title">设置</string>
-    <string name="page_settings_enable_detailed_logging">开启详细日志</string>
-    <string name="page_settings_enable_detailed_logging_description">显示更细节的Hook信息，开关状态变更后请重启作用域。反馈问题时必须打开本开关！</string>
+    <string name="page_settings_log_level">日志等级</string>
+    <string name="page_settings_log_level_summary">汇报问题时请将日志等级设置为 TRACE</string>
     <string name="page_settings_backup_and_restore">备份与还原</string>
     <string name="page_settings_refresh_dex_index">刷新 DexKit 索引</string>
     <string name="page_settings_dex_index_last_indexed_at">上次索引：%1$s</string>

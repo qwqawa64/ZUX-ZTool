@@ -210,7 +210,6 @@ object PreferenceKeys {
     val BYPASS_SHARE_WARNING = BoolKey("bypass_share_warning", false)
     val DISABLE_NEARBY_SHARE_COUNTDOWN = BoolKey("disable_nearby_share_countdown", false)
 
-    val IS_DETAILED_LOGGING = BoolKey("isDetailedLogging", false)
     val HALF_WIDTH_PUNCT = BoolKey("half_width_punct", false)
     val AUTO_CHECK_UPDATE = BoolKey("auto_check_update", true)
     // App-local behavior: exclude ZTool's own tasks from the recents overview
@@ -223,6 +222,8 @@ object PreferenceKeys {
     // Int keys
     // ═══════════════════════════════════════════════════════════
 
+    // Persisted value is the Android log priority of a [LogLevel] entry
+    val LOG_LEVEL = IntKey("log_level", LogLevel.DEFAULT.priority)
     val CUSTOM_LAUNCHER_ROW = IntKey("CustomLauncherRow", 4)
     val CUSTOM_LAUNCHER_COLUMN = IntKey("CustomLauncherColumn", 6)
     val CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR = IntKey("Custom_StatusBarClockTextColor", 0xFFFFFFFF.toInt())
@@ -360,7 +361,7 @@ object PreferenceKeys {
         DISABLE_ALL_VIRUS_SCANS, DEFAULT_ENABLE_AUTORUN,
         AUTO_ACCEPT_FILE_TRANSFER, BYPASS_SHARE_WARNING,
         DISABLE_NEARBY_SHARE_COUNTDOWN,
-        IS_DETAILED_LOGGING, AUTO_CHECK_UPDATE, HIDE_FROM_RECENTS,
+        AUTO_CHECK_UPDATE, HIDE_FROM_RECENTS,
         YIYAN, IS_SYSTEMUI_PERMISSION_CONFIRMED, IS_CONFIG_UPGRADED,
         HALF_WIDTH_PUNCT,
         SYSTEMUI_REALWATTS_SHOW_VOLTAGE, SYSTEMUI_REALWATTS_SHOW_CURRENT,
@@ -370,7 +371,7 @@ object PreferenceKeys {
     )
 
     val intKeys: List<IntKey> = listOf(
-        CUSTOM_LAUNCHER_ROW, CUSTOM_LAUNCHER_COLUMN,
+        LOG_LEVEL, CUSTOM_LAUNCHER_ROW, CUSTOM_LAUNCHER_COLUMN,
         CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR, NOTIFY_NUM_SIZE,
         CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR,
         TILE_ROUND_CORNER_RADIUS, HEAD_UP_ROUND_CORNER_RADIUS,

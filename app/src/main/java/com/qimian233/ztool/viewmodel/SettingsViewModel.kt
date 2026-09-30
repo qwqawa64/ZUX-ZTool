@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.data.keys.LogLevel
 import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.MaterialColorSpec
@@ -59,9 +60,9 @@ class SettingsViewModel(
         _uiState.value = repository.loadState().copy(showRestoreConfirmDialog = false)
     }
 
-    fun setDetailedLoggingEnabled(isEnabled: Boolean) {
-        _uiState.value = _uiState.value.copy(isDetailedLoggingEnabled = isEnabled)
-        repository.setDetailedLoggingEnabled(isEnabled)
+    fun setLogLevel(level: LogLevel) {
+        _uiState.value = _uiState.value.copy(logLevel = level)
+        repository.setLogLevel(level)
     }
 
     fun setDisplayEntryInSettings(isEnabled: Boolean) {
@@ -223,7 +224,7 @@ class SettingsViewModel(
 }
 
 data class SettingsUiState(
-    val isDetailedLoggingEnabled: Boolean = false,
+    val logLevel: LogLevel = LogLevel.DEFAULT,
     val isEntryDisplayedInSettings: Boolean = false,
     val isShowAllAppsEnabled: Boolean = false,
     val isHideFromRecentsEnabled: Boolean = false,

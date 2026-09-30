@@ -1409,9 +1409,9 @@ object SearchIndex {
             titleRes = R.string.page_settings_auto_check_update_title
         ),
         appSettings.item(
-            id = "app_settings_enable_detailed_logging",
-            titleRes = R.string.page_settings_enable_detailed_logging,
-            summaryRes = R.string.page_settings_enable_detailed_logging_description
+            id = "app_settings_log_level",
+            titleRes = R.string.page_settings_log_level,
+            summaryRes = R.string.page_settings_log_level_summary
         ),
         appSettings.item(
             id = "app_settings_export_logs",
