@@ -45,16 +45,28 @@ jobs:
           echo "path=$apk" >> $GITHUB_OUTPUT
           echo "Found release APK: $apk"
 
-      # ---- 提取 更新日志.txt 最新一批（首行版本头 + 其后条目，到下一个版本头为止）----
+      # ---- 提取 更新日志.txt 最新一批并渲染为 Release 正文 ----
+      # 最新一批 = 首行版本头（"Beta/…）到下一个版本头之前。
+      # 渲染规则：
+      #   版本头行  → "版本：<原样>"（首行）
+      #   以中文冒号结尾的行（分类）→ H3（### 前留空行）
+      #   其余非空行（条目）    → 无序列表（- 前缀）
+      # 首行的随机引用为人工添加，CI 不生成。
       - name: Extract latest changelog batch
         run: |
           set -euo pipefail
-          # 第一行是当前版本 header（"Beta/…），取到下一个版本标记行之前；没有则全文
-          awk 'NR>1 && /^"Beta\//{exit} {print}' 更新日志.txt > latest-changelog.md
+          awk '
+            NR>1 && /^"Beta\//{exit}
+            /^"/{print "版本：" $0 > "latest-changelog.md"; next}
+            {
+              if ($0 ~ /：$/) {print "" > "latest-changelog.md"; print "### " $0 > "latest-changelog.md"}
+              else if (NF>0) print "- " $0 > "latest-changelog.md"
+              if (NF>0) print $0 > "latest-entries.txt"
+            }
+          ' 更新日志.txt
           # 去掉尾部空行，避免正文出现多余空隙
           printf '%s\n' "$(cat latest-changelog.md)" > latest-changelog.md
-          # 条目正文（不含 header），供 UpdateCheck.json 的 whatNew 使用
-          tail -n +2 latest-changelog.md > latest-entries.txt
+          cat latest-changelog.md
 
       # ---- 解析 header 并填充 UpdateCheck.json ----
       - name: Update UpdateCheck.json
