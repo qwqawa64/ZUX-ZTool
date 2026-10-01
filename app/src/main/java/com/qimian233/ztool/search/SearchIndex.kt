@@ -1274,6 +1274,18 @@ object SearchIndex {
             titleRes = R.string.launcher_force_freeform_entry_title
         ),
         launcher.item(
+            id = "freeform_keep_alive_enabled",
+            titleRes = R.string.launcher_freeform_keep_alive_title,
+            summaryRes = R.string.launcher_freeform_keep_alive_summary
+        ),
+        launcher.item(
+            id = "freeform_keep_alive_packages",
+            titleRes = R.string.launcher_freeform_keep_alive_title,
+            summaryRes = R.string.launcher_freeform_keep_alive_apps_summary,
+            parentTitleRes = R.string.launcher_freeform_keep_alive_title,
+            parentKey = "freeform_keep_alive_enabled"
+        ),
+        launcher.item(
             id = "launcher_larger_dock",
             titleRes = R.string.launcher_larger_dock_title,
             parentTitleRes = R.string.launcher_disable_dock_bar_title,

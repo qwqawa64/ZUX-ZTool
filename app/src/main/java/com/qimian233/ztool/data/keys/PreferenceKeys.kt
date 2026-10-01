@@ -32,6 +32,9 @@ object PreferenceKeys {
     val FORCE_RELATIVE_APP_FREEFORM = BoolKey("force_relative_app_freeform", false)
     val LAUNCHER_FORCE_FREEFORM_ENTRY = BoolKey("launcher_force_freeform_entry", false)
     val FREEFORM_EDGE_BUBBLE = BoolKey("freeform_edge_bubble", false)
+    // Shared switch of the freeform keep-alive pair (system OomAdjuster pin + launcher
+    // recents-cleaner bypass); module name of both hook classes
+    val FREEFORM_KEEP_ALIVE_ENABLED = BoolKey("freeform_keep_alive_enabled", false)
     val DISABLE_HBM_THERMAL_LIMIT = BoolKey("disable_hbm_thermal_limit", false)
     // One-shot maintenance action marker: clears stale ZUI night-mode override
     // (ui_night_mode_override_on/off) via root; not read by any hook module
@@ -268,6 +271,9 @@ object PreferenceKeys {
 
     val MISTAKE_TOUCH_WHITE_LIST_GAME = StringKey("MistakeTouchWhiteListGame", "")
     val FORCE_STOP_WHITE_LIST = StringKey("ForceStopWhiteList", "")
+    // Package names of apps whose processes must never be cached/killed while
+    // (or after) running in a freeform window; comma-separated
+    val FREEFORM_KEEP_ALIVE_PACKAGES = StringKey("freeform_keep_alive_packages", "")
     val CUSTOM_OTA_TARGET_VERSION_NAME = StringKey("Custom_ota_target_versionName", "")
     val CUSTOM_OTA_TARGET_DEVICE_ID = StringKey("Custom_ota_target_deviceID", "")
     val TB_ENGINE_OTA_PRIVATE_KEY = StringKey("tbengine_ota_private_key", "")
@@ -299,6 +305,7 @@ object PreferenceKeys {
         ALLOW_UNTRUSTED_TOUCH, FORCE_SCREEN_ON_OFF_ANIMATION, AI_INPUT_EXPAND,
         KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH, FORCE_RELATIVE_APP_FREEFORM,
         LAUNCHER_FORCE_FREEFORM_ENTRY, FREEFORM_EDGE_BUBBLE,
+        FREEFORM_KEEP_ALIVE_ENABLED,
         DISABLE_HBM_THERMAL_LIMIT, FIX_NIGHT_MODE_OVERRIDE,
         PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,
         PKG_MGR_DISABLE_VERIFICATION_AGENT, PKG_MGR_BYPASS_DIGEST,
@@ -394,6 +401,7 @@ object PreferenceKeys {
 
     val stringKeys: List<StringKey> = listOf(
         MISTAKE_TOUCH_WHITE_LIST_GAME, FORCE_STOP_WHITE_LIST,
+        FREEFORM_KEEP_ALIVE_PACKAGES,
         CUSTOM_OTA_TARGET_VERSION_NAME, CUSTOM_OTA_TARGET_DEVICE_ID,
         TB_ENGINE_OTA_PRIVATE_KEY, TB_ENGINE_OTA_PUBLIC_KEY, TB_ENGINE_OTA_CERT,
         ABOUT_DEVICE_INFO_MODEL, ABOUT_DEVICE_INFO_CPU,

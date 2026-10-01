@@ -1037,6 +1037,9 @@
     <string name="launcher_disable_recent_app_display">在 Dock 栏隐藏最近使用的 APP</string>
     <string name="launcher_force_freeform_entry_title">所有应用显示小窗入口</string>
     <string name="launcher_force_freeform_entry_summary">跳过系统小窗白名单与客户端开关判断，在最近任务菜单中为所有应用显示小窗入口</string>
+    <string name="launcher_freeform_keep_alive_title">小窗应用后台保活</string>
+    <string name="launcher_freeform_keep_alive_summary">小窗最小化或进入最近任务后，名单内应用进程不再被降级清理或冻结，可保持持续运行；需重启系统和桌面后生效</string>
+    <string name="launcher_freeform_keep_alive_apps_summary">已保活%d个应用</string>
 
     <!--桌面动态壁纸页资源值-->
     <string name="system_ui_animation_desktop_live_wallpaper_title">桌面动态壁纸</string>

@@ -29,6 +29,9 @@ class LauncherSettingsRepository(
             forceStopWhitelist = loadForceStopWhitelist(),
             moreBigDock = prefsUtils.loadBooleanSetting(KEY_ZUI_LAUNCHER_HOTSEAT, false),
             forceFreeformEntry = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_FORCE_FREEFORM_ENTRY, false),
+            freeformKeepAliveEnabled =
+                prefsUtils.loadBooleanSetting(KEY_FREEFORM_KEEP_ALIVE_ENABLED, false),
+            freeformKeepAlivePackages = loadFreeformKeepAlivePackages(),
             customGridSize = prefsUtils.loadBooleanSetting(KEY_CUSTOM_GRID_SIZE, false),
             customGridRow = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LAUNCHER_ROW, DEFAULT_ROW)
                 .coerceIn(GRID_MIN, GRID_MAX),
@@ -89,6 +92,17 @@ class LauncherSettingsRepository(
 
     fun saveForceFreeformEntry(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_FORCE_FREEFORM_ENTRY, enabled)
+    }
+
+    fun saveFreeformKeepAliveEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_FREEFORM_KEEP_ALIVE_ENABLED, enabled)
+    }
+
+    fun saveFreeformKeepAlivePackages(packageNames: List<String>) {
+        prefsUtils.saveStringSetting(
+            KEY_FREEFORM_KEEP_ALIVE_PACKAGES,
+            packageNames.joinToString(separator = ",", postfix = ",")
+        )
     }
 
     fun saveCustomGridSize(enabled: Boolean) {
@@ -235,6 +249,13 @@ class LauncherSettingsRepository(
             .filter { it.isNotEmpty() }
     }
 
+    private fun loadFreeformKeepAlivePackages(): List<String> {
+        return prefsUtils.loadStringSetting(KEY_FREEFORM_KEEP_ALIVE_PACKAGES, "")
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+    }
+
     companion object {
         const val GRID_MIN = 3
         const val GRID_MAX = 10
@@ -252,6 +273,8 @@ class LauncherSettingsRepository(
         private val KEY_FORCE_STOP_WHITE_LIST = PreferenceKeys.FORCE_STOP_WHITE_LIST.name
         private val KEY_ZUI_LAUNCHER_HOTSEAT = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT.name
         private val KEY_LAUNCHER_FORCE_FREEFORM_ENTRY = PreferenceKeys.LAUNCHER_FORCE_FREEFORM_ENTRY.name
+        private val KEY_FREEFORM_KEEP_ALIVE_ENABLED = PreferenceKeys.FREEFORM_KEEP_ALIVE_ENABLED.name
+        private val KEY_FREEFORM_KEEP_ALIVE_PACKAGES = PreferenceKeys.FREEFORM_KEEP_ALIVE_PACKAGES.name
         private val KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT_BACKUP.name
         private val KEY_CUSTOM_GRID_SIZE = PreferenceKeys.CUSTOM_GRID_SIZE.name
         private val KEY_CUSTOM_LAUNCHER_ROW = PreferenceKeys.CUSTOM_LAUNCHER_ROW.name

@@ -988,6 +988,9 @@
     <string name="launcher_disable_recent_app_display">Hide recent apps in dock bar</string>
     <string name="launcher_force_freeform_entry_title">Show small-window entry for all apps</string>
     <string name="launcher_force_freeform_entry_summary">Bypass the system freeform whitelist and client-side gates to show the small-window entry for every app in recents</string>
+    <string name="launcher_freeform_keep_alive_title">Keep freeform apps alive</string>
+    <string name="launcher_freeform_keep_alive_summary">After a small window is minimized or Recents is opened, whitelisted app processes are no longer demoted, cleaned up or frozen, and keep running; takes effect after restarting the system and launcher</string>
+    <string name="launcher_freeform_keep_alive_apps_summary">%d apps kept alive</string>
 
     <!--Desktop live wallpaper resources-->
     <string name="system_ui_animation_desktop_live_wallpaper_title">Desktop Live Wallpaper</string>

@@ -53,6 +53,16 @@ class LauncherSettingsViewModel(
         repository.saveForceFreeformEntry(enabled)
     }
 
+    fun setFreeformKeepAliveEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(freeformKeepAliveEnabled = enabled)
+        repository.saveFreeformKeepAliveEnabled(enabled)
+    }
+
+    fun setFreeformKeepAlivePackages(packageNames: List<String>) {
+        _uiState.value = _uiState.value.copy(freeformKeepAlivePackages = packageNames)
+        repository.saveFreeformKeepAlivePackages(packageNames)
+    }
+
     fun setCustomGridSize(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(customGridSize = enabled)
         repository.saveCustomGridSize(enabled)
@@ -228,6 +238,8 @@ data class LauncherSettingsUiState(
     val forceStopWhitelist: List<String> = emptyList(),
     val moreBigDock: Boolean = false,
     val forceFreeformEntry: Boolean = false,
+    val freeformKeepAliveEnabled: Boolean = false,
+    val freeformKeepAlivePackages: List<String> = emptyList(),
     val customGridSize: Boolean = false,
     val customGridRow: Int = 4,
     val customGridColumn: Int = 6,
@@ -256,4 +268,7 @@ data class LauncherSettingsUiState(
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size
+
+    val freeformKeepAlivePackagesCount: Int
+        get() = freeformKeepAlivePackages.size
 }

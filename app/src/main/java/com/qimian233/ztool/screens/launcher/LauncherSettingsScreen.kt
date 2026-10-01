@@ -130,6 +130,26 @@ fun LauncherSettingsRoute(
             onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss,
             onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
             onForceFreeformEntryChanged = viewModel::setForceFreeformEntry,
+            onFreeformKeepAliveEnabledChanged = viewModel::setFreeformKeepAliveEnabled,
+            onSelectKeepAlivePackages = {
+                val activity = context as? android.app.Activity
+                if (activity != null) {
+                    AppChooserDialog.show(
+                        activity,
+                        viewModel.loadUserInstalledPackageNames(),
+                        uiState.freeformKeepAlivePackages,
+                        context.getString(R.string.launcher_freeform_keep_alive_title),
+                        object : AppChooserDialog.AppSelectionCallback {
+                            override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
+                                viewModel.setFreeformKeepAlivePackages(
+                                    selectedApps.map { it.packageName })
+                            }
+
+                            override fun onCancel() = Unit
+                        }
+                    )
+                }
+            },
             onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall,
             onBigFolderAlignChanged = viewModel::setBigFolderAlign,
             onAppIconUnmaskChanged = viewModel::setAppIconUnmask,
@@ -212,6 +232,8 @@ private fun LauncherSettingsScreen(
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onForceFreeformEntryChanged: (Boolean) -> Unit,
+    onFreeformKeepAliveEnabledChanged: (Boolean) -> Unit,
+    onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
     onAppIconUnmaskChanged: (Boolean) -> Unit,
@@ -279,6 +301,8 @@ private fun LauncherSettingsScreen(
                         onCloudFolderDismissChanged = onCloudFolderDismissChanged,
                         onDisableRecentAppDisplayChanged = onDisableRecentAppDisplayChanged,
                         onForceFreeformEntryChanged = onForceFreeformEntryChanged,
+                        onFreeformKeepAliveEnabledChanged = onFreeformKeepAliveEnabledChanged,
+                        onSelectKeepAlivePackages = onSelectKeepAlivePackages,
                         onLauncherBatchUninstallChanged = onLauncherBatchUninstallChanged,
                         onBigFolderAlignChanged = onBigFolderAlignChanged,
                         onAppIconUnmaskChanged = onAppIconUnmaskChanged,
@@ -318,6 +342,8 @@ private fun launcherSettingsSections(
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onForceFreeformEntryChanged: (Boolean) -> Unit,
+    onFreeformKeepAliveEnabledChanged: (Boolean) -> Unit,
+    onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
     onAppIconUnmaskChanged: (Boolean) -> Unit,
@@ -558,6 +584,29 @@ private fun launcherSettingsSections(
         )
         add(
             SettingItem.Switch(
+                title = stringResource(R.string.launcher_freeform_keep_alive_title),
+                summary = stringResource(R.string.launcher_freeform_keep_alive_summary),
+                checked = state.freeformKeepAliveEnabled,
+                onCheckedChange = onFreeformKeepAliveEnabledChanged,
+                key = "freeform_keep_alive_enabled"
+            )
+        )
+        if (state.freeformKeepAliveEnabled) {
+            add(
+                SettingItem.Custom(
+                    key = "freeform_keep_alive_packages",
+                    content = {
+                        WhitelistRow(
+                            whitelistCount = state.freeformKeepAlivePackagesCount,
+                            onClick = onSelectKeepAlivePackages,
+                            labelRes = R.string.launcher_freeform_keep_alive_apps_summary
+                        )
+                    }
+                )
+            )
+        }
+        add(
+            SettingItem.Switch(
                 title = stringResource(R.string.launcher_show_ram_info),
                 summary = stringResource(R.string.launcher_show_ram_info_summary),
                 checked = state.showRamInfo,
@@ -653,7 +702,8 @@ private fun ForceStopModeRow(
 @Composable
 private fun WhitelistRow(
     whitelistCount: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    labelRes: Int = R.string.launcher_protected_apps_summary
 ) {
     Row(
         modifier = Modifier
@@ -663,7 +713,7 @@ private fun WhitelistRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = stringResource(R.string.launcher_protected_apps_summary, whitelistCount),
+            text = stringResource(labelRes, whitelistCount),
             style = MaterialTheme.typography.bodyMedium,
             color = LocalZToolColorScheme.current.onSurfaceVariant,
             modifier = Modifier.weight(1f)
