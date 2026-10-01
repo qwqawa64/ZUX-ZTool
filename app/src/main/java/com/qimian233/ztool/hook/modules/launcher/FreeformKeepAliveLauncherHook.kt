@@ -12,18 +12,11 @@ import java.lang.reflect.Method
  * Shields whitelisted freeform apps from the launcher's recents memory cleaner
  * (com.zui.launcher.util.OverviewUtilities, tag "Launcher.Recents").
  *
- * On every recents cleanup ZUI kills every process that is not part of the visible
- * task list — via ActivityManager.killBackgroundProcesses on overseas builds and via
- * SystemUiProxy.killUid(uid, "ZuiMemoryCleaner_Recents") on PRC builds. Both paths
- * are closed here without touching the obfuscated RecentsView internals:
- *
- * - `removeAllRunningAppProcesses(Context, ArrayList, boolean)` receives the package
- *   names of the tasks that must SURVIVE the cleanup (they are excluded from both
- *   kill sets inside the AsyncTask). We inject the whitelist into that list, so the
- *   batch cleaner skips those packages on both PRC and overseas builds.
- * - `removeAppProcess(Context, int, String, int)` kills one package (single task
- *   swipe-dismiss and the PRC force-kill path); calls for whitelisted packages are
- *   short-circuited.
+ * The batch cleaner's uid/killBackgroundProcesses kills are blocked system-side by
+ * FreeformKeepAliveSystemHook (AMS.killUid / AMS.killBackgroundProcesses); here we
+ * only block the single-package kill that carries the package name. Never touch the
+ * ArrayList<Task> argument of removeAllRunningAppProcesses — injecting package names
+ * into it crashes the AsyncTask with a ClassCastException.
  *
  * The whitelist is read with the same short throttle as the system-side hook so
  * edits apply without restarting the launcher, while the hot paths stay IPC-free.
@@ -38,7 +31,7 @@ class FreeformKeepAliveLauncherHook : AppHookModule() {
     private var cachedWhitelist: Set<String> = emptySet()
 
     @Volatile
-    private var whitelistLoadedAt: Long = Long.MIN_VALUE
+    private var whitelistLoadedAt: Long = 0L
 
     private fun currentWhitelist(): Set<String> {
         val now = SystemClock.elapsedRealtime()
@@ -61,29 +54,13 @@ class FreeformKeepAliveLauncherHook : AppHookModule() {
         try {
             val utilsClass: Class<*> = classLoader.loadClass(
                 "com.zui.launcher.util.OverviewUtilities")
-            val arrayListClass: Class<*> = java.util.ArrayList::class.java
 
-            // removeAllRunningAppProcesses(Context, ArrayList<Task> keepPackages, boolean)
-            val batchClean: Method = findMethod(
-                utilsClass, "removeAllRunningAppProcesses",
-                Context::class.java,
-                arrayListClass,
-                Boolean::class.javaPrimitiveType
-            )
-            hookWithId(batchClean, "freeform_keep_alive_batch_clean") { chain ->
-                @Suppress("UNCHECKED_CAST")
-                val keepList = chain.args[1] as? ArrayList<Any?>
-                if (keepList != null) {
-                    keepList.addAll(currentWhitelist())
-                    logger.debug(
-                        "Injected ${currentWhitelist().size} keep-alive packages " +
-                            "into the recents batch cleaner"
-                    )
-                }
-                chain.proceed()
-            }
-
-            // static removeAppProcess(Context, int userId, String packageName, int uid)
+            // static removeAppProcess(Context, int userId, String packageName, int uid) —
+            // single task swipe-dismiss and the PRC force-kill path. The batch cleaner's
+            // uid/killBackgroundProcesses calls are blocked system-side (see
+            // FreeformKeepAliveSystemHook); the task ArrayList must not be touched —
+            // injecting package names into it crashes the AsyncTask with a
+            // ClassCastException (String cannot be cast to Task).
             val singleKill: Method = findMethod(
                 utilsClass, "removeAppProcess",
                 Context::class.java,
