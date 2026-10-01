@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemframework
 
+import android.annotation.SuppressLint
 import android.os.SystemClock
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -33,6 +34,7 @@ import java.lang.reflect.Method
  * once at startup: applyOomAdjLSP is a hot path, so a live read per call would be an
  * IPC storm, but a cached set lets users change the list without a system reboot.
  */
+@SuppressLint("PrivateApi")
 class FreeformKeepAliveSystemHook : SystemHookModule() {
     override fun getModuleName(): String = PreferenceKeys.FREEFORM_KEEP_ALIVE_ENABLED.name
 
@@ -141,107 +143,6 @@ class FreeformKeepAliveSystemHook : SystemHookModule() {
                 logger.error("Freeze bypass (CachedAppOptimizer) not installed", t)
             }
 
-            // Last killer: recents clean-all calls ActivityTaskManagerService.removeTask
-            // (kill reason "remove task"), which force-finishes the task and kills the
-            // process regardless of adj. Block removal for whitelisted packages —
-            // the task then also stays in recents.
-            try {
-                val atmsClass: Class<*> = classLoader.loadClass(
-                    "com.android.server.wm.ActivityTaskManagerService")
-                val removeTask: Method = findMethod(
-                    atmsClass, "removeTask", Int::class.javaPrimitiveType)
-                val rootField = findField(atmsClass, "mRootWindowContainer")
-                hookWithId(removeTask, "freeform_keep_alive_remove_task") { chain ->
-                    try {
-                        val atms = chain.thisObject
-                        val root = rootField.get(atms)
-                        val task = root.javaClass.methods
-                            .firstOrNull {
-                                it.name == "anyTaskForId" &&
-                                    it.parameterTypes.size == 1 &&
-                                    it.parameterTypes[0] == Int::class.javaPrimitiveType
-                            }
-                            ?.invoke(root, chain.args[0])
-                        val intent = task?.javaClass?.getMethod("getBaseIntent")
-                            ?.invoke(task)
-                        val pkg = (intent as? android.content.Intent)?.component?.packageName
-                        if (pkg != null && matchesWhitelist(pkg, currentWhitelist())) {
-                            logger.debug("Blocked removeTask for whitelisted $pkg")
-                            return@hookWithId false
-                        }
-                    } catch (t: Throwable) {
-                        logger.error("removeTask filter failed, letting it pass", t)
-                    }
-                    chain.proceed()
-                }
-                logger.info("removeTask blocker installed")
-            } catch (t: Throwable) {
-                logger.error("removeTask blocker not installed", t)
-            }
-
-            // Both recents-cleaner kill primitives, blocked at the AMS entry points so
-            // single kills, batch cleans and overseas killBackgroundProcesses paths are
-            // all covered:
-            // - killUid(int appId, int userId, int oomAdj, int, String reason): uid =
-            //   userId * 100000 + appId; skip when any live process of that uid matches
-            //   the whitelist (force-kill ignores adj, so this cannot be left open).
-            // - killBackgroundProcesses(String packageName, int userId).
-            try {
-                val amsClass: Class<*> = classLoader.loadClass(
-                    "com.android.server.am.ActivityManagerService")
-                val processListField = findField(amsClass, "mProcessList")
-                val getLruProcesses = processListClass.getMethod("getLruProcessesLOSP")
-                val killUid: Method = findMethod(
-                    amsClass, "killUid",
-                    Int::class.javaPrimitiveType,
-                    Int::class.javaPrimitiveType,
-                    Int::class.javaPrimitiveType,
-                    Int::class.javaPrimitiveType,
-                    String::class.java
-                )
-                hookWithId(killUid, "freeform_keep_alive_kill_uid") { chain ->
-                    try {
-                        val appId = chain.args[0] as? Int ?: 0
-                        val userId = chain.args[1] as? Int ?: 0
-                        val uid = userId * PER_USER_RANGE + appId
-                        val ams = chain.thisObject
-                        val processes = getLruProcesses.invoke(processListField.get(ams))
-                                as ArrayList<*>
-                        for (process in processes) {
-                            if (process == null) continue
-                            val procUid = process.javaClass.getField("uid").getInt(process)
-                            if (procUid != uid) continue
-                            val processName = processNameField.get(process) as String
-                            if (matchesWhitelist(processName, currentWhitelist())) {
-                                logger.debug(
-                                    "Blocked killUid for whitelisted $processName (uid=$uid)"
-                                )
-                                return@hookWithId null
-                            }
-                        }
-                    } catch (t: Throwable) {
-                        logger.error("killUid filter failed, letting it pass", t)
-                    }
-                    chain.proceed()
-                }
-                val killBackgroundProcesses: Method = findMethod(
-                    amsClass, "killBackgroundProcesses",
-                    String::class.java,
-                    Int::class.javaPrimitiveType
-                )
-                hookWithId(killBackgroundProcesses, "freeform_keep_alive_kill_bg") { chain ->
-                    val pkg = chain.args[0] as? String
-                    if (pkg != null && matchesWhitelist(pkg, currentWhitelist())) {
-                        logger.debug("Blocked killBackgroundProcesses for whitelisted $pkg")
-                        return@hookWithId null
-                    }
-                    chain.proceed()
-                }
-                logger.info("AMS kill blockers installed")
-            } catch (t: Throwable) {
-                logger.error("AMS kill blockers not installed", t)
-            }
-
             // Fallback: after applyOomAdjLSP has applied the (possibly cached) adj,
             // re-pin whitelisted processes directly, mirroring AdjCustomizeHandler.
             val applyOomAdj: Method = findMethod(
@@ -338,7 +239,6 @@ class FreeformKeepAliveSystemHook : SystemHookModule() {
         const val PINNED_ADJ = 200
         const val PINNED_DURATION_MINUTES = 10080
         const val PREVIOUS_APP_ADJ = 700
-        const val PER_USER_RANGE = 100000
         const val WHITELIST_REFRESH_INTERVAL_MS = 5000L
     }
 }

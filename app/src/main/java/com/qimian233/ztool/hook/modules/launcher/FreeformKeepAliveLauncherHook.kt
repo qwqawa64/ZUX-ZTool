@@ -1,6 +1,6 @@
 package com.qimian233.ztool.hook.modules.launcher
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.os.SystemClock
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -9,18 +9,30 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 
 /**
- * Shields whitelisted freeform apps from the launcher's recents memory cleaner
- * (com.zui.launcher.util.OverviewUtilities, tag "Launcher.Recents").
+ * Excludes whitelisted freeform apps from the launcher's recents "clean all"
+ * (com.android.quickstep.views.RecentsView dismissAllUnlimitedTasks, the method that
+ * ends by calling OverviewUtilities.removeAllRunningAppProcesses).
  *
- * The batch cleaner's uid/killBackgroundProcesses kills are blocked system-side by
- * FreeformKeepAliveSystemHook (AMS.killUid / AMS.killBackgroundProcesses); here we
- * only block the single-package kill that carries the package name. Never touch the
- * ArrayList<Task> argument of removeAllRunningAppProcesses — injecting package names
- * into it crashes the AsyncTask with a ClassCastException.
+ * The batch method receives (ArrayList<Task>, IntSet protectedTaskIds) and already
+ * skips every task whose id is in the IntSet (that is how ZUI keeps user-locked
+ * cards), and it feeds the same task list into the batch killer as the SURVIVE set.
+ * So adding the whitelisted task ids to the IntSet makes the native skip machinery
+ * protect them on both fronts — no task removal and no batch kill.
  *
- * The whitelist is read with the same short throttle as the system-side hook so
- * edits apply without restarting the launcher, while the hot paths stay IPC-free.
+ * Manual swipe-dismiss does NOT go through this method: the removeTask/killUid calls
+ * of a single dismissal are deliberately left alone so the user can always kill a
+ * whitelisted app by hand (agreed semantics: keep-alive protects against automatic
+ * cleanups only).
+ *
+ * The target method is located by signature (single void method taking
+ * (ArrayList, IntSet)) instead of by its obfuscated name, which changes between
+ * launcher builds.
+ *
+ * Never touch the ArrayList<Task> argument itself — injecting package-name strings
+ * into it crashes the AsyncTask with a ClassCastException (String cannot be cast to
+ * Task).
  */
+@SuppressLint("PrivateApi")
 class FreeformKeepAliveLauncherHook : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.FREEFORM_KEEP_ALIVE_ENABLED.name
 
@@ -50,29 +62,70 @@ class FreeformKeepAliveLauncherHook : AppHookModule() {
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
-        logger.info("Installing FreeformKeepAliveLauncherHook on OverviewUtilities")
+        logger.info("Installing FreeformKeepAliveLauncherHook on RecentsView")
         try {
-            val utilsClass: Class<*> = classLoader.loadClass(
-                "com.zui.launcher.util.OverviewUtilities")
-
-            // static removeAppProcess(Context, int userId, String packageName, int uid) —
-            // single task swipe-dismiss and the PRC force-kill path. The batch cleaner's
-            // uid/killBackgroundProcesses calls are blocked system-side (see
-            // FreeformKeepAliveSystemHook); the task ArrayList must not be touched —
-            // injecting package names into it crashes the AsyncTask with a
-            // ClassCastException (String cannot be cast to Task).
-            val singleKill: Method = findMethod(
-                utilsClass, "removeAppProcess",
-                Context::class.java,
-                Int::class.javaPrimitiveType,
-                String::class.java,
-                Int::class.javaPrimitiveType
+            val recentsViewClass: Class<*> = classLoader.loadClass(
+                "com.android.quickstep.views.RecentsView")
+            val intSetClass: Class<*> = classLoader.loadClass(
+                "com.android.launcher3.util.IntSet")
+            val taskClass: Class<*> = classLoader.loadClass(
+                "com.android.systemui.shared.recents.model.Task")
+            val taskKeyClass: Class<*> = classLoader.loadClass(
+                $$"com.android.systemui.shared.recents.model.Task$TaskKey"
             )
-            hookWithId(singleKill, "freeform_keep_alive_single_kill") { chain ->
-                val packageName = chain.args[2] as? String
-                if (packageName != null && currentWhitelist().contains(packageName)) {
-                    logger.debug("Blocked recents kill of whitelisted $packageName")
-                    return@hookWithId null
+
+            val candidates = recentsViewClass.declaredMethods.filter {
+                it.parameterTypes.size == 2 &&
+                    it.parameterTypes[0] == java.util.ArrayList::class.java &&
+                    it.parameterTypes[1] == intSetClass &&
+                    it.returnType == Void.TYPE
+            }
+            logger.info(
+                "RecentsView (ArrayList, IntSet) void candidates: " +
+                    candidates.joinToString { it.name })
+            // dismissAllUnlimitedTasks is obfuscated per build ("P5" on current ZUI
+            // builds). Prefer the known name; degrade to the first candidate with a
+            // logged warning when the name changes.
+            val batchClean: Method = candidates.firstOrNull { it.name == "P5" }
+                ?: candidates.firstOrNull()
+                ?: run {
+                    logger.error(
+                        "dismissAllUnlimitedTasks-like method not found in RecentsView, " +
+                            "batch clean-all will not skip whitelisted apps")
+                    return
+                }
+            logger.info("Batch clean-all method selected: ${batchClean.name}")
+            val keyField = findField(taskClass, "key")
+            val baseIntentField = findField(taskKeyClass, "baseIntent")
+            val idField = findField(taskKeyClass, "id")
+            val intSetAdd: Method = intSetClass.getMethod(
+                "add", Int::class.javaPrimitiveType)
+
+            hookWithId(batchClean, "freeform_keep_alive_clean_all_skip") { chain ->
+                logger.debug("clean-all hook fired, args=${chain.args.map { it?.javaClass?.name }}")
+                try {
+                    val whitelist = currentWhitelist()
+                    val tasks = chain.args[0] as? ArrayList<*>
+                    val protectedIds = chain.args[1]
+                    if (whitelist.isNotEmpty() && tasks != null && protectedIds != null) {
+                        for (task in tasks) {
+                            if (task == null) continue
+                            val key = keyField.get(task) ?: continue
+                            val intent = baseIntentField.get(key) ?: continue
+                            val pkg = (intent as android.content.Intent)
+                                .component?.packageName ?: continue
+                            if (whitelist.contains(pkg)) {
+                                val taskId = idField.getInt(key)
+                                intSetAdd.invoke(protectedIds, taskId)
+                                logger.debug(
+                                    "Protected whitelisted task $taskId ($pkg) " +
+                                        "from batch clean-all"
+                                )
+                            }
+                        }
+                    }
+                } catch (t: Throwable) {
+                    logger.error("clean-all skip failed, letting batch proceed", t)
                 }
                 chain.proceed()
             }
