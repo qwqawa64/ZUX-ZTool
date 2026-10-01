@@ -51,6 +51,30 @@ jobs:
           awk 'NR>1 && /^"Beta\//{exit} {print}' 更新日志.txt > latest-changelog.md
           # 去掉尾部空行，避免正文出现多余空隙
           printf '%s\n' "$(cat latest-changelog.md)" > latest-changelog.md
+          # 条目正文（不含 header），供 UpdateCheck.json 的 whatNew 使用
+          tail -n +2 latest-changelog.md > latest-entries.txt
+
+      # ---- 解析 header 并填充 UpdateCheck.json ----
+      - name: Update UpdateCheck.json
+        run: |
+          set -euo pipefail
+          header=$(head -n1 latest-changelog.md)
+          version_name=$(printf '%s' "$header" | sed -E 's/^"([^"]+)".*/\1/')
+          version_code=$(printf '%s' "$header" | grep -oE '\(c[0-9]+\)' | grep -oE '[0-9]+')
+          # url = 本次 release 标签的完整 URL（标签日期为 8 位 yyyyMMdd）
+          url="https://github.com/${{ github.repository }}/releases/tag/${{ steps.tag.outputs.name }}"
+          test -n "$version_name" && test -n "$version_code"
+          echo "version=$version_name code=$version_code url=$url"
+          jq -n \
+            --arg name "$version_name" \
+            --argjson code "$version_code" \
+            --rawfile entries latest-entries.txt \
+            --arg url "$url" \
+            '{newVersionName: $name,
+              newVersionCode: $code,
+              whatNew: ($entries | gsub("\n+$"; "")),
+              url: $url}' > UpdateCheck.json
+          cat UpdateCheck.json
 
       # ---- 打标签并创建草稿 Release（标签不存在时自动在当前提交上创建） ----
       - name: Create draft GitHub Release
@@ -64,3 +88,13 @@ jobs:
           body_path: latest-changelog.md
           files: ${{ steps.apk.outputs.path }}
           fail_on_unmatched_files: true
+
+      # ---- 将更新后的 UpdateCheck.json 推送到远程 ----
+      - name: Commit and push UpdateCheck.json
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add UpdateCheck.json
+          git commit -m "updatecheck: release ${{ steps.tag.outputs.name }}"
+          git push origin HEAD:${{ github.ref_name }}
