@@ -1,6 +1,6 @@
 {
-  "newVersionName": "Beta/260913",
-  "newVersionCode": 1605,
-  "whatNew": "补全 Credits: 一言支持、GitHub 加速支持\n重置所有受到模块污染的 prop\n网速指示器隐藏慢速\n禁止游戏中降亮度\n集中管理 DexKit 查找的方法名，提供一个列表或者文件来持久化记录\n正方形文件夹\n无字模式，抽屉和桌面各自拦截\n启动器内批量卸载 APP\n屏蔽云控？\n锁屏时钟颜色自定义（ZUXOS 1.5 系统内支持）\n充电动画时长更改\n更新完美横屏适配\n原始设置和桌面图标",
-  "url": "ZTool_Beta_260913_c1605"
+  "newVersionName": "Beta/261001",
+  "newVersionCode": 1907,
+  "whatNew": "新功能（Hook）：\n浮窗保活\nHook 设备服务 APP\n核心破解\n控制中心长按动效\n音量详情面板\n媒体输出磁贴\n隐藏磁贴详情指示按钮\n修复控制中心回弹\nAOSP 长截屏\n跳过人脸识别超时限制\n搜狗输入法（联想 OEM）强制半角符号输出（感谢 BetterZUIKey）\n扩展桌面网格宽度，支持正方形网格与左右留白\n接管桌面图标大小设置，可突破系统 0.6~1.3 的倍率限制\n所有应用显示小窗入口\n\n新功能（非 Hook）：\n功能搜索\n修复深色模式自动切换失效\n联想工程代码入口\n删除 UDS 引擎下载到 /data/ota_package 的更新包\n锁屏随机签名默认使用内置一言 API 与内容正则\n关于页新增在 GitHub 反馈问题入口\n检查更新失败时显示具体原因并可点击重试\n打开电池优化和极暗模式入口\n验证下载来源\n从 new XSharedPreferences 导入数据\n优化备份还原 JSON 结构；支持备份主题配置\n支持隐藏桌面入口\n支持在后台页面隐藏自身\n许可证行引用到 GitHub LICENSE 文件\n在关于页查看用户协议\n共享偏好值编辑器（高级功能，不懂勿用）\n在功能面板显示被冻结或卸载的应用\n\n稳定性（Hook）：\n增强竖排控制中心 Hook 健壮性\n修正关联应用小窗判断\n修正最近任务内存显示在 PC 模式桌面重新进入时的崩溃\n\n其它：\n重做日志等级 UI\nFirstrun 页面增加 schema\n主页改版\n首次运行向导改版\n深刷救砖包获取入口迁移到杂项\n设置页拆分出独立杂项页\n移除主页随机一言功能",
+  "url": "https://github.com/qwqawa64/ZUX-ZTool/releases/tag/20261001-ZTool_Beta"
 }
