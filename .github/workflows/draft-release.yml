@@ -10,7 +10,9 @@ jobs:
   build:
     name: Build Debug & Release
     # 复用 Android CI 工作流：workflow_call 事件下其内部逻辑等价于手动触发，总是构建
+    # secrets: inherit —— secrets 不会自动透传给可复用工作流，签名密钥必须显式继承
     uses: ./.github/workflows/android.yml
+    secrets: inherit
 
   draft-release:
     name: Draft release
