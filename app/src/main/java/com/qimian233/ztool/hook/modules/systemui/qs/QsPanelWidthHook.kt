@@ -41,6 +41,7 @@ class QsPanelWidthHook : AppHookModule() {
         return view.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
     }
 
+    @SuppressLint("DiscouragedPrivateApi")
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         logger.info("QsPanelWidthTestHook: loading")
 
@@ -69,10 +70,9 @@ class QsPanelWidthHook : AppHookModule() {
             if (cachedQsFrameId == 0) {
                 val resolved = frame.resources
                     .getIdentifier("qs_frame", "id", ScopeKeys.SYSTEM_UI.packageName)
-                if (resolved != 0) cachedQsFrameId = resolved
+                if (resolved != 0) cachedQsFrameId = resolved else logger.warn("Failed to resolve QS frame id!")
             }
             if (cachedQsFrameId == 0 || frame.id != cachedQsFrameId) {
-                logger.warn("Unable to locate QS frame ID: cachedQsFrameId = $cachedQsFrameId, frame.id = ${frame.id}")
                 return@hookWithId chain.proceed()
             }
 
@@ -212,16 +212,22 @@ class QsPanelWidthHook : AppHookModule() {
         logger.info("QsPanelWidthHook: pagedDefaultColumns = $pagedDefaultColumns")
 
         hookWithId(pagedMeasureMethod, "tile_columns_adjust", 100) { chain ->
+            logger.info("tileColumns = $tileColumns")
             if (tileColumns != 0) {
                 val pagedLayout = chain.thisObject as View
-                if (isWindowPortrait(pagedLayout)) {
+                val isPortrait = isWindowPortrait(pagedLayout)
+                logger.debug("isWindowPortrait = $isPortrait")
+                if (isPortrait) {
                     val pages = pagesField.get(pagedLayout) as ArrayList<*>
                     if (pages.isNotEmpty()) {
                         // Only trigger redistribution when the column count actually changes,
                         // to avoid rebuilding pages on every onMeasure frame
                         val currentColumns = columnsField.getInt(pages[0])
+                        logger.debug("current = $currentColumns, target = $tileColumns")
                         if (currentColumns != tileColumns) {
-                            if (pagedDefaultColumns == -1) pagedDefaultColumns = currentColumns
+                            if (pagedDefaultColumns == -1) {
+                                pagedDefaultColumns = currentColumns
+                            }
                             for (page in pages) {
                                 columnsField.setInt(page, tileColumns)
                             }
@@ -251,23 +257,25 @@ class QsPanelWidthHook : AppHookModule() {
             Int::class.javaPrimitiveType!!,
             Int::class.javaPrimitiveType!!
         )
-        val maxAllowedRowsField = findField(tileLayoutClass, "mMaxAllowedRows")
         val quickQSPanelClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.QuickQSPanel")
         val maxTilesField = findField(quickQSPanelClass, "mMaxTiles")
-        // mTileLayout is defined in QSPanel (QuickQSPanel's parent), used to read the current mMaxAllowedRows
-        val qsPanelTileLayoutField = findField(quickQSPanelClass, "mTileLayout")
         var qqsDefaultColumns = -1
-        // Native mMaxTiles cap read from the quick_qs_panel_max_tiles resource, used to
-        // restore when the window leaves portrait (id cache: 0 = unresolved, retried).
-        var cachedMaxTilesResId = 0
+        var maxTilesResId = 0
         fun nativeMaxTiles(panel: View): Int {
-            if (cachedMaxTilesResId == 0) {
-                val resolved = panel.resources
+            if (maxTilesResId == 0) {
+                maxTilesResId = panel.resources
                     .getIdentifier("quick_qs_panel_max_tiles", "integer", ScopeKeys.SYSTEM_UI.packageName)
-                if (resolved != 0) cachedMaxTilesResId = resolved
             }
-            return if (cachedMaxTilesResId != 0) panel.resources.getInteger(cachedMaxTilesResId) else 0
+            return if (maxTilesResId != 0) panel.resources.getInteger(maxTilesResId) else 0
+        }
+        var maxRowsResId = 0
+        fun nativeMaxRows(panel: View): Int {
+            if (maxRowsResId == 0) {
+                maxRowsResId = panel.resources
+                    .getIdentifier("quick_qs_panel_max_rows", "integer", ScopeKeys.SYSTEM_UI.packageName)
+            }
+            return if (maxRowsResId != 0) panel.resources.getInteger(maxRowsResId) else 0
         }
 
         hookWithId(qqsMeasureMethod, "tile_columns_qqs") { chain ->
@@ -275,33 +283,15 @@ class QsPanelWidthHook : AppHookModule() {
                 val tileLayout = chain.thisObject as View
                 val parent = tileLayout.parent
                 if (parent != null && quickQSPanelClass.isInstance(parent)) {
-                    if (isWindowPortrait(tileLayout)) {
-                        // Only write when the column count actually changes, avoiding unnecessary field updates
+                    val isPortrait = isWindowPortrait(tileLayout)
+                    if (isPortrait) {
                         val currentColumns = columnsField.getInt(tileLayout)
                         if (currentColumns != tileColumns) {
                             if (qqsDefaultColumns == -1) qqsDefaultColumns = currentColumns
                             columnsField.setInt(tileLayout, tileColumns)
                         }
-                        // mMaxTiles must be synced independently of the columns gate: when the
-                        // native column count equals the custom value the gate above never
-                        // fires and the native mMaxTiles cap (from resources) would survive.
-                        val rows = maxAllowedRowsField.getInt(tileLayout)
-                        if (rows > 0 && maxTilesField.getInt(parent) != tileColumns * rows) {
-                            maxTilesField.setInt(parent, tileColumns * rows)
-                            logger.trace("QSW qqs: mMaxTiles -> ${tileColumns * rows}")
-                        }
-                    } else {
-                        if (qqsDefaultColumns > 0 && columnsField.getInt(tileLayout) == tileColumns) {
-                            columnsField.setInt(tileLayout, qqsDefaultColumns)
-                        }
-                        // Restore the native cap when leaving portrait. This also heals the
-                        // rotation race where setTiles() runs while the root view still has
-                        // stale portrait dimensions and the portrait branch re-applied 14.
-                        val nativeMax = nativeMaxTiles(tileLayout)
-                        if (nativeMax > 0 && maxTilesField.getInt(parent) != nativeMax) {
-                            maxTilesField.setInt(parent, nativeMax)
-                            logger.trace("QSW qqs: mMaxTiles restored to native $nativeMax")
-                        }
+                    } else if (qqsDefaultColumns > 0 && columnsField.getInt(tileLayout) == tileColumns) {
+                        columnsField.setInt(tileLayout, qqsDefaultColumns)
                     }
                 }
             }
@@ -310,63 +300,30 @@ class QsPanelWidthHook : AppHookModule() {
 
         logger.info("QsPanelWidthTestHook: hooked QQSSideLabelTileLayout.onMeasure for QQS tile columns")
 
-        // QuickQSPanelController.setTiles() truncates the tile list at QuickQSPanel.mMaxTiles,
-        // which is (re)initialized from resources on construction and on every config change.
-        // Re-apply the custom cap and refresh the list after every native setTiles() so all
-        // paths (boot init, tile list changes, configuration changes) are covered. The
-        // re-applying guard prevents recursion from invoking setTiles inside its own hook.
         val controllerClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.QuickQSPanelController")
         val controllerSetTilesMethod = findMethod(controllerClass, "setTiles")
-        // mView is defined in ViewController (QuickQSPanelController's ancestor)
         val controllerViewField = findField(controllerClass, "mView")
-        var applyingSetTiles = false
 
         hookWithId(controllerSetTilesMethod, "qqs_max_tiles_settiles") { chain ->
-            chain.proceed()
-            if (tileColumns != 0 && !applyingSetTiles) {
+            if (tileColumns != 0) {
                 val controller = chain.thisObject
-                val panel = controllerViewField.get(controller) as? View ?: return@hookWithId null
-                if (!quickQSPanelClass.isInstance(panel)) return@hookWithId null
-                if (isWindowPortrait(panel)) {
-                    // Read the current mMaxAllowedRows from QuickQSPanel's mTileLayout
-                    val tileLayout = qsPanelTileLayoutField.get(panel) ?: return@hookWithId null
-                    val rows = maxAllowedRowsField.getInt(tileLayout)
-                    if (rows > 0) {
-                        val targetMaxTiles = tileColumns * rows
-                        if (maxTilesField.getInt(panel) != targetMaxTiles) {
-                            maxTilesField.setInt(panel, targetMaxTiles)
-                            applyingSetTiles = true
-                            try {
-                                controllerSetTilesMethod.invoke(controller)
-                                logger.trace(
-                                    "QSW qqs: setTiles re-applied with mMaxTiles=$targetMaxTiles"
-                                )
-                            } finally {
-                                applyingSetTiles = false
-                            }
-                        }
+                val panel = controllerViewField.get(controller) as? View
+                if (panel != null && quickQSPanelClass.isInstance(panel)) {
+                    val isPortrait = panel.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                    val target = if (isPortrait) {
+                        val rows = nativeMaxRows(panel)
+                        if (rows > 0) tileColumns * rows else 0
+                    } else {
+                        nativeMaxTiles(panel)
                     }
-                } else {
-                    // Heal the rotation race: setTiles() can run while the root view
-                    // still has stale portrait dimensions, leaving the custom cap
-                    // applied in landscape. Restore the native cap and refresh.
-                    val nativeMax = nativeMaxTiles(panel)
-                    if (nativeMax > 0 && maxTilesField.getInt(panel) != nativeMax) {
-                        maxTilesField.setInt(panel, nativeMax)
-                        applyingSetTiles = true
-                        try {
-                            controllerSetTilesMethod.invoke(controller)
-                            logger.trace(
-                                "QSW qqs: setTiles re-applied with native mMaxTiles=$nativeMax"
-                            )
-                        } finally {
-                            applyingSetTiles = false
-                        }
+                    if (target > 0 && maxTilesField.getInt(panel) != target) {
+                        maxTilesField.setInt(panel, target)
+                        logger.trace("QSW qqs: mMaxTiles -> $target (${if (isPortrait) "portrait" else "native"})")
                     }
                 }
             }
-            null
+            chain.proceed()
         }
 
         logger.info("QsPanelWidthTestHook: hooked QuickQSPanelController.setTiles for QQS max tiles")
