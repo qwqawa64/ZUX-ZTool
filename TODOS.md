@@ -4,10 +4,10 @@
 ## TODOs
 - [ ] 修复桌面网格大小改变后的正方形大文件夹功能 -> 交给用户微调参数？
 - [x] maxTiles Hook 失效
-- [ ] 长按音量 Slider 偶现反射失败/竟态条件？
-- [ ] 百分比颜色链路
+- [x] 长按音量 Slider ~~偶现反射失败/竟态条件？~~ 在竖屏下硬编码 margin 导致控件被挤出屏幕
+~~- [ ] 百分比颜色链路~~ 修复后更难看
 - [x] maxTiles Hook 在横屏依旧生效
-- [ ] 长按动效 + 点按 Headup Tile 触发 NPE
+- [x] 长按动效 + 点按 Headup Tile 触发 NPE
 
 ## Done until 20261001 Beta
 - [x] 核心破解

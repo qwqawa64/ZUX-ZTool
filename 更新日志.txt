@@ -1,3 +1,9 @@
+修复：
+maxTiles Hook 失效
+长按音量 Slider 在竖屏下硬编码 margin 导致控件被挤出屏幕
+maxTiles Hook 在横屏依旧生效
+长按动效 + 点按 Headup Tile 触发 NPE
+
 "Beta/261001" (c1907)
 新功能（Hook）：
 浮窗保活
