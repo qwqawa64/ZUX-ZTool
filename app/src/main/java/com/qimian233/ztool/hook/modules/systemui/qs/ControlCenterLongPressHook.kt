@@ -122,12 +122,11 @@ class ControlCenterLongPressHook : AppHookModule() {
                                     original.onLongClick(v)
                                 } catch (t: Throwable) {
                                     // The native listener dereferences
-                                    // longPressEffect unconditionally; we null
-                                    // that field, so a state-change race can
-                                    // surface an NPE here. Swallow it: the
-                                    // squish already played and the tile's
-                                    // long-press action (dialog vs settings)
-                                    // is best-effort.
+                                    // longPressEffect unconditionally; keep
+                                    // this best-effort so a state-change race
+                                    // can never crash the shade. The squish
+                                    // already played and the tile's long-press
+                                    // action (dialog vs settings) is optional.
                                     logger.error("tile: original long click failed", t)
                                 }
                             }
@@ -139,11 +138,9 @@ class ControlCenterLongPressHook : AppHookModule() {
                         gestureTriggered = true
                         true
                     }
-                    // Null out the native QSLongPressEffect: its own delayed
-                    // animator overwrites our squish (and its end action
-                    // routes long click to the Settings page) the moment
-                    // isLongClickable becomes true.
-                    disableNativeLongPressEffect(view)
+                    // The long-press effect wiring is redone per gesture in
+                    // the touch hook below; the field itself must stay
+                    // non-null (see neutralizeNativeLongPressEffect).
                     result
                 }
             } catch (t: Throwable) {
@@ -153,18 +150,33 @@ class ControlCenterLongPressHook : AppHookModule() {
     }
 
     /**
-     * Nulls the native QSLongPressEffect so its animator stops fighting our
-     * squish and its completion no longer routes long click to Settings.
+     * Disables the native QSLongPressEffect pipeline for the current gesture
+     * WITHOUT nulling the field: the native click listener (init$1.onClick,
+     * installed by init when the effect is present) dereferences the field
+     * unconditionally, so nulling crashed short taps on effect-bearing tiles
+     * (WLAN / Bluetooth large tiles).
+     *
+     * Instead the effect's state machine is rewound to IDLE right after the
+     * native DOWN handling: the effect animator is started from a runnable
+     * the view posts on DOWN that bails out unless state == TIMEOUT_WAIT, so
+     * rewinding here keeps the animator (and its trailing qsTile.longClick()
+     * routing that fights our squish) from ever starting.
      */
-    private fun disableNativeLongPressEffect(view: View) {
+    private fun neutralizeNativeLongPressEffect(view: View) {
         try {
-            findField(view.javaClass, LONG_PRESS_EFFECT_FIELD).set(view, null)
-        } catch (_: Throwable) {
-            logger.warn("longPressEffect field not found in hierarchy")
+            val effect = findField(view.javaClass, LONG_PRESS_EFFECT_FIELD).get(view) ?: return
+            val stateField = findField(effect.javaClass, EFFECT_STATE_FIELD)
+            val idle = idleState(effect.javaClass) ?: return
+            if (stateField.get(effect) !== idle) {
+                stateField.set(effect, idle)
+            }
         } catch (t: Throwable) {
-            logger.error("Failed to null longPressEffect", t)
+            logger.warn("longPressEffect state rewind failed: $t")
         }
     }
+
+    private fun idleState(stateClass: Class<*>): Any? =
+        stateClass.enumConstants?.firstOrNull { (it as Enum<*>).name == "IDLE" }
 
     /**
      * Visual-only touch tracking for tiles: squish-in on DOWN, release on
@@ -199,6 +211,9 @@ class ControlCenterLongPressHook : AppHookModule() {
                                         ", suppress=true, gestureTriggered=false"
                             )
                             squishIn(view)
+                            // Runs after the native onTouchEvent body, which
+                            // has just flipped the effect to TIMEOUT_WAIT.
+                            neutralizeNativeLongPressEffect(view)
                         }
 
                         MotionEvent.ACTION_MOVE -> {
@@ -259,7 +274,7 @@ class ControlCenterLongPressHook : AppHookModule() {
      * when HideDetailIndicatorHook has tagged the button (dual-target tile
      * with the button forced GONE), the tag itself qualifies so long-press
      * routing still reaches performClick() instead of the native listener,
-     * which NPEs on our nulled longPressEffect.
+     * whose effect state machine this hook keeps neutralized.
      */
     private fun findDetailIndicator(view: View): View? {
         return try {
@@ -569,6 +584,7 @@ class ControlCenterLongPressHook : AppHookModule() {
         const val CUSTOM_QS_TILE_VIEW_CLASS =
             "com.android.systemui.qs.tileimpl.CustomQSTileViewImpl"
         const val LONG_PRESS_EFFECT_FIELD = "longPressEffect"
+        const val EFFECT_STATE_FIELD = "state"
         const val QS_TILE_IMPL_CLASS = "com.android.systemui.qs.tileimpl.QSTileImpl"
         const val TOGGLE_SLIDER_VIEW_CLASS = "com.android.systemui.settings.ToggleSliderView"
         const val TOGGLE_SEEK_BAR_CLASS =
