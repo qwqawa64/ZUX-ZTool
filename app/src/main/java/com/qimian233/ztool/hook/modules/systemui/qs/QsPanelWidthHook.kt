@@ -1,7 +1,10 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.annotation.SuppressLint
+import android.content.res.AssetManager
 import android.content.res.Configuration
+import android.content.res.Resources
+import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -13,18 +16,6 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.util.WeakHashMap
 
-/**
- * Modify the QS panel width while ensuring child controls expand and align correctly.
- *
- * Core strategy: instead of modifying QSContainerImpl, modify its parent container
- * qs_frame (FrameLayout). After narrowing qs_frame's measured width and centering it,
- * the layout bounds of QSContainerImpl and all child controls naturally match the
- * visual area, so the TouchHandler needs no extra patching.
- *
- * Only effective when the host window is taller than wide (portrait); the landscape
- * pass-through restores every mutated state (translation, clip flags, child margins,
- * tile columns) so portrait <-> landscape round trips stay consistent.
- */
 @SuppressLint("PrivateApi", "DiscouragedApi")
 class QsPanelWidthHook : AppHookModule() {
 
@@ -46,27 +37,19 @@ class QsPanelWidthHook : AppHookModule() {
     private fun isWindowPortrait(view: View): Boolean {
         val root = view.rootView
         if (root.width > 0 && root.height > 0) return root.width <= root.height
+        logger.warn("root.width = ${root.width}, root.height = ${root.height}")
         return view.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
     }
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
-        if (param.packageName != ScopeKeys.SYSTEM_UI.packageName) return
         logger.info("QsPanelWidthTestHook: loading")
 
-        val prefs = xposed.getRemotePreferences("xposed_module_config")
-        val widthPercent = prefs.getInt(PreferenceKeys.QS_PANEL_WIDTH_PERCENT.name, DEFAULT_WIDTH_PERCENT)
+        val widthPercent = remotePreferences.getInt(PreferenceKeys.QS_PANEL_WIDTH_PERCENT.name, DEFAULT_WIDTH_PERCENT)
             .coerceIn(0, 100)
-        val tileColumns = prefs.getInt(PreferenceKeys.QS_TILE_COLUMNS.name, DEFAULT_TILE_COLUMNS)
+        val tileColumns = remotePreferences.getInt(PreferenceKeys.QS_TILE_COLUMNS.name, DEFAULT_TILE_COLUMNS)
             .coerceIn(0, 10)
         val targetWidthRatio = widthPercent / 100f
 
-        // Narrow qs_frame (QSContainerImpl's parent container) and center it,
-        // so all descendant controls' layout bounds naturally match the visuals,
-        // preserving native touch behavior.
-        //
-        // Id caches use 0 as the "unresolved" sentinel: getIdentifier() returns 0 on
-        // failure, and caching that would make every NO_ID (-1) frame a false match.
-        // An unresolved id is retried on the next callback instead of being cached.
         var cachedQsFrameId = 0
         // Only pay the clip-override subtree walk once per portrait period, and keep
         // the original values so the landscape pass-through can restore them.
@@ -89,6 +72,7 @@ class QsPanelWidthHook : AppHookModule() {
                 if (resolved != 0) cachedQsFrameId = resolved
             }
             if (cachedQsFrameId == 0 || frame.id != cachedQsFrameId) {
+                logger.warn("Unable to locate QS frame ID: cachedQsFrameId = $cachedQsFrameId, frame.id = ${frame.id}")
                 return@hookWithId chain.proceed()
             }
 
@@ -101,11 +85,6 @@ class QsPanelWidthHook : AppHookModule() {
                     "tx=${frame.translationX}"
             )
             if (isWindowPortrait(frame) && widthPercent != 0 && frame.rootView.width > 0) {
-                // Base both the target width and the centering on the frame's host
-                // window (root view), matching the intended "N% of the window,
-                // centered" semantics. The parent's measure spec is only a native
-                // layout slot (on ZUI tablets it is already a centered ~63% column),
-                // so using it would both undersize the frame and mis-place it.
                 val root = frame.rootView
                 val windowWidth = root.width
                 val targetWidth = (windowWidth * targetWidthRatio).toInt()
@@ -208,11 +187,31 @@ class QsPanelWidthHook : AppHookModule() {
             Int::class.javaPrimitiveType!!,
             Int::class.javaPrimitiveType!!
         )
-        // Native column count observed before the first custom write, used to restore
-        // when the window leaves portrait (PagedTileLayout has no config-change hook).
-        var pagedDefaultColumns = -1
 
-        hookWithId(pagedMeasureMethod, "tile_columns_adjust") { chain ->
+        // Native portrait default of the PagedTileLayout pages: SideLabelTileLayout.
+        // updateResources() derives mColumns as min(mResourceColumns, mMaxColumns) with
+        // mResourceColumns read from R.integer.quick_settings_num_columns. Resolve that
+        // resource eagerly from the SystemUI APK here — capturing it lazily inside the
+        // onMeasure hook is unreliable because the first measure can arrive with empty
+        // pages, or after the field was already mutated.
+        var pagedDefaultColumns = -1
+        runCatching {
+            val assets = AssetManager::class.java.getDeclaredConstructor()
+                .apply { isAccessible = true }
+                .newInstance() as AssetManager
+            AssetManager::class.java.getDeclaredMethod("addAssetPath", String::class.java)
+                .invoke(assets, param.applicationInfo.sourceDir)
+            val res = Resources(assets, DisplayMetrics(), Configuration())
+            val id = res.getIdentifier(
+                "quick_settings_num_columns", "integer", ScopeKeys.SYSTEM_UI.packageName
+            )
+            if (id != 0) pagedDefaultColumns = res.getInteger(id)
+        }.onFailure {
+            logger.error("QsPanelWidth: failed to resolve native qs tile columns", it)
+        }
+        logger.info("QsPanelWidthHook: pagedDefaultColumns = $pagedDefaultColumns")
+
+        hookWithId(pagedMeasureMethod, "tile_columns_adjust", 100) { chain ->
             if (tileColumns != 0) {
                 val pagedLayout = chain.thisObject as View
                 if (isWindowPortrait(pagedLayout)) {
