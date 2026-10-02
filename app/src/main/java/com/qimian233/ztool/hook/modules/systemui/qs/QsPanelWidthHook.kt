@@ -28,12 +28,6 @@ class QsPanelWidthHook : AppHookModule() {
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.SYSTEM_UI.packageName)
 
-    /**
-     * Orientation gate based on the actual host window size instead of
-     * [Configuration].orientation: in split-screen/freeform the configuration can
-     * disagree with the window the shade renders in. Falls back to the configuration
-     * only before the root view has been laid out.
-     */
     private fun isWindowPortrait(view: View): Boolean {
         val root = view.rootView
         if (root.width > 0 && root.height > 0) return root.width <= root.height
@@ -75,15 +69,6 @@ class QsPanelWidthHook : AppHookModule() {
             if (cachedQsFrameId == 0 || frame.id != cachedQsFrameId) {
                 return@hookWithId chain.proceed()
             }
-
-            val dbgParent = frame.parent as? ViewGroup
-            logger.trace(
-                "QSW measure: frame=${System.identityHashCode(frame)} avail=" +
-                    "${View.MeasureSpec.getSize(chain.args[0] as Int)} left=${frame.left} " +
-                    "parentW=${dbgParent?.width} " +
-                    "root=${frame.rootView.width}x${frame.rootView.height} " +
-                    "tx=${frame.translationX}"
-            )
             if (isWindowPortrait(frame) && widthPercent != 0 && frame.rootView.width > 0) {
                 val root = frame.rootView
                 val windowWidth = root.width
@@ -212,11 +197,9 @@ class QsPanelWidthHook : AppHookModule() {
         logger.info("QsPanelWidthHook: pagedDefaultColumns = $pagedDefaultColumns")
 
         hookWithId(pagedMeasureMethod, "tile_columns_adjust", 100) { chain ->
-            logger.info("tileColumns = $tileColumns")
             if (tileColumns != 0) {
                 val pagedLayout = chain.thisObject as View
                 val isPortrait = isWindowPortrait(pagedLayout)
-                logger.debug("isWindowPortrait = $isPortrait")
                 if (isPortrait) {
                     val pages = pagesField.get(pagedLayout) as ArrayList<*>
                     if (pages.isNotEmpty()) {
@@ -303,27 +286,51 @@ class QsPanelWidthHook : AppHookModule() {
         val controllerClass = param.defaultClassLoader
             .loadClass("com.android.systemui.qs.QuickQSPanelController")
         val controllerSetTilesMethod = findMethod(controllerClass, "setTiles")
+        val controllerOnConfigChangedMethod = findMethod(controllerClass, "onConfigurationChanged")
         val controllerViewField = findField(controllerClass, "mView")
+
+        fun resolveMaxTilesTarget(panel: View): Int {
+            val isPortrait = panel.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+            val target = if (isPortrait) {
+                val rows = nativeMaxRows(panel)
+                if (rows > 0) tileColumns * rows else 0
+            } else {
+                nativeMaxTiles(panel)
+            }
+            return if (target > 0) {
+                logger.trace("QSW qqs: mMaxTiles target -> $target (${if (isPortrait) "portrait" else "native"})")
+                target
+            } else 0
+        }
 
         hookWithId(controllerSetTilesMethod, "qqs_max_tiles_settiles") { chain ->
             if (tileColumns != 0) {
                 val controller = chain.thisObject
                 val panel = controllerViewField.get(controller) as? View
                 if (panel != null && quickQSPanelClass.isInstance(panel)) {
-                    val isPortrait = panel.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                    val target = if (isPortrait) {
-                        val rows = nativeMaxRows(panel)
-                        if (rows > 0) tileColumns * rows else 0
-                    } else {
-                        nativeMaxTiles(panel)
-                    }
+                    val target = resolveMaxTilesTarget(panel)
                     if (target > 0 && maxTilesField.getInt(panel) != target) {
                         maxTilesField.setInt(panel, target)
-                        logger.trace("QSW qqs: mMaxTiles -> $target (${if (isPortrait) "portrait" else "native"})")
                     }
                 }
             }
             chain.proceed()
+        }
+
+        hookWithId(controllerOnConfigChangedMethod, "qqs_max_tiles_config") { chain ->
+            chain.proceed()
+            if (tileColumns != 0) {
+                val controller = chain.thisObject
+                val panel = controllerViewField.get(controller) as? View
+                if (panel != null && quickQSPanelClass.isInstance(panel)) {
+                    val target = resolveMaxTilesTarget(panel)
+                    if (target > 0 && maxTilesField.getInt(panel) != target) {
+                        maxTilesField.setInt(panel, target)
+                        controllerSetTilesMethod.invoke(controller)
+                    }
+                }
+            }
+            null
         }
 
         logger.info("QsPanelWidthTestHook: hooked QuickQSPanelController.setTiles for QQS max tiles")
