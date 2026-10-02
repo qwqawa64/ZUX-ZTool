@@ -7,6 +7,7 @@ import android.app.Dialog
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.database.ContentObserver
 import android.graphics.Color
 import android.media.AudioManager
@@ -19,6 +20,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -29,7 +31,6 @@ import androidx.core.graphics.drawable.toDrawable
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
-import com.qimian233.ztool.hook.modules.systemui.qs.VolumeSliderLongPressHook.Companion.onVolumeSliderLongPress
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 import java.util.Locale
@@ -279,9 +280,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
         // IS the background (BrightnessDetailDialog does the same; dim stays 0).
         // Tapping anywhere outside the panel dismisses — a fullscreen window has
         // no "outside", so outside-touch dismissal must be handled here.
-        // Layout mirrors BrightnessDetailDialog: the panel is anchored at the
-        // QS frame's left edge (left margin = qsFrameX + qsMarginStart) and
-        // vertically centered on the screen's horizontal midline.
+        // Layout mirrors BrightnessDetailDialog.updateConstraints$1: landscape
+        // anchors the panel at the QS frame's left edge (margin = qsFrameX -
+        // leftInset + qsMarginStart), portrait drops the margin to 0 and
+        // centers horizontally. Insets drive the re-layout, so rotation is
+        // covered without hooking configuration changes.
         val root = FrameLayout(context).apply {
             setOnClickListener { currentDialog?.dismiss() }
         }
@@ -327,11 +330,25 @@ class VolumeSliderLongPressHook : AppHookModule() {
         root.addView(panel, FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply {
-            // Native BrightnessDetailDialog placement: left margin =
-            // qsFrameX - leftInset + qsMarginStart (the QS frame's right edge).
-            gravity = Gravity.CENTER_VERTICAL or Gravity.START
-            marginStart = resolvePanelMarginStart(context)
+            // BrightnessDetailDialog placement (updateConstraints$1):
+            // landscape -> marginStart = qsFrameX - leftInset + qsMarginStart,
+            // portrait -> marginStart = 0 (horizontally centered instead).
+            // Bottom inset is added on top of both, like the native dialog's
+            // bottomMargin = mBottomInset.
+            gravity = Gravity.CENTER_VERTICAL or Gravity.CENTER_HORIZONTAL
+            marginStart = 0
+            bottomMargin = bottomInset
         })
+
+        // Mirror the native dialog: insets arriving on the root (first dispatch
+        // after show() and again on every rotation) are the single authority for
+        // the panel margins — they recompute the landscape/portrait branch each
+        // time, so no configuration-change hook is needed.
+        root.setOnApplyWindowInsetsListener { _, insets ->
+            captureInsets(insets)
+            applyPanelLayout(context, panel)
+            insets
+        }
 
         behindListener = resolveBehindListener(triggerView)
         dialog.setOnDismissListener {
@@ -351,6 +368,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
         panelShowing = true
         currentDialog = dialog
         mainHandler.post { refreshAppSection() }
+        // Pre-insets layout so the landscape margin is already correct when the
+        // window becomes visible; the insets dispatch right after show() refines
+        // it with the real cutout/system-bar values.
+        applyPanelLayout(context, panel)
         dialog.show()
         // AlertDialog.onCreate -> AlertController.installContent() runs inside
         // show() and installs the stock alert layout, REPLACING any content set
@@ -368,6 +389,13 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     window?.attributes?.layoutInDisplayCutoutMode =
                         WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    // Mirror BrightnessDetailDialog.onCreate: the fullscreen
+                    // root extends under the system bars and the insets are
+                    // consumed by our own OnApplyWindowInsetsListener margins.
+                    window?.setDecorFitsSystemWindows(false)
+                    window?.attributes?.fitInsetsTypes = 0
                 }
             } catch (_: Throwable) {
             }
@@ -412,28 +440,82 @@ class VolumeSliderLongPressHook : AppHookModule() {
     }
 
     /**
-     * Left margin of the panel: the native dialog uses
-     * qsFrameX - leftInset + qsMarginStart (the QS frame's left edge on
-     * split-shade / landscape layouts — measured 759.2dp on the reference
-     * device). Resolve the frame position at runtime from
-     * ShadeController.getQuickSettingsController().getQsFrameX(); fall back to
-     * the measured constant when unavailable.
+     * System-bar / cutout insets of the dialog window, mirroring the native
+     * dialog's onApplyWindowInsets: each side keeps the larger of the
+     * systemBars insets and the display cutout safe inset.
      */
-    private fun resolvePanelMarginStart(context: Context): Int {
-        val controller = brightnessDialogController
-        if (controller != null) {
-            try {
-                val shade = findField(controller.javaClass, "mShadeController").get(controller)
-                val qs = findMethod(shade.javaClass, "getQuickSettingsController").invoke(shade)
-                val frameX = findMethod(qs.javaClass, "getQsFrameX").invoke(qs) as Float
-                val qsMarginStart = resolveDimenPx(context, "qs_margin_start", dp(context, 24))
-                val margin = frameX.toInt() + qsMarginStart
-                return margin
-            } catch (t: Throwable) {
-                logger.debug("volume panel: qsFrameX unavailable: ${t.message}")
-            }
+    private var leftInset = 0
+    private var bottomInset = 0
+
+    private fun captureInsets(insets: WindowInsets) {
+        val barsLeft: Int
+        val barsBottom: Int
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bars = insets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars())
+            barsLeft = bars.left
+            barsBottom = bars.bottom
+        } else {
+            @Suppress("DEPRECATION")
+            barsLeft = insets.systemWindowInsetLeft
+            @Suppress("DEPRECATION")
+            barsBottom = insets.systemWindowInsetBottom
         }
-        return dp(context, 759)
+        @Suppress("DEPRECATION")
+        val cutout = insets.displayCutout
+        leftInset = maxOf(barsLeft, cutout?.safeInsetLeft ?: 0)
+        bottomInset = maxOf(barsBottom, cutout?.safeInsetBottom ?: 0)
+    }
+
+    /**
+     * Re-applies the BrightnessDetailDialog.updateConstraints$1 placement to
+     * the panel. Called on every insets dispatch (initial one after show() and
+     * again on rotation), which covers orientation changes.
+     */
+    private fun applyPanelLayout(context: Context, panel: View) {
+        val lp = panel.layoutParams as? FrameLayout.LayoutParams ?: return
+        val landscape =
+            context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        if (landscape) {
+            lp.gravity = Gravity.CENTER_VERTICAL or Gravity.START
+            lp.marginStart = resolveLandscapeMarginStart(context)
+        } else {
+            // Native portrait branch drops the QS-frame margin entirely
+            // (marginStart = 0) and lets the constraint center the container;
+            // a centered gravity with zero margins is the FrameLayout equivalent.
+            lp.gravity = Gravity.CENTER_VERTICAL or Gravity.CENTER_HORIZONTAL
+            lp.marginStart = 0
+        }
+        lp.bottomMargin = bottomInset
+        panel.layoutParams = lp
+    }
+
+    /**
+     * Landscape margin: qsFrameX - leftInset + qsMarginStart (the QS frame's
+     * left edge on split-shade / landscape layouts), shifted by half the
+     * display width in RTL layouts like the native dialog. Resolve the frame
+     * position at runtime from ShadeController.getQuickSettingsController()
+     * .getQsFrameX(); fall back to the measured constant when unavailable.
+     */
+    private fun resolveLandscapeMarginStart(context: Context): Int {
+        var margin = run {
+            val controller = brightnessDialogController
+            if (controller != null) {
+                try {
+                    val shade = findField(controller.javaClass, "mShadeController").get(controller)
+                    val qs = findMethod(shade.javaClass, "getQuickSettingsController").invoke(shade)
+                    val frameX = findMethod(qs.javaClass, "getQsFrameX").invoke(qs) as Float
+                    val qsMarginStart = resolveDimenPx(context, "qs_margin_start", dp(context, 24))
+                    return@run frameX.toInt() - leftInset + qsMarginStart
+                } catch (t: Throwable) {
+                    logger.debug("volume panel: qsFrameX unavailable: ${t.message}")
+                }
+            }
+            dp(context, 759)
+        }
+        if (context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL) {
+            margin += context.resources.displayMetrics.widthPixels / 2
+        }
+        return margin
     }
 
     /** Hidden on NotificationPanelViewController: setDialogBehindAlpha(float). */
