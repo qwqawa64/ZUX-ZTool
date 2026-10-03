@@ -1060,6 +1060,43 @@ class VolumeSliderLongPressHook : AppHookModule() {
             var longPressFired = false
             var longPressPending: Runnable? = null
             val ripple = installTileRipple(tileView)
+            // Align the ripple with the tile's own animation: the state lottie
+            // duration is the device's real tile-animation length (and our
+            // slowDownTileLottie stretches it further by TILE_LOTTIE_SPEED).
+            // The composition may load asynchronously, hence the listener.
+            val lottieView = findLottieView(tileView)
+            if (lottieView != null) {
+                fun applyDuration() {
+                    try {
+                        val duration = findMethod(
+                            lottieView.javaClass, "getDuration"
+                        ).invoke(lottieView) as? Long ?: 0L
+                        if (duration > 0) {
+                            val perceived = (duration / TILE_LOTTIE_SPEED).toLong()
+                            ripple?.setDuration(perceived)
+                            logger.trace(
+                                "volume panel: lottie duration=${duration}ms, " +
+                                    "ripple aligned to ${perceived}ms"
+                            )
+                        }
+                    } catch (t: Throwable) {
+                        logger.debug("volume panel: lottie duration read failed: ${t.message}")
+                    }
+                }
+                applyDuration()
+                try {
+                    val listenerClass = classLoader
+                        .loadClass("com.airbnb.lottie.LottieOnCompositionLoadedListener")
+                    val loadedListener = java.lang.reflect.Proxy.newProxyInstance(
+                        classLoader, arrayOf(listenerClass)
+                    ) { _, _, _ -> applyDuration(); null }
+                    findMethod(
+                        lottieView.javaClass, "addLottieOnCompositionLoadedListener",
+                        listenerClass
+                    ).invoke(lottieView, loadedListener)
+                } catch (_: Throwable) {
+                }
+            }
             // The colored tile square is NOT the whole view: the background
             // LayerDrawable sits on the iconFrame child (see
             // CustomQSTileViewImpl.updateBackground); the rest is label space.
@@ -1246,6 +1283,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private var bounds = Rect(0, 0, 0, 0)
         private var drawCallCount = 0
         private var lastLoggedDraw = 0L
+        private var durationMs = RIPPLE_DURATION_MS
+
+        /** Ripple run length, aligned with the tile's own animation. */
+        fun setDuration(ms: Long) {
+            if (ms > 0) durationMs = ms
+        }
 
         /**
          * ViewOverlay drawables do NOT inherit the view's size (unlike
@@ -1265,7 +1308,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             animator?.cancel()
             drawCallCount = 0
             animator = ValueAnimator.ofFloat(0f, 1f).apply {
-                duration = RIPPLE_DURATION_MS
+                duration = durationMs
                 // Hold near-full opacity through the expansion, then fade in
                 // the tail — closer to the stock enter+fade rhythm.
                 interpolator = android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f)
@@ -1374,6 +1417,22 @@ class VolumeSliderLongPressHook : AppHookModule() {
         } catch (_: Throwable) {
             null
         }
+    }
+
+    /** First LottieAnimationView in the tile's view tree, or null. */
+    private fun findLottieView(root: View): View? {
+        val lottieClass = try {
+            root.context.classLoader.loadClass("com.airbnb.lottie.LottieAnimationView")
+        } catch (_: Throwable) {
+            return null
+        }
+        if (lottieClass.isInstance(root)) return root
+        if (root is ViewGroup) {
+            for (i in 0 until root.childCount) {
+                findLottieView(root.getChildAt(i))?.let { return it }
+            }
+        }
+        return null
     }
 
     /** Installs the self-drawn press ripple into the tile's ViewOverlay. */
