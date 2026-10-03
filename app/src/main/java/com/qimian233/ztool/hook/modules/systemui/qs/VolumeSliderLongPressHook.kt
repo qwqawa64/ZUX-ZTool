@@ -650,8 +650,13 @@ class VolumeSliderLongPressHook : AppHookModule() {
         // The floating icon mirrors the stock slider icon pipeline: drawable
         // family swaps (mute / headset / level) plus the stock color-filter
         // ramp, all driven by the same progress the bar reports.
+        // The stock speaker glyph (volume_* family) draws at ~55% of its 60dp
+        // viewport while the ringer glyph fills ~90% of its 18dp one — equal
+        // view sizes would render the media icon visibly smaller, so the view
+        // is compensated per family.
+        val iconSizeDp = if (mirror != null && mirror.zero != null) 46 else 30
         val iconView = ImageView(context).apply {
-            val size = dp(context, 30)
+            val size = dp(context, iconSizeDp)
             layoutParams = LinearLayout.LayoutParams(size, size)
             (mirror?.baseline ?: fallbackIcon)?.let { setImageDrawable(it) }
         }
