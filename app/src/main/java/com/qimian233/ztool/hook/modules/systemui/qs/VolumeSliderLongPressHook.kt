@@ -627,6 +627,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         fallbackIcon: android.graphics.drawable.Drawable?,
         initial: Int,
         maxValue: Int,
+        iconSizeDp: Int = 30,
         onProgress: (Int) -> Unit = {},
         onStop: (Int) -> Unit = {}
     ): View {
@@ -649,12 +650,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
         // The floating icon mirrors the stock slider icon pipeline: drawable
         // family swaps (mute / headset / level) plus the stock color-filter
-        // ramp, all driven by the same progress the bar reports.
-        // The stock speaker glyph (volume_* family) draws at ~55% of its 60dp
-        // viewport while the ringer glyph fills ~90% of its 18dp one — equal
-        // view sizes would render the media icon visibly smaller, so the view
-        // is compensated per family.
-        val iconSizeDp = if (mirror != null && mirror.zero != null) 46 else 30
+        // ramp, all driven by the same progress the bar reports. iconSizeDp
+        // is per column: the stock speaker glyph (volume_* family) draws at
+        // ~55% of its 60dp viewport while the ringer/app glyphs fill ~90% of
+        // theirs, so the media column takes a compensated, larger view.
         val iconView = ImageView(context).apply {
             val size = dp(context, iconSizeDp)
             layoutParams = LinearLayout.LayoutParams(size, size)
@@ -664,7 +663,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val barThickness = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
             .coerceAtLeast(dp(context, 28))
         // Overlay stack anchored at the bar's bottom end: icon on top of the
-        // percent text, both centered horizontally inside the bar width.
+        // percent text, both centered horizontally inside the bar width. The
+        // gap between them is a fraction of the icon size so visually the
+        // icon-to-label spacing matches across columns of different icon
+        // sizes.
         val overlay = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
@@ -672,7 +674,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         overlay.addView(iconView)
         overlay.addView(percentView, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply { topMargin = dp(context, 2) })
+        ).apply { topMargin = -(iconSizeDp / 4) + dp(context, 2) })
         val barSlot = FrameLayout(context)
         barSlot.addView(buildColumnBar(
             context, initial, maxValue, percentView, iconView, mirror, onProgress, onStop
@@ -891,6 +893,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             iconRes?.let { context.getDrawable(it) },
             initial = (am.getStreamVolume(stream) * 100f / streamMax).roundToInt(),
             maxValue = 100,
+            iconSizeDp = if (stream == AudioManager.STREAM_MUSIC) 46 else 26,
             onProgress = { progress ->
                 val target = (progress * streamMax / 100f).roundToInt()
                 try {
