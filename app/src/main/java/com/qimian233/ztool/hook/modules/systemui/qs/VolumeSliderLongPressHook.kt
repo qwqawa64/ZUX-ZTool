@@ -1065,6 +1065,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
             // slowDownTileLottie stretches it further by TILE_LOTTIE_SPEED).
             // The composition may load asynchronously, hence the listener.
             val lottieView = findLottieView(tileView)
+            if (lottieView == null) {
+                logger.trace("volume panel: no lottie view in tile (ripple keeps default)")
+            }
             if (lottieView != null) {
                 fun applyDuration() {
                     try {
@@ -1284,6 +1287,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private var drawCallCount = 0
         private var lastLoggedDraw = 0L
         private var durationMs = RIPPLE_DURATION_MS
+        private var maxRadius = 0f
 
         /** Ripple run length, aligned with the tile's own animation. */
         fun setDuration(ms: Long) {
@@ -1302,9 +1306,27 @@ class VolumeSliderLongPressHook : AppHookModule() {
             originX = x
             originY = y
             bounds = Rect(area)
-            log("ripple trigger at($x,$y) bounds=$area " +
+            // Distance to the farthest corner: the radius the circle needs to
+            // fully cover the area from wherever the finger landed. Linear
+            // growth toward hypot(w,h) leaves off-center origins uncovered
+            // and makes the tail of the run visually dead.
+            maxRadius = maxOf(
+                kotlin.math.hypot(
+                    (x - area.left).toDouble(), (y - area.top).toDouble()
+                ),
+                kotlin.math.hypot(
+                    (area.right - x).toDouble(), (y - area.top).toDouble()
+                ),
+                kotlin.math.hypot(
+                    (x - area.left).toDouble(), (area.bottom - y).toDouble()
+                ),
+                kotlin.math.hypot(
+                    (area.right - x).toDouble(), (area.bottom - y).toDouble()
+                )
+            ).toFloat()
+            log("ripple trigger at($x,$y) bounds=$area maxR=$maxRadius " +
                 "color=${Integer.toHexString(paint.color)} startR=$startRadiusPx " +
-                "cornerR=$cornerRadiusPx")
+                "cornerR=$cornerRadiusPx dur=${durationMs}ms")
             animator?.cancel()
             drawCallCount = 0
             animator = ValueAnimator.ofFloat(0f, 1f).apply {
@@ -1315,7 +1337,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 addUpdateListener { animation ->
                     val t = animation.animatedValue as Float
                     val fade = ((t - FADE_START) / (1f - FADE_START)).coerceIn(0f, 1f)
-                    paint.alpha = (RIPPLE_MAX_ALPHA * (1f - fade)).toInt()
+                    paint.alpha = (RIPPLE_MAX_ALPHA * (1f - fade * fade)).toInt()
                     invalidateSelf()
                 }
                 addListener(object : android.animation.AnimatorListenerAdapter() {
@@ -1345,10 +1367,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 "ripple draw t=$t alpha=${paint.alpha} " +
                     "bounds=$bounds origin=($originX,$originY)"
             )
-            val maxRadius = kotlin.math.hypot(
-                bounds.width().toDouble(), bounds.height().toDouble()
-            ).toFloat()
-            val radius = startRadiusPx + (maxRadius - startRadiusPx) * t
+            val maxR = maxRadius
+            val radius = startRadiusPx + (maxR - startRadiusPx) * t
             clip.reset()
             clip.addRoundRect(
                 bounds.left.toFloat(), bounds.top.toFloat(),
@@ -1376,8 +1396,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         companion object {
             private const val RIPPLE_MAX_ALPHA = 80
-            private const val RIPPLE_DURATION_MS = 450L
-            private const val FADE_START = 0.45f
+            private const val RIPPLE_DURATION_MS = 500L
+            private const val FADE_START = 0.6f
             var cornerRadiusPx = 0f
         }
     }
