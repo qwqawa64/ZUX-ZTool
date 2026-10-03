@@ -580,6 +580,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * The media column fills the full stock family (mute / wired / BT / level
      * glyphs); the ring column only swaps normal <-> ringer-mute; app columns
      * use a static icon (null mirror).
+     *
+     * tintToStockBase: the ring glyphs are opaque white while the stock
+     * speaker glyphs carry #ffffff@0.3 — when set, every drawable of this
+     * mirror gets a color filter recomputed by the stock ramp formula so the
+     * column's default shade matches the media column.
      */
     private class IconMirror(
         val baseline: android.graphics.drawable.Drawable?,
@@ -587,7 +592,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val btZero: android.graphics.drawable.Drawable? = null,
         val comZero: android.graphics.drawable.Drawable? = null,
         val btNonMute: android.graphics.drawable.Drawable? = null,
-        val comNonMute: android.graphics.drawable.Drawable? = null
+        val comNonMute: android.graphics.drawable.Drawable? = null,
+        val tintToStockBase: Boolean = false
     )
 
     /** Media column: the exact drawable family of updateVolumeStartImgForAnimationFlag. */
@@ -603,7 +609,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
     /** Ring column: ringer glyph swaps to its mute variant at volume zero. */
     private fun ringIconMirror(context: Context): IconMirror = IconMirror(
         baseline = panelDrawable(context, "ic_volume_ringer_zui"),
-        zero = panelDrawable(context, "ic_volume_ringer_mute_zui")
+        zero = panelDrawable(context, "ic_volume_ringer_mute_zui"),
+        tintToStockBase = true
     )
 
     private fun panelDrawable(context: Context, name: String): android.graphics.drawable.Drawable? {
@@ -699,6 +706,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
         })
         if (mirror != null) {
             updateColumnIcon(iconView, mirror, initial)
+        } else {
+            fallbackIcon?.let {
+                iconView.setImageDrawable(it)
+                iconView.clearColorFilter()
+            }
         }
         return column
     }
@@ -752,10 +764,16 @@ class VolumeSliderLongPressHook : AppHookModule() {
             else -> mirror.baseline
         }
         drawable?.let { iconView.setImageDrawable(it) }
-        // Stock applies the ramp only on the speaker non-mute glyph; the
-        // headset glyphs and the zero state carry their own alpha instead.
-        val filtered = percent > 0 && headset == null
-        if (filtered) iconView.setColorFilter(color) else iconView.clearColorFilter()
+        when {
+            // Tinted mirrors (ring): recompute the stock ramp over the opaque
+            // glyph — at volume zero this lands on the base color, above it
+            // the ramp darkens exactly like the media column's filter.
+            mirror.tintToStockBase -> iconView.setColorFilter(color)
+            // Stock applies the ramp only on the speaker non-mute glyph; the
+            // headset glyphs and the zero state carry their own alpha instead.
+            percent > 0 && headset == null -> iconView.setColorFilter(color)
+            else -> iconView.clearColorFilter()
+        }
     }
 
     /**
@@ -893,7 +911,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             iconRes?.let { context.getDrawable(it) },
             initial = (am.getStreamVolume(stream) * 100f / streamMax).roundToInt(),
             maxValue = 100,
-            iconSizeDp = if (stream == AudioManager.STREAM_MUSIC) 40 else 26,
+            iconSizeDp = if (stream == AudioManager.STREAM_MUSIC) 32 else 26,
             onProgress = { progress ->
                 val target = (progress * streamMax / 100f).roundToInt()
                 try {
