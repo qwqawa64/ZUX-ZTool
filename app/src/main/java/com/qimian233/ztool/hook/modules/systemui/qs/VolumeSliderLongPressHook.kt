@@ -979,12 +979,17 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 Boolean::class.javaPrimitiveType)
 
             // Expandable from the view, same as the native dialog's
-            // Expandable.Companion.fromView.
-            val expandable = run {
-                val companion = classLoader.loadClass(EXPANDABLE_CLASS)
-                    .getDeclaredField("Companion").get(null)
-                findMethod(companion.javaClass, "fromView", View::class.java)
-                    .invoke(companion, tileView)
+            // Expandable.Companion.fromView. R8 flattened the Companion, so
+            // fromView lives directly on the interface as a static; fall back
+            // to a hand-rolled implementation of the 3-method interface.
+            val expandableClass = classLoader.loadClass(EXPANDABLE_CLASS)
+            val expandable: Any = try {
+                findMethod(expandableClass, "fromView", View::class.java)
+                    .invoke(null, tileView)
+            } catch (_: Throwable) {
+                java.lang.reflect.Proxy.newProxyInstance(
+                    classLoader, arrayOf(expandableClass)
+                ) { _, _, _ -> tileView }
             }
 
             fun refresh() {
