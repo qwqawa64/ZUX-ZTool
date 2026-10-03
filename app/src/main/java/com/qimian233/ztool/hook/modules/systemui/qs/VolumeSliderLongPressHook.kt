@@ -1062,6 +1062,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
             tileView.setOnTouchListener { view, event ->
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
+                        logger.trace(
+                            "volume panel: tile DOWN at(${event.x},${event.y}) " +
+                                "view=${view.width}x${view.height} ripple=" +
+                                (ripple != null)
+                        )
                         // Ripple from the finger, like the stock press effect.
                         ripple?.trigger(event.x, event.y, view.width, view.height)
                         longPressFired = false
@@ -1195,7 +1200,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
      */
     private class TileRippleDrawable(
         private val tintColor: Int,
-        private val startRadiusPx: Float
+        private val startRadiusPx: Float,
+        private val log: (String) -> Unit
     ) : android.graphics.drawable.Drawable() {
         private val paint = android.graphics.Paint(
             android.graphics.Paint.ANTI_ALIAS_FLAG
@@ -1205,6 +1211,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private var originX = 0f
         private var originY = 0f
         private var bounds = Rect(0, 0, 0, 0)
+        private var drawCallCount = 0
+        private var lastLoggedDraw = 0L
 
         /**
          * ViewOverlay drawables do NOT inherit the view's size (unlike
@@ -1215,7 +1223,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
             originX = x
             originY = y
             bounds = Rect(0, 0, width, height)
+            log("ripple trigger at($x,$y) view=${width}x$height " +
+                "color=${Integer.toHexString(tintColor)} startR=$startRadiusPx " +
+                "cornerR=$cornerRadiusPx")
             animator?.cancel()
+            drawCallCount = 0
             animator = ValueAnimator.ofFloat(0f, 1f).apply {
                 duration = 350L
                 addUpdateListener { animation ->
@@ -1226,6 +1238,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
                     override fun onAnimationEnd(animation: Animator) {
                         paint.alpha = 0
                         invalidateSelf()
+                        log("ripple animation ended, draw calls total=$drawCallCount")
                     }
                 })
                 start()
@@ -1233,10 +1246,21 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
 
         override fun draw(canvas: Canvas) {
+            drawCallCount++
             if (paint.alpha <= 0) return
-            val t = animator?.animatedValue as? Float ?: return
+            val t = animator?.animatedValue as? Float ?: run {
+                throttledLog("ripple draw skipped: animator null/expired")
+                return
+            }
             val bounds = bounds
-            if (bounds.isEmpty) return
+            if (bounds.isEmpty) {
+                throttledLog("ripple draw skipped: empty bounds")
+                return
+            }
+            throttledLog(
+                "ripple draw t=$t alpha=${paint.alpha} " +
+                    "bounds=$bounds origin=($originX,$originY)"
+            )
             val maxRadius = kotlin.math.hypot(
                 bounds.width().toDouble(), bounds.height().toDouble()
             ).toFloat()
@@ -1252,6 +1276,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
             paint.color = tintColor
             canvas.drawCircle(originX, originY, radius, paint)
             canvas.restore()
+        }
+
+        /** draw() fires every frame; log at most twice per animation run. */
+        private fun throttledLog(message: String) {
+            val now = android.os.SystemClock.uptimeMillis()
+            if (now - lastLoggedDraw < 150L) return
+            lastLoggedDraw = now
+            log(message)
         }
 
         override fun setAlpha(alpha: Int) {}
@@ -1281,8 +1313,20 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
         // ViewOverlay draws above the view's own content regardless of the
         // tile's draw overrides; the drawable requests its own invalidations.
-        val ripple = TileRippleDrawable(highlight, dp(context, 22).toFloat())
-        tileView.overlay.add(ripple)
+        val ripple = TileRippleDrawable(highlight, dp(context, 22).toFloat()) {
+            logger.trace(it)
+        }
+        try {
+            tileView.overlay.add(ripple)
+        } catch (t: Throwable) {
+            logger.warn("volume panel: overlay add failed: ${t.message}")
+            return null
+        }
+        logger.trace(
+            "volume panel: ripple installed on tile (overlay count=" +
+                tileView.overlay.javaClass.name + ", color=0x" +
+                Integer.toHexString(highlight) + ")"
+        )
         tileView.tag = TILE_RIPPLE_TAG
         return ripple
     }
