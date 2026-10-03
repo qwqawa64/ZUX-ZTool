@@ -1059,6 +1059,15 @@ class VolumeSliderLongPressHook : AppHookModule() {
             var longPressFired = false
             var longPressPending: Runnable? = null
             val ripple = installTileRipple(tileView)
+            // The colored tile square is NOT the whole view: the background
+            // LayerDrawable sits on the iconFrame child (see
+            // CustomQSTileViewImpl.updateBackground); the rest is label space.
+            // Ripple bounds follow iconFrame so the effect stays in the square.
+            val iconFrame = try {
+                findField(tileView.javaClass, "iconFrame").get(tileView) as? View
+            } catch (_: Throwable) {
+                null
+            }
             tileView.setOnTouchListener { view, event ->
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
@@ -1067,8 +1076,17 @@ class VolumeSliderLongPressHook : AppHookModule() {
                                 "view=${view.width}x${view.height} ripple=" +
                                 (ripple != null)
                         )
-                        // Ripple from the finger, like the stock press effect.
-                        ripple?.trigger(event.x, event.y, view.width, view.height)
+                        // Ripple from the finger, like the stock press effect,
+                        // clipped to the icon square rather than the whole tile.
+                        if (iconFrame != null) {
+                            ripple?.trigger(
+                                event.x - iconFrame.left,
+                                event.y - iconFrame.top,
+                                iconFrame.width, iconFrame.height
+                            )
+                        } else {
+                            ripple?.trigger(event.x, event.y, view.width, view.height)
+                        }
                         longPressFired = false
                         longPressPending?.let(view::removeCallbacks)
                         val lp = Runnable {
