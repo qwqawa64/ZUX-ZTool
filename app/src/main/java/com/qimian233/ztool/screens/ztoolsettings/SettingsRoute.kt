@@ -100,6 +100,7 @@ fun SettingsMainRoute(
     val backupSuccessStr = stringResource(R.string.page_settings_config_backup_success)
     val restoreSuccessStr = stringResource(R.string.page_settings_config_restore_success)
     val exportLogsSuccessStr = stringResource(R.string.page_settings_export_logs_success)
+    val exportLogsStartedStr = stringResource(R.string.page_settings_export_logs_started)
     val exportLogsFailedStr = stringResource(R.string.page_settings_export_logs_failed)
 
     val backupLauncher = rememberLauncherForActivityResult(
@@ -132,6 +133,9 @@ fun SettingsMainRoute(
         ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
         if (uri != null) {
+            // The export now runs logcat/LSPosed sync before zipping, so give
+            // immediate feedback instead of a silent multi-second wait.
+            Toast.makeText(context, exportLogsStartedStr, Toast.LENGTH_SHORT).show()
             viewModel.exportLogsToUri(uri) { success, error ->
                 activity.runOnUiThread {
                     Toast.makeText(

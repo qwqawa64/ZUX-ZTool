@@ -160,6 +160,7 @@
     <!--日志页资源值-->
     <string name="settings_close_button">关闭</string>
     <string name="page_settings_export_logs_success">日志导出成功</string>
+    <string name="page_settings_export_logs_started">开始导出日志</string>
     <string name="page_settings_export_logs_failed">日志导出失败</string>
     <string name="page_settings_export_logs">导出日志</string>
     <string name="page_settings_delete_all_logs">删除所有日志</string>

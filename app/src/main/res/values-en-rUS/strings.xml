@@ -149,6 +149,7 @@
     <string name="page_home_config_upgraded_tip_message">The current version changed the configuration file format.\nRestart the system to keep configuration reading and writing working correctly.</string>
     <string name="settings_close_button">Close</string>
     <string name="page_settings_export_logs_success">Logs exported</string>
+    <string name="page_settings_export_logs_started">Starting log export</string>
     <string name="page_settings_export_logs_failed">Failed to export logs</string>
     <string name="page_settings_export_logs">Export Logs</string>
     <string name="page_settings_delete_all_logs">Delete All Logs</string>
