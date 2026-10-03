@@ -956,14 +956,21 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
             val state = classLoader.loadClass(QS_TILE_STATE_CLASS)
                 .getDeclaredConstructor().newInstance()
+            // Icon: the media-output dialog's device-volume icon lives in the
+            // media.dialog family (jadx-confirmed names); the header fallbacks
+            // are generic media glyphs from the same area.
             val iconRes = resolveDrawableId(
                 context,
-                "ic_media_output", "media_output",
-                "ic_audio_output", "quick_settings_media_output"
+                "media_output_icon_volume", "media_output_icon_volume_off",
+                "media_output_title_icon_area",
+                "ic_media_output", "media_output", "ic_audio_output"
             )
+            // Label: jadx-confirmed strings of the same dialog; the
+            // accessibility title reads naturally as a tile label.
             val labelRes = resolveStringId(
                 context,
-                "media_output_tile_label", "quick_settings_media_output_label",
+                "media_output_dialog_accessibility_title",
+                "media_output_dialog_button_connect_device",
                 "media_output_dialog_title"
             )
             val label = labelRes?.let { context.getString(it) }
