@@ -849,6 +849,21 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val refresh: () -> Unit
     )
 
+    /**
+     * A Lottie state-transition clip the tile plays when its value flips.
+     * CustomizeTileView.animationsEnabled() is hardcoded false (edit-sheet
+     * tiles are static), which also gates the native startLottieAnimation
+     * path, so the clip is driven directly on the LottieAnimationView instead
+     * of through the tile pipeline.
+     */
+    private class TileLottie(
+        val resName: String,
+        val onMin: Int,
+        val onMax: Int,
+        val offMin: Int,
+        val offMax: Int
+    )
+
     private var muteTile: TileUi? = null
     private var dndTile: TileUi? = null
     private var vibrateTile: TileUi? = null
@@ -871,6 +886,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
             labelResNames = arrayOf("widget_text_mute"),
             iconActiveNames = arrayOf("controlcenter_1_btn_mute"),
             iconInactiveNames = arrayOf("controlcenter_1_btn_mute_inactive", "controlcenter_1_btn_mute"),
+            // QMuteTile: silent_off clip, on = frames 0..20, off = 60..110.
+            lottie = TileLottie("silent_off", 0, 20, 60, 110),
             isOn = { muteTileOn() },
             onToggle = { toggleMute() }
         )
@@ -910,6 +927,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         labelResNames: Array<String>,
         iconActiveNames: Array<String>,
         iconInactiveNames: Array<String>,
+        lottie: TileLottie? = null,
         isOn: () -> Boolean,
         onToggle: () -> Unit
     ): TileUi? {
@@ -930,7 +948,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 iconInactiveNames.firstNotNullOfOrNull { resolveDrawableId(context, it) }
             val label = labelResNames.firstNotNullOfOrNull { resolveStringId(context, it) }
                 ?.let { context.getString(it) } ?: ""
+            val lottieRes = lottie?.let { resolveRawId(context, it.resName) }
 
+            var lastOn = isOn()
             fun buildState(on: Boolean): Any {
                 val state = stateClass.getDeclaredConstructor().newInstance()
                 setField(state, "label", label)
@@ -942,12 +962,26 @@ class VolumeSliderLongPressHook : AppHookModule() {
                     val icon = resourceIcon(classLoader, iconRes)
                     if (icon != null) setField(state, "icon", icon)
                 }
+                // Load the transition clip and land on the state's end frame;
+                // playback on flips is driven directly on the Lottie view in
+                // animateLottieFlip() because CustomizeTileView disables the
+                // native startLottieAnimation path.
+                if (lottieRes != null && lottie != null) {
+                    setField(state, "lottieRawResId", lottieRes)
+                    setField(state, "minFrame", if (on) lottie.onMin else lottie.offMin)
+                    setField(state, "maxFrame", if (on) lottie.onMax else lottie.offMax)
+                }
                 return state
             }
 
             fun refresh() {
                 try {
-                    handleStateChanged.invoke(tileView, buildState(isOn()))
+                    val on = isOn()
+                    handleStateChanged.invoke(tileView, buildState(on))
+                    if (lottieRes != null && lottie != null && on != lastOn) {
+                        animateLottieFlip(tileView, lottieRes, lottie, on)
+                    }
+                    lastOn = on
                     slowDownTileLottie(tileView)
                 } catch (t: Throwable) {
                     logger.error("tile refresh failed", t)
@@ -1004,6 +1038,45 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * Tile state-change animations are Lottie clips played at native speed;
      * slow them down so the state transition reads longer.
      */
+    /**
+     * Plays the state-transition clip directly on the tile's LottieAnimationView:
+     * rewind to the segment's first frame, then play — the lottie stops at
+     * maxFrame (set by the state's min/max, mirrored from QMuteTile). This
+     * bypasses CustomizeTileView.animationsEnabled() == false, which kills the
+     * native startLottieAnimation path in QSIconViewImpl.updateIcon.
+     */
+    private fun animateLottieFlip(root: View, lottieRes: Int, lottie: TileLottie, on: Boolean) {
+        try {
+            val lottieClass = root.context.classLoader
+                .loadClass("com.airbnb.lottie.LottieAnimationView")
+            val min = if (on) lottie.onMin else lottie.offMin
+            val max = if (on) lottie.onMax else lottie.offMax
+            fun walk(view: View) {
+                if (lottieClass.isInstance(view)) {
+                    findMethod(lottieClass, "setMinAndMaxFrame",
+                        Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+                        .invoke(view, min, max)
+                    // setFrame is the LottieComposition-free variant used by
+                    // QSIconViewImpl; rewind to min before play so the clip
+                    // always starts from the segment head.
+                    try {
+                        findMethod(lottieClass, "setFrame", Int::class.javaPrimitiveType)
+                            .invoke(view, min)
+                    } catch (_: Throwable) {
+                        findMethod(lottieClass, "setProgress", Float::class.javaPrimitiveType)
+                            .invoke(view, 0f)
+                    }
+                    findMethod(lottieClass, "playAnimation").invoke(view)
+                } else if (view is ViewGroup) {
+                    for (i in 0 until view.childCount) walk(view.getChildAt(i))
+                }
+            }
+            walk(root)
+        } catch (t: Throwable) {
+            logger.debug("volume panel: lottie flip failed: ${t.message}")
+        }
+    }
+
     private fun slowDownTileLottie(root: View) {
         try {
             val lottieClass = root.context.classLoader
@@ -1195,6 +1268,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     private fun resolveStringId(context: Context, vararg names: String): Int? {
         return resolveResourceId(context, "string", *names)
+    }
+
+    private fun resolveRawId(context: Context, name: String): Int? {
+        return resolveResourceId(context, "raw", name)
     }
 
     /**
