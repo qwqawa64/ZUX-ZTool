@@ -104,6 +104,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         systemUiClassLoader = param.defaultClassLoader
         hook = this
         hookVolumeDialogImpl()
+        hookUpdateWindowSize()
         hookVolumeDetailIndicator(param.defaultClassLoader)
         hookTileFactory(param.defaultClassLoader)
         logger.info("VolumeSliderLongPressHook installed")
@@ -269,6 +270,42 @@ class VolumeSliderLongPressHook : AppHookModule() {
             logger.info("volume panel: VolumeDialogImpl init hook installed")
         } catch (t: Throwable) {
             logger.warn("volume panel: VolumeDialogImpl init hook failed: ${t.message}")
+        }
+    }
+
+    /**
+     * SystemUIDialog implements ViewRootImpl.ConfigChangedCallback: on rotation
+     * its onConfigurationChanged() calls updateWindowSize(), which force-sets
+     * the window to the stock dialog size (fixed width, WRAP_CONTENT height) —
+     * collapsing our fullscreen transparent root, so the panel visually
+     * disappears. Re-assert the fullscreen layout after every stock run for
+     * our panel dialog only; insets still drive the panel margins via the
+     * root's OnApplyWindowInsetsListener.
+     */
+    private fun hookUpdateWindowSize() {
+        val classLoader = systemUiClassLoader ?: return
+        try {
+            val dialogClass = classLoader.loadClass(SYSTEM_UI_DIALOG_CLASS)
+            val update = findMethod(dialogClass, "updateWindowSize")
+            hookWithId(update, "volume_panel_dialog_window_size") { chain ->
+                chain.proceed()
+                if (chain.thisObject === currentDialog) {
+                    try {
+                        val window = (chain.thisObject as Dialog).window
+                        window?.setLayout(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        logger.debug("volume panel: window size re-asserted after rotation")
+                    } catch (t: Throwable) {
+                        logger.warn("volume panel: window size re-assert failed: ${t.message}")
+                    }
+                }
+                null
+            }
+            logger.info("volume panel: SystemUIDialog.updateWindowSize hook installed")
+        } catch (t: Throwable) {
+            logger.warn("volume panel: updateWindowSize hook failed: ${t.message}")
         }
     }
 
