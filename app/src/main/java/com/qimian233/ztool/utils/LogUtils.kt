@@ -19,12 +19,18 @@ object LogUtils {
     private const val LOG_DIR_NAME = "Log"
     private const val APP_LOG_SUBDIR = "app"
     private const val LSPOSED_SUBDIR = "lsposed"
+    private const val LOGCAT_SUBDIR = "logcat"
+    private const val LOGCAT_FILE_PREFIX = "system_logcat_"
+    private const val LOGCAT_FILE_SUFFIX = ".log"
+    private const val MAX_LOGCAT_DUMPS = 3
 
     fun logDir(context: Context): File = File(context.filesDir, LOG_DIR_NAME)
 
     fun appLogDir(context: Context): File = File(logDir(context), APP_LOG_SUBDIR)
 
     fun lsposedLogDir(context: Context): File = File(logDir(context), LSPOSED_SUBDIR)
+
+    fun logcatDumpDir(context: Context): File = File(logDir(context), LOGCAT_SUBDIR)
 
     fun exportFileName(): String {
         return "ZTool_Logs_" +
@@ -34,6 +40,7 @@ object LogUtils {
 
     fun exportLogsToUri(context: Context, uri: Uri): Boolean {
         syncLsposedLogs(context)
+        dumpSystemLogcat(context)
 
         val zipFile = zipLogDir(context) ?: return false
         return FileManager.exportFileWithSAF(
@@ -88,6 +95,53 @@ object LogUtils {
         if (dir.exists() && dir.isDirectory()) {
             FileUtils.deleteRecursive(dir)
             Log.i(TAG, "all logs deleted")
+        }
+    }
+
+    /**
+     * Dump the system-wide logcat ring buffers (main + system + crash) to the
+     * app's private Log/logcat/ directory so crash stack traces that only live
+     * in logcat are captured in the exported zip. Requires root. Failures are
+     * logged but never block the export.
+     */
+    fun dumpSystemLogcat(context: Context) {
+        val destDir = logcatDumpDir(context)
+        if (!destDir.exists() && !destDir.mkdirs()) {
+            Log.w(TAG, "cannot create logcat dump target directory")
+            return
+        }
+
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = LOGCAT_FILE_PREFIX + timestamp + LOGCAT_FILE_SUFFIX
+        val destPath = destDir.absolutePath + "/" + fileName
+        val shell = EnhancedShellExecutor.getInstance()
+
+        // -d: dump current buffers and exit; -b all: main/system/crash/events kernels
+        val result = shell.executeRootCommand(
+            "logcat -d -b all -v threadtime > $destPath" +
+            " && chmod 644 $destPath" +
+            " && echo DUMP_OK"
+        )
+
+        if (result.isSuccess && result.output.contains("DUMP_OK")) {
+            Log.i(TAG, "system logcat dumped to $destPath")
+            cleanupOldLogcatDumps(destDir)
+        } else {
+            Log.w(TAG, "system logcat dump failed: ${result.error.ifEmpty { result.output }}")
+            // Remove a possibly truncated/empty partial file so it never ships.
+            shell.executeRootCommand("rm -f $destPath")
+        }
+    }
+
+    private fun cleanupOldLogcatDumps(dir: File) {
+        val dumps = dir.listFiles { _, name ->
+            name.startsWith(LOGCAT_FILE_PREFIX) && name.endsWith(LOGCAT_FILE_SUFFIX)
+        } ?: return
+
+        if (dumps.size > MAX_LOGCAT_DUMPS) {
+            dumps.sortedBy { it.lastModified() }
+                .take(dumps.size - MAX_LOGCAT_DUMPS)
+                .forEach { it.delete() }
         }
     }
 
