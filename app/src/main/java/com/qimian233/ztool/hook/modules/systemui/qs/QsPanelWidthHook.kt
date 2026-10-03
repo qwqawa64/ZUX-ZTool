@@ -179,7 +179,13 @@ class QsPanelWidthHook : AppHookModule() {
         // resource eagerly from the SystemUI APK here — capturing it lazily inside the
         // onMeasure hook is unreliable because the first measure can arrive with empty
         // pages, or after the field was already mutated.
+        // Eagerly read from a bare AssetManager it resolves the DEFAULT (portrait)
+        // config value, which can differ from the real landscape value; used only as
+        // a fallback. The authoritative native landscape value is captured lazily
+        // below, from live pages before/after any overwrite.
         var pagedDefaultColumns = -1
+        // Lazily captured native landscape mColumns, observed on live pages.
+        var pagedLandscapeColumns = -1
         runCatching {
             val assets = AssetManager::class.java.getDeclaredConstructor()
                 .apply { isAccessible = true }
@@ -204,27 +210,44 @@ class QsPanelWidthHook : AppHookModule() {
                 if (isPortrait) {
                     val pages = pagesField.get(pagedLayout) as ArrayList<*>
                     if (pages.isNotEmpty()) {
+                        // Capture the native landscape value on live pages before the
+                        // first portrait overwrite kicks in.
+                        if (pagedLandscapeColumns == -1) {
+                            pagedLandscapeColumns = columnsField.getInt(pages[0])
+                        }
                         // Only trigger redistribution when the column count actually changes,
                         // to avoid rebuilding pages on every onMeasure frame
                         val currentColumns = columnsField.getInt(pages[0])
                         logger.debug("current = $currentColumns, target = $tileColumns")
                         if (currentColumns != tileColumns) {
-                            if (pagedDefaultColumns == -1) {
-                                pagedDefaultColumns = currentColumns
-                            }
                             for (page in pages) {
                                 columnsField.setInt(page, tileColumns)
                             }
                             distributeField.setBoolean(pagedLayout, true)
                         }
                     }
-                } else if (pagedDefaultColumns > 0) {
-                    val pages = pagesField.get(pagedLayout) as ArrayList<*>
-                    if (pages.isNotEmpty() && columnsField.getInt(pages[0]) == tileColumns) {
-                        for (page in pages) {
-                            columnsField.setInt(page, pagedDefaultColumns)
+                } else {
+                    if (pagedLandscapeColumns == -1) {
+                        // No portrait overwrite happened yet, so the live value here IS
+                        // the native landscape value.
+                        val pages = pagesField.get(pagedLayout) as ArrayList<*>
+                        if (pages.isNotEmpty()) {
+                            pagedLandscapeColumns = columnsField.getInt(pages[0])
                         }
-                        distributeField.setBoolean(pagedLayout, true)
+                    }
+                    val restore = if (pagedLandscapeColumns > 0) {
+                        pagedLandscapeColumns
+                    } else {
+                        pagedDefaultColumns
+                    }
+                    if (restore > 0) {
+                        val pages = pagesField.get(pagedLayout) as ArrayList<*>
+                        if (pages.isNotEmpty() && columnsField.getInt(pages[0]) == tileColumns) {
+                            for (page in pages) {
+                                columnsField.setInt(page, restore)
+                            }
+                            distributeField.setBoolean(pagedLayout, true)
+                        }
                     }
                 }
             }
