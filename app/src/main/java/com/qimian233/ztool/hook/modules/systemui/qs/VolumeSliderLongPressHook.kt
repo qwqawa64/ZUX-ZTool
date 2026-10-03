@@ -1,16 +1,10 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
-import android.animation.Animator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
-import android.app.ActivityManager
 import android.app.Dialog
-import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
-import android.database.ContentObserver
-import android.graphics.Canvas
 import android.graphics.Color
 import android.media.AudioManager
 import android.os.Build
@@ -20,9 +14,7 @@ import android.os.Vibrator
 import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.MotionEvent
 import android.view.View
-import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -58,13 +50,14 @@ import kotlin.math.roundToInt
  * window flags), themed like BrightnessDetailDialog
  * (Theme_SystemUI_Dialog_GlobalActionsLite).
  *
- * Tiles: NOT taken from QSHostAdapter (no getTile(spec) entry point exists and
- * mute/vibrate/zen are outside the brightness-related collection). Instead a
- * `CustomizeTileView` per tile is fed a reflectively-constructed
- * `QSTile.BooleanState`, and the state logic mirrors the stock tiles:
- * QMuteTile (ringer mode 0 <-> 2), QVibrateTile (vibrate_on + vibration
- * intensities; offered only when Vibrator.hasVibrator()), and DND via
- * NotificationManager interruption filter.
+ * Tiles: real QSTile instances created via the SystemUI QSFactoryImpl
+ * (captured by hooking createTile) — "mute", "dnd", "vibrate" — each bound to
+ * a stock `CustomizeTileView` exactly like the native BrightnessDetailDialog
+ * does: refreshState + QSTile.Callback feeding the view + setListening. Click
+ * and long-press delegate to the tile (click/longClick with an Expandable), so
+ * native debounce, state lottie, press feedback, per-tile detail dialogs (DND)
+ * and the keyguard unlock flow all come for free; the panel dismisses after a
+ * long press like the native dialog.
  *
  * App volume: per-uid relative volume. The active-app list comes from the
  * framework callback `android.media.AudioSystem$AudioAppListCallback`
@@ -88,7 +81,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // Rebuilt when the app list callback fires while the panel is open.
     private var appSection: LinearLayout? = null
     private var dialogContext: Context? = null
-    private var contentObservers = mutableListOf<ContentObserver>()
 
     /** NotificationPanelViewController used to fade the shade content out/in. */
     private var behindListener: Any? = null
@@ -105,6 +97,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         hook = this
         hookVolumeDialogImpl()
         hookVolumeDetailIndicator(param.defaultClassLoader)
+        hookTileFactory(param.defaultClassLoader)
         logger.info("VolumeSliderLongPressHook installed")
     }
 
@@ -175,10 +168,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
             "com.android.systemui.volume.VolumeDialogImpl"
         private const val CUSTOMIZE_TILE_VIEW_CLASS =
             "com.android.systemui.qs.customize.CustomizeTileView"
-        private const val QS_TILE_STATE_CLASS =
-            $$"com.android.systemui.plugins.qs.QSTile$BooleanState"
-        private const val RESOURCE_ICON_CLASS =
-            $$"com.android.systemui.qs.tileimpl.QSTileImpl$ResourceIcon"
+        private const val QS_FACTORY_IMPL_CLASS =
+            "com.android.systemui.qs.tileimpl.QSFactoryImpl"
+        private const val QS_TILE_CALLBACK_CLASS =
+            $$"com.android.systemui.plugins.qs.QSTile$Callback"
+        private const val EXPANDABLE_CLASS =
+            "com.android.systemui.animation.Expandable"
         private const val APP_SECTION_TAG = "ztool_volume_panel_app_section"
         private const val APP_VOLUME_SETTINGS_KEY = "zui_app_volume"
         private const val MAX_APP_ROWS = 3
@@ -360,7 +355,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         dialog.setOnDismissListener {
             panelShowing = false
             currentDialog = null
-            unregisterPanelObservers()
+            releaseBoundTiles()
             // Reveal the control-center widgets the dialog had hidden and
             // release the view tree so the static hook reference cannot leak it.
             setDialogBehindAlpha(1f)
@@ -369,7 +364,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             dialogContext = null
             appSection = null
         }
-        registerPanelObservers(context)
 
         panelShowing = true
         currentDialog = dialog
@@ -853,20 +847,44 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val refresh: () -> Unit
     )
 
+    /** Captured QSFactoryImpl instance for creating real QSTiles on demand. */
+    @Volatile
+    private var tileFactory: Any? = null
+
+    /** Tiles currently bound to panel views, released on panel dismiss. */
+    private val boundTiles = mutableListOf<Any>()
+
     /**
-     * A Lottie state-transition clip the tile plays when its value flips.
-     * CustomizeTileView.animationsEnabled() is hardcoded false (edit-sheet
-     * tiles are static), which also gates the native startLottieAnimation
-     * path, so the clip is driven directly on the LottieAnimationView instead
-     * of through the tile pipeline.
+     * Captures the SystemUI QSFactoryImpl singleton: every call to
+     * createTile(spec) goes through it, so remembering `this` once gives us
+     * the ability to create real QSTiles (mute/dnd/vibrate) for the panel.
      */
-    private class TileLottie(
-        val resName: String,
-        val onMin: Int,
-        val onMax: Int,
-        val offMin: Int,
-        val offMax: Int
-    )
+    private fun hookTileFactory(classLoader: ClassLoader) {
+        try {
+            val factoryClass = classLoader.loadClass(QS_FACTORY_IMPL_CLASS)
+            val create = factoryClass.getDeclaredMethod("createTile", String::class.java)
+            create.isAccessible = true
+            hookWithId(create, "volume_panel_tile_factory") { chain ->
+                tileFactory = chain.thisObject
+                chain.proceed()
+            }
+            logger.info("volume panel: tile factory hook installed")
+        } catch (t: Throwable) {
+            logger.warn("volume panel: tile factory hook failed: ${t.message}")
+        }
+    }
+
+    /** Creates a real QSTile by spec ("mute"/"dnd"/"vibrate"); null on failure. */
+    private fun createQsTile(spec: String): Any? {
+        val factory = tileFactory ?: return null
+        return try {
+            findMethod(factory.javaClass, "createTile", String::class.java)
+                .invoke(factory, spec)
+        } catch (t: Throwable) {
+            logger.warn("volume panel: createTile($spec) failed: ${t.message}")
+            null
+        }
+    }
 
     private var muteTile: TileUi? = null
     private var dndTile: TileUi? = null
@@ -885,39 +903,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
             context, "brightness_detail_dialog_tile_margin", dp(context, 6)
         )
 
-        muteTile = buildTile(
-            context, classLoader,
-            labelResNames = arrayOf("widget_text_mute"),
-            iconActiveNames = arrayOf("controlcenter_1_btn_mute"),
-            iconInactiveNames = arrayOf("controlcenter_1_btn_mute_inactive", "controlcenter_1_btn_mute"),
-            // QMuteTile: silent_off clip, on = frames 0..20, off = 60..110.
-            lottie = TileLottie("silent_off", 0, 20, 60, 110),
-            isOn = { muteTileOn() },
-            onToggle = { toggleMute() },
-            onLongPress = { openSoundSettings(context) }
-        )
-        dndTile = buildTile(
-            context, classLoader,
-            labelResNames = arrayOf("quick_settings_dnd_label", "widget_text_disturb_free"),
-            // Stock DndTile uses zenmode_off for BOTH states; the tile tint
-            // conveys activation, so no separate "on" icon exists.
-            iconActiveNames = arrayOf("controlcenter_1_btn_zenmode_off"),
-            iconInactiveNames = arrayOf("controlcenter_1_btn_zenmode_off"),
-            isOn = { dndTileOn() },
-            onToggle = { toggleDnd() },
-            onLongPress = { openSoundSettings(context) }
-        )
-        if (hasVibrator(context)) {
-            vibrateTile = buildTile(
-                context, classLoader,
-                labelResNames = arrayOf("widget_text_vibration"),
-                iconActiveNames = arrayOf("controlcenter_1_btn_shock"),
-                iconInactiveNames = arrayOf("controlcenter_1_btn_shock"),
-                isOn = { vibrateTileOn(context) },
-                onToggle = { toggleVibrate(context) },
-                onLongPress = { openSoundSettings(context) }
-            )
-        }
+        muteTile = buildTile(context, classLoader, "mute", row)
+        dndTile = buildTile(context, classLoader, "dnd", row)
+        vibrateTile = if (hasVibrator(context)) buildTile(context, classLoader, "vibrate", row) else null
         for (tile in listOf(muteTile, dndTile, vibrateTile)) {
             if (tile == null) continue
             row.addView(tile.view, LinearLayout.LayoutParams(tileWidth, tileHeight).apply {
@@ -928,18 +916,25 @@ class VolumeSliderLongPressHook : AppHookModule() {
         return row
     }
 
+    /**
+     * Binds a real QSTile to a stock CustomizeTileView, mirroring the native
+     * BrightnessDetailDialog.onStart() wiring: refreshState + a state callback
+     * that feeds the view on the main thread + setListening so the tile's own
+     * observers run. Click and long-press delegate to the tile, which brings
+     * the native debounce, keyguard unlock flow, per-tile detail dialogs
+     * (DND) and shade collapse with them.
+     */
     private fun buildTile(
         context: Context,
         classLoader: ClassLoader,
-        labelResNames: Array<String>,
-        iconActiveNames: Array<String>,
-        iconInactiveNames: Array<String>,
-        lottie: TileLottie? = null,
-        isOn: () -> Boolean,
-        onToggle: () -> Unit,
-        onLongPress: () -> Unit = {}
+        spec: String,
+        parentRow: ViewGroup
     ): TileUi? {
         return try {
+            val tile = createQsTile(spec) ?: run {
+                logger.warn("volume panel: no QSTile for spec $spec")
+                return null
+            }
             val tileViewClass = classLoader.loadClass(CUSTOMIZE_TILE_VIEW_CLASS)
             val tileView = tileViewClass.getConstructor(Context::class.java)
                 .newInstance(context) as ViewGroup
@@ -950,98 +945,112 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 ?: throw NoSuchMethodException($$"handleStateChanged(QSTile$State) not found")
             handleStateChanged.isAccessible = true
 
-            val stateClass = classLoader.loadClass(QS_TILE_STATE_CLASS)
-            val iconActive = iconActiveNames.firstNotNullOfOrNull { resolveDrawableId(context, it) }
-            val iconInactive =
-                iconInactiveNames.firstNotNullOfOrNull { resolveDrawableId(context, it) }
-            val label = labelResNames.firstNotNullOfOrNull { resolveStringId(context, it) }
-                ?.let { context.getString(it) } ?: ""
-            val lottieRes = lottie?.let { resolveRawId(context, it.resName) }
+            val tileClass = tile.javaClass
+            val refreshState = findMethod(tileClass, "refreshState")
+            val click = findMethod(tileClass, "click",
+                classLoader.loadClass(EXPANDABLE_CLASS))
+            val longClick = findMethod(tileClass, "longClick",
+                classLoader.loadClass(EXPANDABLE_CLASS))
+            val getState = findMethod(tileClass, "getState")
 
-            var lastOn = isOn()
-            fun buildState(on: Boolean): Any {
-                val state = stateClass.getDeclaredConstructor().newInstance()
-                setField(state, "label", label)
-                setField(state, "contentDescription", label)
-                setField(state, "state", if (on) 2 else 1)
-                setField(state, "value", on)
-                val iconRes = if (on) iconActive ?: iconInactive else iconInactive ?: iconActive
-                if (iconRes != null) {
-                    val icon = resourceIcon(classLoader, iconRes)
-                    if (icon != null) setField(state, "icon", icon)
+            // QSTile.Callback SAM: onStateChanged fires on the tile's handler
+            // thread; the native dialog re-posts to main before touching views.
+            val callbackClass = classLoader.loadClass(QS_TILE_CALLBACK_CLASS)
+            val mainHandler = this.mainHandler
+            val callback = java.lang.reflect.Proxy.newProxyInstance(
+                classLoader, arrayOf(callbackClass)
+            ) { _, method, args ->
+                if (method.name == "onStateChanged" && args != null && args.isNotEmpty()) {
+                    val state = args[0]
+                    mainHandler.post {
+                        try {
+                            handleStateChanged.invoke(tileView, state)
+                            slowDownTileLottie(tileView)
+                        } catch (t: Throwable) {
+                            logger.error("tile state apply failed", t)
+                        }
+                    }
                 }
-                // Load the transition clip and land on the state's end frame;
-                // playback on flips is driven directly on the Lottie view in
-                // animateLottieFlip() because CustomizeTileView disables the
-                // native startLottieAnimation path.
-                if (lottieRes != null && lottie != null) {
-                    setField(state, "lottieRawResId", lottieRes)
-                    setField(state, "minFrame", if (on) lottie.onMin else lottie.offMin)
-                    setField(state, "maxFrame", if (on) lottie.onMax else lottie.offMax)
-                }
-                return state
+                null
+            }
+            val addCallback = findMethod(tileClass, "addCallback", callbackClass)
+            val removeCallback = findMethod(tileClass, "removeCallback", callbackClass)
+            val setListening = findMethod(tileClass, "setListening", Any::class.java,
+                Boolean::class.javaPrimitiveType)
+
+            // Expandable from the view, same as the native dialog's
+            // Expandable.Companion.fromView.
+            val expandable = run {
+                val companion = classLoader.loadClass(EXPANDABLE_CLASS)
+                    .getDeclaredField("Companion").get(null)
+                findMethod(companion.javaClass, "fromView", View::class.java)
+                    .invoke(companion, tileView)
             }
 
             fun refresh() {
                 try {
-                    val on = isOn()
-                    handleStateChanged.invoke(tileView, buildState(on))
-                    if (lottieRes != null && lottie != null && on != lastOn) {
-                        animateLottieFlip(tileView, lottieRes, lottie, on)
-                    }
-                    lastOn = on
-                    slowDownTileLottie(tileView)
+                    refreshState.invoke(tile)
                 } catch (t: Throwable) {
                     logger.error("tile refresh failed", t)
                 }
             }
 
-            var longPressFired = false
-            var longPressPending: Runnable? = null
-            tileView.setOnTouchListener { view, event ->
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> {
-                        touchX = event.x
-                        touchY = event.y
-                        longPressFired = false
-                        // CustomizeTileView.isLongClickable() is hardcoded
-                        // false, so the framework never runs long-press
-                        // detection on this view — drive our own.
-                        longPressPending?.let(view::removeCallbacks)
-                        val lp = Runnable {
-                            longPressFired = true
-                            flashTileRipple(tileView)
-                            onLongPress()
-                        }
-                        longPressPending = lp
-                        view.postDelayed(lp, ViewConfiguration.getLongPressTimeout().toLong())
-                    }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        longPressPending?.let(view::removeCallbacks)
-                        longPressPending = null
-                    }
-                }
-                // Coordinates only; false hands the gesture back to the
-                // framework click detector so one tap yields exactly one click.
-                false
-            }
+            val host = volumeDialogImpl ?: tile
             tileView.setOnClickListener {
-                if (longPressFired) {
-                    // The long-press detector already consumed this gesture.
-                    longPressFired = false
-                    return@setOnClickListener
+                try {
+                    click.invoke(tile, expandable)
+                } catch (t: Throwable) {
+                    logger.error("tile click failed", t)
                 }
-                flashTileRipple(tileView)
-                onToggle()
-                refresh()
             }
-            installTileRipple(tileView)
-            refresh()
+            tileView.setOnLongClickListener {
+                try {
+                    longClick.invoke(tile, expandable)
+                } catch (t: Throwable) {
+                    logger.error("tile long click failed", t)
+                }
+                // Native BrightnessDetailDialog closes itself after a long
+                // press (the detail UI it opens replaces this panel).
+                currentDialog?.dismiss()
+                true
+            }
+            // Native wiring order: initial state push, then register, then listen.
+            handleStateChanged.invoke(tileView, getState.invoke(tile))
+            addCallback.invoke(tile, callback)
+            setListening.invoke(tile, host, true)
+            refreshState.invoke(tile)
+            boundTiles.add(tile)
+            synchronized(boundCallbacks) { boundCallbacks.add(Pair(tile, callback)) }
             TileUi(tileView, ::refresh)
         } catch (t: Throwable) {
             logger.error("Failed to build QS tile view", t)
             null
         }
+    }
+
+    /** Tile listening registrations to undo when the panel dismisses. */
+    private val boundCallbacks = mutableListOf<Pair<Any, Any>>()
+
+    /** Releases QSTile listeners created for the panel; mirrors onStop(). */
+    private fun releaseBoundTiles() {
+        val pairs = synchronized(boundCallbacks) {
+            val copy = boundCallbacks.toList()
+            boundCallbacks.clear()
+            copy
+        }
+        for ((tile, callback) in pairs) {
+            try {
+                findMethod(tile.javaClass, "removeCallback", callback.javaClass)
+                    .invoke(tile, callback)
+                findMethod(
+                    tile.javaClass, "setListening", Any::class.java,
+                    Boolean::class.javaPrimitiveType
+                ).invoke(tile, volumeDialogImpl ?: tile, false)
+            } catch (t: Throwable) {
+                logger.debug("volume panel: tile release failed: ${t.message}")
+            }
+        }
+        boundTiles.clear()
     }
 
     /**
@@ -1074,163 +1083,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * Tile state-change animations are Lottie clips played at native speed;
      * slow them down so the state transition reads longer.
      */
-    private fun openSoundSettings(context: Context) {
-        try {
-            // The dialog context is application-scoped (SystemUIDialog is not
-            // backed by an Activity task); NEW_TASK is required to launch.
-            context.startActivity(
-                Intent(Settings.ACTION_SOUND_SETTINGS)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
-        } catch (t: Throwable) {
-            logger.warn("open sound settings failed: ${t.message}")
-        }
-    }
-
-    /** Last tile touch point for the ripple origin; -1 = unknown (center). */
-    private var touchX = -1f
-    private var touchY = -1f
-
-    /**
-     * A self-drawn press ripple for the tiles. Every stock path is closed to
-     * module code: CustomizeTileView disables the trigger chain
-     * (showRippleEffect/isLongClickable), the ZUI background ignores manual
-     * pressed flashes, and a foreground RippleDrawable renders invisibly on
-     * this theme. So the effect is drawn explicitly: an expanding circle from
-     * the touch point that fades out, clipped to the tile's rounded bounds.
-     */
-    private class TileRippleDrawable(
-        private val tintColor: Int,
-        private val startRadiusPx: Float
-    ) : android.graphics.drawable.Drawable() {
-        private val paint = android.graphics.Paint(
-            android.graphics.Paint.ANTI_ALIAS_FLAG
-        ).apply { style = android.graphics.Paint.Style.FILL }
-        private val clip = android.graphics.Path()
-        private var animator: ValueAnimator? = null
-        private var originX = 0f
-        private var originY = 0f
-
-        fun trigger(x: Float, y: Float) {
-            originX = x
-            originY = y
-            animator?.cancel()
-            animator = ValueAnimator.ofFloat(0f, 1f).apply {
-                duration = 350L
-                addUpdateListener { animation ->
-                    paint.alpha = (RIPPLE_MAX_ALPHA * (1f - animation.animatedValue as Float)).toInt()
-                    invalidateSelf()
-                }
-                addListener(object : android.animation.AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        paint.alpha = 0
-                        invalidateSelf()
-                    }
-                })
-                start()
-            }
-        }
-
-        override fun draw(canvas: Canvas) {
-            if (paint.alpha <= 0) return
-            val t = animator?.animatedValue as? Float ?: return
-            val bounds = bounds
-            val maxRadius = kotlin.math.hypot(
-                bounds.width().toDouble(), bounds.height().toDouble()
-            ).toFloat()
-            val radius = startRadiusPx + (maxRadius - startRadiusPx) * t
-            clip.reset()
-            clip.addRoundRect(
-                bounds.left.toFloat(), bounds.top.toFloat(),
-                bounds.right.toFloat(), bounds.bottom.toFloat(),
-                cornerRadiusPx, cornerRadiusPx, android.graphics.Path.Direction.CW
-            )
-            canvas.save()
-            canvas.clipPath(clip)
-            paint.color = tintColor
-            canvas.drawCircle(originX, originY, radius, paint)
-            canvas.restore()
-        }
-
-        override fun setAlpha(alpha: Int) {}
-        override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {}
-        @Deprecated("Deprecated in Java")
-        override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
-
-        companion object {
-            private const val RIPPLE_MAX_ALPHA = 80
-            var cornerRadiusPx = 0f
-        }
-    }
-
-    private fun installTileRipple(tileView: View) {
-        val context = tileView.context
-        TileRippleDrawable.cornerRadiusPx =
-            resolveDimenPx(context, "qs_corner_radius", dp(context, 28)).toFloat()
-        tileView.foreground = TileRippleDrawable(
-            obtainAttrColor(context, android.R.attr.colorControlHighlight, 0x33888888.toInt()),
-            dp(context, 22).toFloat()
-        )
-    }
-
-    private fun flashTileRipple(tileView: View) {
-        (tileView.foreground as? TileRippleDrawable)
-            ?.trigger(
-                if (touchX >= 0) touchX else tileView.width / 2f,
-                if (touchY >= 0) touchY else tileView.height / 2f
-            )
-        touchX = -1f
-        touchY = -1f
-    }
-
-    private fun obtainAttrColor(context: Context, attr: Int, fallback: Int): Int {
-        return try {
-            val value = TypedValue()
-            if (context.theme.resolveAttribute(attr, value, true)) value.data else fallback
-        } catch (_: Throwable) {
-            fallback
-        }
-    }
-
-    /**
-     * Plays the state-transition clip directly on the tile's LottieAnimationView:
-     * rewind to the segment's first frame, then play — the lottie stops at
-     * maxFrame (set by the state's min/max, mirrored from QMuteTile). This
-     * bypasses CustomizeTileView.animationsEnabled() == false, which kills the
-     * native startLottieAnimation path in QSIconViewImpl.updateIcon.
-     */
-    private fun animateLottieFlip(root: View, lottieRes: Int, lottie: TileLottie, on: Boolean) {
-        try {
-            val lottieClass = root.context.classLoader
-                .loadClass("com.airbnb.lottie.LottieAnimationView")
-            val min = if (on) lottie.onMin else lottie.offMin
-            val max = if (on) lottie.onMax else lottie.offMax
-            fun walk(view: View) {
-                if (lottieClass.isInstance(view)) {
-                    findMethod(lottieClass, "setMinAndMaxFrame",
-                        Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
-                        .invoke(view, min, max)
-                    // setFrame is the LottieComposition-free variant used by
-                    // QSIconViewImpl; rewind to min before play so the clip
-                    // always starts from the segment head.
-                    try {
-                        findMethod(lottieClass, "setFrame", Int::class.javaPrimitiveType)
-                            .invoke(view, min)
-                    } catch (_: Throwable) {
-                        findMethod(lottieClass, "setProgress", Float::class.javaPrimitiveType)
-                            .invoke(view, 0f)
-                    }
-                    findMethod(lottieClass, "playAnimation").invoke(view)
-                } else if (view is ViewGroup) {
-                    for (i in 0 until view.childCount) walk(view.getChildAt(i))
-                }
-            }
-            walk(root)
-        } catch (t: Throwable) {
-            logger.debug("volume panel: lottie flip failed: ${t.message}")
-        }
-    }
-
     private fun slowDownTileLottie(root: View) {
         try {
             val lottieClass = root.context.classLoader
@@ -1250,17 +1102,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             walk(root)
         } catch (t: Throwable) {
             logger.debug("volume panel: lottie speed unavailable: ${t.message}")
-        }
-    }
-
-    private fun resourceIcon(classLoader: ClassLoader, resId: Int): Any? {
-        return try {
-            val resourceIconClass = classLoader.loadClass(RESOURCE_ICON_CLASS)
-            val get = resourceIconClass.getDeclaredMethod("get", Int::class.javaPrimitiveType)
-            get.isAccessible = true
-            get.invoke(null, resId)
-        } catch (_: Throwable) {
-            null
         }
     }
 
@@ -1284,76 +1125,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
         vibrateTile?.refresh?.invoke()
     }
 
-    // Tile state logic, mirroring QMuteTile / QVibrateTile / DndTile
-
-    private fun muteTileOn(): Boolean {
-        val am = dialogContext?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-        // Tile ON = muted (mirrors QMuteTile: active state when ringer is
-        // silent), OFF = sound on.
-        return amRingerModeInternal(am) == AudioManager.RINGER_MODE_SILENT
-    }
-
-    private fun toggleMute() {
-        val am = dialogContext?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
-        try {
-            if (amRingerModeInternal(am) == AudioManager.RINGER_MODE_SILENT) {
-                amSetRingerModeInternal(am, AudioManager.RINGER_MODE_NORMAL)
-            } else {
-                amSetRingerModeInternal(am, AudioManager.RINGER_MODE_SILENT)
-            }
-        } catch (t: Throwable) {
-            logger.warn("toggleMute failed: ${t.message}")
-        }
-    }
-
-    private fun dndTileOn(): Boolean {
-        val nm = dialogContext?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-        return nm?.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL
-    }
-
-    private fun toggleDnd() {
-        val nm = dialogContext?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
-        try {
-            val target = if (dndTileOn()) {
-                NotificationManager.INTERRUPTION_FILTER_ALL
-            } else {
-                NotificationManager.INTERRUPTION_FILTER_PRIORITY
-            }
-            nm.setInterruptionFilter(target)
-        } catch (t: Throwable) {
-            logger.warn("toggleDnd failed: ${t.message}")
-        }
-    }
-
-    private fun vibrateTileOn(context: Context): Boolean {
-        val cr = context.contentResolver
-        val userId = currentUserId()
-        return try {
-            settingsIntForUser(cr, "vibrate_on", 1, userId) == 1 &&
-                (settingsIntForUser(cr, "ring_vibration_intensity", 0, userId) == 2 ||
-                    settingsIntForUser(cr, "notification_vibration_intensity", 0, userId) == 2)
-        } catch (_: Throwable) {
-            false
-        }
-    }
-
-    private fun toggleVibrate(context: Context) {
-        val cr = context.contentResolver
-        val userId = currentUserId()
-        try {
-            if (vibrateTileOn(context)) {
-                settingsPutIntForUser(cr, "notification_vibration_intensity", 0, userId)
-                settingsPutIntForUser(cr, "ring_vibration_intensity", 0, userId)
-            } else {
-                settingsPutIntForUser(cr, "vibrate_on", 1, userId)
-                settingsPutIntForUser(cr, "notification_vibration_intensity", 2, userId)
-                settingsPutIntForUser(cr, "ring_vibration_intensity", 2, userId)
-            }
-        } catch (t: Throwable) {
-            logger.warn("toggleVibrate failed: ${t.message}")
-        }
-    }
-
     private fun hasVibrator(context: Context): Boolean {
         return try {
             val vibrator = context.getSystemService(Vibrator::class.java)
@@ -1361,44 +1132,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
         } catch (_: Throwable) {
             false
         }
-    }
-
-    // ------------------------------------------------------------------
-    // Panel-scoped observers keeping tile states fresh
-    // ------------------------------------------------------------------
-
-    private fun registerPanelObservers(context: Context) {
-        val cr = context.contentResolver
-        val onChange = object : ContentObserver(mainHandler) {
-            override fun onChange(selfChange: Boolean) {
-                mainHandler.post { refreshAllTiles() }
-            }
-        }
-        for (uri in listOf(
-            Settings.Global.getUriFor("mode_ringer"),
-            Settings.Global.getUriFor("zen_mode"),
-            Settings.System.getUriFor("vibrate_on"),
-            Settings.System.getUriFor("ring_vibration_intensity"),
-            Settings.System.getUriFor("notification_vibration_intensity"),
-            Settings.System.getUriFor("vibrate_when_ringing")
-        )) {
-            try {
-                cr.registerContentObserver(uri, false, onChange)
-                contentObservers.add(onChange)
-            } catch (_: Throwable) {
-            }
-        }
-    }
-
-    private fun unregisterPanelObservers() {
-        val context = dialogContext
-        for (observer in contentObservers) {
-            try {
-                context?.contentResolver?.unregisterContentObserver(observer)
-            } catch (_: Throwable) {
-            }
-        }
-        contentObservers.clear()
     }
 
     // ------------------------------------------------------------------
@@ -1487,70 +1220,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             } catch (_: Throwable) {
                 false
             }
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Hidden-API reflection helpers (compiled against the public SDK)
-    // ------------------------------------------------------------------
-
-    /** Hidden: ActivityManager.getCurrentUser() */
-    private fun currentUserId(): Int {
-        return try {
-            val method = ActivityManager::class.java.getDeclaredMethod("getCurrentUser")
-            method.isAccessible = true
-            method.invoke(null) as Int
-        } catch (_: Throwable) {
-            0
-        }
-    }
-
-    /** Hidden: Settings.System.getIntForUser(...) */
-    private fun settingsIntForUser(cr: android.content.ContentResolver, key: String, def: Int, userId: Int): Int {
-        val method = Settings.System::class.java.getDeclaredMethod(
-            "getIntForUser",
-            android.content.ContentResolver::class.java,
-            String::class.java,
-            Int::class.javaPrimitiveType,
-            Int::class.javaPrimitiveType
-        )
-        method.isAccessible = true
-        return method.invoke(null, cr, key, def, userId) as Int
-    }
-
-    /** Hidden: Settings.System.putIntForUser(...) */
-    private fun settingsPutIntForUser(cr: android.content.ContentResolver, key: String, value: Int, userId: Int) {
-        val method = Settings.System::class.java.getDeclaredMethod(
-            "putIntForUser",
-            android.content.ContentResolver::class.java,
-            String::class.java,
-            Int::class.javaPrimitiveType,
-            Int::class.javaPrimitiveType
-        )
-        method.isAccessible = true
-        method.invoke(null, cr, key, value, userId)
-    }
-
-    /** Hidden: AudioManager.getRingerModeInternal() */
-    private fun amRingerModeInternal(am: AudioManager?): Int {
-        if (am == null) return AudioManager.RINGER_MODE_NORMAL
-        return try {
-            val method = am.javaClass.getDeclaredMethod("getRingerModeInternal")
-            method.isAccessible = true
-            method.invoke(am) as Int
-        } catch (_: Throwable) {
-            am.ringerMode
-        }
-    }
-
-    /** Hidden: AudioManager.setRingerModeInternal(int) */
-    private fun amSetRingerModeInternal(am: AudioManager, mode: Int) {
-        try {
-            val method = am.javaClass.getDeclaredMethod("setRingerModeInternal", Int::class.javaPrimitiveType)
-            method.isAccessible = true
-            method.invoke(am, mode)
-        } catch (t: Throwable) {
-            logger.warn("setRingerModeInternal failed: ${t.message}")
         }
     }
 
