@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.database.ContentObserver
 import android.graphics.Color
+import android.graphics.drawable.RippleDrawable
 import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
@@ -1001,14 +1002,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
             }
             tileView.setOnClickListener {
                 // Native tiles mask the instant background flip behind a press
-                // ripple; CustomizeTileView disables the ripple trigger path,
-                // so flash the view's own pressed state at the touch point —
-                // the stock background RippleDrawable lights up with the
-                // framework's enter/fade timeline.
-                flashTilePressedState(tileView)
+                // ripple; the tile's own background chain is unreachable from
+                // module code on this ROM, so our installed foreground ripple
+                // provides the same masking at the touch point.
+                flashTileRipple(tileView)
                 onToggle()
                 refresh()
             }
+            installTileRipple(tileView)
             tileView.setOnLongClickListener {
                 try {
                     context.startActivity(Intent(Settings.ACTION_SOUND_SETTINGS))
@@ -1059,31 +1060,56 @@ class VolumeSliderLongPressHook : AppHookModule() {
     private var touchX = -1f
     private var touchY = -1f
 
+    /** Pending un-press callbacks per tile, so a re-tap cancels the old one. */
+    private val unpressRunners = mutableMapOf<View, Runnable>()
+
     /**
-     * Flashes the tile's pressed state so the background RippleDrawable plays
-     * its enter/fade timeline at the touch point. CustomizeTileView disables
-     * the gesture-driven ripple (showRippleEffect = false via
-     * handleStateChanged, plus isLongClickable always false), but the state
-     * callbacks on the background drawable still work: drawableHotspotChanged
-     * positions the ripple, refreshing the pressed drawable state lights it,
-     * and unpressing runs the standard fade-out. handleStateChanged forcibly
-     * resets showRippleEffect afterwards, which does not matter — it only
-     * gates the view's own touch-driven hotspot updates, not ours.
+     * Attaches a foreground ripple to the tile: the view-background ripple is
+     * unreachable on this ROM (CustomizeTileView kills the trigger path and
+     * the ZUI background chain ignores manual pressed flashes), while a
+     * foreground RippleDrawable is entirely ours — public APIs only, drawn
+     * inside the tile's rounded bounds, driven at the touch point.
      */
-    private fun flashTilePressedState(tileView: View) {
+    private fun installTileRipple(tileView: View) {
+        val highlight = obtainAttrColor(tileView.context, android.R.attr.colorControlHighlight)
+        val mask = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadius = resolveDimenPx(tileView.context, "qs_corner_radius", dp(tileView.context, 28)).toFloat()
+        }
+        val ripple = RippleDrawable(
+            android.content.res.ColorStateList.valueOf(highlight), null, mask
+        )
+        tileView.foreground = ripple
+        // Foreground drawables need the view's own state callbacks to animate;
+        // press is flashed manually in flashTileRipple.
+    }
+
+    private fun flashTileRipple(tileView: View) {
+        val ripple = tileView.foreground as? RippleDrawable ?: return
         val x = if (touchX >= 0) touchX else tileView.width / 2f
         val y = if (touchY >= 0) touchY else tileView.height / 2f
         touchX = -1f
         touchY = -1f
-        tileView.drawableHotspotChanged(x, y)
-        tileView.isPressed = true
-        tileView.refreshDrawableState()
-        // Give the ripple a few frames before releasing so the fade-out is
-        // visible rather than swallowed by the same-frame state change.
-        mainHandler.postDelayed({
-            tileView.isPressed = false
-            tileView.refreshDrawableState()
-        }, 120L)
+        ripple.setHotspot(x, y)
+        ripple.state = intArrayOf(android.R.attr.state_pressed)
+        // A re-tap before the fade-out cancels the pending release so the new
+        // ripple plays from the fresh hotspot instead of being clipped.
+        unpressRunners.remove(tileView)?.let { mainHandler.removeCallbacks(it) }
+        val unpress = Runnable {
+            unpressRunners.remove(tileView)
+            ripple.state = intArrayOf()
+        }
+        unpressRunners[tileView] = unpress
+        mainHandler.postDelayed(unpress, 120L)
+    }
+
+    private fun obtainAttrColor(context: Context, attr: Int): Int {
+        return try {
+            val value = TypedValue()
+            if (context.theme.resolveAttribute(attr, value, true)) value.data else -0x4d000000
+        } catch (_: Throwable) {
+            -0x4d000000
+        }
     }
 
     /**
