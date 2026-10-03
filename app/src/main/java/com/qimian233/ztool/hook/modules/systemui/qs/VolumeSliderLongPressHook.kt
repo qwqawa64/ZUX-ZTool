@@ -1265,6 +1265,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
             setField(state, "contentDescription", label)
             setField(state, "state", 1)
             setField(state, "value", false)
+            // Native QS tiles set this so QSIconViewImpl pads the glyph with
+            // qs_tile_icon_drawable_padding; without it the glyph fills the
+            // whole icon frame and renders visibly larger than the same tile
+            // in the QS panel (whose icon view is bigger but padded).
+            setField(state, "iconUsePadding", true)
             if (iconRes != null) {
                 val icon = resourceIcon(classLoader, iconRes)
                 if (icon != null) setField(state, "icon", icon)
@@ -1272,13 +1277,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             setField(state, "spec", "ztool_media_output")
             handleStateChanged.invoke(tileView, state)
             slowDownTileLottie(tileView)
-
-            // CustomizeTileView (via CustomQSTileViewImpl.createAndAddIcon)
-            // sizes its icon to custom_qs_icon_size, visibly larger than the
-            // qs_icon_size the stock QS panel's QSTileViewImpl uses for the
-            // same glyph. Re-constrain the QSIconView layout params so the
-            // panel icon matches the QS panel rendering.
-            constrainMediaTileIcon(tileViewClass, tileView)
 
             tileView.setOnClickListener {
                 // Same path as the ZTool quick-settings tile: explicit
@@ -1297,40 +1295,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             logger.error("Failed to build media output tile", t)
             null
         }
-    }
-
-    /**
-     * Re-constrains the media tile's QSIconView to the stock QS panel icon
-     * size (qs_icon_size) instead of the customize-panel custom_qs_icon_size.
-     * Every failure path logs WARN so an ineffective resize is visible in the
-     * module log.
-     */
-    private fun constrainMediaTileIcon(tileViewClass: Class<*>, tileView: ViewGroup) {
-        val iconView = try {
-            findField(tileViewClass, "icon").get(tileView) as? View
-        } catch (t: Throwable) {
-            logger.warn("volume panel: media tile icon field lookup failed: ${t.message}")
-            null
-        }
-        if (iconView == null) {
-            logger.warn("volume panel: media tile icon view is null, icon size not constrained")
-            return
-        }
-        val lp = iconView.layoutParams
-        if (lp == null) {
-            logger.warn("volume panel: media tile icon has no layout params, icon size not constrained")
-            return
-        }
-        val context = tileView.context
-        val before = lp.width
-        val iconSize = resolveDimenPx(context, "qs_icon_size", dp(context, 24))
-        lp.width = iconSize
-        lp.height = iconSize
-        iconView.requestLayout()
-        logger.debug(
-            "volume panel: media tile icon constrained ${before}x${before} -> ${iconSize}x${iconSize} " +
-                "(view=${iconView.javaClass.simpleName})"
-        )
     }
 
     /**
