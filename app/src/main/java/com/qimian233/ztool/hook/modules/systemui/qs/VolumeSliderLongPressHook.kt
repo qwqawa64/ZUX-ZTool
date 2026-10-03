@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.database.ContentObserver
 import android.graphics.Color
+import android.graphics.drawable.RippleDrawable
 import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
@@ -18,6 +19,7 @@ import android.os.Vibrator
 import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -951,6 +953,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val lottieRes = lottie?.let { resolveRawId(context, it.resName) }
 
             var lastOn = isOn()
+            var touchX = -1f
+            var touchY = -1f
             fun buildState(on: Boolean): Any {
                 val state = stateClass.getDeclaredConstructor().newInstance()
                 setField(state, "label", label)
@@ -988,7 +992,20 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 }
             }
 
+            tileView.setOnTouchListener { view, event ->
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                    touchX = event.x
+                    touchY = event.y
+                }
+                // Let the plain click listener run.
+                view.performClick()
+                true
+            }
             tileView.setOnClickListener {
+                // Native tiles mask the instant background flip behind a ripple;
+                // CustomizeTileView kills the view-driven path, so play the
+                // stock background RippleDrawable directly at the touch point.
+                playTileRipple(tileView, touchX, touchY)
                 onToggle()
                 refresh()
             }
@@ -1038,6 +1055,37 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * Tile state-change animations are Lottie clips played at native speed;
      * slow them down so the state transition reads longer.
      */
+    /**
+     * Plays the tile's stock background ripple (QSTileViewImpl.qsTileBackground,
+     * a public RippleDrawable field) at the recorded touch point. The
+     * view-driven ripple path is disabled by CustomizeTileView
+     * (showRippleEffect = false, isLongClickable false), but the drawable
+     * itself is fully drivable: setHotspot on press, then exit to run the
+     * standard enter/fade-out ripple timeline.
+     */
+    private fun playTileRipple(tileView: View, touchX: Float, touchY: Float) {
+        try {
+            val ripple = findField(tileView.javaClass, "qsTileBackground")
+                .get(tileView) as? RippleDrawable ?: return
+            val x = if (touchX >= 0) touchX else tileView.width / 2f
+            val y = if (touchY >= 0) touchY else tileView.height / 2f
+            // autoMirror is irrelevant here (widths match layout direction);
+            // skip it rather than fight API-level visibility.
+            ripple.state = intArrayOf(android.R.attr.state_pressed)
+            ripple.setHotspot(x, y)
+            // Post the release so the enter ripple gets at least one frame
+            // before the exit animation fades it out.
+            mainHandler.postDelayed({
+                try {
+                    ripple.state = intArrayOf()
+                } catch (_: Throwable) {
+                }
+            }, 80L)
+        } catch (t: Throwable) {
+            logger.debug("volume panel: tile ripple failed: ${t.message}")
+        }
+    }
+
     /**
      * Plays the state-transition clip directly on the tile's LottieAnimationView:
      * rewind to the segment's first frame, then play — the lottie stops at
