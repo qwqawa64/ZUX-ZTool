@@ -893,7 +893,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             iconRes?.let { context.getDrawable(it) },
             initial = (am.getStreamVolume(stream) * 100f / streamMax).roundToInt(),
             maxValue = 100,
-            iconSizeDp = if (stream == AudioManager.STREAM_MUSIC) 46 else 26,
+            iconSizeDp = if (stream == AudioManager.STREAM_MUSIC) 40 else 26,
             onProgress = { progress ->
                 val target = (progress * streamMax / 100f).roundToInt()
                 try {
