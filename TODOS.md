@@ -8,6 +8,14 @@
 ~~- [ ] 百分比颜色链路~~ 修复后更难看
 - [x] maxTiles Hook 在横屏依旧生效
 - [x] 长按动效 + 点按 Headup Tile 触发 NPE
+- [x] 修复部分 ROM 上自启动权限检查失败导致 OOBE 无法完成的问题
+- [x] 修复 DexKit 索引崩溃
+- [x] 修复音量对话框磁贴动画和点按行为
+- [x] 修复音量对话框 Slider 点按时的异常行为
+- [x] 修复音量对话框旋转时消失的问题
+- [x] 导出日志中包含 logcat 信息
+- [x] 音量详情面板添加媒体切换磁贴
+- [ ] 高音量警告点击取消时重置到门禁值
 
 ## Done until 20261001 Beta
 - [x] 核心破解
@@ -136,3 +144,4 @@ Compose 应用的 release 构建性能远优于 debug 构建
 欢迎 PR 或者围观我们的开发进度： https://github.com/qwqawa64/ZUX-ZTool
 无法在应用内导出崩溃日志？请使用 LogFox 记录问题日志并汇报。
 Not ZUXCeiler or ZaUXiliary.
+不要相信热重载，我们仍在驯服它！要让新功能生效请手动重启作用域。

@@ -3,6 +3,15 @@ maxTiles Hook 失效
 长按音量 Slider 在竖屏下硬编码 margin 导致控件被挤出屏幕
 maxTiles Hook 在横屏依旧生效
 长按动效 + 点按 Headup Tile 触发 NPE
+部分 ROM 上自启动权限检查失败导致 OOBE 无法完成的问题
+DexKit 索引崩溃
+音量对话框磁贴动画和点按行为
+音量对话框 Slider 点按时的异常行为
+音量对话框旋转时消失的问题
+
+功能：
+导出日志中包含 logcat 信息
+音量详情面板添加媒体切换磁贴
 
 "Beta/261001" (c1907)
 新功能（Hook）：
