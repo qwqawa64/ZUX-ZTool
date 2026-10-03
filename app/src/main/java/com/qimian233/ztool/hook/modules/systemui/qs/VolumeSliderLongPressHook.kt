@@ -613,6 +613,18 @@ class VolumeSliderLongPressHook : AppHookModule() {
         tintToStockBase = true
     )
 
+    /**
+     * Prepares an opaque-white glyph (the ring family) for the stock-shade
+     * mirror: mutates the drawable to a target fill color. The stock speaker
+     * glyphs bake their shade into the vector's fillAlpha (#ffffff@0.3 base),
+     * which an ImageView color filter cannot reproduce — SRC_ATOP keeps the
+     * drawable's own alpha, so a 30%-alpha filter color would still render
+     * opaque. Encoding the alpha directly into the fill color does.
+     */
+    private fun tintGlyph(drawable: android.graphics.drawable.Drawable?, color: Int) {
+        drawable?.mutate()?.setTint(color)
+    }
+
     private fun panelDrawable(context: Context, name: String): android.graphics.drawable.Drawable? {
         val id = resolveResourceId(context, "drawable", name, warnOnMiss = false)
         return if (id != null) context.getDrawable(id) else null
@@ -763,12 +775,28 @@ class VolumeSliderLongPressHook : AppHookModule() {
             headset == HeadSetType.COM -> mirror.comNonMute ?: mirror.baseline
             else -> mirror.baseline
         }
-        drawable?.let { iconView.setImageDrawable(it) }
+        if (mirror.tintToStockBase) {
+            // Opaque ring glyph: the shade must live in the fill color itself
+            // (color filters preserve the drawable's own opaque alpha), so
+            // re-tint per frame with the stock ramp color.
+            tintGlyph(drawable, color)
+        }
+        drawable?.let {
+            // The two ring vectors have mismatched viewports (17x20 vs 25x24
+            // with the bell at ~75% height), so the mute variant renders
+            // visibly smaller in the same view. Scale its drawable bounds to
+            // equalize the rendered bell height with the unmuted glyph.
+            if (mirror.tintToStockBase && it === mirror.zero) {
+                val w = it.intrinsicWidth
+                val h = it.intrinsicHeight
+                if (w > 0 && h > 0) it.setBounds(0, 0, (w * 0.8f).toInt(), (h * 0.8f).toInt())
+            } else {
+                it.setBounds(0, 0, it.intrinsicWidth, it.intrinsicHeight)
+            }
+            iconView.setImageDrawable(it)
+        }
         when {
-            // Tinted mirrors (ring): recompute the stock ramp over the opaque
-            // glyph — at volume zero this lands on the base color, above it
-            // the ramp darkens exactly like the media column's filter.
-            mirror.tintToStockBase -> iconView.setColorFilter(color)
+            mirror.tintToStockBase -> iconView.clearColorFilter()
             // Stock applies the ramp only on the speaker non-mute glyph; the
             // headset glyphs and the zero state carry their own alpha instead.
             percent > 0 && headset == null -> iconView.setColorFilter(color)
@@ -911,7 +939,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             iconRes?.let { context.getDrawable(it) },
             initial = (am.getStreamVolume(stream) * 100f / streamMax).roundToInt(),
             maxValue = 100,
-            iconSizeDp = if (stream == AudioManager.STREAM_MUSIC) 32 else 26,
+            iconSizeDp = if (stream == AudioManager.STREAM_MUSIC) 36 else 26,
             onProgress = { progress ->
                 val target = (progress * streamMax / 100f).roundToInt()
                 try {
