@@ -25,6 +25,7 @@ Use English for new agent-facing documentation where practical. Existing user-fa
 - Java/Kotlin JVM target: `11`
 - Xposed API: libxposed API 102
 - Hidden API bypass: `org.lsposed.hiddenapibypass:hiddenapibypass:4.3`
+- DexKit: `org.luckypray:dexkit:2.3.0`
 - Main verification command: `.\gradlew.bat assembleDebug` (Windows PowerShell or CMD) or `./gradlew.bat assembleDebug` (WSL2 and Git Bash)
 
 For any Miuix API or component behavior, consult the official [Dokka site](https://compose-miuix-ui.github.io/miuix/dokka/index.html) instead of decompiling or reading locally downloaded dependencies:

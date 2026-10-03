@@ -19,7 +19,7 @@ lunar = "1.7.5"
 tinypinyin = "2.0.3"
 hiddenApiBypass = "4.3"
 gson = "2.10.1"
-dexkit = "2.0.6"
+dexkit = "2.3.0"
 leakcanary = "2.14"
 
 [libraries]
