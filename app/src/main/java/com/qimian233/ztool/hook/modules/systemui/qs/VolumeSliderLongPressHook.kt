@@ -12,6 +12,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
+import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
@@ -197,6 +198,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         // icon filter against this raw-progress range; keep both in sync.
         private const val STOCK_VOLUME_RAW_RANGE = 100_000
         private const val BASE_PERCENT_COLOR = 0xffd8d8d8.toInt()
+        private const val ICON_BASE_COLOR = 0x4Dffffff.toInt()
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"
         private const val MODULE_PACKAGE = "com.qimian233.ztool"
         private const val MEDIA_OUTPUT_RECEIVER_CLASS =
@@ -573,18 +575,56 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // ------------------------------------------------------------------
 
     /**
+     * Resolved icon set for one column's stock-mirror behavior. Drawables are
+     * resolved once per panel open (getIdentifier per drag frame would jank).
+     * The media column fills the full stock family (mute / wired / BT / level
+     * glyphs); the ring column only swaps normal <-> ringer-mute; app columns
+     * use a static icon (null mirror).
+     */
+    private class IconMirror(
+        val baseline: android.graphics.drawable.Drawable?,
+        val zero: android.graphics.drawable.Drawable? = null,
+        val btZero: android.graphics.drawable.Drawable? = null,
+        val comZero: android.graphics.drawable.Drawable? = null,
+        val btNonMute: android.graphics.drawable.Drawable? = null,
+        val comNonMute: android.graphics.drawable.Drawable? = null
+    )
+
+    /** Media column: the exact drawable family of updateVolumeStartImgForAnimationFlag. */
+    private fun mediaIconMirror(context: Context): IconMirror = IconMirror(
+        baseline = panelDrawable(context, "volume_no_poercing"),
+        zero = panelDrawable(context, "volume_silence"),
+        btZero = panelDrawable(context, "volume_start_bl_mute"),
+        comZero = panelDrawable(context, "volume_start_com_mute"),
+        btNonMute = panelDrawable(context, "volume_start_bt_non_mute"),
+        comNonMute = panelDrawable(context, "volume_start_com_non_mute")
+    )
+
+    /** Ring column: ringer glyph swaps to its mute variant at volume zero. */
+    private fun ringIconMirror(context: Context): IconMirror = IconMirror(
+        baseline = panelDrawable(context, "ic_volume_ringer_zui"),
+        zero = panelDrawable(context, "ic_volume_ringer_mute_zui")
+    )
+
+    private fun panelDrawable(context: Context, name: String): android.graphics.drawable.Drawable? {
+        val id = resolveResourceId(context, "drawable", name, warnOnMiss = false)
+        return if (id != null) context.getDrawable(id) else null
+    }
+
+    /**
      * Vertical slider column matching the control-center vertical slider
      * style: the bar spans the full column height, and the icon plus percent
      * label float INSIDE the bar's bottom end (overlay, like the native
-     * slider), not as separate rows. The percent label only shows when
-     * VolumeSliderPercentageHook's switch is on, and its color follows the
-     * same stock icon-filter mirror as that hook. The bar is a horizontal
-     * SeekBar rotated 270deg: the progress-increasing axis points UP, so
-     * dragging up raises the value, dragging down lowers it.
+     * slider), not as separate rows. The icon mirrors the stock slider icon
+     * pipeline via [mirror] (family swaps + color-filter ramp); the percent
+     * label only shows when VolumeSliderPercentageHook's switch is on. The
+     * bar is a horizontal SeekBar rotated 270deg: the progress-increasing
+     * axis points UP, so dragging up raises the value, dragging down lowers it.
      */
     private fun buildSliderColumn(
         context: Context,
-        iconDrawable: android.graphics.drawable.Drawable?,
+        mirror: IconMirror?,
+        fallbackIcon: android.graphics.drawable.Drawable?,
         initial: Int,
         maxValue: Int,
         onProgress: (Int) -> Unit = {},
@@ -607,6 +647,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
             text = formatPercent(initial, maxValue)
             visibility = if (percentEnabled) View.VISIBLE else View.GONE
         }
+        // The floating icon mirrors the stock slider icon pipeline: drawable
+        // family swaps (mute / headset / level) plus the stock color-filter
+        // ramp, all driven by the same progress the bar reports.
+        val iconView = ImageView(context).apply {
+            val size = dp(context, 30)
+            layoutParams = LinearLayout.LayoutParams(size, size)
+            (mirror?.baseline ?: fallbackIcon)?.let { setImageDrawable(it) }
+        }
         val barLength = dp(context, 260)
         val barThickness = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
             .coerceAtLeast(dp(context, 28))
@@ -616,18 +664,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
         }
-        if (iconDrawable != null) {
-            overlay.addView(ImageView(context).apply {
-                setImageDrawable(iconDrawable)
-                val size = dp(context, 30)
-                layoutParams = LinearLayout.LayoutParams(size, size)
-            })
-        }
+        overlay.addView(iconView)
         overlay.addView(percentView, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { topMargin = dp(context, 2) })
         val barSlot = FrameLayout(context)
-        barSlot.addView(buildColumnBar(context, initial, maxValue, percentView, onProgress, onStop).apply {
+        barSlot.addView(buildColumnBar(
+            context, initial, maxValue, percentView, iconView, mirror, onProgress, onStop
+        ).apply {
             thumb = null
             progressDrawable = resolveSliderDrawable(context)
             minHeight = barThickness
@@ -646,6 +690,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         ).apply {
             setMargins(dp(context, 6), 0, dp(context, 6), 0)
         })
+        if (mirror != null) {
+            updateColumnIcon(iconView, mirror, initial)
+        }
         return column
     }
 
@@ -657,6 +704,81 @@ class VolumeSliderLongPressHook : AppHookModule() {
             false
         }
     }
+
+    /**
+     * Icon color ramp, same stock formula as the percent label. Base color is
+     * the speaker glyph's own #ffffff@0.3 (volume_piercing fillAlpha), which
+     * the stock code shows filter-free below level 3.
+     */
+    private fun resolveIconColor(percent: Int): Int {
+        val rawProgress = percent.coerceIn(0, 100) * (STOCK_VOLUME_RAW_RANGE / 100)
+        val level = kotlin.math.ceil(rawProgress / 10000.0f).toInt()
+        if (level < 3) {
+            return ICON_BASE_COLOR
+        }
+        val fMin = ((level - 2) / 3.0f).coerceAtMost(1.0f)
+        val gray = ((1.0f - fMin) * 216.0f).toInt()
+        val alpha = (kotlin.math.floor(fMin * 85.0f).toInt() + 170).coerceAtMost(255)
+        return Color.argb(alpha, gray, gray, gray)
+    }
+
+    /**
+     * Mirror of the stock updateVolumeStartImgForAnimationFlag, restricted to
+     * what a static ImageView can express (no lottie): drawable swaps by
+     * headset state and volume band, plus the same color-filter ramp the
+     * percent label uses (level = ceil(raw/10000), filter from level 3).
+     * Lottie volume-zero animation and the animation-flag subtleties are
+     * intentionally dropped; the stock silent state also just shows a static
+     * icon in its non-animated branch.
+     */
+    private fun updateColumnIcon(iconView: ImageView, mirror: IconMirror, percent: Int) {
+        val headset = resolveHeadSetState(iconView.context)
+        val color = resolveIconColor(percent)
+        val drawable = when {
+            percent <= 0 -> when (headset) {
+                HeadSetType.BT -> mirror.btZero
+                HeadSetType.COM -> mirror.comZero
+                else -> mirror.zero
+            } ?: mirror.zero
+            headset == HeadSetType.BT -> mirror.btNonMute ?: mirror.baseline
+            headset == HeadSetType.COM -> mirror.comNonMute ?: mirror.baseline
+            else -> mirror.baseline
+        }
+        drawable?.let { iconView.setImageDrawable(it) }
+        // Stock applies the ramp only on the speaker non-mute glyph; the
+        // headset glyphs and the zero state carry their own alpha instead.
+        val filtered = percent > 0 && headset == null
+        if (filtered) iconView.setColorFilter(color) else iconView.clearColorFilter()
+    }
+
+    /**
+     * Mirror of the stock isHeadSetConnect: BT headset when an A2DP-profile
+     * connection is live, wired headset when any output device of the classic
+     * wired types (WIRED_HEADSET/HEADPHONES/USB_HEADSET/HEARING_AID family) is
+     * present. BT wins over wired exactly like the stock code.
+     */
+    private fun resolveHeadSetState(context: Context): HeadSetType? {
+        return try {
+            val bt = context.getSystemService(Context.BLUETOOTH_SERVICE)
+                as? android.bluetooth.BluetoothManager
+            val btConnected = bt?.adapter
+                ?.getProfileConnectionState(android.bluetooth.BluetoothProfile.A2DP) ==
+                android.bluetooth.BluetoothProfile.STATE_CONNECTED
+            if (btConnected) return HeadSetType.BT
+            val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val wired = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any {
+                it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                    it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+                    it.type == AudioDeviceInfo.TYPE_USB_HEADSET
+            }
+            if (wired) HeadSetType.COM else null
+        } catch (t: Throwable) {
+            logger.debug("volume panel: headset detection failed: ${t.message}")
+            null
+        }
+    }
+
+    private enum class HeadSetType { BT, COM }
 
     /**
      * Percent label color, mirroring VolumeSliderPercentageHook's stock
@@ -692,6 +814,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
         initialPercent: Int,
         maxValue: Int,
         percentView: TextView,
+        iconView: ImageView?,
+        mirror: IconMirror?,
         onProgress: (Int) -> Unit,
         onStop: (Int) -> Unit
     ): SeekBar {
@@ -725,6 +849,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 val percent = (progress * 100 / scale.toFloat()).roundToInt().coerceIn(0, 100)
                 percentView.text = formatPercent(progress, bar.max)
                 percentView.setTextColor(resolveVolumePercentColor(percent))
+                if (iconView != null && mirror != null) {
+                    updateColumnIcon(iconView, mirror, percent)
+                }
                 onProgress((progress * maxValue / scale.toFloat()).roundToInt())
             }
 
@@ -748,8 +875,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
         // (coarse) volume steps; without the finer display scale dragging feels
         // like a staircase of a few big jumps.
         val streamMax = am.getStreamMaxVolume(stream)
+        val mirror = when (stream) {
+            AudioManager.STREAM_MUSIC -> mediaIconMirror(context)
+            AudioManager.STREAM_RING -> ringIconMirror(context)
+            else -> null
+        }
         val column = buildSliderColumn(
             context,
+            mirror,
             iconRes?.let { context.getDrawable(it) },
             initial = (am.getStreamVolume(stream) * 100f / streamMax).roundToInt(),
             maxValue = 100,
@@ -864,7 +997,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             ?: resolveDrawableId(context, "ic_volume_media_zui")
                 ?.let { context.getDrawable(it) }
         val column = buildSliderColumn(
-            context, icon,
+            context, null, icon,
             initial = entry.initialPercent,
             maxValue = 100,
             onStop = { progress -> commitAppVolume(context, entry.uid, progress) }
