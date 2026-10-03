@@ -619,7 +619,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         if (iconDrawable != null) {
             overlay.addView(ImageView(context).apply {
                 setImageDrawable(iconDrawable)
-                val size = dp(context, 22)
+                val size = dp(context, 30)
                 layoutParams = LinearLayout.LayoutParams(size, size)
             })
         }
@@ -639,7 +639,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
             Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
         ).apply {
-            bottomMargin = dp(context, 10)
+            bottomMargin = dp(context, 26)
         })
         column.addView(barSlot, LinearLayout.LayoutParams(
             barThickness, barLength
