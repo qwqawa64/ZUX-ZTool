@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Rect
 import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
@@ -1062,7 +1063,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         // Ripple from the finger, like the stock press effect.
-                        ripple?.trigger(event.x, event.y)
+                        ripple?.trigger(event.x, event.y, view.width, view.height)
                         longPressFired = false
                         longPressPending?.let(view::removeCallbacks)
                         val lp = Runnable {
@@ -1203,10 +1204,17 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private var animator: ValueAnimator? = null
         private var originX = 0f
         private var originY = 0f
+        private var bounds = Rect(0, 0, 0, 0)
 
-        fun trigger(x: Float, y: Float) {
+        /**
+         * ViewOverlay drawables do NOT inherit the view's size (unlike
+         * foreground), so bounds must be pushed in at trigger time — with the
+         * default (0,0,0,0) the clip rect is empty and nothing renders.
+         */
+        fun trigger(x: Float, y: Float, width: Int, height: Int) {
             originX = x
             originY = y
+            bounds = Rect(0, 0, width, height)
             animator?.cancel()
             animator = ValueAnimator.ofFloat(0f, 1f).apply {
                 duration = 350L
@@ -1228,6 +1236,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             if (paint.alpha <= 0) return
             val t = animator?.animatedValue as? Float ?: return
             val bounds = bounds
+            if (bounds.isEmpty) return
             val maxRadius = kotlin.math.hypot(
                 bounds.width().toDouble(), bounds.height().toDouble()
             ).toFloat()
