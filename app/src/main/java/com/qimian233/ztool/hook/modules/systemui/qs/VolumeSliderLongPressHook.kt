@@ -4,8 +4,10 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
@@ -90,6 +92,24 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // Rebuilt when the app list callback fires while the panel is open.
     private var appSection: LinearLayout? = null
     private var dialogContext: Context? = null
+
+    /** AudioManager bound to the open panel, used by the volume refresh receiver. */
+    private var panelAudioManager: AudioManager? = null
+
+    /** Live stream-slider handles (media/ring) refreshed by [VolumeChangeReceiver]. */
+    private val streamHandles = mutableMapOf<Int, SliderHandle>()
+
+    /**
+     * Mirror of the stock ToggleSliderView.VolumeChangedReceiver while the
+     * panel is open: the stock slider re-reads getStreamVolume(3) on
+     * VOLUME_CHANGED / STREAM_DEVICES_CHANGED / STREAM_MUTE_CHANGED /
+     * HEADSET_PLUG / bluetooth connection events, which is what keeps it
+     * showing the ACTIVE output device's volume after a route switch — the
+     * per-device index only lands in the AudioManager-visible slot after
+     * those events. Without this the panel keeps the value snapshotted at
+     * open time (the speaker slot on route switches).
+     */
+    private var volumeChangeReceiver: BroadcastReceiver? = null
 
     /** NotificationPanelViewController used to fade the shade content out/in. */
     private var behindListener: Any? = null
@@ -357,8 +377,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         dialogContext = context
         appSection = null
-
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        panelAudioManager = am
+        streamHandles.clear()
 
         val sliderRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -417,10 +438,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
 
         behindListener = resolveBehindListener(triggerView)
+        registerVolumeChangeReceiver(context, am)
         dialog.setOnDismissListener {
             panelShowing = false
             currentDialog = null
             releaseBoundTiles()
+            unregisterVolumeChangeReceiver()
+            streamHandles.clear()
+            panelAudioManager = null
             // Reveal the control-center widgets the dialog had hidden and
             // release the view tree so the static hook reference cannot leak it.
             setDialogBehindAlpha(1f)
@@ -686,7 +711,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         maxValue: Int,
         iconSizeDp: Int = 30,
         onProgress: (Int) -> Unit = {},
-        onStop: (Int) -> Unit = {}
+        onStop: (Int) -> Unit = {},
+        onHandleReady: ((SliderHandle) -> Unit)? = null,
+        handleLevelMax: Int = maxValue
     ): View {
         val column = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -732,10 +759,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
         overlay.addView(percentView, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { topMargin = -(iconSizeDp / 3) + dp(context, 1) })
-        val barSlot = FrameLayout(context)
-        barSlot.addView(buildColumnBar(
+        val bar = buildColumnBar(
             context, initial, maxValue, percentView, iconView, mirror, onProgress, onStop
-        ).apply {
+        )
+        val barSlot = FrameLayout(context)
+        barSlot.addView(bar.apply {
             thumb = null
             progressDrawable = resolveSliderDrawable(context)
             minHeight = barThickness
@@ -761,6 +789,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 iconView.setImageDrawable(it)
                 iconView.clearColorFilter()
             }
+        }
+        if (onHandleReady != null) {
+            val scale = if (bar.javaClass.name == SEEK_BAR_NPS_CLASS) 1000 else maxValue
+            onHandleReady(SliderHandle(bar, percentView, iconView, mirror, handleLevelMax, scale))
         }
         return column
     }
@@ -958,6 +990,100 @@ class VolumeSliderLongPressHook : AppHookModule() {
         return bar
     }
 
+    /**
+     * Live refresh handle for one stream column, mirroring the stock
+     * ToggleSliderView's updateMusicSlider/updateVolumeVoice: re-apply a
+     * freshly-read stream level to the bar, percent label and icon without
+     * disturbing an in-progress user drag (the stock mFromUser guard).
+     */
+    private inner class SliderHandle(
+        private val bar: SeekBar,
+        private val percentView: TextView,
+        private val iconView: ImageView,
+        private val mirror: IconMirror?,
+        private val levelMax: Int,
+        private val scale: Int
+    ) {
+        fun applyLevel(level: Int) {
+            val percent = (level * 100f / levelMax.coerceAtLeast(1)).roundToInt().coerceIn(0, 100)
+            if (!bar.isPressed) {
+                bar.progress = (percent * scale / 100f).roundToInt()
+            }
+            percentView.text = formatPercent(bar.progress, bar.max)
+            percentView.setTextColor(resolveVolumePercentColor(percent))
+            if (mirror != null) {
+                updateColumnIcon(iconView, mirror, percent)
+            }
+        }
+    }
+
+    /**
+     * Stock VolumeChangedReceiver actions (ToggleSliderView ctor): any of
+     * these can move the active output device or the stream level, so both
+     * stream columns re-read AudioManager afterwards — exactly what the QS
+     * slider does.
+     */
+    private fun registerVolumeChangeReceiver(context: Context, am: AudioManager) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context, intent: Intent) {
+                if (!panelShowing) return
+                mainHandler.post { refreshStreamColumns(intent) }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction("android.media.VOLUME_CHANGED_ACTION")
+            addAction("android.media.STREAM_DEVICES_CHANGED_ACTION")
+            addAction("android.media.STREAM_MUTE_CHANGED_ACTION")
+            addAction("android.intent.action.HEADSET_PLUG")
+            addAction("android.bluetooth.headset.profile.action.CONNECTION_STATE_CHANGED")
+            addAction("android.bluetooth.adapter.action.STATE_CHANGED")
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
+            } else {
+                @Suppress("UnspecifiedRegisterReceiverFlag")
+                context.registerReceiver(receiver, filter)
+            }
+            volumeChangeReceiver = receiver
+        } catch (t: Throwable) {
+            logger.warn("volume panel: volume change receiver failed: ${t.message}")
+        }
+    }
+
+    /** Stock updateMusicSlider/updateVolumeVoice equivalent for the panel. */
+    private fun refreshStreamColumns(intent: Intent) {
+        val am = panelAudioManager ?: return
+        var handles = streamHandles.toMutableMap()
+        if (handles.isEmpty()) return
+        val action = intent.action
+        if (action == "android.media.VOLUME_CHANGED_ACTION" ||
+            action == "android.media.STREAM_DEVICES_CHANGED_ACTION"
+        ) {
+            val stream = intent.getIntExtra("android.media.EXTRA_VOLUME_STREAM_TYPE", -1)
+            if (stream != -1 && handles.containsKey(stream)) {
+                handles = mutableMapOf(stream to handles.getValue(stream))
+            }
+        }
+        for ((stream, handle) in handles) {
+            try {
+                handle.applyLevel(am.getStreamVolume(stream))
+            } catch (t: Throwable) {
+                logger.debug("volume panel: refresh stream $stream failed: ${t.message}")
+            }
+        }
+    }
+
+    private fun unregisterVolumeChangeReceiver() {
+        val receiver = volumeChangeReceiver ?: return
+        val context = dialogContext ?: return
+        try {
+            context.unregisterReceiver(receiver)
+        } catch (_: Throwable) {
+        }
+        volumeChangeReceiver = null
+    }
+
     private fun buildStreamColumn(
         context: Context,
         am: AudioManager,
@@ -988,7 +1114,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 } catch (t: Throwable) {
                     logger.warn("setStreamVolume($stream) failed: ${t.message}")
                 }
-            }
+            },
+            onHandleReady = { handle -> streamHandles[stream] = handle },
+            handleLevelMax = streamMax
         )
         (column.layoutParams as? LinearLayout.LayoutParams)?.marginStart =
             dp(context, marginStartDp)
