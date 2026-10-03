@@ -633,6 +633,13 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
         val isNps = bar.javaClass.name == SEEK_BAR_NPS_CLASS
         val scale = if (isNps) 1000 else maxValue
+        // SeekBarNps drives touch itself and never calls drawableHotspotChanged
+        // when setPressed(true) on DOWN, so the theme-injected foreground ripple
+        // stays anchored at local (0,0) — drawn as a stray dot at the bar's
+        // corner once rotated 270°. Strip background/foreground feedback; the
+        // progress bar is all this bar should draw.
+        bar.background = null
+        bar.foreground = null
         bar.max = scale
         bar.progress = (initialPercent * scale / maxValue.toFloat()).roundToInt()
         bar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
