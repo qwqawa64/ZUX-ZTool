@@ -14,7 +14,9 @@ import android.os.Vibrator
 import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -946,6 +948,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
             handleStateChanged.isAccessible = true
 
             val tileClass = tile.javaClass
+            val tileSpec = try {
+                findMethod(tileClass, "getTileSpec").invoke(tile) as? String ?: spec
+            } catch (_: Throwable) {
+                spec
+            }
             val refreshState = findMethod(tileClass, "refreshState")
             val click = findMethod(tileClass, "click",
                 classLoader.loadClass(EXPANDABLE_CLASS))
@@ -1000,30 +1007,79 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 }
             }
 
+            /**
+             * Synchronous fallback: push the tile's current state straight
+             * into the view. The async callback usually delivers updates, but
+             * if it never fires (handler/looper quirks on this ROM) the tile
+             * would stay a blank slab — this guarantees the view matches
+             * tile.getState() every time we ask for a refresh.
+             */
+            fun applyStateSync() {
+                try {
+                    val state = getState.invoke(tile) ?: return
+                    // mState.spec was captured before setTileSpec ran (null);
+                    // handleStateChanged dereferences it for subtitles.
+                    setField(state, "spec", tileSpec)
+                    handleStateChanged.invoke(tileView, state)
+                    slowDownTileLottie(tileView)
+                } catch (t: Throwable) {
+                    logger.error("tile state apply failed", t)
+                }
+            }
+
             val host = volumeDialogImpl ?: tile
+            // CustomizeTileView.isLongClickable() is hardcoded false, so the
+            // framework never runs long-press detection on this view — drive
+            // our own and forward to the tile (native DND detail dialog, key
+            //guard flow), closing the panel like the native dialog does.
+            var longPressFired = false
+            var longPressPending: Runnable? = null
+            tileView.setOnTouchListener { view, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        longPressFired = false
+                        longPressPending?.let(view::removeCallbacks)
+                        val lp = Runnable {
+                            longPressFired = true
+                            try {
+                                longClick.invoke(tile, expandable)
+                            } catch (t: Throwable) {
+                                logger.error("tile long click failed", t)
+                            }
+                            currentDialog?.dismiss()
+                        }
+                        longPressPending = lp
+                        view.postDelayed(lp, ViewConfiguration.getLongPressTimeout().toLong())
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        longPressPending?.let(view::removeCallbacks)
+                        longPressPending = null
+                    }
+                }
+                false
+            }
             tileView.setOnClickListener {
+                if (longPressFired) {
+                    // The long-press detector already consumed this gesture.
+                    longPressFired = false
+                    return@setOnClickListener
+                }
                 try {
                     click.invoke(tile, expandable)
                 } catch (t: Throwable) {
                     logger.error("tile click failed", t)
                 }
-            }
-            tileView.setOnLongClickListener {
-                try {
-                    longClick.invoke(tile, expandable)
-                } catch (t: Throwable) {
-                    logger.error("tile long click failed", t)
-                }
-                // Native BrightnessDetailDialog closes itself after a long
-                // press (the detail UI it opens replaces this panel).
-                currentDialog?.dismiss()
-                true
+                // Apply the (optimistically toggled) state right away; the
+                // async callback refines it when handleRefreshState lands.
+                mainHandler.postDelayed({ applyStateSync() }, 100L)
             }
             // Native wiring order: initial state push, then register, then listen.
-            handleStateChanged.invoke(tileView, getState.invoke(tile))
             addCallback.invoke(tile, callback)
             setListening.invoke(tile, host, true)
             refreshState.invoke(tile)
+            // Guarantee a populated view even if the callback path is dead.
+            mainHandler.postDelayed({ applyStateSync() }, 60L)
+            mainHandler.postDelayed({ applyStateSync() }, 250L)
             boundTiles.add(tile)
             synchronized(boundCallbacks) { boundCallbacks.add(Pair(tile, callback)) }
             TileUi(tileView, ::refresh)
@@ -1110,18 +1166,21 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
     }
 
-    private fun setField(target: Any, name: String, value: Any?) {
+    private fun setField(target: Any, name: String, value: Any?): Boolean {
         var clazz: Class<*>? = target.javaClass
         while (clazz != null) {
             try {
                 val f = clazz.getDeclaredField(name)
                 f.isAccessible = true
                 f.set(target, value)
-                return
+                return true
             } catch (_: NoSuchFieldException) {
                 clazz = clazz.superclass
+            } catch (_: Throwable) {
+                return false
             }
         }
+        return false
     }
 
     private fun refreshAllTiles() {
