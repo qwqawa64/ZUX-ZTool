@@ -1078,15 +1078,24 @@ class VolumeSliderLongPressHook : AppHookModule() {
                                 (ripple != null)
                         )
                         // Ripple from the finger, like the stock press effect,
-                        // clipped to the icon square rather than the whole tile.
+                        // clipped to the icon square rather than the whole
+                        // tile. The overlay draws in the TILE's canvas space,
+                        // so the area is iconFrame's absolute rect and the
+                        // origin is the raw touch point (no offset math).
                         if (iconFrame != null) {
                             ripple?.trigger(
-                                event.x - iconFrame.left,
-                                event.y - iconFrame.top,
-                                iconFrame.width, iconFrame.height
+                                event.x, event.y,
+                                Rect(
+                                    iconFrame.left, iconFrame.top,
+                                    iconFrame.left + iconFrame.width,
+                                    iconFrame.top + iconFrame.height
+                                )
                             )
                         } else {
-                            ripple?.trigger(event.x, event.y, view.width, view.height)
+                            ripple?.trigger(
+                                event.x, event.y,
+                                Rect(0, 0, view.width, view.height)
+                            )
                         }
                         longPressFired = false
                         longPressPending?.let(view::removeCallbacks)
@@ -1242,20 +1251,28 @@ class VolumeSliderLongPressHook : AppHookModule() {
          * ViewOverlay drawables do NOT inherit the view's size (unlike
          * foreground), so bounds must be pushed in at trigger time — with the
          * default (0,0,0,0) the clip rect is empty and nothing renders.
+         * Coordinates are the HOST view's: the overlay draws in the host's
+         * canvas space, so the bounds are iconFrame's absolute rect inside
+         * the tile and the origin is the raw touch point.
          */
-        fun trigger(x: Float, y: Float, width: Int, height: Int) {
+        fun trigger(x: Float, y: Float, area: Rect) {
             originX = x
             originY = y
-            bounds = Rect(0, 0, width, height)
-            log("ripple trigger at($x,$y) view=${width}x$height " +
+            bounds = Rect(area)
+            log("ripple trigger at($x,$y) bounds=$area " +
                 "color=${Integer.toHexString(paint.color)} startR=$startRadiusPx " +
                 "cornerR=$cornerRadiusPx")
             animator?.cancel()
             drawCallCount = 0
             animator = ValueAnimator.ofFloat(0f, 1f).apply {
-                duration = 350L
+                duration = RIPPLE_DURATION_MS
+                // Hold near-full opacity through the expansion, then fade in
+                // the tail — closer to the stock enter+fade rhythm.
+                interpolator = android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f)
                 addUpdateListener { animation ->
-                    paint.alpha = (RIPPLE_MAX_ALPHA * (1f - animation.animatedValue as Float)).toInt()
+                    val t = animation.animatedValue as Float
+                    val fade = ((t - FADE_START) / (1f - FADE_START)).coerceIn(0f, 1f)
+                    paint.alpha = (RIPPLE_MAX_ALPHA * (1f - fade)).toInt()
                     invalidateSelf()
                 }
                 addListener(object : android.animation.AnimatorListenerAdapter() {
@@ -1316,6 +1333,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         companion object {
             private const val RIPPLE_MAX_ALPHA = 80
+            private const val RIPPLE_DURATION_MS = 450L
+            private const val FADE_START = 0.45f
             var cornerRadiusPx = 0f
         }
     }
