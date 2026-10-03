@@ -693,7 +693,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         overlay.addView(iconView)
         overlay.addView(percentView, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply { topMargin = -(iconSizeDp / 4) + dp(context, 2) })
+        ).apply { topMargin = -(iconSizeDp / 3) + dp(context, 1) })
         val barSlot = FrameLayout(context)
         barSlot.addView(buildColumnBar(
             context, initial, maxValue, percentView, iconView, mirror, onProgress, onStop
