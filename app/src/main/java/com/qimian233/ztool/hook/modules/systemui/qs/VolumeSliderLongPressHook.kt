@@ -9,6 +9,7 @@ import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
@@ -1319,12 +1320,59 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
     }
 
+    /**
+     * Finds the GradientDrawable that paints the tile's colored square:
+     * iconFrame.background is the qs_tile_background RippleDrawable whose
+     * "qs_tile_background_base" layer (or any nested layer) is the shape.
+     */
+    private fun iconFrameBackgroundGradient(tileView: View): android.graphics.drawable.GradientDrawable? {
+        val iconFrame = try {
+            findField(tileView.javaClass, "iconFrame").get(tileView) as? View
+        } catch (_: Throwable) {
+            null
+        } ?: return null
+        val background = iconFrame.background ?: return null
+        val candidates = mutableListOf<Drawable>()
+        fun collect(drawable: Drawable?) {
+            when (drawable) {
+                is android.graphics.drawable.GradientDrawable -> candidates.add(drawable)
+                is android.graphics.drawable.LayerDrawable -> {
+                    for (i in 0 until drawable.numberOfLayers) {
+                        collect(drawable.getDrawable(i))
+                    }
+                }
+            }
+        }
+        collect(background)
+        return candidates.firstOrNull() as android.graphics.drawable.GradientDrawable?
+    }
+
+    /** Live corner radius of a GradientDrawable; null when absent or unset. */
+    private fun gradientCornerRadius(drawable: Drawable?): Float? {
+        val gradient = drawable as? android.graphics.drawable.GradientDrawable ?: return null
+        return try {
+            gradient.cornerRadius.takeIf { it > 0f }
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
     /** Installs the self-drawn press ripple into the tile's ViewOverlay. */
     private fun installTileRipple(tileView: View): TileRippleDrawable? {
         if (tileView.tag == TILE_RIPPLE_TAG) return null
         val context = tileView.context
+        // The user (or another module/theme) can change the tile corner radius
+        // at runtime by mutating the background shape — the qs_corner_radius
+        // dimen stays stale in that case. Read the live value off the tile's
+        // own background GradientDrawable (it lives on iconFrame), fall back
+        // to the dimen.
+        val liveRadius = gradientCornerRadius(iconFrameBackgroundGradient(tileView))
         TileRippleDrawable.cornerRadiusPx =
-            resolveDimenPx(context, "qs_corner_radius", dp(context, 28)).toFloat()
+            liveRadius ?: resolveDimenPx(context, "qs_corner_radius", dp(context, 28)).toFloat()
+        logger.trace(
+            "volume panel: ripple cornerRadius=${TileRippleDrawable.cornerRadiusPx} " +
+                "(live=${liveRadius ?: "unavailable"})"
+        )
         // colorControlHighlight resolves to a ColorStateList reference; the
         // TypedValue.data path returned 0x10b2 (alpha 0x00 = invisible), so
         // take the CSL's default color instead and force a visible alpha.
