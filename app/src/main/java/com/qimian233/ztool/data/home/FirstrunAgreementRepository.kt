@@ -73,8 +73,8 @@ class FirstrunAgreementRepository(
      * row column `state`, 1 = allowed). The provider is exported but guarded by a
      * signature|privileged permission, so the query runs through the root shell.
      * Authority/column names may shift across ZUX releases; any failure reports
-     * "not granted", which (as part of allGranted) blocks the first-run flow until
-     * the user grants auto-start.
+     * "not granted" (advisory only — auto-start is an optional item that does
+     * not block the first-run flow).
      */
     fun hasAutoStartPermission(): Boolean {
         if (!shellExecutor.checkRootAccess().isSuccess) return false
@@ -132,10 +132,10 @@ data class FirstrunCheckState(
     val hasUsageStats: Boolean = false,
     val hasOverlay: Boolean = false,
     // ZUI auto-start (联想安全中心). Undetectable without root or on non-ZUI builds,
-    // in which case it reports false and blocks the flow until granted.
+    // in which case it reports false; it is an optional item and does not block the flow.
     val hasAutoStart: Boolean = false
 ) {
-    val allGranted: Boolean
-        get() = hasRoot && isModuleActive && canListApps && hasUsageStats && hasOverlay &&
-            hasAutoStart
+    /** Items the user cannot pass the flow without; the rest are advisory only. */
+    val requiredGranted: Boolean
+        get() = hasRoot && isModuleActive && canListApps
 }

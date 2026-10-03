@@ -284,7 +284,7 @@ fun FirstrunAgreementRoute(
                     )
                     FirstrunPage.Permissions -> PermissionPage(
                         state = uiState.checkState,
-                        allGranted = uiState.checkState.allGranted,
+                        requiredGranted = uiState.checkState.requiredGranted,
                         isLastPage = page == pages.last(),
                         pageScrollState = permissionPageScrollState,
                         onRequestRoot = { viewModel.refreshChecks() },
@@ -510,7 +510,7 @@ private fun SourceVerifyPage(
 @Composable
 private fun PermissionPage(
     state: FirstrunCheckState,
-    allGranted: Boolean,
+    requiredGranted: Boolean,
     isLastPage: Boolean,
     pageScrollState: ScrollState,
     onRequestRoot: () -> Unit,
@@ -545,23 +545,70 @@ private fun PermissionPage(
                 fontWeight = FontWeight.Bold
             )
 
+            // Blocking items: the flow cannot continue until every one is granted.
+            SectionLabel(stringResource(R.string.page_firstrun_permissions_required_section))
             ActionRow(
-                state = state,
-                onRequestRoot = onRequestRoot,
-                onCheckModule = onCheckModule,
-                onRequestPackages = onRequestPackages,
-                onRequestUsage = onRequestUsage,
-                onRequestOverlay = onRequestOverlay,
-                onRequestAutoStart = onRequestAutoStart
+                requests = listOf(
+                    ActionEntry(
+                        title = stringResource(R.string.page_firstrun_root_title),
+                        summary = stringResource(R.string.page_firstrun_root_summary),
+                        checked = state.hasRoot,
+                        icon = Icons.Rounded.Numbers,
+                        onClick = onRequestRoot
+                    ),
+                    ActionEntry(
+                        title = stringResource(R.string.page_firstrun_module_title),
+                        summary = stringResource(R.string.page_firstrun_module_summary),
+                        checked = state.isModuleActive,
+                        icon = Icons.Rounded.Extension,
+                        onClick = onCheckModule
+                    ),
+                    ActionEntry(
+                        title = stringResource(R.string.page_firstrun_packages_title),
+                        summary = stringResource(R.string.page_firstrun_packages_summary),
+                        checked = state.canListApps,
+                        icon = Icons.Rounded.Apps,
+                        onClick = onRequestPackages
+                    )
+                )
+            )
+
+            // Non-blocking items: recommended, but leaving them ungranted only
+            // degrades individual features and never stops the flow.
+            SectionLabel(stringResource(R.string.page_firstrun_permissions_optional_section))
+            ActionRow(
+                requests = listOf(
+                    ActionEntry(
+                        title = stringResource(R.string.page_firstrun_usage_title),
+                        summary = stringResource(R.string.page_firstrun_usage_summary),
+                        checked = state.hasUsageStats,
+                        icon = Icons.Rounded.QueryStats,
+                        onClick = onRequestUsage
+                    ),
+                    ActionEntry(
+                        title = stringResource(R.string.page_firstrun_overlay_title),
+                        summary = stringResource(R.string.page_firstrun_overlay_summary),
+                        checked = state.hasOverlay,
+                        icon = Icons.AutoMirrored.Rounded.OpenInNew,
+                        onClick = onRequestOverlay
+                    ),
+                    ActionEntry(
+                        title = stringResource(R.string.page_firstrun_autostart_title),
+                        summary = stringResource(R.string.page_firstrun_autostart_summary),
+                        checked = state.hasAutoStart,
+                        icon = Icons.Rounded.RestartAlt,
+                        onClick = onRequestAutoStart
+                    )
+                )
             )
 
             StatusBanner(
-                text = if (allGranted) {
+                text = if (requiredGranted) {
                     stringResource(R.string.page_firstrun_permissions_ready)
                 } else {
                     stringResource(R.string.page_firstrun_permissions_pending)
                 },
-                ready = allGranted
+                ready = requiredGranted
             )
         }
 
@@ -570,11 +617,50 @@ private fun PermissionPage(
             nextText = stringResource(
                 if (isLastPage) R.string.page_firstrun_agreement_confirm else R.string.page_firstrun_next_step
             ),
-            nextEnabled = allGranted,
+            nextEnabled = requiredGranted,
             onNext = onAgree,
             onDisagree = onBack,
             negativeText = stringResource(R.string.page_firstrun_previous)
         )
+    }
+}
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.Bold,
+        color = LocalZToolColorScheme.current.onSurfaceVariant
+    )
+}
+
+private data class ActionEntry(
+    val title: String,
+    val summary: String,
+    val checked: Boolean,
+    val icon: ImageVector,
+    val onClick: () -> Unit
+)
+
+@Composable
+private fun ActionRow(
+    requests: List<ActionEntry>
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        requests.forEach { request ->
+            FirstrunActionCard(
+                title = request.title,
+                summary = request.summary,
+                checked = request.checked,
+                icon = request.icon,
+                onClick = request.onClick
+            )
+        }
     }
 }
 
@@ -616,66 +702,6 @@ private fun PageHeader(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = LocalZToolColorScheme.current.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun ActionRow(
-    state: FirstrunCheckState,
-    onRequestRoot: () -> Unit,
-    onCheckModule: () -> Unit,
-    onRequestPackages: () -> Unit,
-    onRequestUsage: () -> Unit,
-    onRequestOverlay: () -> Unit,
-    onRequestAutoStart: () -> Unit
-) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        FirstrunActionCard(
-            title = stringResource(R.string.page_firstrun_root_title),
-            summary = stringResource(R.string.page_firstrun_root_summary),
-            checked = state.hasRoot,
-            icon = Icons.Rounded.Numbers,
-            onClick = onRequestRoot
-        )
-        FirstrunActionCard(
-            title = stringResource(R.string.page_firstrun_module_title),
-            summary = stringResource(R.string.page_firstrun_module_summary),
-            checked = state.isModuleActive,
-            icon = Icons.Rounded.Extension,
-            onClick = onCheckModule
-        )
-        FirstrunActionCard(
-            title = stringResource(R.string.page_firstrun_packages_title),
-            summary = stringResource(R.string.page_firstrun_packages_summary),
-            checked = state.canListApps,
-            icon = Icons.Rounded.Apps,
-            onClick = onRequestPackages
-        )
-        FirstrunActionCard(
-            title = stringResource(R.string.page_firstrun_usage_title),
-            summary = stringResource(R.string.page_firstrun_usage_summary),
-            checked = state.hasUsageStats,
-            icon = Icons.Rounded.QueryStats,
-            onClick = onRequestUsage
-        )
-        FirstrunActionCard(
-            title = stringResource(R.string.page_firstrun_overlay_title),
-            summary = stringResource(R.string.page_firstrun_overlay_summary),
-            checked = state.hasOverlay,
-            icon = Icons.AutoMirrored.Rounded.OpenInNew,
-            onClick = onRequestOverlay
-        )
-        FirstrunActionCard(
-            title = stringResource(R.string.page_firstrun_autostart_title),
-            summary = stringResource(R.string.page_firstrun_autostart_summary),
-            checked = state.hasAutoStart,
-            icon = Icons.Rounded.RestartAlt,
-            onClick = onRequestAutoStart
         )
     }
 }

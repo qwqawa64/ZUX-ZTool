@@ -36,8 +36,10 @@
     <string name="page_firstrun_verify_input_hint">Enter the repository name</string>
     <string name="page_firstrun_permissions_subtitle">The module could not work properly without these permissions</string>
     <string name="page_firstrun_permissions_check_title">Permission checks and actions</string>
-    <string name="page_firstrun_permissions_ready">All permission requirements satisfied, you can continue.</string>
-    <string name="page_firstrun_permissions_pending">Some items are still pending</string>
+    <string name="page_firstrun_permissions_required_section">Required permissions</string>
+    <string name="page_firstrun_permissions_optional_section">Optional (does not block continuing)</string>
+    <string name="page_firstrun_permissions_ready">All required permissions are granted, you can continue.</string>
+    <string name="page_firstrun_permissions_pending">Some required permissions are still pending</string>
     <string name="page_firstrun_previous">Previous</string>
     <string name="page_firstrun_root_title">Root</string>
     <string name="page_firstrun_root_summary">Check whether Root access is available. Functions such as restarting scope, install OneVision module and fetch current OTA update log needs this permission.</string>
