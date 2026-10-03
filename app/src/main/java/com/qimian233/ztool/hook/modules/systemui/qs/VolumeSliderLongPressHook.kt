@@ -1,10 +1,12 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
+import android.animation.Animator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Canvas
 import android.graphics.Color
 import android.media.AudioManager
 import android.os.Build
@@ -181,6 +183,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private const val MAX_APP_ROWS = 3
         private const val TILE_LOTTIE_TAG = "ztool_tile_lottie_slowed"
         private const val TILE_LOTTIE_SPEED = 0.6f
+        private const val TILE_RIPPLE_TAG = "ztool_tile_ripple"
 
         /** Called by [ControlCenterLongPressHook] on the volume slider long press. */
         @JvmStatic
@@ -988,7 +991,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
             // Expandable from the view, same as the native dialog's
             // Expandable.Companion.fromView. R8 flattened the Companion, so
             // fromView lives directly on the interface as a static; fall back
-            // to a hand-rolled implementation of the 3-method interface.
+            // to a hand-rolled implementation — transitionView() returns the
+            // tile, the transition-controller methods return null (their
+            // absence only skips launch animations, never the action).
             val expandableClass = classLoader.loadClass(EXPANDABLE_CLASS)
             val expandable: Any = try {
                 findMethod(expandableClass, "fromView", View::class.java)
@@ -996,7 +1001,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
             } catch (_: Throwable) {
                 java.lang.reflect.Proxy.newProxyInstance(
                     classLoader, arrayOf(expandableClass)
-                ) { _, _, _ -> tileView }
+                ) { _, method, _ ->
+                    if (method.name == "transitionView") tileView else null
+                }
             }
 
             fun refresh() {
@@ -1012,8 +1019,13 @@ class VolumeSliderLongPressHook : AppHookModule() {
              * into the view. The async callback usually delivers updates, but
              * if it never fires (handler/looper quirks on this ROM) the tile
              * would stay a blank slab — this guarantees the view matches
-             * tile.getState() every time we ask for a refresh.
+             * tile.getState() every time we ask for a refresh. On a state
+             * flip the tile's own lottie clip segment (min/maxFrame the tile
+             * wrote into its state, e.g. QMuteTile's silent_off) is played
+             * directly on the Lottie view, since CustomizeTileView kills the
+             * native startLottieAnimation path.
              */
+            var lastAppliedState = Int.MIN_VALUE
             fun applyStateSync() {
                 try {
                     val state = getState.invoke(tile) ?: return
@@ -1022,6 +1034,19 @@ class VolumeSliderLongPressHook : AppHookModule() {
                     setField(state, "spec", tileSpec)
                     handleStateChanged.invoke(tileView, state)
                     slowDownTileLottie(tileView)
+                    val newState = (findField(state.javaClass, "state")
+                        .get(state) as? Int) ?: return
+                    if (lastAppliedState != Int.MIN_VALUE && newState != lastAppliedState) {
+                        val min = findFieldSafe(state, "minFrame") as? Int
+                        val max = findFieldSafe(state, "maxFrame") as? Int
+                        val lottieRes = findFieldSafe(state, "lottieRawResId") as? Int
+                        if (lottieRes != null && lottieRes != 0 &&
+                            min != null && max != null && min != max
+                        ) {
+                            playTileLottieSegment(tileView, lottieRes, min, max)
+                        }
+                    }
+                    lastAppliedState = newState
                 } catch (t: Throwable) {
                     logger.error("tile state apply failed", t)
                 }
@@ -1034,9 +1059,13 @@ class VolumeSliderLongPressHook : AppHookModule() {
             //guard flow), closing the panel like the native dialog does.
             var longPressFired = false
             var longPressPending: Runnable? = null
+            installTileRipple(tileView)
             tileView.setOnTouchListener { view, event ->
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
+                        // Ripple from the finger, like the stock press effect.
+                        (view.foreground as? TileRippleDrawable)
+                            ?.trigger(event.x, event.y)
                         longPressFired = false
                         longPressPending?.let(view::removeCallbacks)
                         val lp = Runnable {
@@ -1081,7 +1110,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
             mainHandler.postDelayed({ applyStateSync() }, 60L)
             mainHandler.postDelayed({ applyStateSync() }, 250L)
             boundTiles.add(tile)
-            synchronized(boundCallbacks) { boundCallbacks.add(Pair(tile, callback)) }
+            synchronized(boundCallbacks) {
+                boundCallbacks.add(TileBinding(tile, callback, callbackClass, host))
+            }
             TileUi(tileView, ::refresh)
         } catch (t: Throwable) {
             logger.error("Failed to build QS tile view", t)
@@ -1090,23 +1121,28 @@ class VolumeSliderLongPressHook : AppHookModule() {
     }
 
     /** Tile listening registrations to undo when the panel dismisses. */
-    private val boundCallbacks = mutableListOf<Pair<Any, Any>>()
+    private data class TileBinding(val tile: Any, val callback: Any, val callbackInterface: Class<*>, val host: Any)
+
+    private val boundCallbacks = mutableListOf<TileBinding>()
 
     /** Releases QSTile listeners created for the panel; mirrors onStop(). */
     private fun releaseBoundTiles() {
-        val pairs = synchronized(boundCallbacks) {
+        val bindings = synchronized(boundCallbacks) {
             val copy = boundCallbacks.toList()
             boundCallbacks.clear()
             copy
         }
-        for ((tile, callback) in pairs) {
+        for (binding in bindings) {
             try {
-                findMethod(tile.javaClass, "removeCallback", callback.javaClass)
-                    .invoke(tile, callback)
+                // The callback is a Proxy, so look the method up by the
+                // QSTile$Callback interface parameter, never Proxy's class.
                 findMethod(
-                    tile.javaClass, "setListening", Any::class.java,
+                    binding.tile.javaClass, "removeCallback", binding.callbackInterface
+                ).invoke(binding.tile, binding.callback)
+                findMethod(
+                    binding.tile.javaClass, "setListening", Any::class.java,
                     Boolean::class.javaPrimitiveType
-                ).invoke(tile, volumeDialogImpl ?: tile, false)
+                ).invoke(binding.tile, binding.host, false)
             } catch (t: Throwable) {
                 logger.debug("volume panel: tile release failed: ${t.message}")
             }
@@ -1140,10 +1176,140 @@ class VolumeSliderLongPressHook : AppHookModule() {
         return null
     }
 
+    /** Field read across the class hierarchy; null when absent. */
+    private fun findFieldSafe(target: Any, name: String): Any? {
+        return try {
+            findField(target.javaClass, name).get(target)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    /**
+     * A self-drawn press ripple for the tiles. The stock background ripple is
+     * unreachable from module code (CustomizeTileView disables the trigger
+     * chain and the ZUI background ignores external pressed flashes; a
+     * foreground RippleDrawable renders invisibly on this theme), so the
+     * effect is drawn explicitly: an expanding circle from the touch point
+     * that fades out, clipped to the tile's rounded bounds.
+     */
+    private class TileRippleDrawable(
+        private val tintColor: Int,
+        private val startRadiusPx: Float
+    ) : android.graphics.drawable.Drawable() {
+        private val paint = android.graphics.Paint(
+            android.graphics.Paint.ANTI_ALIAS_FLAG
+        ).apply { style = android.graphics.Paint.Style.FILL }
+        private val clip = android.graphics.Path()
+        private var animator: ValueAnimator? = null
+        private var originX = 0f
+        private var originY = 0f
+
+        fun trigger(x: Float, y: Float) {
+            originX = x
+            originY = y
+            animator?.cancel()
+            animator = ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 350L
+                addUpdateListener { animation ->
+                    paint.alpha = (RIPPLE_MAX_ALPHA * (1f - animation.animatedValue as Float)).toInt()
+                    invalidateSelf()
+                }
+                addListener(object : android.animation.AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        paint.alpha = 0
+                        invalidateSelf()
+                    }
+                })
+                start()
+            }
+        }
+
+        override fun draw(canvas: Canvas) {
+            if (paint.alpha <= 0) return
+            val t = animator?.animatedValue as? Float ?: return
+            val bounds = bounds
+            val maxRadius = kotlin.math.hypot(
+                bounds.width().toDouble(), bounds.height().toDouble()
+            ).toFloat()
+            val radius = startRadiusPx + (maxRadius - startRadiusPx) * t
+            clip.reset()
+            clip.addRoundRect(
+                bounds.left.toFloat(), bounds.top.toFloat(),
+                bounds.right.toFloat(), bounds.bottom.toFloat(),
+                cornerRadiusPx, cornerRadiusPx, android.graphics.Path.Direction.CW
+            )
+            canvas.save()
+            canvas.clipPath(clip)
+            paint.color = tintColor
+            canvas.drawCircle(originX, originY, radius, paint)
+            canvas.restore()
+        }
+
+        override fun setAlpha(alpha: Int) {}
+        override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {}
+        @Deprecated("Deprecated in Java")
+        override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
+
+        companion object {
+            private const val RIPPLE_MAX_ALPHA = 80
+            var cornerRadiusPx = 0f
+        }
+    }
+
+    /** Installs the self-drawn press ripple as the tile's foreground. */
+    private fun installTileRipple(tileView: View) {
+        if (tileView.tag == TILE_RIPPLE_TAG) return
+        val context = tileView.context
+        TileRippleDrawable.cornerRadiusPx =
+            resolveDimenPx(context, "qs_corner_radius", dp(context, 28)).toFloat()
+        val highlight = try {
+            val value = TypedValue()
+            if (context.theme.resolveAttribute(android.R.attr.colorControlHighlight, value, true)) {
+                value.data
+            } else 0x33888888.toInt()
+        } catch (_: Throwable) {
+            0x33888888.toInt()
+        }
+        tileView.foreground = TileRippleDrawable(highlight, dp(context, 22).toFloat())
+        tileView.tag = TILE_RIPPLE_TAG
+    }
+
     /**
      * Tile state-change animations are Lottie clips played at native speed;
      * slow them down so the state transition reads longer.
      */
+    private fun playTileLottieSegment(root: View, lottieRes: Int, min: Int, max: Int) {
+        try {
+            val lottieClass = root.context.classLoader
+                .loadClass("com.airbnb.lottie.LottieAnimationView")
+            fun walk(view: View) {
+                if (lottieClass.isInstance(view)) {
+                    try {
+                        findMethod(lottieClass, "setMinAndMaxFrame",
+                            Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+                            .invoke(view, min, max)
+                    } catch (_: Throwable) {
+                    }
+                    try {
+                        findMethod(lottieClass, "setFrame", Int::class.javaPrimitiveType)
+                            .invoke(view, min)
+                    } catch (_: Throwable) {
+                    }
+                    try {
+                        findMethod(lottieClass, "playAnimation").invoke(view)
+                    } catch (_: Throwable) {
+                    }
+                } else if (view is ViewGroup) {
+                    for (i in 0 until view.childCount) walk(view.getChildAt(i))
+                }
+            }
+            walk(root)
+        } catch (t: Throwable) {
+            logger.debug("volume panel: lottie segment failed: ${t.message}")
+        }
+    }
+
     private fun slowDownTileLottie(root: View) {
         try {
             val lottieClass = root.context.classLoader
