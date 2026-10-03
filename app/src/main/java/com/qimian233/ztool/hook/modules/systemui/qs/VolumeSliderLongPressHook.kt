@@ -1199,13 +1199,18 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * clipped to the tile's rounded bounds.
      */
     private class TileRippleDrawable(
-        private val tintColor: Int,
+        tintColor: Int,
         private val startRadiusPx: Float,
         private val log: (String) -> Unit
     ) : android.graphics.drawable.Drawable() {
         private val paint = android.graphics.Paint(
             android.graphics.Paint.ANTI_ALIAS_FLAG
-        ).apply { style = android.graphics.Paint.Style.FILL }
+        ).apply {
+            style = android.graphics.Paint.Style.FILL
+            // Set once here: assigning paint.color per draw() would reset the
+            // animation-driven alpha to the tint's own alpha every frame.
+            color = tintColor
+        }
         private val clip = android.graphics.Path()
         private var animator: ValueAnimator? = null
         private var originX = 0f
@@ -1224,7 +1229,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             originY = y
             bounds = Rect(0, 0, width, height)
             log("ripple trigger at($x,$y) view=${width}x$height " +
-                "color=${Integer.toHexString(tintColor)} startR=$startRadiusPx " +
+                "color=${Integer.toHexString(paint.color)} startR=$startRadiusPx " +
                 "cornerR=$cornerRadiusPx")
             animator?.cancel()
             drawCallCount = 0
@@ -1273,7 +1278,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             )
             canvas.save()
             canvas.clipPath(clip)
-            paint.color = tintColor
             canvas.drawCircle(originX, originY, radius, paint)
             canvas.restore()
         }
@@ -1303,11 +1307,16 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val context = tileView.context
         TileRippleDrawable.cornerRadiusPx =
             resolveDimenPx(context, "qs_corner_radius", dp(context, 28)).toFloat()
+        // colorControlHighlight resolves to a ColorStateList reference; the
+        // TypedValue.data path returned 0x10b2 (alpha 0x00 = invisible), so
+        // take the CSL's default color instead and force a visible alpha.
         val highlight = try {
-            val value = TypedValue()
-            if (context.theme.resolveAttribute(android.R.attr.colorControlHighlight, value, true)) {
-                value.data
-            } else 0x33888888.toInt()
+            val styles = context.obtainStyledAttributes(
+                intArrayOf(android.R.attr.colorControlHighlight)
+            )
+            val color = styles.getColor(0, 0x33888888.toInt())
+            styles.recycle()
+            (color and 0x00FFFFFF) or 0x28000000.toInt() // ~16% alpha
         } catch (_: Throwable) {
             0x33888888.toInt()
         }
