@@ -1,5 +1,6 @@
 package com.qimian233.ztool.hook.modules.systemui.qs
 
+import android.animation.Animator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.ActivityManager
@@ -9,8 +10,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.database.ContentObserver
+import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.RippleDrawable
 import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
@@ -21,6 +22,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -891,7 +893,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
             // QMuteTile: silent_off clip, on = frames 0..20, off = 60..110.
             lottie = TileLottie("silent_off", 0, 20, 60, 110),
             isOn = { muteTileOn() },
-            onToggle = { toggleMute() }
+            onToggle = { toggleMute() },
+            onLongPress = { openSoundSettings(context) }
         )
         dndTile = buildTile(
             context, classLoader,
@@ -901,7 +904,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
             iconActiveNames = arrayOf("controlcenter_1_btn_zenmode_off"),
             iconInactiveNames = arrayOf("controlcenter_1_btn_zenmode_off"),
             isOn = { dndTileOn() },
-            onToggle = { toggleDnd() }
+            onToggle = { toggleDnd() },
+            onLongPress = { openSoundSettings(context) }
         )
         if (hasVibrator(context)) {
             vibrateTile = buildTile(
@@ -910,7 +914,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 iconActiveNames = arrayOf("controlcenter_1_btn_shock"),
                 iconInactiveNames = arrayOf("controlcenter_1_btn_shock"),
                 isOn = { vibrateTileOn(context) },
-                onToggle = { toggleVibrate(context) }
+                onToggle = { toggleVibrate(context) },
+                onLongPress = { openSoundSettings(context) }
             )
         }
         for (tile in listOf(muteTile, dndTile, vibrateTile)) {
@@ -931,7 +936,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
         iconInactiveNames: Array<String>,
         lottie: TileLottie? = null,
         isOn: () -> Boolean,
-        onToggle: () -> Unit
+        onToggle: () -> Unit,
+        onLongPress: () -> Unit = {}
     ): TileUi? {
         return try {
             val tileViewClass = classLoader.loadClass(CUSTOMIZE_TILE_VIEW_CLASS)
@@ -990,34 +996,46 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 }
             }
 
+            var longPressFired = false
+            var longPressPending: Runnable? = null
             tileView.setOnTouchListener { view, event ->
-                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                    touchX = event.x
-                    touchY = event.y
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        touchX = event.x
+                        touchY = event.y
+                        longPressFired = false
+                        // CustomizeTileView.isLongClickable() is hardcoded
+                        // false, so the framework never runs long-press
+                        // detection on this view — drive our own.
+                        longPressPending?.let(view::removeCallbacks)
+                        val lp = Runnable {
+                            longPressFired = true
+                            flashTileRipple(tileView)
+                            onLongPress()
+                        }
+                        longPressPending = lp
+                        view.postDelayed(lp, ViewConfiguration.getLongPressTimeout().toLong())
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        longPressPending?.let(view::removeCallbacks)
+                        longPressPending = null
+                    }
                 }
-                // Record coordinates only; returning false hands the gesture
-                // back to the framework click detector so one gesture yields
-                // exactly one click.
+                // Coordinates only; false hands the gesture back to the
+                // framework click detector so one tap yields exactly one click.
                 false
             }
             tileView.setOnClickListener {
-                // Native tiles mask the instant background flip behind a press
-                // ripple; the tile's own background chain is unreachable from
-                // module code on this ROM, so our installed foreground ripple
-                // provides the same masking at the touch point.
+                if (longPressFired) {
+                    // The long-press detector already consumed this gesture.
+                    longPressFired = false
+                    return@setOnClickListener
+                }
                 flashTileRipple(tileView)
                 onToggle()
                 refresh()
             }
             installTileRipple(tileView)
-            tileView.setOnLongClickListener {
-                try {
-                    context.startActivity(Intent(Settings.ACTION_SOUND_SETTINGS))
-                } catch (t: Throwable) {
-                    logger.warn("open sound settings failed: ${t.message}")
-                }
-                true
-            }
             refresh()
             TileUi(tileView, ::refresh)
         } catch (t: Throwable) {
@@ -1056,59 +1074,116 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * Tile state-change animations are Lottie clips played at native speed;
      * slow them down so the state transition reads longer.
      */
-    /** Last tile touch point for the ripple hotspot; -1 = unknown (center). */
+    private fun openSoundSettings(context: Context) {
+        try {
+            context.startActivity(Intent(Settings.ACTION_SOUND_SETTINGS))
+        } catch (t: Throwable) {
+            logger.warn("open sound settings failed: ${t.message}")
+        }
+    }
+
+    /** Last tile touch point for the ripple origin; -1 = unknown (center). */
     private var touchX = -1f
     private var touchY = -1f
 
-    /** Pending un-press callbacks per tile, so a re-tap cancels the old one. */
-    private val unpressRunners = mutableMapOf<View, Runnable>()
-
     /**
-     * Attaches a foreground ripple to the tile: the view-background ripple is
-     * unreachable on this ROM (CustomizeTileView kills the trigger path and
-     * the ZUI background chain ignores manual pressed flashes), while a
-     * foreground RippleDrawable is entirely ours — public APIs only, drawn
-     * inside the tile's rounded bounds, driven at the touch point.
+     * A self-drawn press ripple for the tiles. Every stock path is closed to
+     * module code: CustomizeTileView disables the trigger chain
+     * (showRippleEffect/isLongClickable), the ZUI background ignores manual
+     * pressed flashes, and a foreground RippleDrawable renders invisibly on
+     * this theme. So the effect is drawn explicitly: an expanding circle from
+     * the touch point that fades out, clipped to the tile's rounded bounds.
      */
-    private fun installTileRipple(tileView: View) {
-        val highlight = obtainAttrColor(tileView.context, android.R.attr.colorControlHighlight)
-        val mask = android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-            cornerRadius = resolveDimenPx(tileView.context, "qs_corner_radius", dp(tileView.context, 28)).toFloat()
+    private class TileRippleDrawable(
+        private val tintColor: Int,
+        private val startRadiusPx: Float
+    ) : android.graphics.drawable.Drawable() {
+        private val paint = android.graphics.Paint(
+            android.graphics.Paint.ANTI_ALIAS_FLAG
+        ).apply { style = android.graphics.Paint.Style.FILL }
+        private val clip = android.graphics.Path()
+        private var animator: ValueAnimator? = null
+        private var originX = 0f
+        private var originY = 0f
+
+        fun trigger(x: Float, y: Float) {
+            originX = x
+            originY = y
+            animator?.cancel()
+            animator = ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 350L
+                addUpdateListener { animation ->
+                    paint.alpha = (RIPPLE_MAX_ALPHA * (1f - animation.animatedValue as Float)).toInt()
+                    invalidateSelf()
+                }
+                addListener(object : android.animation.AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        paint.alpha = 0
+                        invalidateSelf()
+                    }
+                })
+                start()
+            }
         }
-        val ripple = RippleDrawable(
-            android.content.res.ColorStateList.valueOf(highlight), null, mask
+
+        override fun draw(canvas: Canvas) {
+            if (paint.alpha <= 0) return
+            val t = animator?.animatedValue as? Float ?: return
+            val bounds = bounds
+            val maxRadius = kotlin.math.hypot(
+                bounds.width().toDouble(), bounds.height().toDouble()
+            ).toFloat()
+            val radius = startRadiusPx + (maxRadius - startRadiusPx) * t
+            clip.reset()
+            clip.addRoundRect(
+                bounds.left.toFloat(), bounds.top.toFloat(),
+                bounds.right.toFloat(), bounds.bottom.toFloat(),
+                cornerRadiusPx, cornerRadiusPx, android.graphics.Path.Direction.CW
+            )
+            canvas.save()
+            canvas.clipPath(clip)
+            paint.color = tintColor
+            canvas.drawCircle(originX, originY, radius, paint)
+            canvas.restore()
+        }
+
+        override fun setAlpha(alpha: Int) {}
+        override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {}
+        @Deprecated("Deprecated in Java")
+        override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
+
+        companion object {
+            private const val RIPPLE_MAX_ALPHA = 80
+            var cornerRadiusPx = 0f
+        }
+    }
+
+    private fun installTileRipple(tileView: View) {
+        val context = tileView.context
+        TileRippleDrawable.cornerRadiusPx =
+            resolveDimenPx(context, "qs_corner_radius", dp(context, 28)).toFloat()
+        tileView.foreground = TileRippleDrawable(
+            obtainAttrColor(context, android.R.attr.colorControlHighlight, 0x33888888.toInt()),
+            dp(context, 22).toFloat()
         )
-        tileView.foreground = ripple
-        // Foreground drawables need the view's own state callbacks to animate;
-        // press is flashed manually in flashTileRipple.
     }
 
     private fun flashTileRipple(tileView: View) {
-        val ripple = tileView.foreground as? RippleDrawable ?: return
-        val x = if (touchX >= 0) touchX else tileView.width / 2f
-        val y = if (touchY >= 0) touchY else tileView.height / 2f
+        (tileView.foreground as? TileRippleDrawable)
+            ?.trigger(
+                if (touchX >= 0) touchX else tileView.width / 2f,
+                if (touchY >= 0) touchY else tileView.height / 2f
+            )
         touchX = -1f
         touchY = -1f
-        ripple.setHotspot(x, y)
-        ripple.state = intArrayOf(android.R.attr.state_pressed)
-        // A re-tap before the fade-out cancels the pending release so the new
-        // ripple plays from the fresh hotspot instead of being clipped.
-        unpressRunners.remove(tileView)?.let { mainHandler.removeCallbacks(it) }
-        val unpress = Runnable {
-            unpressRunners.remove(tileView)
-            ripple.state = intArrayOf()
-        }
-        unpressRunners[tileView] = unpress
-        mainHandler.postDelayed(unpress, 120L)
     }
 
-    private fun obtainAttrColor(context: Context, attr: Int): Int {
+    private fun obtainAttrColor(context: Context, attr: Int, fallback: Int): Int {
         return try {
             val value = TypedValue()
-            if (context.theme.resolveAttribute(attr, value, true)) value.data else -0x4d000000
+            if (context.theme.resolveAttribute(attr, value, true)) value.data else fallback
         } catch (_: Throwable) {
-            -0x4d000000
+            fallback
         }
     }
 
