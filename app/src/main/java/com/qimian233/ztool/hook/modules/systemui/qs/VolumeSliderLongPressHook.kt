@@ -394,6 +394,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
                     // Mirror BrightnessDetailDialog.onCreate: the fullscreen
                     // root extends under the system bars and the insets are
                     // consumed by our own OnApplyWindowInsetsListener margins.
+                    // Deprecated on API 36+ with no hook-process equivalent; this
+                    // mirrors the native BrightnessDetailDialog behavior.
+                    @Suppress("DEPRECATION")
                     window?.setDecorFitsSystemWindows(false)
                     window?.attributes?.fitInsetsTypes = 0
                 }

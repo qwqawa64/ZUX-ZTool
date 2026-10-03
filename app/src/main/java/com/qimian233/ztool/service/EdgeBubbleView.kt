@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.GestureDetector
@@ -179,12 +180,16 @@ class EdgeBubbleView(
         // Oplus: smooth-rounded outline + elevation + colored shadows + clipToOutline.
         outlineProvider = object : ViewOutlineProvider() {
             override fun getOutline(view: View, outline: Outline) {
-                outline.setConvexPath(
-                    squirclePath(
-                        containerOriginX(), 0f,
-                        containerWpx.toFloat(), containerHpx.toFloat()
-                    )
+                val path = squirclePath(
+                    containerOriginX(), 0f,
+                    containerWpx.toFloat(), containerHpx.toFloat()
                 )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    outline.setPath(path)
+                } else {
+                    @Suppress("DEPRECATION")
+                    outline.setConvexPath(path)
+                }
             }
         }
         clipToOutline = true
@@ -258,7 +263,7 @@ class EdgeBubbleView(
             // Whole-view alpha: covers background, icon and shadow uniformly on
             // every collapse path (first collapse included).
             animate().alpha(targetAlpha)
-                .setDuration(MODE_ANIM_MS.toLong())
+                .setDuration(MODE_ANIM_MS)
                 .start()
         } else {
             translationX = if (target == MODE_FULL) 0f else halfTranslation(side)

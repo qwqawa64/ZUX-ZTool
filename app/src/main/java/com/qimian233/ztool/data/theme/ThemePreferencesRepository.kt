@@ -136,20 +136,27 @@ class ThemePreferencesRepository(
             val defaults = ZToolThemeSettings()
             val parsed = Gson().fromJson(json, ZToolThemeSettings::class.java) ?: return false
             saveSettings(
+                // Gson bypasses constructors, so "non-null" fields of [parsed] can
+                // still be null at runtime — widen them explicitly before the merge.
                 defaults.copy(
-                    frontendStyle = parsed.frontendStyle ?: defaults.frontendStyle,
-                    themeMode = parsed.themeMode ?: defaults.themeMode,
-                    materialColorSpec = parsed.materialColorSpec ?: defaults.materialColorSpec,
-                    materialPalette = parsed.materialPalette ?: defaults.materialPalette,
-                    dynamicColorEnabled = parsed.dynamicColorEnabled ?: defaults.dynamicColorEnabled,
-                    amoledBlackEnabled = parsed.amoledBlackEnabled ?: defaults.amoledBlackEnabled,
-                    predictiveBackGestureEnabled = parsed.predictiveBackGestureEnabled
+                    frontendStyle = (parsed.frontendStyle as FrontendStyle?) ?: defaults.frontendStyle,
+                    themeMode = (parsed.themeMode as ThemeMode?) ?: defaults.themeMode,
+                    materialColorSpec = (parsed.materialColorSpec as MaterialColorSpec?)
+                        ?: defaults.materialColorSpec,
+                    materialPalette = (parsed.materialPalette as MaterialPalette?)
+                        ?: defaults.materialPalette,
+                    dynamicColorEnabled = (parsed.dynamicColorEnabled as Boolean?)
+                        ?: defaults.dynamicColorEnabled,
+                    amoledBlackEnabled = (parsed.amoledBlackEnabled as Boolean?)
+                        ?: defaults.amoledBlackEnabled,
+                    predictiveBackGestureEnabled = (parsed.predictiveBackGestureEnabled as Boolean?)
                         ?: defaults.predictiveBackGestureEnabled,
-                    manualColorEnabled = parsed.manualColorEnabled ?: defaults.manualColorEnabled,
-                    manualSeedColor = parsed.manualSeedColor ?: defaults.manualSeedColor,
-                    enableFloatingBottomBar = parsed.enableFloatingBottomBar
+                    manualColorEnabled = (parsed.manualColorEnabled as Boolean?)
+                        ?: defaults.manualColorEnabled,
+                    manualSeedColor = (parsed.manualSeedColor as Long?) ?: defaults.manualSeedColor,
+                    enableFloatingBottomBar = (parsed.enableFloatingBottomBar as Boolean?)
                         ?: defaults.enableFloatingBottomBar,
-                    enableFloatingBottomBarBlur = parsed.enableFloatingBottomBarBlur
+                    enableFloatingBottomBarBlur = (parsed.enableFloatingBottomBarBlur as Boolean?)
                         ?: defaults.enableFloatingBottomBarBlur
                 )
             )

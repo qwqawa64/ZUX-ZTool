@@ -186,6 +186,7 @@ class QsPanelWidthHook : AppHookModule() {
                 .newInstance() as AssetManager
             AssetManager::class.java.getDeclaredMethod("addAssetPath", String::class.java)
                 .invoke(assets, param.applicationInfo.sourceDir)
+            @Suppress("DEPRECATION") // sole way to read another APK's resources from a raw AssetManager
             val res = Resources(assets, DisplayMetrics(), Configuration())
             val id = res.getIdentifier(
                 "quick_settings_num_columns", "integer", ScopeKeys.SYSTEM_UI.packageName

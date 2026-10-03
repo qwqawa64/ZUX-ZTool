@@ -742,7 +742,7 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         val taskClass = classLoader.loadClass("com.android.server.wm.Task")
         hookWithId(setBounds, "freeform_edge_bubble_detect") { chain ->
             val task = chain.thisObject
-            if (internalMove.get() || !taskClass.isInstance(task)) {
+            if (internalMove.get() == true || !taskClass.isInstance(task)) {
                 return@hookWithId chain.proceed()
             }
             val newBounds = chain.getArg(0) as Rect
