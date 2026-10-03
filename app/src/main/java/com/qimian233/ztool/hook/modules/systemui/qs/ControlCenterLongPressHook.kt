@@ -191,7 +191,7 @@ class ControlCenterLongPressHook : AppHookModule() {
             hookWithId(
                 onTouchEvent,
                 "tile_touch_squish",
-                XposedInterface.PRIORITY_LOWEST
+                XposedInterface.PRIORITY_HIGHEST
             ) { chain ->
                 val result = chain.proceed()
                 try {
@@ -357,7 +357,7 @@ class ControlCenterLongPressHook : AppHookModule() {
             hookWithId(
                 onTouchEvent,
                 "slider_touch_long_press",
-                XposedInterface.PRIORITY_LOWEST
+                XposedInterface.PRIORITY_HIGHEST
             ) { chain ->
                 val result = chain.proceed()
                 trackPress(chain.thisObject as View, chain.args[0] as MotionEvent) { v ->
@@ -383,7 +383,7 @@ class ControlCenterLongPressHook : AppHookModule() {
             hookWithId(
                 onTouchEvent,
                 "slider_touch_long_press_nps",
-                XposedInterface.PRIORITY_LOWEST
+                XposedInterface.PRIORITY_HIGHEST
             ) { chain ->
                 val result = chain.proceed()
                 val view = chain.thisObject as View
@@ -392,6 +392,11 @@ class ControlCenterLongPressHook : AppHookModule() {
                         logger.debug("slider: volume long press, opening detail panel")
                         VolumeSliderLongPressHook.onVolumeSliderLongPress(view)
                     }
+                } else if (view.tag == VOLUME_PANEL_SLIDER_TAG) {
+                    // A slider built by VolumeSliderLongPressHook's own panel:
+                    // squish + haptic only, no trigger — the panel is already
+                    // open, and handleVolumeLongPress would just ignore it.
+                    trackPress(view, chain.args[0] as MotionEvent) { }
                 }
                 result
             }
@@ -579,7 +584,9 @@ class ControlCenterLongPressHook : AppHookModule() {
         var animationTarget: View? = null
     }
 
-    private companion object {
+    // Internal so VolumeSliderLongPressHook can reference the shared panel
+    // slider tag constant.
+    internal companion object {
         const val QS_TILE_VIEW_CLASS = "com.android.systemui.qs.tileimpl.QSTileViewImpl"
         const val CUSTOM_QS_TILE_VIEW_CLASS =
             "com.android.systemui.qs.tileimpl.CustomQSTileViewImpl"
@@ -591,6 +598,13 @@ class ControlCenterLongPressHook : AppHookModule() {
             "com.android.systemui.settings.brightness.ToggleSeekBar"
         const val SEEK_BAR_NPS_CLASS = "zui.widget.SeekBarNps"
         const val VOLUME_SLIDER_FIELD = "mMediaVolumeSlider"
+
+        /**
+         * Tag on the panel sliders VolumeSliderLongPressHook builds itself
+         * (bare SeekBarNps with no ToggleSliderView ancestor): marks them as
+         * squish-animation targets without routing a long-press trigger.
+         */
+        const val VOLUME_PANEL_SLIDER_TAG = "ztool_volume_panel_slider"
         val SLIDER_ROOT_FIELDS =
             arrayOf("mBrightnessSliderRoot", "mVolumeSliderRoot")
         const val DETAIL_INDICATOR_FIELD = "detailIndicatorView"

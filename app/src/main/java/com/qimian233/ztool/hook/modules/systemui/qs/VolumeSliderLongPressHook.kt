@@ -186,6 +186,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private const val EXPANDABLE_CLASS =
             "com.android.systemui.animation.Expandable"
         private const val APP_SECTION_TAG = "ztool_volume_panel_app_section"
+        private const val VOLUME_PANEL_SLIDER_TAG =
+            ControlCenterLongPressHook.VOLUME_PANEL_SLIDER_TAG
         private const val APP_VOLUME_SETTINGS_KEY = "zui_app_volume"
         private const val MAX_APP_ROWS = 3
         private const val TILE_LOTTIE_TAG = "ztool_tile_lottie_slowed"
@@ -650,6 +652,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
         val isNps = bar.javaClass.name == SEEK_BAR_NPS_CLASS
         val scale = if (isNps) 1000 else maxValue
+        // Marks this bar for ControlCenterLongPressHook: it is a bare
+        // SeekBarNps with no ToggleSliderView ancestor, so the tag is the
+        // only way the shared squish detector can recognize it (and skip
+        // its long-press trigger — the panel is already open).
+        if (isNps) bar.tag = VOLUME_PANEL_SLIDER_TAG
         // SeekBarNps drives touch itself and never calls drawableHotspotChanged
         // when setPressed(true) on DOWN, so the theme-injected foreground ripple
         // stays anchored at local (0,0) — drawn as a stray dot at the bar's
