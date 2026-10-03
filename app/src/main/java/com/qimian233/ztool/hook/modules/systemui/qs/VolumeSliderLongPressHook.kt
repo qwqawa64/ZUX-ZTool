@@ -573,12 +573,14 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // ------------------------------------------------------------------
 
     /**
-     * Vertical slider column (bar on top, icon at the bar's bottom end, percent
-     * below the icon), matching the control-center vertical slider style. The
-     * percent label only shows when VolumeSliderPercentageHook's switch is on,
-     * and its color follows the same stock icon-filter mirror as that hook.
-     * The bar is a horizontal SeekBar rotated 270deg: the progress-increasing
-     * axis points UP, so dragging up raises the value, dragging down lowers it.
+     * Vertical slider column matching the control-center vertical slider
+     * style: the bar spans the full column height, and the icon plus percent
+     * label float INSIDE the bar's bottom end (overlay, like the native
+     * slider), not as separate rows. The percent label only shows when
+     * VolumeSliderPercentageHook's switch is on, and its color follows the
+     * same stock icon-filter mirror as that hook. The bar is a horizontal
+     * SeekBar rotated 270deg: the progress-increasing axis points UP, so
+     * dragging up raises the value, dragging down lowers it.
      */
     private fun buildSliderColumn(
         context: Context,
@@ -604,13 +606,26 @@ class VolumeSliderLongPressHook : AppHookModule() {
             setTextColor(resolveVolumePercentColor(initial))
             text = formatPercent(initial, maxValue)
             visibility = if (percentEnabled) View.VISIBLE else View.GONE
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = dp(context, 2) }
         }
         val barLength = dp(context, 260)
         val barThickness = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
             .coerceAtLeast(dp(context, 28))
+        // Overlay stack anchored at the bar's bottom end: icon on top of the
+        // percent text, both centered horizontally inside the bar width.
+        val overlay = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
+        }
+        if (iconDrawable != null) {
+            overlay.addView(ImageView(context).apply {
+                setImageDrawable(iconDrawable)
+                val size = dp(context, 22)
+                layoutParams = LinearLayout.LayoutParams(size, size)
+            })
+        }
+        overlay.addView(percentView, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { topMargin = dp(context, 2) })
         val barSlot = FrameLayout(context)
         barSlot.addView(buildColumnBar(context, initial, maxValue, percentView, onProgress, onStop).apply {
             thumb = null
@@ -620,21 +635,17 @@ class VolumeSliderLongPressHook : AppHookModule() {
             rotation = 270f
             layoutParams = FrameLayout.LayoutParams(barLength, barThickness, Gravity.CENTER)
         })
+        barSlot.addView(overlay, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+        ).apply {
+            bottomMargin = dp(context, 10)
+        })
         column.addView(barSlot, LinearLayout.LayoutParams(
             barThickness, barLength
         ).apply {
             setMargins(dp(context, 6), 0, dp(context, 6), 0)
         })
-        if (iconDrawable != null) {
-            column.addView(ImageView(context).apply {
-                setImageDrawable(iconDrawable)
-                val size = dp(context, 22)
-                layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                    topMargin = dp(context, 10)
-                }
-            })
-        }
-        column.addView(percentView)
         return column
     }
 
