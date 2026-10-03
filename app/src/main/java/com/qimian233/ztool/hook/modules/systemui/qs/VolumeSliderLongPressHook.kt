@@ -5,6 +5,7 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
@@ -174,6 +175,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
             "com.android.systemui.volume.VolumeDialogImpl"
         private const val CUSTOMIZE_TILE_VIEW_CLASS =
             "com.android.systemui.qs.customize.CustomizeTileView"
+        private const val QS_TILE_STATE_CLASS =
+            $$"com.android.systemui.plugins.qs.QSTile$BooleanState"
+        private const val RESOURCE_ICON_CLASS =
+            $$"com.android.systemui.qs.tileimpl.QSTileImpl$ResourceIcon"
         private const val QS_FACTORY_IMPL_CLASS =
             "com.android.systemui.qs.tileimpl.QSFactoryImpl"
         private const val QS_TILE_CALLBACK_CLASS =
@@ -186,6 +191,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private const val TILE_LOTTIE_TAG = "ztool_tile_lottie_slowed"
         private const val TILE_LOTTIE_SPEED = 0.6f
         private const val TILE_RIPPLE_TAG = "ztool_tile_ripple"
+        private const val SYSTEMUI_PACKAGE = "com.android.systemui"
+        private const val MEDIA_OUTPUT_RECEIVER_CLASS =
+            "com.android.systemui.media.dialog.MediaOutputDialogReceiver"
+        // Public AOSP SystemUI action consumed by MediaOutputDialogReceiver.
+        private const val ACTION_LAUNCH_MEDIA_OUTPUT_DIALOG =
+            "com.android.systemui.action.LAUNCH_SYSTEM_MEDIA_OUTPUT_DIALOG"
 
         /** Called by [ControlCenterLongPressHook] on the volume slider long press. */
         @JvmStatic
@@ -913,7 +924,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
         muteTile = buildTile(context, classLoader, "mute")
         dndTile = buildTile(context, classLoader, "dnd")
         vibrateTile = if (hasVibrator(context)) buildTile(context, classLoader, "vibrate") else null
-        for (tile in listOf(muteTile, dndTile, vibrateTile)) {
+        val mediaTile = buildMediaOutputTile(context, classLoader)
+        for (tile in listOf(muteTile, dndTile, vibrateTile, mediaTile)) {
             if (tile == null) continue
             row.addView(tile.view, LinearLayout.LayoutParams(tileWidth, tileHeight).apply {
                 setMargins(margin, 0, margin, 0)
@@ -921,6 +933,75 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
         refreshAllTiles()
         return row
+    }
+
+    /**
+     * The media output switcher tile: single-state, no QSTile behind it — its
+     * whole behavior is launching the system media output dialog via the same
+     * broadcast the ZTool quick-settings tile sends (MediaOutputDialogReceiver
+     * handles it; MediaOutputDialogCenterHook fixes centering/theme on this
+     * path). Rendered with the same CustomizeTileView for visual consistency.
+     */
+    private fun buildMediaOutputTile(
+        context: Context,
+        classLoader: ClassLoader
+    ): TileUi? {
+        return try {
+            val tileViewClass = classLoader.loadClass(CUSTOMIZE_TILE_VIEW_CLASS)
+            val tileView = tileViewClass.getConstructor(Context::class.java)
+                .newInstance(context) as ViewGroup
+            val handleStateChanged = findTileStateMethod(tileViewClass, classLoader)
+                ?: throw NoSuchMethodException($$"handleStateChanged(QSTile$State) not found")
+            handleStateChanged.isAccessible = true
+
+            val state = classLoader.loadClass(QS_TILE_STATE_CLASS)
+                .getDeclaredConstructor().newInstance()
+            val iconRes = resolveDrawableId(
+                context,
+                "ic_media_output", "media_output",
+                "ic_audio_output", "quick_settings_media_output"
+            )
+            val labelRes = resolveStringId(
+                context,
+                "media_output_tile_label", "quick_settings_media_output_label",
+                "media_output_dialog_title"
+            )
+            val label = labelRes?.let { context.getString(it) }
+                ?: resolveFirstString(context, "媒体输出", "输出切换")
+            setField(state, "label", label)
+            setField(state, "contentDescription", label)
+            setField(state, "state", 1)
+            setField(state, "value", false)
+            if (iconRes != null) {
+                val icon = resourceIcon(classLoader, iconRes)
+                if (icon != null) setField(state, "icon", icon)
+            }
+            setField(state, "spec", "ztool_media_output")
+            handleStateChanged.invoke(tileView, state)
+            slowDownTileLottie(tileView)
+
+            tileView.setOnClickListener {
+                // Same path as the ZTool quick-settings tile: explicit
+                // broadcast to SystemUI's static receiver.
+                context.sendBroadcast(
+                    Intent(ACTION_LAUNCH_MEDIA_OUTPUT_DIALOG).apply {
+                        setClassName(SYSTEMUI_PACKAGE, MEDIA_OUTPUT_RECEIVER_CLASS)
+                    }
+                )
+                // The system dialog replaces this panel, matching the
+                // shade-collapses-when-dialog-opens behavior.
+                currentDialog?.dismiss()
+            }
+            TileUi(tileView) {}
+        } catch (t: Throwable) {
+            logger.error("Failed to build media output tile", t)
+            null
+        }
+    }
+
+    /** First non-empty string among the given literal candidates. */
+    private fun resolveFirstString(context: Context, vararg candidates: String): String {
+        return candidates.firstOrNull { it.isNotBlank() } ?: ""
     }
 
     /**
@@ -1610,6 +1691,22 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     private fun resolveDrawableId(context: Context, vararg names: String): Int? {
         return resolveResourceId(context, "drawable", *names)
+    }
+
+    private fun resolveStringId(context: Context, vararg names: String): Int? {
+        return resolveResourceId(context, "string", *names)
+    }
+
+    /** QSTileImpl$ResourceIcon.get(resId): the stock tile icon wrapper. */
+    private fun resourceIcon(classLoader: ClassLoader, resId: Int): Any? {
+        return try {
+            val resourceIconClass = classLoader.loadClass(RESOURCE_ICON_CLASS)
+            val get = resourceIconClass.getDeclaredMethod("get", Int::class.javaPrimitiveType)
+            get.isAccessible = true
+            get.invoke(null, resId)
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     /**
