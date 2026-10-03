@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.database.ContentObserver
 import android.graphics.Color
-import android.graphics.drawable.RippleDrawable
 import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
@@ -953,8 +952,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val lottieRes = lottie?.let { resolveRawId(context, it.resName) }
 
             var lastOn = isOn()
-            var touchX = -1f
-            var touchY = -1f
             fun buildState(on: Boolean): Any {
                 val state = stateClass.getDeclaredConstructor().newInstance()
                 setField(state, "label", label)
@@ -997,15 +994,18 @@ class VolumeSliderLongPressHook : AppHookModule() {
                     touchX = event.x
                     touchY = event.y
                 }
-                // Let the plain click listener run.
-                view.performClick()
-                true
+                // Record coordinates only; returning false hands the gesture
+                // back to the framework click detector so one gesture yields
+                // exactly one click.
+                false
             }
             tileView.setOnClickListener {
-                // Native tiles mask the instant background flip behind a ripple;
-                // CustomizeTileView kills the view-driven path, so play the
-                // stock background RippleDrawable directly at the touch point.
-                playTileRipple(tileView, touchX, touchY)
+                // Native tiles mask the instant background flip behind a press
+                // ripple; CustomizeTileView disables the ripple trigger path,
+                // so flash the view's own pressed state at the touch point —
+                // the stock background RippleDrawable lights up with the
+                // framework's enter/fade timeline.
+                flashTilePressedState(tileView)
                 onToggle()
                 refresh()
             }
@@ -1055,35 +1055,35 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * Tile state-change animations are Lottie clips played at native speed;
      * slow them down so the state transition reads longer.
      */
+    /** Last tile touch point for the ripple hotspot; -1 = unknown (center). */
+    private var touchX = -1f
+    private var touchY = -1f
+
     /**
-     * Plays the tile's stock background ripple (QSTileViewImpl.qsTileBackground,
-     * a public RippleDrawable field) at the recorded touch point. The
-     * view-driven ripple path is disabled by CustomizeTileView
-     * (showRippleEffect = false, isLongClickable false), but the drawable
-     * itself is fully drivable: setHotspot on press, then exit to run the
-     * standard enter/fade-out ripple timeline.
+     * Flashes the tile's pressed state so the background RippleDrawable plays
+     * its enter/fade timeline at the touch point. CustomizeTileView disables
+     * the gesture-driven ripple (showRippleEffect = false via
+     * handleStateChanged, plus isLongClickable always false), but the state
+     * callbacks on the background drawable still work: drawableHotspotChanged
+     * positions the ripple, refreshing the pressed drawable state lights it,
+     * and unpressing runs the standard fade-out. handleStateChanged forcibly
+     * resets showRippleEffect afterwards, which does not matter — it only
+     * gates the view's own touch-driven hotspot updates, not ours.
      */
-    private fun playTileRipple(tileView: View, touchX: Float, touchY: Float) {
-        try {
-            val ripple = findField(tileView.javaClass, "qsTileBackground")
-                .get(tileView) as? RippleDrawable ?: return
-            val x = if (touchX >= 0) touchX else tileView.width / 2f
-            val y = if (touchY >= 0) touchY else tileView.height / 2f
-            // autoMirror is irrelevant here (widths match layout direction);
-            // skip it rather than fight API-level visibility.
-            ripple.state = intArrayOf(android.R.attr.state_pressed)
-            ripple.setHotspot(x, y)
-            // Post the release so the enter ripple gets at least one frame
-            // before the exit animation fades it out.
-            mainHandler.postDelayed({
-                try {
-                    ripple.state = intArrayOf()
-                } catch (_: Throwable) {
-                }
-            }, 80L)
-        } catch (t: Throwable) {
-            logger.debug("volume panel: tile ripple failed: ${t.message}")
-        }
+    private fun flashTilePressedState(tileView: View) {
+        val x = if (touchX >= 0) touchX else tileView.width / 2f
+        val y = if (touchY >= 0) touchY else tileView.height / 2f
+        touchX = -1f
+        touchY = -1f
+        tileView.drawableHotspotChanged(x, y)
+        tileView.isPressed = true
+        tileView.refreshDrawableState()
+        // Give the ripple a few frames before releasing so the fade-out is
+        // visible rather than swallowed by the same-frame state change.
+        mainHandler.postDelayed({
+            tileView.isPressed = false
+            tileView.refreshDrawableState()
+        }, 120L)
     }
 
     /**
