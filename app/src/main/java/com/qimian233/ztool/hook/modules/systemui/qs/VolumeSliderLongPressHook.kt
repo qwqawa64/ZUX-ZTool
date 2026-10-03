@@ -192,6 +192,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private const val TILE_LOTTIE_SPEED = 0.6f
         private const val TILE_RIPPLE_TAG = "ztool_tile_ripple"
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"
+        private const val MODULE_PACKAGE = "com.qimian233.ztool"
         private const val MEDIA_OUTPUT_RECEIVER_CLASS =
             "com.android.systemui.media.dialog.MediaOutputDialogReceiver"
         // Public AOSP SystemUI action consumed by MediaOutputDialogReceiver.
@@ -956,25 +957,20 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
             val state = classLoader.loadClass(QS_TILE_STATE_CLASS)
                 .getDeclaredConstructor().newInstance()
-            // Icon: the media-output dialog's device-volume icon lives in the
-            // media.dialog family (jadx-confirmed names); the header fallbacks
-            // are generic media glyphs from the same area.
+            // Label comes from ZTool's own resources (i18n handled app-side);
+            // the cross-package read follows the RecentTaskMemoryViewHook
+            // pattern: createPackageContext with IGNORE_SECURITY.
+            val label = moduleString(context, "ztool_media_output_label", "媒体输出")
+            // Icon: the media-output dialog's device-volume glyph — the only
+            // media-output-family drawable on this ROM. The dialog draws it
+            // at ~24dp; the state icon pipeline scales with the tile's own
+            // qs_icon_size, so no manual sizing.
             val iconRes = resolveDrawableId(
                 context,
                 "media_output_icon_volume", "media_output_icon_volume_off",
                 "media_output_title_icon_area",
                 "ic_media_output", "media_output", "ic_audio_output"
             )
-            // Label: jadx-confirmed strings of the same dialog; the
-            // accessibility title reads naturally as a tile label.
-            val labelRes = resolveStringId(
-                context,
-                "media_output_dialog_accessibility_title",
-                "media_output_dialog_button_connect_device",
-                "media_output_dialog_title"
-            )
-            val label = labelRes?.let { context.getString(it) }
-                ?: resolveFirstString(context, "媒体输出", "输出切换")
             setField(state, "label", label)
             setField(state, "contentDescription", label)
             setField(state, "state", 1)
@@ -1006,9 +1002,24 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
     }
 
-    /** First non-empty string among the given literal candidates. */
-    private fun resolveFirstString(context: Context, vararg candidates: String): String {
-        return candidates.firstOrNull { it.isNotBlank() } ?: ""
+    /**
+     * Reads a string from ZTool's own package resources, so tile labels get
+     * proper i18n from the app's strings.xml instead of literals baked into
+     * the hook code (same cross-package read as RecentTaskMemoryViewHook).
+     */
+    private fun moduleString(hostContext: Context, resourceName: String, fallback: String): String {
+        return try {
+            val moduleContext = hostContext.createPackageContext(
+                MODULE_PACKAGE, Context.CONTEXT_IGNORE_SECURITY
+            )
+            val resId = moduleContext.resources.getIdentifier(
+                resourceName, "string", MODULE_PACKAGE
+            )
+            if (resId != 0) moduleContext.resources.getString(resId) else fallback
+        } catch (t: Throwable) {
+            logger.warn("volume panel: module string $resourceName failed: ${t.message}")
+            fallback
+        }
     }
 
     /**
