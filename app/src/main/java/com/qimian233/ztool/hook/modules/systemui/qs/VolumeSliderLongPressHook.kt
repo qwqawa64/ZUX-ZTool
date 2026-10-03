@@ -39,6 +39,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Method
 import java.util.Locale
 import kotlin.math.roundToInt
+import androidx.core.graphics.withClip
 
 /**
  * Volume slider long-press panel: long-pressing the control-center media volume
@@ -624,12 +625,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * column's default shade matches the media column.
      */
     private class IconMirror(
-        val baseline: android.graphics.drawable.Drawable?,
-        val zero: android.graphics.drawable.Drawable? = null,
-        val btZero: android.graphics.drawable.Drawable? = null,
-        val comZero: android.graphics.drawable.Drawable? = null,
-        val btNonMute: android.graphics.drawable.Drawable? = null,
-        val comNonMute: android.graphics.drawable.Drawable? = null,
+        val baseline: Drawable?,
+        val zero: Drawable? = null,
+        val btZero: Drawable? = null,
+        val comZero: Drawable? = null,
+        val btNonMute: Drawable? = null,
+        val comNonMute: Drawable? = null,
         val tintToStockBase: Boolean = false
     )
 
@@ -658,11 +659,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * drawable's own alpha, so a 30%-alpha filter color would still render
      * opaque. Encoding the alpha directly into the fill color does.
      */
-    private fun tintGlyph(drawable: android.graphics.drawable.Drawable?, color: Int) {
+    private fun tintGlyph(drawable: Drawable?, color: Int) {
         drawable?.mutate()?.setTint(color)
     }
 
-    private fun panelDrawable(context: Context, name: String): android.graphics.drawable.Drawable? {
+    private fun panelDrawable(context: Context, name: String): Drawable? {
         val id = resolveResourceId(context, "drawable", name, warnOnMiss = false)
         return if (id != null) context.getDrawable(id) else null
     }
@@ -680,7 +681,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
     private fun buildSliderColumn(
         context: Context,
         mirror: IconMirror?,
-        fallbackIcon: android.graphics.drawable.Drawable?,
+        fallbackIcon: Drawable?,
         initial: Int,
         maxValue: Int,
         iconSizeDp: Int = 30,
@@ -695,7 +696,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val percentView = TextView(context).apply {
             // Same styling as VolumeSliderPercentageHook's label.
             textSize = 13f
-            setTypeface(Typeface.DEFAULT_BOLD)
+            typeface = Typeface.DEFAULT_BOLD
             setShadowLayer(2f, 0f, 0f, Color.BLACK)
             isSingleLine = true
             includeFontPadding = false
@@ -847,6 +848,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * wired types (WIRED_HEADSET/HEADPHONES/USB_HEADSET/HEARING_AID family) is
      * present. BT wins over wired exactly like the stock code.
      */
+    // Runs inside SystemUI, which already holds BLUETOOTH_CONNECT; the try/catch
+    // below is the security fallback lint asks for.
+    @SuppressLint("MissingPermission", "WrongConstant")
     private fun resolveHeadSetState(context: Context): HeadSetType? {
         return try {
             val bt = context.getSystemService(Context.BLUETOOTH_SERVICE)
@@ -995,7 +999,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * Same progress drawable the stock ToggleSliderView uses for its sliders
      * (brightness_progress_selector), giving the panel the control-center look.
      */
-    private fun resolveSliderDrawable(context: Context): android.graphics.drawable.Drawable? {
+    private fun resolveSliderDrawable(context: Context): Drawable? {
         val id = resolveDrawableId(context, "brightness_progress_selector")
         return if (id != null) context.getDrawable(id) else null
     }
@@ -1246,7 +1250,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
             // Label comes from ZTool's own resources (i18n handled app-side);
             // the cross-package read follows the RecentTaskMemoryViewHook
             // pattern: createPackageContext with IGNORE_SECURITY.
-            val label = moduleString(context, "ztool_media_output_label", "媒体输出")
+            val label = moduleString(context)
             // Icon: the media-output dialog's device-volume glyph — the only
             // media-output-family drawable on this ROM. The dialog draws it
             // at ~24dp; the state icon pipeline scales with the tile's own
@@ -1293,18 +1297,18 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * proper i18n from the app's strings.xml instead of literals baked into
      * the hook code (same cross-package read as RecentTaskMemoryViewHook).
      */
-    private fun moduleString(hostContext: Context, resourceName: String, fallback: String): String {
+    private fun moduleString(hostContext: Context): String {
         return try {
             val moduleContext = hostContext.createPackageContext(
                 MODULE_PACKAGE, Context.CONTEXT_IGNORE_SECURITY
             )
             val resId = moduleContext.resources.getIdentifier(
-                resourceName, "string", MODULE_PACKAGE
+                "ztool_media_output_label", "string", MODULE_PACKAGE
             )
-            if (resId != 0) moduleContext.resources.getString(resId) else fallback
+            if (resId != 0) moduleContext.resources.getString(resId) else "媒体输出"
         } catch (t: Throwable) {
-            logger.warn("volume panel: module string $resourceName failed: ${t.message}")
-            fallback
+            logger.warn("volume panel: module string ztool_media_output_label failed: ${t.message}")
+            "媒体输出"
         }
     }
 
@@ -1316,6 +1320,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * the native debounce, keyguard unlock flow, per-tile detail dialogs
      * (DND) and shade collapse with them.
      */
+    // Click dispatch is handled by setOnClickListener below; onTouch only feeds
+    // the ripple/long-press detector, so no performClick() call is wanted here.
+    @SuppressLint("ClickableViewAccessibility")
     private fun buildTile(
         context: Context,
         classLoader: ClassLoader,
@@ -1588,17 +1595,17 @@ class VolumeSliderLongPressHook : AppHookModule() {
             boundCallbacks.clear()
             copy
         }
-        for (binding in bindings) {
+        for ((tile, callback, callbackInterface, host) in bindings) {
             try {
                 // The callback is a Proxy, so look the method up by the
                 // QSTile$Callback interface parameter, never Proxy's class.
                 findMethod(
-                    binding.tile.javaClass, "removeCallback", binding.callbackInterface
-                ).invoke(binding.tile, binding.callback)
+                    tile.javaClass, "removeCallback", callbackInterface
+                ).invoke(tile, callback)
                 findMethod(
-                    binding.tile.javaClass, "setListening", Any::class.java,
+                    tile.javaClass, "setListening", Any::class.java,
                     Boolean::class.javaPrimitiveType
-                ).invoke(binding.tile, binding.host, false)
+                ).invoke(tile, host, false)
             } catch (t: Throwable) {
                 logger.debug("volume panel: tile release failed: ${t.message}")
             }
@@ -1655,7 +1662,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         tintColor: Int,
         private val startRadiusPx: Float,
         private val log: (String) -> Unit
-    ) : android.graphics.drawable.Drawable() {
+    ) : Drawable() {
         private val paint = android.graphics.Paint(
             android.graphics.Paint.ANTI_ALIAS_FLAG
         ).apply {
@@ -1760,10 +1767,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 bounds.right.toFloat(), bounds.bottom.toFloat(),
                 cornerRadiusPx, cornerRadiusPx, android.graphics.Path.Direction.CW
             )
-            canvas.save()
-            canvas.clipPath(clip)
-            canvas.drawCircle(originX, originY, radius, paint)
-            canvas.restore()
+            canvas.withClip(clip) {
+                drawCircle(originX, originY, radius, paint)
+            }
         }
 
         /** draw() fires every frame; log at most twice per animation run. */
@@ -1995,10 +2001,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     private fun resolveDrawableId(context: Context, vararg names: String): Int? {
         return resolveResourceId(context, "drawable", *names)
-    }
-
-    private fun resolveStringId(context: Context, vararg names: String): Int? {
-        return resolveResourceId(context, "string", *names)
     }
 
     /** QSTileImpl$ResourceIcon.get(resId): the stock tile icon wrapper. */
