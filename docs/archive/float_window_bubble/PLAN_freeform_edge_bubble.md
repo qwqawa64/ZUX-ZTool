@@ -3,7 +3,7 @@
 Replicates the OnePlus "shrink a freeform window into an edge bubble" feature on
 Lenovo ZUX. Final architecture diverged from the original plan during bring-up; this
 document reflects the SHIPPED state. Reference:
-`docs/research/oplus-float-handle-gesture-spec.md`.
+`../../research/oplus-float-handle-gesture-spec.md`.
 
 ## Shipped architecture
 
