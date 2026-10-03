@@ -1273,6 +1273,16 @@ class VolumeSliderLongPressHook : AppHookModule() {
             handleStateChanged.invoke(tileView, state)
             slowDownTileLottie(tileView)
 
+            // CustomizeTileView (via CustomQSTileViewImpl.createAndAddIcon)
+            // sizes its icon to custom_qs_icon_size, visibly larger than the
+            // qs_icon_size the stock QS panel's QSTileViewImpl uses for the
+            // same glyph. Re-constrain the QSIconView layout params so the
+            // panel icon matches the QS panel rendering.
+            val iconSize = resolveDimenPx(context, "qs_icon_size", dp(context, 24))
+            val iconView = findField(tileViewClass, "icon").get(tileView) as? View
+            iconView?.layoutParams?.width = iconSize
+            iconView?.layoutParams?.height = iconSize
+
             tileView.setOnClickListener {
                 // Same path as the ZTool quick-settings tile: explicit
                 // broadcast to SystemUI's static receiver.
