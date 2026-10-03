@@ -908,9 +908,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
             context, "brightness_detail_dialog_tile_margin", dp(context, 6)
         )
 
-        muteTile = buildTile(context, classLoader, "mute", row)
-        dndTile = buildTile(context, classLoader, "dnd", row)
-        vibrateTile = if (hasVibrator(context)) buildTile(context, classLoader, "vibrate", row) else null
+        muteTile = buildTile(context, classLoader, "mute")
+        dndTile = buildTile(context, classLoader, "dnd")
+        vibrateTile = if (hasVibrator(context)) buildTile(context, classLoader, "vibrate") else null
         for (tile in listOf(muteTile, dndTile, vibrateTile)) {
             if (tile == null) continue
             row.addView(tile.view, LinearLayout.LayoutParams(tileWidth, tileHeight).apply {
@@ -932,8 +932,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
     private fun buildTile(
         context: Context,
         classLoader: ClassLoader,
-        spec: String,
-        parentRow: ViewGroup
+        spec: String
     ): TileUi? {
         return try {
             val tile = createQsTile(spec) ?: run {
@@ -984,7 +983,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 null
             }
             val addCallback = findMethod(tileClass, "addCallback", callbackClass)
-            val removeCallback = findMethod(tileClass, "removeCallback", callbackClass)
             val setListening = findMethod(tileClass, "setListening", Any::class.java,
                 Boolean::class.javaPrimitiveType)
 
@@ -1043,7 +1041,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
                         if (lottieRes != null && lottieRes != 0 &&
                             min != null && max != null && min != max
                         ) {
-                            playTileLottieSegment(tileView, lottieRes, min, max)
+                            playTileLottieSegment(tileView, min, max)
                         }
                     }
                     lastAppliedState = newState
@@ -1059,13 +1057,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
             //guard flow), closing the panel like the native dialog does.
             var longPressFired = false
             var longPressPending: Runnable? = null
-            installTileRipple(tileView)
+            val ripple = installTileRipple(tileView)
             tileView.setOnTouchListener { view, event ->
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         // Ripple from the finger, like the stock press effect.
-                        (view.foreground as? TileRippleDrawable)
-                            ?.trigger(event.x, event.y)
+                        ripple?.trigger(event.x, event.y)
                         longPressFired = false
                         longPressPending?.let(view::removeCallbacks)
                         val lp = Runnable {
@@ -1189,9 +1186,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * A self-drawn press ripple for the tiles. The stock background ripple is
      * unreachable from module code (CustomizeTileView disables the trigger
      * chain and the ZUI background ignores external pressed flashes; a
-     * foreground RippleDrawable renders invisibly on this theme), so the
-     * effect is drawn explicitly: an expanding circle from the touch point
-     * that fades out, clipped to the tile's rounded bounds.
+     * foreground RippleDrawable renders invisibly on this theme, and the tile
+     * view's own foreground/draw pipeline is equally unreliable). So the
+     * effect lives in the view's ViewOverlay — a draw layer independent of
+     * onDraw — as an expanding circle from the touch point that fades out,
+     * clipped to the tile's rounded bounds.
      */
     private class TileRippleDrawable(
         private val tintColor: Int,
@@ -1248,7 +1247,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
         override fun setAlpha(alpha: Int) {}
         override fun setColorFilter(colorFilter: android.graphics.ColorFilter?) {}
-        @Deprecated("Deprecated in Java")
+        @Deprecated("Deprecated in Java", replaceWith = ReplaceWith(""))
         override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
 
         companion object {
@@ -1257,9 +1256,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
     }
 
-    /** Installs the self-drawn press ripple as the tile's foreground. */
-    private fun installTileRipple(tileView: View) {
-        if (tileView.tag == TILE_RIPPLE_TAG) return
+    /** Installs the self-drawn press ripple into the tile's ViewOverlay. */
+    private fun installTileRipple(tileView: View): TileRippleDrawable? {
+        if (tileView.tag == TILE_RIPPLE_TAG) return null
         val context = tileView.context
         TileRippleDrawable.cornerRadiusPx =
             resolveDimenPx(context, "qs_corner_radius", dp(context, 28)).toFloat()
@@ -1271,15 +1270,19 @@ class VolumeSliderLongPressHook : AppHookModule() {
         } catch (_: Throwable) {
             0x33888888.toInt()
         }
-        tileView.foreground = TileRippleDrawable(highlight, dp(context, 22).toFloat())
+        // ViewOverlay draws above the view's own content regardless of the
+        // tile's draw overrides; the drawable requests its own invalidations.
+        val ripple = TileRippleDrawable(highlight, dp(context, 22).toFloat())
+        tileView.overlay.add(ripple)
         tileView.tag = TILE_RIPPLE_TAG
+        return ripple
     }
 
     /**
      * Tile state-change animations are Lottie clips played at native speed;
      * slow them down so the state transition reads longer.
      */
-    private fun playTileLottieSegment(root: View, lottieRes: Int, min: Int, max: Int) {
+    private fun playTileLottieSegment(root: View, min: Int, max: Int) {
         try {
             val lottieClass = root.context.classLoader
                 .loadClass("com.airbnb.lottie.LottieAnimationView")
@@ -1381,14 +1384,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
 
     private fun resolveDrawableId(context: Context, vararg names: String): Int? {
         return resolveResourceId(context, "drawable", *names)
-    }
-
-    private fun resolveStringId(context: Context, vararg names: String): Int? {
-        return resolveResourceId(context, "string", *names)
-    }
-
-    private fun resolveRawId(context: Context, name: String): Int? {
-        return resolveResourceId(context, "raw", name)
     }
 
     /**
