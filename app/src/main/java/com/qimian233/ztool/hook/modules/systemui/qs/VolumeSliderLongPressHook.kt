@@ -1076,7 +1076,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
      */
     private fun openSoundSettings(context: Context) {
         try {
-            context.startActivity(Intent(Settings.ACTION_SOUND_SETTINGS))
+            // The dialog context is application-scoped (SystemUIDialog is not
+            // backed by an Activity task); NEW_TASK is required to launch.
+            context.startActivity(
+                Intent(Settings.ACTION_SOUND_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
         } catch (t: Throwable) {
             logger.warn("open sound settings failed: ${t.message}")
         }
