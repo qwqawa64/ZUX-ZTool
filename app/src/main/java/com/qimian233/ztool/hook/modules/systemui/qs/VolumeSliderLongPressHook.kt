@@ -164,6 +164,8 @@ class VolumeSliderLongPressHook : AppHookModule() {
             "com.android.systemui.statusbar.phone.SystemUIDialog"
         private const val TOGGLE_SLIDER_VIEW_CLASS =
             "com.android.systemui.settings.ToggleSliderView"
+        private const val SEEK_BAR_NPS_CLASS =
+            "zui.widget.SeekBarNps"
         private const val VOLUME_DETAIL_INDICATOR_FIELD = "mVolumeDetailIndicator"
         private const val VOLUME_DIALOG_IMPL_CLASS =
             "com.android.systemui.volume.VolumeDialogImpl"
@@ -586,28 +588,13 @@ class VolumeSliderLongPressHook : AppHookModule() {
         val barThickness = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
             .coerceAtLeast(dp(context, 28))
         val barSlot = FrameLayout(context)
-        barSlot.addView(SeekBar(context).apply {
-            max = maxValue
-            progress = initial
+        barSlot.addView(buildColumnBar(context, initial, maxValue, percentView, onProgress, onStop).apply {
             thumb = null
             progressDrawable = resolveSliderDrawable(context)
             minHeight = barThickness
             maxHeight = barThickness
             rotation = 270f
             layoutParams = FrameLayout.LayoutParams(barLength, barThickness, Gravity.CENTER)
-            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(bar: SeekBar, progress: Int, fromUser: Boolean) {
-                    if (!fromUser) return
-                    percentView.text = formatPercent(progress, bar.max)
-                    onProgress(progress)
-                }
-
-                override fun onStartTrackingTouch(bar: SeekBar) {}
-
-                override fun onStopTrackingTouch(bar: SeekBar) {
-                    onStop(bar.progress)
-                }
-            })
         })
         column.addView(barSlot, LinearLayout.LayoutParams(
             barThickness, barLength
@@ -616,6 +603,52 @@ class VolumeSliderLongPressHook : AppHookModule() {
         })
         column.addView(percentView)
         return column
+    }
+
+    /**
+     * The column's draggable bar: the stock zui.widget.SeekBarNps when
+     * available, plain SeekBar otherwise. SeekBarNps only enables its
+     * relative-drag gesture (finger-delta driven, tap never repositions the
+     * thumb) when max >= 100 — and it rescales any such max to 1000 internally
+     * — so on the Nps path the bar runs on a 0..1000 scale and the percent
+     * [maxValue] contract is converted at the listener boundary. A plain
+     * SeekBar jumps straight to the tap point, which users reported as
+     * accidental volume jumps.
+     */
+    private fun buildColumnBar(
+        context: Context,
+        initialPercent: Int,
+        maxValue: Int,
+        percentView: TextView,
+        onProgress: (Int) -> Unit,
+        onStop: (Int) -> Unit
+    ): SeekBar {
+        val bar = try {
+            val classLoader = systemUiClassLoader ?: context.classLoader
+            val clazz = classLoader.loadClass(SEEK_BAR_NPS_CLASS)
+            clazz.getConstructor(Context::class.java).newInstance(context) as SeekBar
+        } catch (t: Throwable) {
+            logger.warn("volume panel: SeekBarNps unavailable, plain SeekBar fallback: ${t.message}")
+            SeekBar(context)
+        }
+        val isNps = bar.javaClass.name == SEEK_BAR_NPS_CLASS
+        val scale = if (isNps) 1000 else maxValue
+        bar.max = scale
+        bar.progress = (initialPercent * scale / maxValue.toFloat()).roundToInt()
+        bar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(bar: SeekBar, progress: Int, fromUser: Boolean) {
+                if (!fromUser) return
+                percentView.text = formatPercent(progress, bar.max)
+                onProgress((progress * maxValue / scale.toFloat()).roundToInt())
+            }
+
+            override fun onStartTrackingTouch(bar: SeekBar) {}
+
+            override fun onStopTrackingTouch(bar: SeekBar) {
+                onStop((bar.progress * maxValue / scale.toFloat()).roundToInt())
+            }
+        })
+        return bar
     }
 
     private fun buildStreamColumn(
