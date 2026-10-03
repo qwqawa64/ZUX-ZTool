@@ -10,6 +10,7 @@ import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.os.Build
@@ -17,7 +18,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Vibrator
 import android.provider.Settings
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -193,6 +193,10 @@ class VolumeSliderLongPressHook : AppHookModule() {
         private const val TILE_LOTTIE_TAG = "ztool_tile_lottie_slowed"
         private const val TILE_LOTTIE_SPEED = 0.6f
         private const val TILE_RIPPLE_TAG = "ztool_tile_ripple"
+        // VolumeSliderPercentageHook's label colors mirror the stock slider
+        // icon filter against this raw-progress range; keep both in sync.
+        private const val STOCK_VOLUME_RAW_RANGE = 100_000
+        private const val BASE_PERCENT_COLOR = 0xffd8d8d8.toInt()
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"
         private const val MODULE_PACKAGE = "com.qimian233.ztool"
         private const val MEDIA_OUTPUT_RECEIVER_CLASS =
@@ -569,10 +573,12 @@ class VolumeSliderLongPressHook : AppHookModule() {
     // ------------------------------------------------------------------
 
     /**
-     * Vertical slider column (icon on top, vertical bar, percent below),
-     * matching the control-center vertical slider style. The bar is a
-     * horizontal SeekBar rotated 270deg: the progress-increasing axis points
-     * UP, so dragging up raises the value, dragging down lowers it.
+     * Vertical slider column (bar on top, icon at the bar's bottom end, percent
+     * below the icon), matching the control-center vertical slider style. The
+     * percent label only shows when VolumeSliderPercentageHook's switch is on,
+     * and its color follows the same stock icon-filter mirror as that hook.
+     * The bar is a horizontal SeekBar rotated 270deg: the progress-increasing
+     * axis points UP, so dragging up raises the value, dragging down lowers it.
      */
     private fun buildSliderColumn(
         context: Context,
@@ -586,22 +592,21 @@ class VolumeSliderLongPressHook : AppHookModule() {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
         }
-        if (iconDrawable != null) {
-            column.addView(ImageView(context).apply {
-                setImageDrawable(iconDrawable)
-                val size = dp(context, 22)
-                layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                    bottomMargin = dp(context, 10)
-                }
-            })
-        }
+        val percentEnabled = isPercentageLabelEnabled()
         val percentView = TextView(context).apply {
-            textSize = 12f
-            setTextColor(obtainThemeColor(context))
+            // Same styling as VolumeSliderPercentageHook's label.
+            textSize = 13f
+            setTypeface(Typeface.DEFAULT_BOLD)
+            setShadowLayer(2f, 0f, 0f, Color.BLACK)
+            isSingleLine = true
+            includeFontPadding = false
+            gravity = Gravity.CENTER
+            setTextColor(resolveVolumePercentColor(initial))
             text = formatPercent(initial, maxValue)
+            visibility = if (percentEnabled) View.VISIBLE else View.GONE
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = dp(context, 10) }
+            ).apply { topMargin = dp(context, 2) }
         }
         val barLength = dp(context, 260)
         val barThickness = resolveDimenPx(context, "brightness_bar_height", dp(context, 18))
@@ -620,8 +625,45 @@ class VolumeSliderLongPressHook : AppHookModule() {
         ).apply {
             setMargins(dp(context, 6), 0, dp(context, 6), 0)
         })
+        if (iconDrawable != null) {
+            column.addView(ImageView(context).apply {
+                setImageDrawable(iconDrawable)
+                val size = dp(context, 22)
+                layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                    topMargin = dp(context, 10)
+                }
+            })
+        }
         column.addView(percentView)
         return column
+    }
+
+    /** The panel's percent label mirrors VolumeSliderPercentageHook's switch. */
+    private fun isPercentageLabelEnabled(): Boolean {
+        return try {
+            remotePreferences.getBoolean(PreferenceKeys.VOLUME_SLIDER_PERCENTAGE.name, false)
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    /**
+     * Percent label color, mirroring VolumeSliderPercentageHook's stock
+     * updateVolumeStartImgForAnimationFlag formula: discrete level =
+     * ceil(rawProgress/10000), filter from level 3 with fMin = (level-2)/3.
+     * The panel slider runs on a 0..100 percent scale, so the percent is
+     * mapped onto the stock slider's raw progress range first.
+     */
+    private fun resolveVolumePercentColor(percent: Int): Int {
+        val rawProgress = percent.coerceIn(0, 100) * (STOCK_VOLUME_RAW_RANGE / 100)
+        val level = kotlin.math.ceil(rawProgress / 10000.0f).toInt()
+        if (level < 3) {
+            return BASE_PERCENT_COLOR
+        }
+        val fMin = ((level - 2) / 3.0f).coerceAtMost(1.0f)
+        val gray = ((1.0f - fMin) * 216.0f).toInt()
+        val alpha = (kotlin.math.floor(fMin * 85.0f).toInt() + 170).coerceAtMost(255)
+        return Color.argb(alpha, gray, gray, gray)
     }
 
     /**
@@ -669,7 +711,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         bar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(bar: SeekBar, progress: Int, fromUser: Boolean) {
                 if (!fromUser) return
+                val percent = (progress * 100 / scale.toFloat()).roundToInt().coerceIn(0, 100)
                 percentView.text = formatPercent(progress, bar.max)
+                percentView.setTextColor(resolveVolumePercentColor(percent))
                 onProgress((progress * maxValue / scale.toFloat()).roundToInt())
             }
 
@@ -1759,15 +1803,6 @@ class VolumeSliderLongPressHook : AppHookModule() {
     private fun resolveDimenPx(context: Context, name: String, fallbackPx: Int): Int {
         val id = resolveResourceId(context, "dimen", name)
         return if (id != null) context.resources.getDimensionPixelSize(id) else fallbackPx
-    }
-
-    private fun obtainThemeColor(context: Context): Int {
-        return try {
-            val value = TypedValue()
-            if (context.theme.resolveAttribute(android.R.attr.textColorPrimary, value, true)) value.data else Color.GRAY
-        } catch (_: Throwable) {
-            Color.GRAY
-        }
     }
 
     private fun formatPercent(value: Int, max: Int): String {
