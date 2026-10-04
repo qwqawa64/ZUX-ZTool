@@ -835,6 +835,11 @@ object SearchIndex {
             summaryRes = R.string.system_framework_fine_volume_steps_summary
         ),
         framework.item(
+            id = "framework_volume_key_nonlinear",
+            titleRes = R.string.system_framework_volume_key_nonlinear_title,
+            summaryRes = R.string.system_framework_volume_key_nonlinear_summary
+        ),
+        framework.item(
             id = "framework_pkgmgr_allow_downgrade",
             titleRes = R.string.system_framework_pkgmgr_allow_downgrade_title,
             summaryRes = R.string.system_framework_pkgmgr_allow_downgrade_summary

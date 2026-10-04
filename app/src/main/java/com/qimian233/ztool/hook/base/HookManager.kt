@@ -86,6 +86,7 @@ import com.qimian233.ztool.hook.modules.systemframework.PackageManagerHiddenApiH
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerSharedUserBypassHook
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerSignatureBypassHook
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerVerificationAgentHook
+import com.qimian233.ztool.hook.modules.systemframework.VolumeKeyNonlinearRamp
 import com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory as SystemSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ChargeAnimationDurationHook
 import com.qimian233.ztool.hook.modules.systemui.keyguard.BypassFaceAuthTimeout
@@ -171,6 +172,7 @@ object HookManager {
         registerHookModule(FreeformKeepAliveSystemHook())
         registerHookModule(DisableHbmThermalLimit())
         registerHookModule(FineVolumeSteps())
+        registerHookModule(VolumeKeyNonlinearRamp())
         registerHookModule(SystemSplitScreenMandatory())
 
         registerHookModule(PackageManagerDowngradeHook())

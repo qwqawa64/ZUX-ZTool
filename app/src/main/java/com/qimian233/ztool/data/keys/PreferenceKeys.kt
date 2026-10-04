@@ -38,6 +38,8 @@ object PreferenceKeys {
     val DISABLE_HBM_THERMAL_LIMIT = BoolKey("disable_hbm_thermal_limit", false)
     // Raise media stream volume steps to 150 (Xiaomi fine volume alignment)
     val FINE_VOLUME_STEPS = BoolKey("fine_volume_steps", false)
+    // Non-linear volume key ramping: drop early key repeats, accelerating while held
+    val VOLUME_KEY_NONLINEAR = BoolKey("volume_key_nonlinear", false)
     // One-shot maintenance action marker: clears stale ZUI night-mode override
     // (ui_night_mode_override_on/off) via root; not read by any hook module
     val FIX_NIGHT_MODE_OVERRIDE = BoolKey("fix_night_mode_override", false)
@@ -309,6 +311,7 @@ object PreferenceKeys {
         LAUNCHER_FORCE_FREEFORM_ENTRY, FREEFORM_EDGE_BUBBLE,
         FREEFORM_KEEP_ALIVE_ENABLED,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
+        VOLUME_KEY_NONLINEAR,
         PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,
         PKG_MGR_DISABLE_VERIFICATION_AGENT, PKG_MGR_BYPASS_DIGEST,
         PKG_MGR_USE_PREVIOUS_SIGNATURES, PKG_MGR_BYPASS_EXACT_SIG_MATCH,
