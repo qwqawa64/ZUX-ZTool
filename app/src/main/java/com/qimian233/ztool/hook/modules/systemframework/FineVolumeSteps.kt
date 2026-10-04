@@ -12,7 +12,12 @@ import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
  * Fine volume steps hook module.
  *
  * Raises the media stream (STREAM_MUSIC) volume scale from the stock step count
- * (e.g. 15) to 150, aligning with the Xiaomi/HyperOS "fine volume" behavior.
+ * (e.g. 15) to 38 steps. The count is co-designed with VolumeKeyNonlinearRamp:
+ * the native key-repeat loop ticks at most ~20 steps/s, and 38 steps keep the
+ * ramp's full-speed animation equivalent to the previous 150-step scale driven
+ * at 80 steps/s (same ~53% of range per second) while the ramp applies at most
+ * one adjust per tick - no per-tick multi-step amplification, no animation
+ * jitter. It is no longer Xiaomi/HyperOS step-count aligned.
  *
  * Mechanics (see com.android.server.audio.AudioService in services.jar):
  * - [android.media.AudioService.VolumeStreamState] derives its index range from the
@@ -83,10 +88,18 @@ class FineVolumeSteps : SystemHookModule() {
         }
 
         if (contentResolver != null &&
-            Settings.Global.getInt(contentResolver, MIGRATION_MARKER, 0) == 0
+            Settings.Global.getInt(contentResolver, MIGRATION_MARKER_V2, 0) == 0
         ) {
-            migratePersistedMusicVolume(contentResolver, stockMax)
-            Settings.Global.putInt(contentResolver, MIGRATION_MARKER, 1)
+            // Values previously migrated to the 150-step scale (v1 marker set)
+            // must be rescaled 150 -> TARGET; fresh installs rescale from the
+            // stock scale detected via the v1 marker being absent.
+            val fromSteps = if (Settings.Global.getInt(contentResolver, MIGRATION_MARKER, 0) == 1) {
+                LEGACY_TARGET_STEPS
+            } else {
+                stockMax
+            }
+            migratePersistedMusicVolume(contentResolver, fromSteps)
+            Settings.Global.putInt(contentResolver, MIGRATION_MARKER_V2, 1)
         }
 
         maxVolumes[STREAM_MUSIC] = TARGET_STEPS
@@ -147,12 +160,17 @@ class FineVolumeSteps : SystemHookModule() {
         /** android.media.AudioManager.STREAM_MUSIC */
         private const val STREAM_MUSIC = 3
 
-        /** Target step count, aligned with the Xiaomi fine volume implementation. */
-        private const val TARGET_STEPS = 150
+        /** Target step count; 38 keeps the volume-key ramp's full speed at
+         *  ~53% of range per second under the native ~20 ticks/s loop limit. */
+        private const val TARGET_STEPS = 38
+
+        /** Step count of the previous scale (v1 migration). */
+        private const val LEGACY_TARGET_STEPS = 150
 
         private const val MUSIC_SETTING_PREFIX = "volume_music"
         private const val NAME_COLUMN = "name"
         private const val VALUE_COLUMN = "value"
         private const val MIGRATION_MARKER = "ztool_fine_volume_steps_migrated"
+        private const val MIGRATION_MARKER_V2 = "ztool_fine_volume_steps_migrated_v2"
     }
 }

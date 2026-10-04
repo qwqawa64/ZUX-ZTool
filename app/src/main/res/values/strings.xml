@@ -734,7 +734,7 @@
     <string name="system_ui_misc_volume_key_nonlinear_title">音量键非线性调节</string>
     <string name="system_ui_misc_volume_key_nonlinear_summary">长按音量键时增速持续线性加快：起步约 3 阶/秒，按住越久越快，约 4 秒后恢复原生速度，便于在低音量区精细调整。单击音量行为不变。需重启系统生效。</string>
     <string name="system_framework_fine_volume_steps_title">精细音量调节</string>
-    <string name="system_framework_fine_volume_steps_summary">将音量阶数设置为 150 阶，对齐小米实现。生效后系统界面与音量键同步细化为 150 级；关闭并重启后请手动调回音量。需重启系统生效。</string>
+    <string name="system_framework_fine_volume_steps_summary">将音量阶数设置为 38 阶（与"音量键非线性调节"联动设计：满速动画等效原 150 阶量程下 80 阶/秒，且每拍至多一阶、无动画抖动；不再对齐小米 150 阶实现）。生效后系统界面与音量键同步细化为 38 级；关闭并重启后请手动调回音量。需重启系统生效。</string>
     <string name="system_framework_disable_zui_applist_enable_title">停用系统的“允许获取应用列表”</string>
     <string name="system_framework_disable_zui_applist_enable_summary">ZUI/ZUX实现的应用列表管理并不完善，建议用"隐藏应用列表"APP替代</string>
     <string name="system_framework_restart_system_title">重启系统</string>

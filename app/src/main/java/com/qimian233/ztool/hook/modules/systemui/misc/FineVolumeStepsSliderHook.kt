@@ -13,7 +13,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 /**
  * SystemUI companion of FineVolumeSteps: raises the control-center media
  * volume slider's raw max so the slider keeps mapping 1:1 onto the stream's
- * (now 150) steps.
+ * (now 38) steps.
  *
  * The stock ToggleSliderView hardcodes `mMediaVolumeSlider.setMax(150000)`
  * (15 steps x 10000 raw units per step) in its constructor, while every
@@ -22,8 +22,8 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
  * - getVolumeProgressReal$1()       -> level = ceil(progress / 10000)
  * - drag (ToggleSliderView$2)       -> setStreamVolume(3, ceil(progress/10000))
  *
- * With the stream raised to 150 steps the hardcoded max makes the slider top
- * out at volume 15/150. Re-asserting max = getStreamMaxVolume(3) * 10000 (and
+ * With the stream raised to 38 steps the hardcoded max makes the slider top
+ * out at volume 15/38. Re-asserting max = getStreamMaxVolume(3) * 10000 (and
  * re-applying the current volume) realigns the whole chain; nothing else in
  * SystemUI needs changing.
  *

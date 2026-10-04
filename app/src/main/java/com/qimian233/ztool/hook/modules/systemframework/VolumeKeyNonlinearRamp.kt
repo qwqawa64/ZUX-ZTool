@@ -22,16 +22,16 @@ import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
  * before it runs and drops part of the key-driven adjusts, producing a
  * slow-start-then-accelerate ramp:
  *
- *   speed(t) = V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * t   (steps/s)
+ *   speed(t) = min(V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * t, MAX)  (steps/s)
  *
- * The speed grows linearly while the key is held and is capped at
- * MAX_STEPS_PER_SEC: speed(t) = min(V0 + ACCEL*t, MAX). Each loop tick
- * (~50ms) applies the number of steps implied by the integrated budget
- * V0*t + ACCEL*t^2/2; ticks qualifying for more than one step are amplified
- * by invoking the original adjust extra times under a reentry guard. With
- * V0=8, ACCEL=16, MAX=80 the ramp starts at 8 steps/s and reaches its
- * 80 steps/s full speed after ~4.5s. The first tick of every press always
- * applies exactly one step so single short presses stay stock.
+ * The speed grows linearly while the key is held. MAX equals the native loop
+ * tick rate (~20/s), so at most one adjust is applied per tick - no per-tick
+ * multi-step amplification, keeping the volume panel animation smooth. With
+ * V0=2, ACCEL=4, MAX=20 on the 38-step fine volume scale (see
+ * [FineVolumeSteps]), the ramp is time-wise equivalent to the previous
+ * 150-step scale driven at up to 80 steps/s, reaching full speed after 4.5s.
+ * The first tick of every press always applies exactly one step so single
+ * short presses stay stock.
  *
  * Key-driven adjusts are identified by FLAG_FROM_KEY (0x1000) in the flags
  * argument, so slider drags, setStreamVolume and other programmatic adjusts
@@ -53,12 +53,6 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
     private var sessionApplied = 0
     private var sessionDirection = 0
 
-    /**
-     * Reentry guard: reflection invokes on the hooked method re-enter this
-     * hook; while amplifying, those calls pass through unthrottled.
-     */
-    private var amplifying = false
-
     override fun handleSystemServerStarting(param: SystemServerStartingParam) {
         try {
             val audioServiceClass = param.classLoader.loadClass("com.android.server.audio.AudioService")
@@ -72,34 +66,15 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
                 java.lang.Boolean.TYPE,
                 intT
             )
-            adjust.isAccessible = true
             hookWithId(adjust, HOOK_ID) { chain ->
                 val direction = chain.args[0] as? Int
                 val flags = chain.args[2] as? Int ?: 0
                 if (direction != null &&
                     flags and FLAG_FROM_KEY != 0 &&
-                    !amplifying
+                    shouldSuppressAdjust(direction)
                 ) {
-                    val steps = stepsForThisTick(direction)
-                    if (steps <= 0) {
-                        // Drop this key-driven adjust: return without proceeding.
-                        return@hookWithId null
-                    }
-                    if (steps > 1) {
-                        // Amplify: invoke the original adjust (steps - 1) extra
-                        // times. The reentry flag routes these calls straight
-                        // through this hook without re-entering the throttle.
-                        amplifying = true
-                        try {
-                            repeat(steps - 1) {
-                                adjust.invoke(chain.thisObject, *(chain.args.toTypedArray()))
-                            }
-                        } catch (t: Throwable) {
-                            logger.warn("Volume ramp amplification invoke failed: $t")
-                        } finally {
-                            amplifying = false
-                        }
-                    }
+                    // Drop this key-driven adjust: return without proceeding.
+                    return@hookWithId null
                 }
                 chain.proceed()
             }
@@ -110,16 +85,17 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
     }
 
     /**
-     * Computes how many volume steps this loop tick should apply for a
-     * key-driven adjust (0 = suppress the tick). Also advances the session
-     * bookkeeping.
+     * Decides whether this key-driven adjust is swallowed by the non-linear
+     * ramp. Also advances the session bookkeeping.
      *
-     * The desired speed ramps linearly from [V0_STEPS_PER_SEC] and is capped
-     * at [MAX_STEPS_PER_SEC] (which exceeds the native ~20 ticks/s loop rate,
-     * so the hook amplifies qualifying ticks to multiple steps).
+     * speed(t) = min(V0 + ACCEL * t, MAX), capped at the native loop tick
+     * rate (~20/s), so at most one adjust is ever applied per tick and the
+     * volume panel animation stays smooth. The curve is calibrated against
+     * the 38-step fine volume scale and is time-wise equivalent to the
+     * previous 150-step scale driven at up to 80 steps/s.
      */
     @Synchronized
-    private fun stepsForThisTick(direction: Int): Int {
+    private fun shouldSuppressAdjust(direction: Int): Boolean {
         val now = SystemClock.elapsedRealtime()
 
         val newSession = direction != sessionDirection ||
@@ -133,8 +109,6 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         sessionLastTime = now
 
         val elapsedSec = (now - sessionFirstTime) / 1000.0
-        // Integrated budget of steps to have applied since press start,
-        // speed(t) = min(V0 + ACCEL * t, MAX).
         val tFull = (MAX_STEPS_PER_SEC - V0_STEPS_PER_SEC) / ACCEL_STEPS_PER_SEC2
         val budget = if (elapsedSec < tFull) {
             V0_STEPS_PER_SEC * elapsedSec + ACCEL_STEPS_PER_SEC2 * elapsedSec * elapsedSec / 2.0
@@ -144,14 +118,15 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         }
         // First tick of a press always applies one step: a single short press
         // must keep its stock one-step semantics.
-        val steps = if (sessionApplied == 0) 1 else (budget.toInt() - sessionApplied).coerceAtLeast(0)
-        sessionApplied += steps
+        val suppress = sessionApplied != 0 && budget < sessionApplied + 1
+        if (!suppress) sessionApplied++
         logger.debug(
-            "adjust: direction=$direction steps=$steps applied=$sessionApplied elapsedMs=${(elapsedSec * 1000).toInt()} " +
+            "adjust: direction=$direction applied=$sessionApplied elapsedMs=${(elapsedSec * 1000).toInt()} " +
                 "budget=${"%.2f".format(budget)} speed=${"%.1f".format(
-                    (V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * elapsedSec).coerceAtMost(MAX_STEPS_PER_SEC))}/s"
+                    (V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * elapsedSec).coerceAtMost(MAX_STEPS_PER_SEC))}/s " +
+                "decision=${if (suppress) "SUPPRESS" else "pass"}"
         )
-        return steps
+        return suppress
     }
 
     companion object {
@@ -161,14 +136,14 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         private const val FLAG_FROM_KEY = 0x1000
 
         /** Ramp start speed (steps/s) at the moment the key goes down. */
-        private const val V0_STEPS_PER_SEC = 8.0
+        private const val V0_STEPS_PER_SEC = 2.0
 
         /** Constant acceleration of the ramp speed (steps/s^2). */
-        private const val ACCEL_STEPS_PER_SEC2 = 16.0
+        private const val ACCEL_STEPS_PER_SEC2 = 4.0
 
-        /** Full-speed cap (steps/s). Exceeds the native ~20 ticks/s loop rate,
-         *  reached after (MAX - V0) / ACCEL ≈ 4.5s of holding. */
-        private const val MAX_STEPS_PER_SEC = 80.0
+        /** Full-speed cap (steps/s). Equal to the native ~20 ticks/s loop
+         *  rate, reached after (MAX - V0) / ACCEL = 4.5s of holding. */
+        private const val MAX_STEPS_PER_SEC = 20.0
 
         /** No adjust for this long = key released; next adjust starts a session. */
         private const val SESSION_GAP_MS = 600L

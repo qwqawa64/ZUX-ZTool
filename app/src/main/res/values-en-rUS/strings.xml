@@ -652,7 +652,7 @@
     <string name="system_ui_misc_volume_key_nonlinear_title">Non-linear volume key ramp</string>
     <string name="system_ui_misc_volume_key_nonlinear_summary">Holding a volume key ramps with continuously increasing speed: ~3 steps/s at first, faster the longer you hold, reaching the stock speed after ~4s, enabling fine adjustments at low volume. Single presses are unchanged. Requires a reboot.</string>
     <string name="system_framework_fine_volume_steps_title">Fine volume adjustment</string>
-    <string name="system_framework_fine_volume_steps_summary">Sets the volume scale to 150 steps, aligning with the Xiaomi implementation. System UI sliders and volume keys follow automatically. Re-adjust volume manually after disabling. Requires a reboot.</string>
+    <string name="system_framework_fine_volume_steps_summary">Sets the volume scale to 38 steps, co-designed with the non-linear volume key ramp (full-speed animation equivalent to 80 steps/s on the old 150-step scale, at most one step per tick so no animation jitter; no longer Xiaomi-aligned). System UI sliders and volume keys follow automatically. Re-adjust volume manually after disabling. Requires a reboot.</string>
     <string name="system_framework_disable_zui_applist_enable_title">Disable system "allow app list access"</string>
     <string name="system_framework_disable_zui_applist_enable_summary">ZUI/ZUX app list management is incomplete. Consider using an app such as "Hide My Applist" instead.</string>
     <string name="system_framework_restart_system_title">Restart system</string>
