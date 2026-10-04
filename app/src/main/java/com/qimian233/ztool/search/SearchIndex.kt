@@ -791,11 +791,6 @@ object SearchIndex {
             summaryRes = R.string.system_ui_misc_aosp_scroll_capture_summary
         ),
         systemUiMisc.item(
-            id = "system_ui_misc_volume_key_nonlinear",
-            titleRes = R.string.system_ui_misc_volume_key_nonlinear_title,
-            summaryRes = R.string.system_ui_misc_volume_key_nonlinear_summary
-        ),
-        systemUiMisc.item(
             id = "system_ui_misc_shade_rebound_fix",
             titleRes = R.string.system_ui_misc_shade_rebound_fix_title,
             summaryRes = R.string.system_ui_misc_shade_rebound_fix_summary
@@ -833,6 +828,11 @@ object SearchIndex {
         framework.item(
             id = "framework_allow_untrusted_touch",
             titleRes = R.string.system_framework_allow_untrusted_touch
+        ),
+        framework.item(
+            id = "framework_volume_key_nonlinear",
+            titleRes = R.string.system_framework_volume_key_nonlinear_title,
+            summaryRes = R.string.system_framework_volume_key_nonlinear_summary
         ),
         framework.item(
             id = "framework_fine_volume_steps",

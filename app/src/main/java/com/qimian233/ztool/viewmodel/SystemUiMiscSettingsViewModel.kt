@@ -51,11 +51,6 @@ class SystemUiMiscSettingsViewModel(
         repository.saveAospScrollCapture(enabled)
     }
 
-    fun setVolumeKeyNonlinear(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(volumeKeyNonlinear = enabled)
-        repository.saveVolumeKeyNonlinear(enabled)
-    }
-
     fun setShadeReboundFix(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(shadeReboundFix = enabled)
         repository.saveShadeReboundFix(enabled)

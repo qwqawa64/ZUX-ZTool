@@ -225,13 +225,17 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         private const val V0_STEPS_PER_SEC = 8.0
 
         /** Constant acceleration of the ramp speed (steps/s^2). */
-        private const val ACCEL_STEPS_PER_SEC2 = 40.0
+        private const val ACCEL_STEPS_PER_SEC2 = 200.0
 
         /** Full-speed cap (steps/s); no longer bounded by the native loop. */
-        private const val MAX_STEPS_PER_SEC = 80.0
+        private const val MAX_STEPS_PER_SEC = 150.0
 
-        /** Lower bound of the driver tick interval (ms). */
-        private const val MIN_TICK_MS = 10L
+        /** Lower bound of the driver tick interval (ms). NOTE: this clamps
+         *  the achievable speed at 1000/MIN_TICK_MS steps/s (100/s at 10ms);
+         *  each step also runs the full AudioService chain synchronously on
+         *  the main thread, so the real ceiling may be lower — check the
+         *  "ramp: stop ... applied=N in Xms" debug log to measure it. */
+        private const val MIN_TICK_MS = 5L
 
         /** Fixed grid for ADJUST_SAME panel refreshes between real steps. */
         private const val REFRESH_INTERVAL_MS = 50L
