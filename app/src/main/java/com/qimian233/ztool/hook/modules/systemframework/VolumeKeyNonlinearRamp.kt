@@ -29,8 +29,8 @@ import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
  * (~50ms) applies the number of steps implied by the integrated budget
  * V0*t + ACCEL*t^2/2; ticks qualifying for more than one step are amplified
  * by invoking the original adjust extra times under a reentry guard. With
- * V0=8, ACCEL=10, MAX=50 the ramp starts at 8 steps/s and reaches its
- * 50 steps/s full speed after ~4.2s. The first tick of every press always
+ * V0=8, ACCEL=16, MAX=80 the ramp starts at 8 steps/s and reaches its
+ * 80 steps/s full speed after ~4.5s. The first tick of every press always
  * applies exactly one step so single short presses stay stock.
  *
  * Key-driven adjusts are identified by FLAG_FROM_KEY (0x1000) in the flags
@@ -164,11 +164,11 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         private const val V0_STEPS_PER_SEC = 8.0
 
         /** Constant acceleration of the ramp speed (steps/s^2). */
-        private const val ACCEL_STEPS_PER_SEC2 = 10.0
+        private const val ACCEL_STEPS_PER_SEC2 = 16.0
 
         /** Full-speed cap (steps/s). Exceeds the native ~20 ticks/s loop rate,
-         *  reached after (MAX - V0) / ACCEL ≈ 4.2s of holding. */
-        private const val MAX_STEPS_PER_SEC = 50.0
+         *  reached after (MAX - V0) / ACCEL ≈ 4.5s of holding. */
+        private const val MAX_STEPS_PER_SEC = 80.0
 
         /** No adjust for this long = key released; next adjust starts a session. */
         private const val SESSION_GAP_MS = 600L
