@@ -52,11 +52,18 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
             )
             hookWithId(handleVolumeKey, HOOK_ID) { chain ->
                 val keyEvent = chain.args[0] as? KeyEvent
-                if (keyEvent != null && shouldSuppressRepeat(keyEvent)) {
-                    // Drop this repeat: return without proceeding.
+                if (keyEvent == null) {
+                    chain.proceed()
                     return@hookWithId null
                 }
+                if (shouldSuppressRepeat(keyEvent)) {
+                    // Drop this repeat: return without proceeding.
+                    logDecision(keyEvent, suppressed = true, before = -1, after = -1)
+                    return@hookWithId null
+                }
+                val before = currentMusicVolumeIndex()
                 chain.proceed()
+                logDecision(keyEvent, suppressed = false, before = before, after = currentMusicVolumeIndex())
             }
             logger.info("Successfully hooked AudioService.handleVolumeKey")
         } catch (t: Throwable) {
@@ -82,8 +89,36 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         return repeat % modulo != 0
     }
 
+    /**
+     * Debug log of one volume key event decision. `before`/`after` are the
+     * STREAM_MUSIC index around the native adjust (-1 when the event was
+     * suppressed or the index is unavailable); they show the actual step delta.
+     */
+    private fun logDecision(keyEvent: KeyEvent, suppressed: Boolean, before: Int, after: Int) {
+        val delta = if (before >= 0 && after >= 0) after - before else Int.MIN_VALUE
+        logger.debug(
+            "volume key: action=${if (keyEvent.action == KeyEvent.ACTION_DOWN) "DOWN" else "UP"}" +
+                " code=${keyEvent.keyCode} repeat=${keyEvent.repeatCount}" +
+                " downTimeMs=${keyEvent.downTime} eventTimeMs=${keyEvent.eventTime}" +
+                " decision=${if (suppressed) "SUPPRESS" else "pass"}" +
+                " musicIndex=$before->$after delta=${if (delta == Int.MIN_VALUE) "n/a" else delta}"
+        )
+    }
+
+    /** Current STREAM_MUSIC volume index via AudioSystem, or -1 on failure. */
+    private fun currentMusicVolumeIndex(): Int = try {
+        val audioSystemClass = Class.forName("android.media.AudioSystem")
+        audioSystemClass.getMethod("getStreamVolume", Int::class.javaPrimitiveType)
+            .invoke(null, STREAM_MUSIC) as? Int ?: -1
+    } catch (_: Throwable) {
+        -1
+    }
+
     companion object {
         private const val HOOK_ID = "volume_key_nonlinear_handle_volume_key"
+
+        /** android.media.AudioManager.STREAM_MUSIC */
+        private const val STREAM_MUSIC = 3
 
         // Repeat cadence is ~50ms, so 20 repeats ≈ 1s of holding.
         private const val TIER_1_REPEAT = 20
