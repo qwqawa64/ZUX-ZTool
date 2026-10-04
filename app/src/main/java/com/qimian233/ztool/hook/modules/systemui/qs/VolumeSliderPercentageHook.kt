@@ -251,9 +251,10 @@ class VolumeSliderPercentageHook : AppHookModule() {
             val progress = rawProgress ?: volumeSlider.progress
             // The stock color ramp below is defined on the stock 0..100000 raw
             // range; with fine volume steps the slider max grows beyond that,
-            // so normalize the raw progress onto the stock range first.
+            // so normalize the raw progress onto the stock range first. Long
+            // arithmetic: progress * 100000 overflows Int at the 150-step max.
             val range = 1.coerceAtLeast(volumeSlider.max - volumeSlider.min)
-            progress * STOCK_VOLUME_RAW_RANGE / range
+            (progress.toLong() * STOCK_VOLUME_RAW_RANGE / range).toInt()
         } catch (_: Throwable) {
             null
         }
