@@ -86,18 +86,10 @@ class FineVolumeSteps : SystemHookModule() {
         }
 
         if (contentResolver != null &&
-            Settings.Global.getInt(contentResolver, MIGRATION_MARKER_V3, 0) == 0
+            Settings.Global.getInt(contentResolver, MIGRATION_MARKER, 0) == 0
         ) {
-            // Rescale persisted values from whatever scale they are on,
-            // detected via the markers written by earlier migrations:
-            // v2 set -> 38-step scale, v1 set -> 150-step scale, else stock.
-            val fromSteps = when {
-                Settings.Global.getInt(contentResolver, MIGRATION_MARKER_V2, 0) == 1 -> STEP_SCALE_V2
-                Settings.Global.getInt(contentResolver, MIGRATION_MARKER, 0) == 1 -> STEP_SCALE_V1
-                else -> stockMax
-            }
-            migratePersistedMusicVolume(contentResolver, fromSteps)
-            Settings.Global.putInt(contentResolver, MIGRATION_MARKER_V3, 1)
+            migratePersistedMusicVolume(contentResolver, stockMax)
+            Settings.Global.putInt(contentResolver, MIGRATION_MARKER, 1)
         }
 
         maxVolumes[STREAM_MUSIC] = TARGET_STEPS
@@ -161,17 +153,9 @@ class FineVolumeSteps : SystemHookModule() {
         /** Target step count (fine scale, pairs with VolumeKeyNonlinearRamp). */
         private const val TARGET_STEPS = 150
 
-        /** Step count of the v1 migration scale. */
-        private const val STEP_SCALE_V1 = 150
-
-        /** Step count of the v2 migration scale. */
-        private const val STEP_SCALE_V2 = 38
-
         private const val MUSIC_SETTING_PREFIX = "volume_music"
         private const val NAME_COLUMN = "name"
         private const val VALUE_COLUMN = "value"
         private const val MIGRATION_MARKER = "ztool_fine_volume_steps_migrated"
-        private const val MIGRATION_MARKER_V2 = "ztool_fine_volume_steps_migrated_v2"
-        private const val MIGRATION_MARKER_V3 = "ztool_fine_volume_steps_migrated_v3"
     }
 }
