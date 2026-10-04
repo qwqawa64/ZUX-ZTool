@@ -85,6 +85,7 @@ fun SystemUiMiscSettingsRoute(
             onBypassFaceAuthTimeoutChanged = viewModel::setBypassFaceAuthTimeout,
             onAospScrollCaptureChanged = viewModel::setAospScrollCapture,
             onShadeReboundFixChanged = viewModel::setShadeReboundFix,
+            onVolumeKeyNonlinearChanged = viewModel::setVolumeKeyNonlinear,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -130,6 +131,7 @@ private fun SystemUiMiscSettingsScreen(
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
     onAospScrollCaptureChanged: (Boolean) -> Unit,
     onShadeReboundFixChanged: (Boolean) -> Unit,
+    onVolumeKeyNonlinearChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -177,6 +179,7 @@ private fun SystemUiMiscSettingsScreen(
                         onBypassFaceAuthTimeoutChanged = onBypassFaceAuthTimeoutChanged,
                         onAospScrollCaptureChanged = onAospScrollCaptureChanged,
                         onShadeReboundFixChanged = onShadeReboundFixChanged,
+                        onVolumeKeyNonlinearChanged = onVolumeKeyNonlinearChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -194,6 +197,7 @@ private fun systemUiMiscSettingsSections(
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
     onAospScrollCaptureChanged: (Boolean) -> Unit,
     onShadeReboundFixChanged: (Boolean) -> Unit,
+    onVolumeKeyNonlinearChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -232,6 +236,15 @@ private fun systemUiMiscSettingsSections(
                         checked = state.aospScrollCapture,
                         onCheckedChange = onAospScrollCaptureChanged,
                         key = "system_ui_misc_aosp_scroll_capture"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_misc_volume_key_nonlinear_title),
+                        summary = stringResource(R.string.system_ui_misc_volume_key_nonlinear_summary),
+                        checked = state.volumeKeyNonlinear,
+                        onCheckedChange = onVolumeKeyNonlinearChanged,
+                        key = "system_ui_misc_volume_key_nonlinear"
                     )
                 )
                 add(

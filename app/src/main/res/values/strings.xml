@@ -731,8 +731,8 @@
     <string name="system_framework_disable_zui_applist_title">安全相关</string>
     <string name="system_framework_disable_flag_secure_title">强制允许截屏</string>
     <string name="system_framework_disable_flag_secure_summary">移除安全窗口标志，解决安全窗口截屏为全黑问题</string>
-    <string name="system_framework_volume_key_nonlinear_title">音量键非线性调节</string>
-    <string name="system_framework_volume_key_nonlinear_summary">长按音量键时增速先慢后快：初期约每 4 次重复才增减一阶，随后逐步恢复原生速度，便于在低音量区精细调整。单击音量行为不变。需重启系统生效。</string>
+    <string name="system_ui_misc_volume_key_nonlinear_title">音量键非线性调节</string>
+    <string name="system_ui_misc_volume_key_nonlinear_summary">长按音量键时增速持续线性加快：起步约 3 阶/秒，按住越久越快，约 4 秒后恢复原生速度，便于在低音量区精细调整。单击音量行为不变。需重启系统生效。</string>
     <string name="system_framework_fine_volume_steps_title">精细音量调节</string>
     <string name="system_framework_fine_volume_steps_summary">将音量阶数设置为 150 阶，对齐小米实现。生效后系统界面与音量键同步细化为 150 级；关闭并重启后请手动调回音量。需重启系统生效。</string>
     <string name="system_framework_disable_zui_applist_enable_title">停用系统的“允许获取应用列表”</string>

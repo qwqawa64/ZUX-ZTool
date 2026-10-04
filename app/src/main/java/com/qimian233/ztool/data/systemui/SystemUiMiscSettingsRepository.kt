@@ -16,6 +16,7 @@ class SystemUiMiscSettingsRepository(context: Context) {
             bypassFaceAuthTimeout = prefsUtils.loadBooleanSetting(KEY_BYPASS_FACE_AUTH_TIMEOUT, false),
             aospScrollCapture = prefsUtils.loadBooleanSetting(KEY_FORCE_LONG_SCREENSHOT_AOSP, false),
             shadeReboundFix = prefsUtils.loadBooleanSetting(KEY_SHADE_REBOUND_FIX, false),
+            volumeKeyNonlinear = prefsUtils.loadBooleanSetting(KEY_VOLUME_KEY_NONLINEAR, false),
         )
     }
 
@@ -24,6 +25,7 @@ class SystemUiMiscSettingsRepository(context: Context) {
     fun saveBypassFaceAuthTimeout(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_BYPASS_FACE_AUTH_TIMEOUT, enabled)
     fun saveAospScrollCapture(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_FORCE_LONG_SCREENSHOT_AOSP, enabled)
     fun saveShadeReboundFix(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_SHADE_REBOUND_FIX, enabled)
+    fun saveVolumeKeyNonlinear(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_VOLUME_KEY_NONLINEAR, enabled)
 
     fun forceStopScope(): ShellActionResult {
         val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
@@ -40,6 +42,7 @@ class SystemUiMiscSettingsRepository(context: Context) {
         private val KEY_BYPASS_FACE_AUTH_TIMEOUT = PreferenceKeys.BYPASS_FACE_AUTH_TIMEOUT.name
         private val KEY_FORCE_LONG_SCREENSHOT_AOSP = PreferenceKeys.FORCE_LONG_SCREENSHOT_AOSP.name
         private val KEY_SHADE_REBOUND_FIX = PreferenceKeys.SHADE_REBOUND_FIX.name
+        private val KEY_VOLUME_KEY_NONLINEAR = PreferenceKeys.VOLUME_KEY_NONLINEAR.name
     }
 }
 
@@ -49,6 +52,7 @@ data class SystemUiMiscSettingsUiState(
     val bypassFaceAuthTimeout: Boolean = false,
     val aospScrollCapture: Boolean = false,
     val shadeReboundFix: Boolean = false,
+    val volumeKeyNonlinear: Boolean = false,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )

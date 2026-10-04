@@ -30,7 +30,6 @@ class FrameworkSettingsRepository(
             forceRelativeAppFreeform = prefsUtils.loadBooleanSetting(FORCE_RELATIVE_APP_FREEFORM, false),
             disableHbmThermalLimit = prefsUtils.loadBooleanSetting(KEY_DISABLE_HBM_THERMAL_LIMIT, false),
             fineVolumeSteps = prefsUtils.loadBooleanSetting(KEY_FINE_VOLUME_STEPS, false),
-            volumeKeyNonlinear = prefsUtils.loadBooleanSetting(KEY_VOLUME_KEY_NONLINEAR, false),
             pkgMgrAllowDowngrade = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_ALLOW_DOWNGRADE, false),
             pkgMgrBypassVerification = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_BYPASS_VERIFICATION, false),
             pkgMgrDisableVerificationAgent = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_DISABLE_VERIFICATION_AGENT, false),
@@ -94,10 +93,6 @@ class FrameworkSettingsRepository(
 
     fun saveFineVolumeSteps(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_FINE_VOLUME_STEPS, enabled)
-    }
-
-    fun saveVolumeKeyNonlinear(enabled: Boolean) {
-        prefsUtils.saveBooleanSetting(KEY_VOLUME_KEY_NONLINEAR, enabled)
     }
 
     fun savePkgMgrAllowDowngrade(enabled: Boolean) {
@@ -218,7 +213,6 @@ class FrameworkSettingsRepository(
         private val FORCE_RELATIVE_APP_FREEFORM = PreferenceKeys.FORCE_RELATIVE_APP_FREEFORM.name
         private val KEY_DISABLE_HBM_THERMAL_LIMIT = PreferenceKeys.DISABLE_HBM_THERMAL_LIMIT.name
         private val KEY_FINE_VOLUME_STEPS = PreferenceKeys.FINE_VOLUME_STEPS.name
-        private val KEY_VOLUME_KEY_NONLINEAR = PreferenceKeys.VOLUME_KEY_NONLINEAR.name
 
         private val KEY_PKG_MGR_ALLOW_DOWNGRADE = PreferenceKeys.PKG_MGR_ALLOW_DOWNGRADE.name
         private val KEY_PKG_MGR_BYPASS_VERIFICATION = PreferenceKeys.PKG_MGR_BYPASS_VERIFICATION.name

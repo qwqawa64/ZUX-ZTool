@@ -22,9 +22,13 @@ import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
  * before it runs and drops part of the key-driven adjusts, producing a
  * slow-start-then-accelerate ramp:
  *
- *   0..TIER_1_MS after press start   -> pass every 4th  (slow, ~5 steps/s)
- *   TIER_1..TIER_2_MS (~3s)          -> pass every 2nd  (~10 steps/s)
- *   beyond TIER_2_MS                 -> pass all        (~20 steps/s, stock)
+ *   speed(t) = V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * t   (steps/s)
+ *
+ * The speed grows linearly the whole time the key is held — no discrete
+ * tiers. A loop tick (~50ms) is passed only while the count of already-passed
+ * adjusts is below the integrated budget V0*t + ACCEL*t^2/2. With
+ * V0=3, ACCEL=4 the speed starts at 3 steps/s and reaches the native
+ * ~20 steps/s after ~4.25s of holding; past that every tick passes.
  *
  * Key-driven adjusts are identified by FLAG_FROM_KEY (0x1000) in the flags
  * argument, so slider drags, setStreamVolume and other programmatic adjusts
@@ -43,7 +47,7 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
     /** Monotonic clock state for the current key-hold adjust session. */
     private var sessionFirstTime = 0L
     private var sessionLastTime = 0L
-    private var sessionOrdinal = 0
+    private var sessionPassed = 0
     private var sessionDirection = 0
 
     override fun handleSystemServerStarting(param: SystemServerStartingParam) {
@@ -96,22 +100,21 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
             now - sessionLastTime > SESSION_GAP_MS
         if (newSession) {
             sessionFirstTime = now
-            sessionOrdinal = 0
+            sessionPassed = 0
             sessionDirection = direction
         }
         sessionLastTime = now
-        sessionOrdinal++
 
-        val elapsed = now - sessionFirstTime
-        val modulo = when {
-            elapsed < TIER_1_MS -> TIER_1_MODULO
-            elapsed < TIER_2_MS -> TIER_2_MODULO
-            else -> 1
-        }
-        val suppress = sessionOrdinal % modulo != 0
+        val elapsedSec = (now - sessionFirstTime) / 1000.0
+        // Integrated budget of allowed adjusts since press start; the loop
+        // cannot pass more ticks than it receives, so no explicit cap is needed.
+        val budget = V0_STEPS_PER_SEC * elapsedSec + ACCEL_STEPS_PER_SEC2 * elapsedSec * elapsedSec / 2.0
+        val suppress = budget < sessionPassed + 1
+        if (!suppress) sessionPassed++
         logger.debug(
-            "adjust: direction=$direction ordinal=$sessionOrdinal elapsedMs=$elapsed " +
-                "modulo=$modulo decision=${if (suppress) "SUPPRESS" else "pass"}"
+            "adjust: direction=$direction passed=$sessionPassed elapsedMs=${(elapsedSec * 1000).toInt()} " +
+                "budget=${"%.2f".format(budget)} speed=${"%.1f".format(V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * elapsedSec)}/s " +
+                "decision=${if (suppress) "SUPPRESS" else "pass"}"
         )
         return suppress
     }
@@ -122,12 +125,12 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         /** android.media.AudioManager.FLAG_FROM_KEY */
         private const val FLAG_FROM_KEY = 0x1000
 
-        // The native loop ticks ~50ms; keep the tier boundaries in wall time
-        // so the curve does not depend on the tick rate.
-        private const val TIER_1_MS = 1000L
-        private const val TIER_2_MS = 3000L
-        private const val TIER_1_MODULO = 4
-        private const val TIER_2_MODULO = 2
+        /** Ramp start speed (steps/s) at the moment the key goes down. */
+        private const val V0_STEPS_PER_SEC = 3.0
+
+        /** Constant acceleration of the ramp speed (steps/s^2): speed grows
+         *  linearly while held, reaching the native ~20 steps/s after ~4.25s. */
+        private const val ACCEL_STEPS_PER_SEC2 = 4.0
 
         /** No adjust for this long = key released; next adjust starts a session. */
         private const val SESSION_GAP_MS = 600L
