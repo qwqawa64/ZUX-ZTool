@@ -73,13 +73,31 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
                 stopDriver("native heartbeat lost")
                 return
             }
-            invokeOriginalAdjust()
+            invokeOriginalAdjust(sessionDirection, null)
             sessionApplied++
             val elapsedSec = (SystemClock.elapsedRealtime() - sessionStart) / 1000.0
             val speed = (V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * elapsedSec)
                 .coerceAtMost(MAX_STEPS_PER_SEC)
             val intervalMs = (1000.0 / speed).toLong().coerceIn(MIN_TICK_MS, 1000L)
             driverHandler.postDelayed(this, intervalMs)
+        }
+    }
+
+    /**
+     * Uniform panel refresh between real steps: while the driver waits for
+     * its next variable-interval step, emits ADJUST_SAME adjusts (index
+     * unchanged, no broadcast/persist per VolumeStreamState.setIndex, no
+     * sound with PLAY_SOUND stripped) at a fixed grid so the volume panel
+     * receives a refresh event on every frame and the animation never
+     * stalls between steps. postVolumeChanged is unconditional in
+     * AudioService.sendVolumeUpdate — the official mechanism behind
+     * ADJUST_SAME + FLAG_SHOW_UI "show panel without changing volume".
+     */
+    private val refreshRunnable = object : Runnable {
+        override fun run() {
+            if (!driverActive) return
+            invokeOriginalAdjust(0, REFRESH_FLAGS)
+            driverHandler.postDelayed(this, REFRESH_INTERVAL_MS)
         }
     }
 
@@ -155,6 +173,7 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
             // run natively, then the driver takes over the cadence.
             val intervalMs = (1000.0 / V0_STEPS_PER_SEC).toLong().coerceIn(MIN_TICK_MS, 1000L)
             driverHandler.postDelayed(driverRunnable, intervalMs)
+            driverHandler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS)
             logger.debug("ramp: session start direction=$direction speed0=$V0_STEPS_PER_SEC/s")
             return TICK_PROCEED
         }
@@ -164,18 +183,24 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
     private fun stopDriver(reason: String) {
         driverActive = false
         driverHandler.removeCallbacks(driverRunnable)
+        driverHandler.removeCallbacks(refreshRunnable)
         logger.debug(
             "ramp: stop ($reason), applied=$sessionApplied steps in " +
                 "${SystemClock.elapsedRealtime() - sessionStart}ms"
         )
     }
 
-    /** Applies one adjust via the original method, bypassing this hook. */
-    private fun invokeOriginalAdjust() {
+    /**
+     * Applies one adjust via the original method, bypassing this hook.
+     * @param direction adjust direction (0 = ADJUST_SAME refresh)
+     * @param flagsOverride when non-null, replaces the flags argument
+     */
+    private fun invokeOriginalAdjust(direction: Int, flagsOverride: Int?) {
         val method = adjustMethod ?: return
         val service = audioService ?: return
         val args = argsTemplate.copyOf()
-        args[0] = sessionDirection
+        args[0] = direction
+        if (flagsOverride != null) args[2] = flagsOverride
         driving = true
         try {
             method.invoke(service, *args)
@@ -200,13 +225,20 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         private const val V0_STEPS_PER_SEC = 8.0
 
         /** Constant acceleration of the ramp speed (steps/s^2). */
-        private const val ACCEL_STEPS_PER_SEC2 = 16.0
+        private const val ACCEL_STEPS_PER_SEC2 = 40.0
 
         /** Full-speed cap (steps/s); no longer bounded by the native loop. */
         private const val MAX_STEPS_PER_SEC = 80.0
 
         /** Lower bound of the driver tick interval (ms). */
         private const val MIN_TICK_MS = 10L
+
+        /** Fixed grid for ADJUST_SAME panel refreshes between real steps. */
+        private const val REFRESH_INTERVAL_MS = 50L
+
+        /** Flags for ADJUST_SAME refreshes: FROM_KEY | SHOW_UI only — sound,
+         *  vibrate and vendor bits stripped so the refresh is silent. */
+        private const val REFRESH_FLAGS = FLAG_FROM_KEY or 0x1
 
         /** No native tick for this long while holding = key released. */
         private const val NATIVE_TICK_TIMEOUT_MS = 300L
