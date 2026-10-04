@@ -830,6 +830,11 @@ object SearchIndex {
             titleRes = R.string.system_framework_allow_untrusted_touch
         ),
         framework.item(
+            id = "framework_fine_volume_steps",
+            titleRes = R.string.system_framework_fine_volume_steps_title,
+            summaryRes = R.string.system_framework_fine_volume_steps_summary
+        ),
+        framework.item(
             id = "framework_pkgmgr_allow_downgrade",
             titleRes = R.string.system_framework_pkgmgr_allow_downgrade_title,
             summaryRes = R.string.system_framework_pkgmgr_allow_downgrade_summary

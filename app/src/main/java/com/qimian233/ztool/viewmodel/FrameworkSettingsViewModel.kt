@@ -97,6 +97,11 @@ class FrameworkSettingsViewModel(
         repository.saveDisableHbmThermalLimit(enabled)
     }
 
+    fun setFineVolumeSteps(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(fineVolumeSteps = enabled)
+        repository.saveFineVolumeSteps(enabled)
+    }
+
     fun setPkgMgrAllowDowngrade(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(pkgMgrAllowDowngrade = enabled)
         repository.savePkgMgrAllowDowngrade(enabled)
@@ -190,6 +195,7 @@ data class FrameworkSettingsUiState(
     val allowRelativeAppLaunch: Boolean = false,
     val forceRelativeAppFreeform: Boolean = false,
     val disableHbmThermalLimit: Boolean = false,
+    val fineVolumeSteps: Boolean = false,
     val pkgMgrAllowDowngrade: Boolean = false,
     val pkgMgrBypassVerification: Boolean = false,
     val pkgMgrDisableVerificationAgent: Boolean = false,

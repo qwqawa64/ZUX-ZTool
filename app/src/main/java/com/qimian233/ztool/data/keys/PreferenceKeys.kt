@@ -36,6 +36,8 @@ object PreferenceKeys {
     // recents-cleaner bypass); module name of both hook classes
     val FREEFORM_KEEP_ALIVE_ENABLED = BoolKey("freeform_keep_alive_enabled", false)
     val DISABLE_HBM_THERMAL_LIMIT = BoolKey("disable_hbm_thermal_limit", false)
+    // Raise media stream volume steps to 150 (Xiaomi fine volume alignment)
+    val FINE_VOLUME_STEPS = BoolKey("fine_volume_steps", false)
     // One-shot maintenance action marker: clears stale ZUI night-mode override
     // (ui_night_mode_override_on/off) via root; not read by any hook module
     val FIX_NIGHT_MODE_OVERRIDE = BoolKey("fix_night_mode_override", false)
@@ -306,7 +308,7 @@ object PreferenceKeys {
         KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH, FORCE_RELATIVE_APP_FREEFORM,
         LAUNCHER_FORCE_FREEFORM_ENTRY, FREEFORM_EDGE_BUBBLE,
         FREEFORM_KEEP_ALIVE_ENABLED,
-        DISABLE_HBM_THERMAL_LIMIT, FIX_NIGHT_MODE_OVERRIDE,
+        DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,
         PKG_MGR_DISABLE_VERIFICATION_AGENT, PKG_MGR_BYPASS_DIGEST,
         PKG_MGR_USE_PREVIOUS_SIGNATURES, PKG_MGR_BYPASS_EXACT_SIG_MATCH,

@@ -110,6 +110,7 @@ fun FrameworkSettingsRoute(
             onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
             onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
             onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit,
+            onFineVolumeStepsChanged = viewModel::setFineVolumeSteps,
             onPkgMgrAllowDowngradeChanged = viewModel::setPkgMgrAllowDowngrade,
             onPkgMgrBypassVerificationChanged = viewModel::setPkgMgrBypassVerification,
             onPkgMgrDisableVerificationAgentChanged = viewModel::setPkgMgrDisableVerificationAgent,
@@ -174,6 +175,7 @@ private fun FrameworkSettingsScreen(
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
+    onFineVolumeStepsChanged: (Boolean) -> Unit,
     onPkgMgrAllowDowngradeChanged: (Boolean) -> Unit,
     onPkgMgrBypassVerificationChanged: (Boolean) -> Unit,
     onPkgMgrDisableVerificationAgentChanged: (Boolean) -> Unit,
@@ -237,6 +239,7 @@ private fun FrameworkSettingsScreen(
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
                         onForceRelativeAppFreeformChanged = onForceRelativeAppFreeformChanged,
                         onDisableHbmThermalLimitChanged = onDisableHbmThermalLimitChanged,
+                        onFineVolumeStepsChanged = onFineVolumeStepsChanged,
                         onPkgMgrAllowDowngradeChanged = onPkgMgrAllowDowngradeChanged,
                         onPkgMgrBypassVerificationChanged = onPkgMgrBypassVerificationChanged,
                         onPkgMgrDisableVerificationAgentChanged = onPkgMgrDisableVerificationAgentChanged,
@@ -268,6 +271,7 @@ private fun frameworkSettingsSections(
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
+    onFineVolumeStepsChanged: (Boolean) -> Unit,
     onPkgMgrAllowDowngradeChanged: (Boolean) -> Unit,
     onPkgMgrBypassVerificationChanged: (Boolean) -> Unit,
     onPkgMgrDisableVerificationAgentChanged: (Boolean) -> Unit,
@@ -451,6 +455,13 @@ private fun frameworkSettingsSections(
                     checked = state.forceRelativeAppFreeform,
                     onCheckedChange = onForceRelativeAppFreeformChanged,
                     key = "framework_force_relative_app_freeform"
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_framework_fine_volume_steps_title),
+                    summary = stringResource(R.string.system_framework_fine_volume_steps_summary),
+                    checked = state.fineVolumeSteps,
+                    onCheckedChange = onFineVolumeStepsChanged,
+                    key = "framework_fine_volume_steps"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_framework_disable_flag_secure_title),

@@ -649,6 +649,8 @@
     <string name="system_framework_disable_zui_applist_title">Security</string>
     <string name="system_framework_disable_flag_secure_title">Force allow screenshots</string>
     <string name="system_framework_disable_flag_secure_summary">Remove secure window flags to fix black screenshots in secure windows.</string>
+    <string name="system_framework_fine_volume_steps_title">Fine volume adjustment</string>
+    <string name="system_framework_fine_volume_steps_summary">Sets the volume scale to 150 steps, aligning with the Xiaomi implementation. System UI sliders and volume keys follow automatically. Re-adjust volume manually after disabling. Requires a reboot.</string>
     <string name="system_framework_disable_zui_applist_enable_title">Disable system "allow app list access"</string>
     <string name="system_framework_disable_zui_applist_enable_summary">ZUI/ZUX app list management is incomplete. Consider using an app such as "Hide My Applist" instead.</string>
     <string name="system_framework_restart_system_title">Restart system</string>
