@@ -43,6 +43,48 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         hookKeyQueueDiagnostic(classLoader)
         hookStatusBarForward(classLoader)
         hookAudioServiceForward(classLoader)
+        hookAdjustDiagnostic(classLoader)
+    }
+
+    /**
+     * Temporary diagnostic: log a short stack trace for every volume adjust
+     * reaching AudioService, to identify what drives the hold-to-ramp.
+     */
+    private fun hookAdjustDiagnostic(classLoader: ClassLoader) {
+        try {
+            val audioServiceClass = classLoader.loadClass("com.android.server.audio.AudioService")
+            val intT = Int::class.javaPrimitiveType
+            val strT = String::class.java
+            val targets = listOf(
+                "adjustSuggestedStreamVolume" to arrayOf(
+                    intT, intT, intT, strT, strT, intT, intT, java.lang.Boolean.TYPE, intT),
+                "adjustStreamVolume" to arrayOf(
+                    intT, intT, intT, strT, strT, intT, intT, strT, java.lang.Boolean.TYPE, intT),
+                "adjustStreamVolume" to arrayOf(intT, intT, intT, strT)
+            )
+            var index = 0
+            for ((name, params) in targets) {
+                val method = try {
+                    findMethod(audioServiceClass, name, *params)
+                } catch (_: Throwable) {
+                    continue
+                }
+                val label = "${name}/${params.size}args"
+                hookWithId(method, "volume_key_nonlinear_adjust_diag_${index++}") { chain ->
+                    val direction = chain.args[0] as? Int
+                    val flags = chain.args[2] as? Int
+                    val stack = Throwable().stackTrace
+                        .drop(1)
+                        .take(12)
+                        .joinToString(" <- ") { "${it.className.substringAfterLast('.')}.${it.methodName}" }
+                    logger.debug("adjust[$label]: direction=$direction flags=$flags stack=$stack")
+                    chain.proceed()
+                }
+                logger.info("Adjust diagnostic hooked: $label")
+            }
+        } catch (t: Throwable) {
+            logger.error("Failed to hook adjust diagnostics", t)
+        }
     }
 
     /**
