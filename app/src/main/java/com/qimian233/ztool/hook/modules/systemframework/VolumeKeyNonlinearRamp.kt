@@ -40,8 +40,44 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
 
     override fun handleSystemServerStarting(param: SystemServerStartingParam) {
         val classLoader = param.classLoader
+        hookKeyQueueDiagnostic(classLoader)
         hookStatusBarForward(classLoader)
         hookAudioServiceForward(classLoader)
+    }
+
+    /**
+     * Temporary diagnostic: log every volume-related key event reaching
+     * PhoneWindowManager.interceptKeyBeforeQueueing (the system_server entry
+     * for all key events, repeats included) to trace where repeats are consumed.
+     */
+    private fun hookKeyQueueDiagnostic(classLoader: ClassLoader) {
+        try {
+            val pwmClass = classLoader.loadClass("com.android.server.policy.PhoneWindowManager")
+            val intercept = findMethod(pwmClass, "interceptKeyBeforeQueueing", KeyEvent::class.java, Int::class.javaPrimitiveType)
+            hookWithId(intercept, QUEUE_DIAG_HOOK_ID) { chain ->
+                val keyEvent = chain.args[0] as? KeyEvent
+                if (keyEvent != null) {
+                    val keyCode = keyEvent.keyCode
+                    if (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
+                        keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                        keyCode == KeyEvent.KEYCODE_VOLUME_MUTE
+                    ) {
+                        val result = chain.proceed()
+                        logger.debug(
+                            "ikbq: action=${if (keyEvent.action == KeyEvent.ACTION_DOWN) "DOWN" else "UP"}" +
+                                " code=$keyCode repeat=${keyEvent.repeatCount}" +
+                                " flags=0x${Integer.toHexString(keyEvent.flags)}" +
+                                " result=$result"
+                        )
+                        return@hookWithId result
+                    }
+                }
+                chain.proceed()
+            }
+            logger.info("Successfully hooked PhoneWindowManager.interceptKeyBeforeQueueing (diagnostic)")
+        } catch (t: Throwable) {
+            logger.error("Failed to hook interceptKeyBeforeQueueing diagnostic", t)
+        }
     }
 
     /**
@@ -152,6 +188,7 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
     }
 
     companion object {
+        private const val QUEUE_DIAG_HOOK_ID = "volume_key_nonlinear_ikbq_diag"
         private const val STATUS_BAR_HOOK_ID = "volume_key_nonlinear_handle_system_key"
         private const val AUDIO_HOOK_ID = "volume_key_nonlinear_handle_volume_key"
 
