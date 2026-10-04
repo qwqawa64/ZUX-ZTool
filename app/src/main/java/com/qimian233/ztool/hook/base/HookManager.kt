@@ -96,6 +96,7 @@ import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIChargeWattsHoo
 import com.qimian233.ztool.hook.modules.systemui.keyguard.SystemUIRealWatts
 import com.qimian233.ztool.hook.modules.systemui.misc.AospScrollCaptureHook
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomChargeAnimation
+import com.qimian233.ztool.hook.modules.systemui.misc.FineVolumeStepsSliderHook
 import com.qimian233.ztool.hook.modules.systemui.misc.CustomControlCenterDate
 import com.qimian233.ztool.hook.modules.systemui.misc.DisableBiometricErrorVibration
 import com.qimian233.ztool.hook.modules.systemui.misc.ForceImmersiveMode
@@ -215,6 +216,7 @@ object HookManager {
         registerHookModule(QsPanelWidthHook())
         registerHookModule(SliderStyleHook())
         registerHookModule(CustomChargeAnimation())
+        registerHookModule(FineVolumeStepsSliderHook())
         registerHookModule(DisableBiometricErrorVibration())
         registerHookModule(MediaOutputDialogCenterHook())
 

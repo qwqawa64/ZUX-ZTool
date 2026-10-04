@@ -248,7 +248,12 @@ class VolumeSliderPercentageHook : AppHookModule() {
         return try {
             val volumeSlider = sliderView.javaClass
                 .getDeclaredField("mMediaVolumeSlider").get(sliderView) as SeekBar
-            rawProgress ?: volumeSlider.progress
+            val progress = rawProgress ?: volumeSlider.progress
+            // The stock color ramp below is defined on the stock 0..100000 raw
+            // range; with fine volume steps the slider max grows beyond that,
+            // so normalize the raw progress onto the stock range first.
+            val range = 1.coerceAtLeast(volumeSlider.max - volumeSlider.min)
+            progress * STOCK_VOLUME_RAW_RANGE / range
         } catch (_: Throwable) {
             null
         }
@@ -502,5 +507,6 @@ class VolumeSliderPercentageHook : AppHookModule() {
         private const val VOLUME_ICON_FIELD = "mMediaVolumeIconMark"
         private const val LABEL_GAP_DP = 2
         private const val BASE_PERCENT_COLOR = 0xffd8d8d8.toInt()
+        private const val STOCK_VOLUME_RAW_RANGE = 100_000
     }
 }
