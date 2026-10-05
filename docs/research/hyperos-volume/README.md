@@ -879,3 +879,162 @@ with `alpha = ceil(v)`; overscroll = `PathInterpolator(0.15,0,0.2,1)` on `drag/3
 3 s (`Settings.Secure "volume_dialog_dismiss_timeout"`), a11y-scaled. Xiaomi adds only
 per-step haptics (`VolumeDialogTransformHelper.calculateHapticFeedbackState`), a
 fixed-rotation dismiss listener, and the Dolby/MiSound volume callbacks.
+
+---
+
+## 9. Device configuration (verified on a HyperOS 3 device)
+
+```
+ro.config.media_vol_steps            = 150
+ro.vendor.audio.volume_super_index_add   (unset → getInt default -1)
+ro.vendor.audio.volume_super_streamtype  (unset → 0)
+ro.vendor.audio.volume.boost.support     (unset → 0)
+```
+
+Working through the `VolumeBoostHelper` static initialisers (§7.3, §7.4):
+
+- `SUPER_VOLUME_ENABLE = SUPER_VOLUME_PROP != -1` → **false** (property unset).
+- `VOICE_VOIP_VOLUME_BOOST_PROP = 0` → every `*_VOLUME_BOOST_ENABLE` flag is false;
+  `ro.vendor.audio.call.vol_12_levels` is unset → `MTK_VOICE_HANDSET_VOLUME_BOOST_ENABLE`
+  false → `CALL_VOLUME_BOOST_ENABLE` false.
+- `ENABLE = SUPER_VOLUME_ENABLE || CALL_VOLUME_BOOST_ENABLE` → **false**, so
+  `AudioServiceStubImpl.init()` never constructs the helper
+  (`if (VolumeBoostHelper.ENABLE) { mVolumeBoostHelper = new ... }`).
+
+**Consequence: on this device the entire super-index / volume-boost subsystem is dead
+code.** `enableSuperIndex` returns -1, `getSuperIndex` returns `indexMax`,
+`setSuperIndex` returns `index` unchanged, `isSuperVolumeEnable` false,
+`isNeedSetIndexToMax` / `isNeedRescaleStepBySuperVolume` false — the guards short-circuit
+before touching the null helper. §7.3–§7.5 describe a *capability* of the build, not
+behaviour of this phone.
+
+So the complete list of **active** Xiaomi volume customisations on this device is:
+
+1. `MAX_STREAM_VOLUME[STREAM_MUSIC] = 150` from `ro.config.media_vol_steps` (§7.1).
+2. The `AudioServiceInjector` table edits in §10 (`adjustMaxStreamVolume`,
+   `customMinStreamVolume`, `adjustDefaultStreamVolume`, `adjustVolumeSetting`).
+3. The effect-chain index push (`notifyVolumeIndexChangedToEffect...`, §7.7) and the HAL
+   parameter push (`setStreamMusicOrVoiceCallIndex`, §7.6) — both unconditional.
+4. The SystemUI animation and per-step haptics (§6).
+
+Still unchecked but relevant: `ro.vendor.audio.voice.volume.boost` (the *earpiece* call
+boost uses `== "manual"`, a different property from `volume.boost.support`) and
+`persist.vendor.audio.voice.spk_super_volume` (speaker call boost).
+
+---
+
+## 10. `miui_framework.jar`: `android.media.AudioServiceInjector`
+
+The class the stub delegates to (§7.8). Note the package: **`android.media`**, not
+`com.android.server.audio` — it is a framework-bootclasspath extension called both by
+`AudioServiceStubImpl` and directly by the framework. On this device
+`isApplyMiuiCustom() = !ro.vendor.audio.skip_miui_volume_custom` is true, so all of the
+following are live.
+
+### 10.1 The volume scale tables
+
+```java
+public static void adjustMaxStreamVolume(int[] maxStreamVolume) {
+    for (int i = 0; i < maxStreamVolume.length; i++)
+        if (i != 0 && i != 6 && i != 7) maxStreamVolume[i] = 15;      // not VOICE_CALL / SCO / SYSTEM_ENFORCED
+}
+public static void customMinStreamVolume(int[] minStreamVolume) { minStreamVolume[6] = 1; }   // BT SCO min 0 -> 1
+public static void adjustDefaultStreamVolume(int[] defaultStreamVolume) {
+    for (int i = 0; i < defaultStreamVolume.length; i++)
+        if (i != 0 && i != 6) defaultStreamVolume[i] = 10;            // stock-15-scale default 10
+}
+public static int calculateStreamVolume(int streamType, int index, Context c) { return (index + 5) / 10; }
+public static int calculateStreamMaxVolume(int streamType, int maxIndex, Context c) { return (maxIndex + 5) / 10; }
+```
+
+Ordering matters and explains the final table: AOSP's `int[]{5,7,7,15,7,7,15,7,15,15,15,15}`
+→ the volume-group loop overwrites from the policy → `adjustMaxStreamVolume` forces **all
+streams to 15 except 0/6/7** → `ro.config.vc_call_vol_steps` (if set) overrides stream 0 →
+the stepless branch raises **music to 150**. Net result for this phone: music 150, voice
+call 5, BT SCO 15, system-enforced 7, everything else 15; BT SCO minimum 1 (which is why
+`VolumeStreamState.setStreamVolumeIndex` contains the `isStreamBluetoothSco && index == 0
+→ 1` clamp seen in §1.4); every default 10 except voice call / BT SCO.
+
+Note `calculateStreamVolume` / `calculateStreamMaxVolume` are plain `+5)/10` rounding —
+they are **not** a volume curve; MIUI does not reshape the index→loudness mapping here.
+
+### 10.2 The one-time 15 → 150 migration (the canonical Xiaomi recipe)
+
+```java
+public static void adjustVolumeSetting() {
+    Context ctx = ActivityThread.currentApplication().getApplicationContext();
+    ContentResolver cr = ctx.getContentResolver();
+    if (Settings.System.getIntForUser(cr, "volume_use_150_level", 0, -2) == 0) {
+        Settings.System.putIntForUser(cr, "volume_use_150_level", 1, -2);
+        for (String k : {"volume_music_speaker", "volume_music_headset",
+                         "volume_music_usb_headset", "volume_music_bt_a2dp"}) {
+            int v = Settings.System.getIntForUser(cr, k, AudioSystem.DEFAULT_STREAM_VOLUME[3], -2);
+            Settings.System.putIntForUser(cr, k, v * 10, -2);
+        }
+    }
+}
+```
+
+This is exactly the problem ZTool's `FineVolumeSteps.migratePersistedMusicVolume` solves,
+and it is worth comparing directly:
+
+| | HyperOS | ZTool |
+|---|---|---|
+| Marker | `Settings.System "volume_use_150_level"` = 1 | `Settings.Global "ztool_fine_volume_steps_migrated"` = 1 |
+| Scope | the four `volume_music_*` per-device keys, named explicitly | every `Settings.System` row matching `volume_music%` (catches future/unknown device suffixes too) |
+| Factor | hard-coded `× 10` (15 → 150) | `TARGET_STEPS / stockMax`, computed from the actual stock max |
+| Fallback default | `AudioSystem.DEFAULT_STREAM_VOLUME[3]` | same idea |
+
+ZTool's is the more general version (any target step count, any device suffix). One
+detail worth copying from Xiaomi: it also rewrites `AudioSystem.DEFAULT_STREAM_VOLUME`
+usage as the migration *seed*, and it stores the marker in `Settings.System` (so it
+survives and is visible) rather than `Settings.Global`.
+
+### 10.3 Per-device "music volume before mute"
+
+`saveAllDevicesMusicVolume` / `restoreAllDevicesMusicVolume` (private, called with the
+`AudioService` instance, and `int maxIndexSrc, int maxIndexDst, int[] streamVolumeAlias`):
+for each output device they copy `volume_music<suffix>` (suffix =
+`"_" + AudioSystem.getOutputDeviceName(device)`) into / out of
+`MiuiSettings.SilenceMode.VOLUME_MUSIC_BEFORE_MUTE<suffix>`, then call
+`updateMusicStreamVolume(audioService)` — a **reflective call to
+`AudioService.reloadMusicVolume()`** (a MIUI-added method on the services.jar side).
+This is "remember the music level per output device across silent-mode toggles / device
+switches", i.e. another mechanism that prevents audible jumps when the route changes.
+(The decompiled device-mask loops are unreliable — jadx lost the mask initialiser — so
+treat the loop bounds as "the connected device set".)
+
+### 10.4 Framework-side earpiece call boost
+
+```java
+public static boolean needEnableVoiceVolumeBoost(int direction, boolean isMaxVol, int device,
+                                                 int streamTypeAlias, boolean boostEnabled) {
+    if (isXOptMode() || streamTypeAlias != 0 || device != 1
+            || !"manual".equals(SystemProperties.get("ro.vendor.audio.voice.volume.boost"))) return false;
+    if (direction == 1 && isMaxVol && !boostEnabled) return true;   // press up at max -> boost on
+    return direction == -1 && boostEnabled;                        // press down -> boost off
+}
+public static boolean setVolumeBoost(boolean boostEnabled, Context context) {
+    am.setParameters("voice_volume_boost=" + (boostEnabled ? "false" : "true"));
+    sendVolumeBoostBroadcast(!boostEnabled, context);
+    return !boostEnabled;
+}
+public static void sendVolumeBoostBroadcast(boolean boostEnabled, Context context) {
+    intent = new Intent(ACTION_VOLUME_BOOST); intent.putExtra(EXTRA_BOOST_STATE, boostEnabled);
+    context.sendStickyBroadcastAsUser(intent, UserHandle.ALL);
+}
+```
+
+Two things to flag: this is gated by a **different property** than §7.4
+(`ro.vendor.audio.voice.volume.boost == "manual"`, the same one the stub reads into
+`mVolumeBoostSupported`), and it is earpiece-only (`device == 1`, `alias == 0`) and
+`isXOptMode()`-excluded. The parameter polarity here (`boostEnabled → "false"`) is the
+opposite of `AudioServiceStubImpl.setVoiceHandsetVolumeBoostMtk`
+(`boostOn → "true"`), so one of the two call sites is inverted — worth remembering if
+this feature is ever ported.
+
+`getActiveStreamType(boolean isInCommunication, int platformType, int suggestedStreamType,
+int streamOverrideDelayMs, boolean DEBUG_VOL[, boolean])` exists here too (the 5-arg
+overload delegates to the 6-arg), i.e. MIUI also overrides **which stream the volume keys
+act on** — the direct analogue of the `getActiveStreamType` the ZTool ramp hook sits in
+front of. Its body was not extracted (budget).
