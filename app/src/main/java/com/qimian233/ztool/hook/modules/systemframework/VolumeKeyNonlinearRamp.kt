@@ -44,45 +44,41 @@ import java.lang.reflect.Method
  *    first shown and therefore swallows the whole ramp. That gate is
  *    neutralised for driver sessions — see [hookSuppressAdjustment].
  *
- * ## The curve is anchored to the stock 15-step feel
+ * ## How the ramp is emitted, and its curve
  *
- * The reference is the stock behaviour traced above: **15** media steps at a
- * constant **20 stock-steps/s** (the native ~50 ms loop), i.e. 20/15 of the
- * range per second and a full sweep in **0.75 s**. The curve is written in
- * those stock units and converted to fine steps, so it stays correct if the
- * fine step count changes:
+ * One `adjustSuggestedStreamVolume` moves exactly **one** user step, so a
+ * 150-position sweep would need 150 calls — and the volume panel only survives
+ * ~50 updates/s: each call costs ~2.9 ms of synchronous AudioService work plus
+ * a binder into SystemUI, and at ~110 updates/s the panel's UI thread
+ * saturates and stops repainting mid-sweep (measured 2026-10-06: 150-step
+ * sweeps of 1.44-1.63 s at ~110 ticks/s while the curve intended 0.93 s).
  *
- * | stock unit                          | stock-steps | fine steps (150-scale) |
- * |-------------------------------------|-------------|------------------------|
- * | start rate V0                       | 2/s         | 20/s                   |
- * | cap MAX (= stock rate, tail parity) | 20/s        | 200/s                  |
- * | acceleration (cap at 30% of range)  | 44/s²       | 440/s²                 |
+ * The driver therefore moves [STEPS_PER_UPDATE] fine steps per update via
+ * `AudioService.setStreamVolume(stream, absoluteIndex, …)`, which can move any
+ * number of steps in a single call. This is the same trick behind HyperOS's
+ * `getMusicVolumeStep` returning `maxVolume / 15` (= 10 steps per press) —
+ * see docs/research/hyperos-volume/README.md §7.1.
  *
- * Resulting feel versus stock: the first *stock* step (1/15 of the range)
- * arrives after 0.17 s instead of 0.05 s — about 3.4x finer control at the
- * start.
+ * The curve is consequently written in **update rates**, which is what the
+ * panel actually renders. Stock reference (traced above): 15 media steps at
+ * the native ~50 ms loop = 20 stock-steps/s = 200 fine steps/s, full sweep
+ * 0.75 s, constant.
  *
- * ## Why the sweep is ~3 s and not the ~0.93 s the shape implies
+ * | quantity                           | updates/s | fine steps/s | stock-steps/s |
+ * |------------------------------------|-----------|--------------|---------------|
+ * | start rate V0                      | 8         | 40           | 4             |
+ * | cap MAX                            | 40        | 200          | 20 (= stock)  |
+ * | acceleration (cap at 30% of range) | 85.3/s²   | 426.7/s²     | 42.7/s²       |
  *
- * The shape above wants 200 fine steps/s at the tail, but that is **not
- * renderable** on this ROM: one tick = one AudioService adjust ≈ 2.9 ms of
- * synchronous work plus a binder into SystemUI, so ~110 ticks/s already
- * saturates the volume panel's UI thread and it stops repainting mid-sweep
- * ("the head animates, then it freezes and jumps"). Measured from the
- * `ramp: stop …` log on 2026-10-06 (150-step sweeps of 1.44-1.63 s at
- * ~110 ticks/s, while the curve intended 0.93 s).
+ * With `STEPS_PER_UPDATE = 5` the range is 30 updates: the first lands 125 ms
+ * after the press, the cap is reached after 0.38 s / 9 updates, and a full
+ * sweep takes **~0.90 s** with a peak of 40 updates/s — below the 50/s the
+ * panel was measured to survive ([MIN_TICK_MS]) and below the load of the
+ * earlier one-step-per-tick version. The tail rate equals stock's.
  *
- * So [MIN_TICK_MS] is the real cap, and the effective curve is
- * **20 → 50 fine steps/s** (0.5 → 5 stock-steps/s), a full sweep in **~3.0 s**,
- * with 150 updates and every update a real volume change the panel can draw.
- *
- * Getting stock's 0.75-0.93 s *and* a shaped ramp needs fewer updates, which
- * needs more than one step per update — impossible through
- * `adjustSuggestedStreamVolume` (fixed at one user step per call), but
- * possible through `AudioService.setStreamVolume(stream, absoluteIndex, …)`.
- * That is exactly the trick behind HyperOS's `getMusicVolumeStep` returning
- * `maxVolume / 15` (10 steps per press) — see
- * docs/research/hyperos-volume/README.md §7.1.
+ * Driving the absolute index also makes the ramp self-correcting (no drift),
+ * and any press that does not resolve to the music stream falls back to the
+ * original one-step driver, unchanged.
  */
 @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
 class VolumeKeyNonlinearRamp : SystemHookModule() {
@@ -93,11 +89,14 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
 
     private var adjustMethod: Method? = null
     private var streamVolumeMethod: Method? = null
+    private var streamMaxVolumeMethod: Method? = null
+    private var setStreamVolumeMethod: Method? = null
     private val driverHandler = Handler(Looper.getMainLooper())
 
     // Session state. `driverActive` / `sessionStartVolume` / `driverIntervalMs`
-    // are written from the AudioService (binder) thread and read from the main
-    // thread, so they are volatile; the rest is main-thread only.
+    // / `absoluteMode` are written from the AudioService (binder) thread and
+    // read from the main thread, so they are volatile; the rest is
+    // main-thread only.
     private var sessionStart = 0L
     private var sessionApplied = 0
     private var sessionDirection = 0
@@ -111,19 +110,45 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
     private var driverActive = false
 
     /** Media-stream volume at session start, for the "did the index actually
-     *  move" diagnostic in [stopDriver]. */
+     *  move" probe and the [stopDriver] diagnostic. */
     @Volatile
     private var sessionStartVolume = -1
+
+    /** Media-stream max index (steps) at session start, used to clamp the
+     *  absolute targets. */
+    private var sessionMaxVolume = -1
+
+    /** Flags / calling package of the native call, replayed to
+     *  `setStreamVolume` so the panel still sees a key-driven change. */
+    private var updateFlags = 0
+    private var updateCallingPackage = "android"
 
     /** Interval the driver last scheduled, so the ADJUST_SAME refresh grid can
      *  be skipped once real steps already arrive at least that often. */
     @Volatile
     private var driverIntervalMs = 0L
 
+    /** True once the probe confirmed the press moves the media stream, i.e.
+     *  the driver may move [STEPS_PER_UPDATE] steps per update through
+     *  `setStreamVolume` instead of one step per `adjustSuggestedStreamVolume`. */
+    @Volatile
+    private var absoluteMode = false
+
+    /** Absolute updates emitted in this session (main thread only). */
+    private var updatesEmitted = 0
+
+    /** Volume the absolute ramp counts from: the value read *after* the first
+     *  native tick, so it already includes that step (main thread only). */
+    private var absoluteBase = 0
+
+    /** Last absolute index requested, to detect that the ramp is pinned at an
+     *  end of the range (main thread only). */
+    private var lastTargetVolume = -1
+
     /** Reentry guard for the driver's own reflection invokes. */
     private var driving = false
 
-    /** One driver step: apply one adjust and reschedule at the curve speed. */
+    /** One driver step: apply one update and reschedule at the curve speed. */
     private val driverRunnable = object : Runnable {
         override fun run() {
             if (!driverActive) return
@@ -132,14 +157,19 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
                 stopDriver("native heartbeat lost")
                 return
             }
+            if (!absoluteMode) probeAbsoluteMode()
             val tickStart = SystemClock.elapsedRealtime()
-            invokeOriginalAdjust(sessionDirection, null)
+            if (absoluteMode) {
+                applyAbsoluteUpdate()
+            } else {
+                invokeOriginalAdjust(sessionDirection, null)
+            }
             sessionApplied++
             val workMs = SystemClock.elapsedRealtime() - tickStart
             val elapsedSec = (SystemClock.elapsedRealtime() - sessionStart) / 1000.0
             val speed = (V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * elapsedSec)
                 .coerceAtMost(MAX_STEPS_PER_SEC)
-            val intervalMs = (1000.0 / speed).toLong().coerceIn(MIN_TICK_MS, 1000L)
+            val intervalMs = updateIntervalMs(speed)
             driverIntervalMs = intervalMs
             // `invokeOriginalAdjust` runs the whole AudioService chain
             // synchronously (measured ~2.9 ms on this ROM, and it grows with
@@ -150,6 +180,64 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
             driverHandler.postDelayed(this, (intervalMs - workMs).coerceAtLeast(1L))
         }
     }
+
+    /**
+     * Decides, once per session, whether the press acts on the media stream —
+     * and therefore whether the driver may use absolute multi-step updates.
+     *
+     * The first native tick has already run (`chain.proceed()`), so if this
+     * press moved the media stream it now reads a different value than
+     * [sessionStartVolume]. The test is "changed in the press direction, by any
+     * amount" rather than "by exactly one": a muted stream reports 0 while its
+     * real index is preserved, so a press that unmutes it can move a long way
+     * in one step. Anything that leaves the media stream untouched (ring /
+     * notification press, already at a range end) keeps the legacy one-step
+     * path, so the ramp never drives a stream it did not verify.
+     */
+    private fun probeAbsoluteMode() {
+        if (setStreamVolumeMethod == null) return
+        val current = readStreamVolume(audioService)
+        if (current < 0 || sessionStartVolume < 0) return
+        if ((current - sessionStartVolume) * sessionDirection <= 0) return
+        absoluteMode = true
+        absoluteBase = current
+        updatesEmitted = 0
+        lastTargetVolume = -1
+        logger.debug("ramp: absolute mode (x$STEPS_PER_UPDATE) confirmed, music=$current")
+    }
+
+    /**
+     * Moves the media stream to an absolute index on the curve, avoiding the
+     * one-step ceiling of `adjustSuggestedStreamVolume`. Requests beyond the
+     * range are clamped; once pinned at an end the driver switches to silent
+     * ADJUST_SAME refreshes so the panel stays alive while the key is held.
+     */
+    private fun applyAbsoluteUpdate() {
+        updatesEmitted++
+        val max = if (sessionMaxVolume > 0) sessionMaxVolume else Int.MAX_VALUE
+        val target = (absoluteBase + sessionDirection * (updatesEmitted * STEPS_PER_UPDATE))
+            .coerceIn(0, max)
+        if (target == lastTargetVolume) {
+            // Pinned at 0 or max: keep the panel refreshed (a repeated
+            // setStreamVolume with an unchanged index may early-return before
+            // sendVolumeUpdate), but do not spam real changes.
+            invokeOriginalAdjust(0, REFRESH_FLAGS)
+            return
+        }
+        val method = setStreamVolumeMethod ?: return
+        val service = audioService ?: return
+        lastTargetVolume = target
+        try {
+            method.invoke(service, STREAM_MUSIC, target, updateFlags, updateCallingPackage)
+        } catch (t: Throwable) {
+            logger.warn("Volume ramp absolute update failed: $t")
+        }
+    }
+
+    /** Update interval (ms) for a fine-step rate; one update moves
+     *  [STEPS_PER_UPDATE] steps. */
+    private fun updateIntervalMs(fineStepsPerSec: Double): Long =
+        (1000.0 * STEPS_PER_UPDATE / fineStepsPerSec).toLong().coerceIn(MIN_TICK_MS, 1000L)
 
     /**
      * Uniform panel refresh between real steps: while the driver waits for
@@ -207,6 +295,21 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
                 findMethod(audioServiceClass, "getStreamVolume", intT).also { it.isAccessible = true }
             }.getOrNull()
             if (streamVolumeMethod == null) logger.warn("getStreamVolume not found; ramp log has no index delta")
+
+            // Absolute multi-step updates: one setStreamVolume call can move any
+            // number of steps, which is what keeps the update rate (and thus the
+            // panel) inside its budget.
+            streamMaxVolumeMethod = runCatching {
+                findMethod(audioServiceClass, "getStreamMaxVolume", intT).also { it.isAccessible = true }
+            }.getOrNull()
+            setStreamVolumeMethod = runCatching {
+                findMethod(audioServiceClass, "setStreamVolume", intT, intT, intT, String::class.java)
+                    .also { it.isAccessible = true }
+            }.getOrNull()
+            if (setStreamVolumeMethod == null) {
+                logger.warn("setStreamVolume(int,int,int,String) not found; " +
+                    "ramp stays on one step per update (slow sweep)")
+            }
 
             hookSuppressAdjustment(audioServiceClass, param.classLoader)
         } catch (t: Throwable) {
@@ -285,14 +388,23 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
             audioService = service
             argsTemplate = args.toTypedArray().copyOf()
             sessionStartVolume = readStreamVolume(service)
+            sessionMaxVolume = readStreamMaxVolume(service)
+            updateFlags = args.getOrNull(2) as? Int ?: 0
+            updateCallingPackage = args.getOrNull(3) as? String ?: "android"
+            // The absolute path is only entered once the probe confirms this
+            // press moves the media stream — never assume it.
+            absoluteMode = false
+            updatesEmitted = 0
+            absoluteBase = 0
+            lastTargetVolume = -1
             driverActive = true
             // The first step of the press is this very tick; the hook lets it
             // run natively, then the driver takes over the cadence.
-            val intervalMs = (1000.0 / V0_STEPS_PER_SEC).toLong().coerceIn(MIN_TICK_MS, 1000L)
+            val intervalMs = updateIntervalMs(V0_STEPS_PER_SEC)
             driverIntervalMs = intervalMs
             driverHandler.postDelayed(driverRunnable, intervalMs)
             driverHandler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS)
-            logger.debug("ramp: session start direction=$direction speed0=$V0_STEPS_PER_SEC/s")
+            logger.debug("ramp: session start direction=$direction first update in ${intervalMs}ms")
             return TICK_PROCEED
         }
         return TICK_DROP
@@ -300,24 +412,38 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
 
     private fun stopDriver(reason: String) {
         driverActive = false
+        absoluteMode = false
         driverHandler.removeCallbacks(driverRunnable)
         driverHandler.removeCallbacks(refreshRunnable)
         val endVolume = readStreamVolume(audioService)
         logger.debug(
-            "ramp: stop ($reason), applied=$sessionApplied steps in " +
+            "ramp: stop ($reason), ticks=$sessionApplied " +
+                "mode=${if (updatesEmitted > 0) "absolute x$STEPS_PER_UPDATE" else "one-step"} in " +
                 "${SystemClock.elapsedRealtime() - sessionStart}ms, " +
                 "music $sessionStartVolume -> $endVolume"
         )
     }
 
     /**
-     * Reads the media stream volume through the captured AudioService, purely
-     * for the [stopDriver] diagnostic. `applied` counts driver ticks that ran;
-     * the volume delta says how many of them actually reached the index, which
-     * is what separates a swallowed tick from a panel that did not repaint.
+     * Reads the media stream volume through the captured AudioService. Used by
+     * [probeAbsoluteMode] (did the press actually move the stream?) and by the
+     * [stopDriver] diagnostic, where `ticks` counts driver updates while the
+     * volume delta says how many of them reached the index — which separates a
+     * swallowed update from a panel that did not repaint.
      */
     private fun readStreamVolume(service: Any?): Int {
         val method = streamVolumeMethod ?: return -1
+        val target = service ?: return -1
+        return try {
+            (method.invoke(target, STREAM_MUSIC) as? Int) ?: -1
+        } catch (t: Throwable) {
+            -1
+        }
+    }
+
+    /** Reads the media stream's max index (steps), to clamp absolute targets. */
+    private fun readStreamMaxVolume(service: Any?): Int {
+        val method = streamMaxVolumeMethod ?: return -1
         val target = service ?: return -1
         return try {
             (method.invoke(target, STREAM_MUSIC) as? Int) ?: -1
@@ -366,6 +492,14 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         // it keeps its feel if the fine step count changes. The stock reference
         // is the native ~50 ms MediaSessionService loop on a 15-step phone.
 
+        /** Fine steps moved by one driver update. One `setStreamVolume` call
+         *  can move any number of steps, and every update costs ~2.9 ms of
+         *  synchronous AudioService work plus a binder + a panel repaint, so
+         *  this is the knob that trades key-press granularity for sweep time:
+         *  total time = FINE_STEPS / (STEPS_PER_UPDATE * updates/s).
+         *  5 = 1/30 of the range per update (2x finer than stock's 1/15). */
+        private const val STEPS_PER_UPDATE = 5
+
         /** Media steps installed by FineVolumeSteps; keep the two in sync. */
         private const val FINE_STEPS = 150.0
 
@@ -378,42 +512,39 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         /** Fine steps per stock step (= 10 on the 150-step scale). */
         private const val FINE_PER_STOCK = FINE_STEPS / STOCK_STEPS
 
-        /** Start rate: stock/10, i.e. ten times finer at the moment of press. */
-        private const val V0_STOCK_RATE = STOCK_STEP_RATE / 10.0
-
-        /** Top rate: exactly stock, so the tail never feels slower than stock. */
-        private const val MAX_STOCK_RATE = STOCK_STEP_RATE
+        /** Start rate in *updates* per second: 8/s = the first update lands
+         *  125 ms after the press. */
+        private const val V0_UPDATES_PER_SEC = 8.0
 
         /** Fraction of the range covered while accelerating; the rest runs at max. */
         private const val ACCEL_RANGE_FRACTION = 0.30
 
-        /** Ramp start speed (fine steps/s); 20 on the 150-step scale. */
-        private const val V0_STEPS_PER_SEC = V0_STOCK_RATE * FINE_PER_STOCK
+        /** Start rate (fine steps/s); 40 on the 150-step scale. */
+        private const val V0_STEPS_PER_SEC = V0_UPDATES_PER_SEC * STEPS_PER_UPDATE
 
-        /** Full-speed cap (fine steps/s); 200 on the 150-step scale. */
-        private const val MAX_STEPS_PER_SEC = MAX_STOCK_RATE * FINE_PER_STOCK
+        /** Full-speed cap (fine steps/s): exactly the stock rate, so the tail
+         *  never drags. 200 here = 20 stock-steps/s = 40 updates/s, which stays
+         *  under the 1000/[MIN_TICK_MS] = 50 updates/s floor by construction. */
+        private const val MAX_STEPS_PER_SEC = STOCK_STEP_RATE * FINE_PER_STOCK
 
         /**
-         * Constant acceleration (fine steps/s²); 440 on the 150-step scale.
+         * Constant acceleration (fine steps/s²); 426.7 on the 150-step scale.
          *
          * Solved from "the cap is reached after [ACCEL_RANGE_FRACTION] of the
          * range": with t1 = 2·f·N/(v0+v1) and a = (v1−v0)/t1, this reduces to
-         * a = (v1² − v0²) / (2·f·N).
+         * a = (v1² − v0²) / (2·f·N). It puts the cap at 0.375 s / 9 updates and
+         * the full sweep at ~0.90 s.
          */
         private const val ACCEL_STEPS_PER_SEC2 =
-            ((MAX_STOCK_RATE * MAX_STOCK_RATE - V0_STOCK_RATE * V0_STOCK_RATE)
-                / (2.0 * ACCEL_RANGE_FRACTION * STOCK_STEPS)) * FINE_PER_STOCK
+            ((MAX_STEPS_PER_SEC * MAX_STEPS_PER_SEC - V0_STEPS_PER_SEC * V0_STEPS_PER_SEC)
+                / (2.0 * ACCEL_RANGE_FRACTION * FINE_STEPS))
 
-        /** Lower bound of the driver tick interval (ms).
+        /** Lower bound of the driver update interval (ms) = 50 updates/s.
          *
-         *  This is the binding constraint, not [MAX_STEPS_PER_SEC]: the volume
-         *  panel can only render ~60 updates/s, and each tick costs ~2.9 ms of
-         *  synchronous AudioService work plus a binder into SystemUI, so a
-         *  driver that emits faster than this saturates the panel's UI thread
-         *  and it stops repainting mid-sweep ("frozen, then it jumps"). 20 ms
-         *  caps the driver at 50 updates/s — below the frame rate, above the
-         *  native 20/s loop. Raise it towards 30-33 ms if the panel still
-         *  stutters; the trade-off is a proportionally longer sweep. */
+         *  This is the panel's budget, not the CPU's: measured on this ROM,
+         *  ~110 updates/s already saturates SystemUI's UI thread and it stops
+         *  repainting mid-sweep, while 50/s renders cleanly. [MAX_STEPS_PER_SEC]
+         *  is deliberately below this so the curve, not the floor, binds. */
         private const val MIN_TICK_MS = 20L
 
         /** Fixed grid for ADJUST_SAME panel refreshes between real steps. */

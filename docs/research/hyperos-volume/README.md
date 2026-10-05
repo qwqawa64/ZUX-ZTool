@@ -1051,3 +1051,56 @@ int streamOverrideDelayMs, boolean DEBUG_VOL[, boolean])` exists here too (the 5
 overload delegates to the 6-arg), i.e. MIUI also overrides **which stream the volume keys
 act on** — the direct analogue of the `getActiveStreamType` the ZTool ramp hook sits in
 front of. Its body was not extracted (budget).
+
+---
+
+## 11. Porting note: emitting a fine-grained key ramp without a vendor stub
+
+Measured on ZUI (Android 16-era, no MIUI stub), while building ZTool's
+`VolumeKeyNonlinearRamp`. Useful for anyone trying to reproduce HyperOS's fine volume on
+a ROM that lacks the stub.
+
+**The two hard limits**
+
+1. `adjustSuggestedStreamVolume` moves exactly **one user step** per call. With a
+   150-position scale, a full sweep is therefore 150 calls — there is no way to make one
+   call carry more.
+2. Every call costs **~2.9 ms of synchronous AudioService work** (whole chain: HAL binder,
+   broadcast, `sendVolumeUpdate` → binder into SystemUI, persistence) *plus* one
+   `IVolumeController.volumeChanged` into SystemUI. The panel's UI thread stops
+   repainting somewhere between 50 and 110 updates/s: at ~110/s the user sees the head of
+   the ramp animate, then a 1–2 s freeze, then a jump to the end. `Handler.postDelayed`
+   also *adds* that work to every period, so a curve that intends 5 ms/tick realises
+   ~8 ms (measured: a 0.93 s curve took 1.44 s). Subtract the measured work time from the
+   period.
+
+**The replacement for the stub's step**
+
+`AudioService.setStreamVolume(streamType, absoluteIndex, flags, callingPackage)` moves an
+arbitrary number of steps in one call. Driving the *absolute* index from the curve:
+
+- keeps the update rate at `stepsPerUpdate × volume-rate`, so moving 5 steps per update
+  cuts the call count 5× for free;
+- is self-correcting (no drift), unlike accumulating relative adjusts;
+- costs a probe, because the target stream must be known: `adjustSuggestedStreamVolume`
+  resolves it internally, so read the media stream before and after the first native tick
+  and only take the absolute path if it moved in the press direction. Test "moved at all",
+  not "moved by one" — a *muted* stream reports index 0 through `getStreamVolume` while
+  its real index is preserved, so the unmuting press can jump a long way in one step.
+- needs the mute caveat twice: read the base volume *after* the first tick, never before.
+
+**Budget conclusions for a 150-position scale**
+
+| steps per update | updates per sweep | peak updates/s | full sweep |
+|---|---|---|---|
+| 1 | 150 | 50 (at the ceiling) | ~3.0 s |
+| 3 | 50 | 50 | ~1.1 s |
+| **5** | **30** | **40** | **~0.90 s** |
+| 10 (= HyperOS's `maxVolume/15`) | 15 | 20 | ~0.90 s |
+
+With ≥5 steps per update the curve's own cap (stock's 20 stock-steps/s = 200 fine
+steps/s) becomes the binding limit, so the sweep settles at HyperOS's ~0.9 s while the
+update rate *falls* to 20–40/s — i.e. faster **and** cheaper than one step per update.
+Reducing the step count instead (150 → 100) buys only a proportional 33 % while costing
+slider resolution, the 150/15 = 10 anchoring, and a re-migration of the persisted
+`volume_music*` settings.
