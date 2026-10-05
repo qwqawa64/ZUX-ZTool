@@ -108,18 +108,21 @@ MIN_STREAM_VOLUME = new int[]{1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0};
 
 - AOSP ships `ro.config.vc_call_vol_steps` only. **`ro.config.media_vol_steps` and
   `ro.config.media_vol_default` are Xiaomi additions** — this is the switch that turns
-  15 media steps into 100 (or whatever the device ships).
+  15 media steps into the fine scale.
 - The gate is `isSupportSteplessVolume(STREAM_MUSIC, "android")`; when it returns
   `false` the property is *ignored* and the AOSP 15 is written back. So an OEM must
-  implement the stub for the property to have any effect.
+  implement the stub for the property to have any effect. The stub's actual
+  implementation (§7.1) shows the gate is in practice *always* true for music, and that
+  Xiaomi ships **150** steps (`ro.config.media_vol_steps = 150`) — see §7.2 for how that
+  number is pinned down.
 
-### 1.2 Index model (why 100 steps works end-to-end)
+### 1.2 Index model (why a wider step count works end-to-end)
 
 `VolumeStreamState` (from `AudioService.VolumeStreamState.<init>`):
 
 ```java
 this.mIndexMin = AudioService.MIN_STREAM_VOLUME[streamType] * 10;
-this.mIndexMax = AudioService.MAX_STREAM_VOLUME[streamType] * 10;   // 1000 for 100 steps
+this.mIndexMax = AudioService.MAX_STREAM_VOLUME[streamType] * 10;   // 1500 for 150 steps
 this.mIndexSuper = AudioServiceStub.get().enableSuperIndex(this.mStreamType, this.mIndexMax);
 updateIndexFactors();
 ```
@@ -464,8 +467,8 @@ value** (e.g. the actual `ro.config.media_vol_steps` on a HyperOS phone, and the
 | Fine step count | `MAX_STREAM_VOLUME[3]` overwritten in the `AudioService` ctor from `ro.config.media_vol_steps`, gated by `isSupportSteplessVolume(3, "android")` | `FineVolumeSteps` hooks `createStreamStates()` and sets `MAX_STREAM_VOLUME[3] = 150` |
 | Step-space propagation | implicit: `VolumeStreamState` ctor (`*10`) + `updateIndexFactors()` → `setMaxVolumeIndexForGroup` | same AOSP mechanism, so also implicit — no extra work needed |
 | Persisted value migration | not visible in `services.jar` (policy is in the stub) | `FineVolumeSteps.migratePersistedMusicVolume` rescales `volume_music*` and `DEFAULT_STREAM_VOLUME` once, behind a `Settings.Global` marker |
-| Per-press step | `getMusicVolumeStep(stream, pkg, MAX_STREAM_VOLUME[stream])` × `rescaleStep` / `rescaleStepBySuperVolume` | 1 step per tick (stock), cadence controlled by `VolumeKeyNonlinearRamp` |
-| Key-hold ramp | not in `AudioService` at all — must live in the stub impl / `MiAudioService` / SystemUI | `VolumeKeyNonlinearRamp` owns the cadence itself: drops native ticks, drives `adjustSuggestedStreamVolume` on an accelerating curve (`V0=8`, `ACCEL=16` in the docstring vs `200` in the constant, `MAX=80`/`150`) |
+| Per-press step | `getMusicVolumeStep(...) = maxVolume/15` → **10 of 150 steps = 1/15 of the range** (stock granularity kept), then `rescaleStep` / `rescaleStepBySuperVolume` | 1 step per tick = **1/150 of the range**, cadence controlled by `VolumeKeyNonlinearRamp` |
+| Key-hold ramp | none anywhere — not in `AudioService`, not in the MIUI stub (§7.6), not in SystemUI (§6.3); native key-repeat drives 1/15-of-range steps | `VolumeKeyNonlinearRamp` owns the cadence itself: drops native ticks, drives `adjustSuggestedStreamVolume` on an accelerating curve (`V0=8`, `ACCEL=16` in the docstring vs `200` in the constant, `MAX=80`/`150`) |
 | Panel refresh between steps | `sendVolumeUpdate` is unconditional; `ADJUST_SAME + FLAG_SHOW_UI` is the documented "refresh without change" path | already used: `refreshRunnable` emits `ADJUST_SAME | FLAG_SHOW_UI` every 50 ms |
 | Rapid-adjust suppression | `VolumeController.suppressAdjustment` + `mVolumeControllerLongPressEnabled` (SystemUI opt-in) | **not used** — ZTool bypasses the gate by re-entering `adjustSuggestedStreamVolume`; adopting the AOSP knob may be cleaner than dropping native ticks |
 | Broadcast coalescing | AOSP `BroadcastOptions` merge/deferral per stream | inherited for free |
@@ -586,7 +589,7 @@ AudioService.sendVolumeUpdate
 So the "smooth" feel is three cooperating mechanisms, not one:
 
 1. **Step count** — because `services.jar` raises `MAX_STREAM_VOLUME[STREAM_MUSIC]`,
-   `VolumeDialogStreamModel.levelMax` is `100` (or whatever `ro.config.media_vol_steps`
+   `VolumeDialogStreamModel.levelMax` is `150` (i.e. `ro.config.media_vol_steps`
    is) instead of `15`, so a single key press moves 1/100 of the track. This is the part
    Xiaomi actually changed on the framework side.
 2. **Spring retargeting** — `spring(dampingRatio = 1.0f, stiffness = 1500.0f)` is
@@ -623,8 +626,8 @@ itself instead of batching at the framework.
 |---|---|---|
 | Panel technology | Kotlin + Compose (`volume.dialog.*`), Compose `Slider` with a spring `Animatable` | ZUI `zui.widget.SeekBarNps` / `ToggleSliderView` (View-based) |
 | Slider motion | `spring(ζ=1.0, k=1500)` on the value, `stepDistance = 1.0f`, 100 ms post-drag debounce | no value animation; the label/colour are refreshed per event |
-| Steps | `ro.config.media_vol_steps` → `MAX_STREAM_VOLUME[3]` | `FineVolumeSteps` → `MAX_STREAM_VOLUME[3] = 150` |
-| Key ramp | *not* in SystemUI; only per-step haptics. Framework has no self-driven loop either | `VolumeKeyNonlinearRamp` self-driven accelerating loop + `ADJUST_SAME` panel refresh |
+| Steps | `ro.config.media_vol_steps` (150) → `MAX_STREAM_VOLUME[3]`; key step stays 1/15 (§7.1) | `FineVolumeSteps` → `MAX_STREAM_VOLUME[3] = 150`; key step becomes 1/150 |
+| Key ramp | *not* in SystemUI and *not* in the MIUI stub; only per-step haptics | `VolumeKeyNonlinearRamp` self-driven accelerating loop + `ADJUST_SAME` panel refresh |
 | Panel reveal | spring stiffness 700 / ζ 0.9 on `translationX` (width→0) + `alpha = ceil(v)` | stock ZUI window animation |
 | Overscroll | `PathInterpolator(0.15,0,0.2,1)`, drag/3, capped, spring back k=800 ζ=0.6 | not implemented |
 | Per-step haptics | `calculateHapticFeedbackState` bitmask (min/max/level-changed/show) | not implemented |
@@ -632,16 +635,247 @@ itself instead of batching at the framework.
 
 ---
 
-## 7. What is still unknown
+## 7. `miui-services.jar`: the real policy
 
-1. The MIUI stub jars (`miui-framework.jar` / `miui-services.jar`) — `AudioServiceStub`
-   implementation and `MiAudioService`: the real `getMusicVolumeStep`,
-   `isSupportSteplessVolume`, super-index math, and the actual
-   `ro.config.media_vol_steps` value (`adb shell getprop`).
-2. Whether `ro.config.media_vol_steps` is actually set on a shipping HyperOS 3 device
-   (if it is not, the stepless path stays inert and the framework never widens the range).
+Now that the MIUI STUB jar is loaded, every contract in §1 has a body. Classes:
+`com.android.server.audio.AudioServiceStubImpl` (implements `AudioServiceStub`),
+`com.android.server.audio.VolumeBoostHelper`, `com.android.server.audio.MiAudioService`,
+`com.android.server.audio.MQSUtils`, `com.android.server.audio.AudioServiceInjector`
+(**not in this jar** — see §7.8).
+
+Wiring (`AudioServiceStubImpl.init(Context, AudioService)`, called from the `AudioService`
+ctor): stores `mAudioService`/`mAudioManager`, then creates
+`mMiAudioService = new MiAudioService(context, service, mWorkerThread.getLooper())`, and
+`mVolumeBoostHelper = new VolumeBoostHelper(context, mWorkerThread.getLooper(), service)`
+**only if `VolumeBoostHelper.ENABLE`**.
+
+### 7.1 Stepless volume: the actual implementation
+
+```java
+public boolean isSupportSteplessVolume(int stream, String callingPackage) {
+    return stream == 3 && !isCtsVerifier(callingPackage);
+}
+
+public int getMusicVolumeStep(int stream, String callingPackage, int maxVolume) {
+    if (isSupportSteplessVolume(stream, callingPackage)) {
+        Log.d(TAG, "adjustStreamVolume(): SupportSteplessVolume, maxVolume = " + maxVolume);
+        return maxVolume / 15;
+    }
+    return 1;
+}
+
+private boolean isCtsVerifier(String p) {   // com.android.cts*, android.media.cts,
+    ...                                     // com.google.android.gts*, android.media.audio.cts
+}
+```
+
+Two consequences that change the §1 reading:
+
+1. **The gate is unconditionally true for `STREAM_MUSIC`** (except for CTS/GTS verifier
+   packages). The gate is *not* what enables the feature — `ro.config.media_vol_steps` is.
+   If that property is unset, `MAX_STREAM_VOLUME[3]` keeps the AOSP 15 and
+   `getMusicVolumeStep` returns `15/15 = 1`, i.e. byte-for-byte stock behaviour.
+2. **`maxVolume / 15` deliberately preserves the stock key-press granularity.** The step
+   is `miuistep * 10` internal units = `(maxVolume/15) * 10`; with `maxVolume = 150` that
+   is 10 user steps out of 150 = **exactly 1/15 of the range** — the same audible step as
+   a stock 15-step phone. So "无极音量" is *not* finer key stepping: the extra resolution is
+   for the slider/drag, per-app volume, absolute (Bluetooth) volume, and the DSP volume
+   index. Without the MIUI stub (e.g. on ZUI) a 150-step scale makes one key press move
+   1/150 instead — which is why ZTool needs its own ramp driver and Xiaomi does not.
+
+### 7.2 Which step counts exist at all
+
+Three independent places divide by 15 or 150, and they agree on exactly two scales:
+
+- `getMusicVolumeStep` → `maxVolume / 15`
+- `VolumeBoostHelper.enableSuperIndex` → `mMusicVolumeStep = (indexMax/10) / 15`
+- `VolumeBoostHelper.setSuperIndex` special-cases `mMusicVolumeStep == 10` and `== 2`
+- `AudioServiceStubImpl.getAbsoluteVolumeIndex` → `step = indexMax / 150`
+
+`mMusicVolumeStep == 10` ⇔ `mIndexMax == 1500` ⇔ **150 steps**; `== 2` ⇔ 300 ⇔ **30 steps**.
+Nothing else is representable, so `ro.config.media_vol_steps` is 150 (primary; the
+`/150` in `getAbsoluteVolumeIndex` only makes sense at 1500) or 30. **This confirms
+ZTool's `TARGET_STEPS = 150` is exactly Xiaomi's number.**
+
+### 7.3 "Super index" = 超级音量 (speaker-only DSP boost), not a step-count feature
+
+Implemented by `VolumeBoostHelper`, created only when
+`ENABLE = SUPER_VOLUME_ENABLE || CALL_VOLUME_BOOST_ENABLE`.
+
+- Feature detection: `SUPER_VOLUME_ENABLE = (ro.vendor.audio.volume_super_index_add != -1)`;
+  the *streams* that participate come from the bitmask
+  `ro.vendor.audio.volume_super_streamtype` (`initSuperVolumeStateMap` sets bit *i* for
+  stream *i*). Extra headroom per stream = `ro.vendor.audio.volume_super_index_add`.
+- `enableSuperIndex(streamType, indexMax)` (called from the `VolumeStreamState` ctor):
+  music → `mMusicVolumeStep = (indexMax/10)/15; indexSuper = SUPER_VOLUME_PROP * mMusicVolumeStep + indexMax`;
+  other streams → `indexSuper = SUPER_VOLUME_PROP + indexMax`; otherwise `-1`.
+- `getSuperIndex(...)` (reached from `VolumeStreamState.getMaxIndex()` when
+  `isSuperVolumeEnable()`) returns `indexSuper` **only if** `indexSuper != -1` **and the
+  stream has exactly one output device** **and that device's internal type == 2
+  (speaker)** **and the calling package is non-null, not CTS, and not
+  `android.uid.bluetooth`** (`isWhiteList`). Otherwise it returns `indexMax` → the extra
+  range is invisible to Bluetooth/CTS callers and to non-speaker routes.
+- `setSuperIndex(index, currentIndexMax, device, streamType)` (reached from
+  `VolumeStreamState.setStreamVolumeIndex`, i.e. the HAL write) does **not** widen the HAL
+  index range. With `maxIndex = currentIndexMax/10` and `device == 2`:
+  - going above max → `AudioSystem.setParameters("SuperVolume=super_speaker_on;SuperGrade=<g>;SpkVolIdx=<i>[;SuperStream=<s>]")`
+    where `g = (index - maxIndex)/mMusicVolumeStep` for music (else `index - maxIndex`),
+    and `SpkVolIdx = index` (or `index/mMusicVolumeStep` when step == 2); then starts the
+    temperature monitor and OneTrack-tracks `super / <stream> / speaker`.
+  - falling back to/below max → `"SuperVolume=super_speaker_off;SuperGrade=0;SpkVolIdx=..."`
+  - **returns `min(index, maxIndex)`**, so the framework index saturates at max and the
+    extra loudness is applied entirely by the DSP parameter.
+- Thermal guard: `TEMPERATURE_MONITOR_ENABLE` = `ro.vendor.audio.volume_super_temp_monitor == "true"`;
+  a `FileObserver` on `/sys/class/thermal/thermal_message/board_sensor_temp`; levels
+  `TEMPERATURE_FIRST_LEVEL` (default **37000**, `ro.vendor.audio.volume_super_temp_first_level`)
+  and `TEMPERATURE_SECOND_LEVEL` (default **41000**, `..._second_level`). Above the first
+  → `dropSuperVolume()`; above the second → `closeSuperVolume()`, which walks the
+  stream-volume aliases and calls `mAudioManager.adjustStreamVolume(stream, -1, 0)` once
+  or twice depending on the stored grade.
+- CTS hiding: `isNeedSetIndexToMax(pkg, index, indexMax) = SUPER_VOLUME_ENABLE &&
+  isCtsVerifier(pkg) && index > indexMax` (used by `VolumeStreamState.setIndex` to clamp)
+  and `isNeedRescaleStepBySuperVolume(pkg) = SUPER_VOLUME_ENABLE && isCtsVerifier(pkg)`
+  (used by `adjustStreamVolume` to compute the step from the *non*-super range). Both
+  exist purely so CTS never observes the extra range.
+
+### 7.4 Call-volume boost (通话/免提音量增强) and the extra UI step
+
+Same helper, separate feature set:
+
+- Props: `ro.vendor.audio.volume.boost.support` bitmask (1 voice-earpiece, 2 voice-speaker,
+  4 voip-earpiece, 8 voip-speaker), `ro.vendor.audio.volume.boost.supportMtk` (same bits
+  for the MTK paths), `ro.vendor.audio.call.vol_12_levels` (MTK 12-level earpiece).
+  Runtime state is persisted in `persist.audio.call_volume_boost.enabled` and announced
+  with the broadcast `miui.intent.action.CALL_VOLUME_BOOST_ON` (extra `boost_state`).
+- Qcom path → `AudioManager.setParameters("volume_boost_support=voice_handset_on" /
+  "voice_speaker_on" / "voip_handset_on" / "voip_speaker_on"`, and `..._off`).
+- MTK path → `CustInfo=super_voice` (voice) and
+  `CustInfo=voip,vol_level,extra,cust_scene,default` (voip), or
+  `voice_volume_boost=true`.
+- **The visible "one extra step" trick:**
+  ```java
+  public int calibrateMaxIndexForBoostIfNeed(int originalMaxIndex, int stream, Set<Integer> deviceSet) {
+      ... if (!enabled || isCtsVerifierUid(...)) return originalMaxIndex;
+      int maxIndexForBoostUI = originalMaxIndex + 10;      // +1 user step (internal x10)
+      return maxIndexForBoostUI;
+  }
+  public int calibrateIndexForBoostIfNeed(int originalIndex, int stream, Set<AudioDeviceAttributes> deviceSet) {
+      ... int streamMaxVolume = mAudioService.getStreamMaxVolume(stream);
+      if ((originalIndex + 5) / 10 == streamMaxVolume - 1) return originalIndex + 10;
+      return originalIndex;
+  }
+  ```
+  i.e. while on a call (STREAM_VOICE_CALL, single device, earpiece 1 / speaker 2, mode 2
+  or 3, and `CALL_VOLUME_BOOST_ENABLE`), the framework reports **one more step than it
+  really has**, and moving onto that step turns the DSP boost on. That is 小米的
+  "再按一格，音量增强".
+- Trigger points: `onUpdateAudioMode`, `onHeadsetPlugStateChanged`,
+  `onCommunicationDeviceChanged` (posts `updateCallVolumeBoostState` after 1000 ms), and
+  `updateCallVolumeBoostState()` (requires exactly one output device for stream 0, and
+  `getStreamVolume(0) == getStreamMaxVolume(0)`), plus `enableVoiceVoipVolumeBoost(...)`
+  for the `adjustStreamVolume` path at max.
+
+### 7.5 Absolute (Bluetooth/AVRCP) volume: non-linear low end
+
+```java
+public int getAbsoluteVolumeIndex(int index, int indexMax) {
+    int step = indexMax / 150;                       // 10 when indexMax == 1500
+    if (index == 0) return 0;
+    if (index > 0 && index <= step * 5) {            // first 5 user steps
+        int pos = (int) Math.ceil((index - step) / step);
+        return (int) (indexMax * this.mPrescaleAbsoluteVolume[pos]) / 10;
+    }
+    return (indexMax + 5) / 10;
+}
+```
+with the stub's **own** table `mPrescaleAbsoluteVolume = {0.5f, 0.7f, 0.85f, 0.9f, 0.95f}`
+— note this is *different* from `AudioService.mPrescaleAbsoluteVolume = {0.985f, 1.0f, 1.03f}`
+(see §0/§1.2), so the stub is not reusing the AOSP table. The intent is a deliberately
+**non-linear bottom end** for absolute-volume devices instead of a plain linear split.
+(The call site lives in `services.jar`'s absolute-volume path, so the unit convention of
+`index`/`indexMax` cannot be re-verified now that only `miui-services.jar` is loaded; the
+formula and the `indexMax/150` scaling are certain.)
+
+### 7.6 Corrections to the `services.jar`-era reading
+
+- `setStreamMusicOrVoiceCallIndex(index, stream, device)` is **a real behaviour hook, not
+  telemetry**: on MIUI's worker thread (handler msg 26) it calls
+  `AudioSystem.setParameters("audio_volume_stream_music_device_<outputDeviceName>=<index/10>")`
+  for music, or `"audio_volume_stream_voice_call_device_<name>=<index>"` for stream 0.
+  This is how the HAL/SmartPA/DSP learns the current per-device volume index. (The
+  original §1.4 note about it was right; the "likely how SystemUI gets fast updates" guess
+  was not — see the next bullet.)
+- `updataVolumeAdjustCount(0|1)` is **analytics only**: after a 60 s per-type throttle it
+  sends msg 28, which increments `MQSUtils.mKeyAdjustCount` / `mSliderAdjustCount`. It has
+  no effect on volume, stepping or ramping. My earlier speculation that it distinguishes
+  key-vs-slider for ramping purposes was wrong — it distinguishes them for statistics.
+- Confirmed: there is **no key-hold ramp in the MIUI stub either**. The only framework-side
+  ramp affordance remains AOSP's `VolumeController.suppressAdjustment` +
+  `setVolumeControllerLongPressTimeoutEnabled`, and HyperOS's SystemUI never calls the
+  latter (§6.3). So neither the framework nor SystemUI implements "hold to accelerate" —
+  HyperOS simply lets input key-repeat drive 1/15-of-range steps.
+
+### 7.7 The DSP/effect side (`MiAudioService`)
+
+`MiAudioService` does **not** override the volume flow; it only carries the effect-chain
+side and is reached through two stub hooks:
+
+- `notifyVolumeIndexChangedToEffectMiAudioService(stream, index, device)` →
+  `MiAudioService.notifyVolumeIndexChangedToEffect(...)` →
+  `DolbyEffectController.setStreamVolumeForDolby(index)` when Dolby multi-volume is
+  supported, and `MiSoundEffectController.setStreamVolumeForMiSound(index)` when MiSound
+  multi-volume is supported. This is how the vendor effects follow the *fine* (150-step)
+  index.
+- `MiAudioService.adjustStreamVolume(stream, dir, flags, pkg, caller, uid, pid, tag,
+  hasModifyAudioSettings, keyEventMode)` — the hook the `AudioService` calls at the end of
+  `adjustStreamVolume` — only forwards `getDeviceStreamVolume(3, 2)` to
+  `DolbyEffectController.receiveVolumeChanged(...)` when
+  `ro.vendor.audio.dolby.*`-style Dolby tuning-by-volume is enabled.
+- `AudioServiceStubImpl.notifyVolumeChangedToDolbyEffectController(context, stream, index)`
+  → `DolbyEffectController.getInstance(context).receiveVolumeChanged(index)` for stream 3.
+
+### 7.8 Still not visible (updated)
+
+1. `com.android.server.audio.AudioServiceInjector` — referenced by
+   `AudioServiceStubImpl.customMinStreamVolume(...)` and
+   `adjustDefaultStreamVolumeForMiui(...)` (guarded by
+   `isApplyMiuiCustom() = !ro.vendor.audio.skip_miui_volume_custom`), but **the class
+   itself is not in `miui-services.jar`** — it lives in `framework.jar` /
+   `miui-framework.jar`. That is where `ro.config.media_vol_steps`'s consumers and MIUI's
+   min/default volume tables are finalised.
+2. The actual on-device `getprop` values:
+   `ro.config.media_vol_steps`, `ro.config.media_vol_default`,
+   `ro.vendor.audio.volume.super_index_add`, `ro.vendor.audio.volume_super_streamtype`,
+   `ro.vendor.audio.volume.boost.support`, `ro.vendor.audio.volume_super_temp_monitor`.
 3. `R.dimen.volume_dialog_slider_max_deviation` and
-   `R.dimen.volume_dialog_half_opened_offset` actual dp values — they live in
-   `resources.arsc`, which the JADX MCP cannot hand out as a file.
-4. Whether HyperOS also wires `IAudioVolumeChangeDispatcher` (§2.6) into the panel; the
-   SystemUI side seen here still goes through the legacy `IVolumeController` path.
+   `R.dimen.volume_dialog_half_opened_offset` actual dp values (they live in
+   `resources.arsc`, which the JADX MCP cannot hand out as a file).
+4. Whether HyperOS wires `IAudioVolumeChangeDispatcher` (§2.6) into the panel; the
+   SystemUI side seen here goes through the legacy `IVolumeController` path only.
+
+---
+
+## 8. Final answer in one page
+
+**无极音量 (stepless media volume) — `services.jar` + `miui-services.jar`:**
+`ro.config.media_vol_steps = 150` → `AudioService.<init>` sets
+`MAX_STREAM_VOLUME[STREAM_MUSIC] = 150` (gated by `AudioServiceStubImpl
+.isSupportSteplessVolume(3, pkg)`, which is true for everything except CTS) →
+`VolumeStreamState.mIndexMax = 1500` → `updateIndexFactors()` pushes `0..150` into the
+native volume group range → every client (`AudioManager.getStreamMaxVolume`) sees 150
+steps. Key presses still move `150/15 = 10` steps (= 1/15 of the range) because of
+`getMusicVolumeStep`. Extra headroom beyond max is 超级音量, a speaker-only DSP
+`SuperVolume=` parameter with thermal back-off and CTS masking, not an index extension.
+
+**流畅的音量切换 (smooth switching) — `SystemUI.apk`:**
+AOSP 16's Compose volume dialog. Value motion = `Animatable` driven by
+`spring(dampingRatio = 1.0, stiffness = 1500)`, re-targeted on every
+`IVolumeController.volumeChanged` → `VolumeDialogControllerImpl.onVolumeChangedW` →
+`VolumeDialogStateModel.streamModels` → `VolumeDialogSliderInteractor` → ViewModel
+emission, with a 100 ms post-drag debounce and a `callbackFlow` buffer
+(`16, DROP_OLDEST`). Panel reveal = spring `k=700 ζ=0.9` on `translationX = width*(1-v)`
+with `alpha = ceil(v)`; overscroll = `PathInterpolator(0.15,0,0.2,1)` on `drag/3` capped by
+`volume_dialog_slider_max_deviation`, sprung back with `k=800 ζ=0.6`; auto-dismiss after
+3 s (`Settings.Secure "volume_dialog_dismiss_timeout"`), a11y-scaled. Xiaomi adds only
+per-step haptics (`VolumeDialogTransformHelper.calculateHapticFeedbackState`), a
+fixed-rotation dismiss listener, and the Dolby/MiSound volume callbacks.
