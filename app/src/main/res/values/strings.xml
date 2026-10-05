@@ -734,7 +734,7 @@
     <string name="system_framework_volume_key_nonlinear_title">非线性音量调节</string>
     <string name="system_framework_volume_key_nonlinear_summary">若使用系统默认音量阶数则效果不会很明显</string>
     <string name="system_framework_fine_volume_steps_title">精细音量调节</string>
-    <string name="system_framework_fine_volume_steps_summary">将音量阶数设置为 150 阶，建议同时开启非线性音量调节</string>
+    <string name="system_framework_fine_volume_steps_summary">将音量阶数设置为 150 阶，建议同时开启非线性音量调节。关闭后请手动调回音量</string>
     <string name="system_framework_disable_zui_applist_enable_title">停用系统的“允许获取应用列表”</string>
     <string name="system_framework_disable_zui_applist_enable_summary">ZUI/ZUX实现的应用列表管理并不完善，建议用"隐藏应用列表"APP替代</string>
     <string name="system_framework_restart_system_title">重启系统</string>

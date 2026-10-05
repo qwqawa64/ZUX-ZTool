@@ -652,7 +652,7 @@
     <string name="system_framework_volume_key_nonlinear_title">Non-linear volume ramp</string>
     <string name="system_framework_volume_key_nonlinear_summary">The effect is not very noticeable on the system default volume step count.</string>
     <string name="system_framework_fine_volume_steps_title">Fine volume adjustment</string>
-    <string name="system_framework_fine_volume_steps_summary">Sets the volume scale to 150 steps. Enabling the non-linear volume ramp at the same time is recommended.</string>
+    <string name="system_framework_fine_volume_steps_summary">Sets the volume scale to 150 steps. Enabling the non-linear volume ramp at the same time is recommended. Re-adjust volume manually after disabling.</string>
     <string name="system_framework_disable_zui_applist_enable_title">Disable system "allow app list access"</string>
     <string name="system_framework_disable_zui_applist_enable_summary">ZUI/ZUX app list management is incomplete. Consider using an app such as "Hide My Applist" instead.</string>
     <string name="system_framework_restart_system_title">Restart system</string>
