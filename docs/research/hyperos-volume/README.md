@@ -357,6 +357,19 @@ i.e. **the volume controller (SystemUI) decides** whether the framework suppress
 adjustments for `mLongPressTimeout` after the panel appears. This is the official AOSP 16
 seam for "hold the key → let the UI own the cadence".
 
+**Practical trap (cost ZTool a 1–2 s dead zone).** The flag is initialised to
+`new AtomicBoolean(true)` in the `AudioService` constructor, and *neither* HyperOS's
+SystemUI (§6.3) *nor* ZUI's ever calls the setter to turn it off. So on a stock device the
+window is always armed: the first `FLAG_SHOW_UI` press with the panel hidden sets
+`mNextLongPress = now + mLongPressTimeout`, and every adjustment inside that window is
+forced to `direction = 0` — volume and panel both stand still. A hook that drives volume
+by re-entering `adjustSuggestedStreamVolume` (the obvious implementation) inherits the
+gate: the hold looks frozen, and only the portion of the ramp *after* the window expires
+is ever visible. Any such driver must either bypass this gate for its own session
+(hook `suppressAdjustment`, return `false`) or clear `mVolumeControllerLongPressEnabled`.
+`suppressAdjustment` also short-circuits when `mAudioSystem.isStreamActive(3, mLongPressTimeout)`
+is true, so the symptom only shows when no media is playing.
+
 ### 2.3 Broadcast coalescing
 
 `VolumeStreamState.mVolumeChanged` and `mStreamDevicesChanged` are sent with
@@ -470,7 +483,7 @@ value** (e.g. the actual `ro.config.media_vol_steps` on a HyperOS phone, and the
 | Per-press step | `getMusicVolumeStep(...) = maxVolume/15` → **10 of 150 steps = 1/15 of the range** (stock granularity kept), then `rescaleStep` / `rescaleStepBySuperVolume` | 1 step per tick = **1/150 of the range**, cadence controlled by `VolumeKeyNonlinearRamp` |
 | Key-hold ramp | none anywhere — not in `AudioService`, not in the MIUI stub (§7.6), not in SystemUI (§6.3); native key-repeat drives 1/15-of-range steps | `VolumeKeyNonlinearRamp` owns the cadence itself: drops native ticks, drives `adjustSuggestedStreamVolume` on an accelerating curve (`V0=8`, `ACCEL=16` in the docstring vs `200` in the constant, `MAX=80`/`150`) |
 | Panel refresh between steps | `sendVolumeUpdate` is unconditional; `ADJUST_SAME + FLAG_SHOW_UI` is the documented "refresh without change" path | already used: `refreshRunnable` emits `ADJUST_SAME | FLAG_SHOW_UI` every 50 ms |
-| Rapid-adjust suppression | `VolumeController.suppressAdjustment` + `mVolumeControllerLongPressEnabled` (SystemUI opt-in) | **not used** — ZTool bypasses the gate by re-entering `adjustSuggestedStreamVolume`; adopting the AOSP knob may be cleaner than dropping native ticks |
+| Rapid-adjust suppression | `VolumeController.suppressAdjustment` + `mVolumeControllerLongPressEnabled` (defaults true; SystemUI never disables it) → armed on every first press | **had to neutralise it**: `VolumeKeyNonlinearRamp` hooks `suppressAdjustment` and returns `false` for its own session, otherwise the window swallowed the whole ramp |
 | Broadcast coalescing | AOSP `BroadcastOptions` merge/deferral per stream | inherited for free |
 | Multi-remote-device volume | float + proportion model (§2.4) | not implemented (ZUI keeps AOSP integer remote volume) |
 | Effect/DSP sync | `notifyVolumeIndexChangedToEffectMiAudioService`, `notifyVolumeChangedToDolbyEffectController` | none (ZUI has no such hook surface) |

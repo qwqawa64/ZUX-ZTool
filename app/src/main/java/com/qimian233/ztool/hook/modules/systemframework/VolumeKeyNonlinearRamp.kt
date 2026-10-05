@@ -38,6 +38,11 @@ import java.lang.reflect.Method
  *  - The native ticks double as a heartbeat while the key is held; the
  *    driver stops when they stop (key released) or on the ADJUST_SAME
  *    release cue.
+ *  - Re-entering `adjustSuggestedStreamVolume` also re-enters the framework's
+ *    long-press suppression (`VolumeController.suppressAdjustment`), which
+ *    forces `direction = 0` for `mLongPressTimeout` ms after the panel is
+ *    first shown and therefore swallows the whole ramp. That gate is
+ *    neutralised for driver sessions — see [hookSuppressAdjustment].
  *
  * ## The curve is anchored to the stock 15-step feel
  *
@@ -73,16 +78,33 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.ANDROID_SYSTEM.packageName)
 
     private var adjustMethod: Method? = null
+    private var streamVolumeMethod: Method? = null
     private val driverHandler = Handler(Looper.getMainLooper())
 
-    // Session state; all touched on the system server main thread only.
+    // Session state. `driverActive` / `sessionStartVolume` / `driverIntervalMs`
+    // are written from the AudioService (binder) thread and read from the main
+    // thread, so they are volatile; the rest is main-thread only.
     private var sessionStart = 0L
     private var sessionApplied = 0
     private var sessionDirection = 0
     private var lastTickTime = 0L
     private var audioService: Any? = null
     private var argsTemplate: Array<Any?> = emptyArray()
+
+    /** True while the self-scheduled driver owns the key cadence. Also read by
+     *  the [HOOK_ID_SUPPRESS] hook, which runs on the calling thread. */
+    @Volatile
     private var driverActive = false
+
+    /** Media-stream volume at session start, for the "did the index actually
+     *  move" diagnostic in [stopDriver]. */
+    @Volatile
+    private var sessionStartVolume = -1
+
+    /** Interval the driver last scheduled, so the ADJUST_SAME refresh grid can
+     *  be skipped once real steps already arrive at least that often. */
+    @Volatile
+    private var driverIntervalMs = 0L
 
     /** Reentry guard for the driver's own reflection invokes. */
     private var driving = false
@@ -102,6 +124,7 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
             val speed = (V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * elapsedSec)
                 .coerceAtMost(MAX_STEPS_PER_SEC)
             val intervalMs = (1000.0 / speed).toLong().coerceIn(MIN_TICK_MS, 1000L)
+            driverIntervalMs = intervalMs
             driverHandler.postDelayed(this, intervalMs)
         }
     }
@@ -119,7 +142,9 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
     private val refreshRunnable = object : Runnable {
         override fun run() {
             if (!driverActive) return
-            invokeOriginalAdjust(0, REFRESH_FLAGS)
+            // Only fill the gaps: once real steps already arrive at least as
+            // often as the grid, they are the refresh.
+            if (driverIntervalMs > REFRESH_INTERVAL_MS) invokeOriginalAdjust(0, REFRESH_FLAGS)
             driverHandler.postDelayed(this, REFRESH_INTERVAL_MS)
         }
     }
@@ -153,8 +178,54 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
                 return@hookWithId null
             }
             logger.info("Successfully hooked AudioService.adjustSuggestedStreamVolume")
+
+            // Diagnostic: lets the stop log distinguish "the index moved but the
+            // panel did not repaint" from "the ticks were swallowed".
+            streamVolumeMethod = runCatching {
+                findMethod(audioServiceClass, "getStreamVolume", intT).also { it.isAccessible = true }
+            }.getOrNull()
+            if (streamVolumeMethod == null) logger.warn("getStreamVolume not found; ramp log has no index delta")
+
+            hookSuppressAdjustment(audioServiceClass, param.classLoader)
         } catch (t: Throwable) {
             logger.error("Failed to hook AudioService.adjustSuggestedStreamVolume", t)
+        }
+    }
+
+    /**
+     * Neutralises the framework's long-press suppression while the driver owns
+     * the cadence.
+     *
+     * `AudioService$VolumeController.suppressAdjustment` forces `direction = 0`
+     * (an ADJUST_SAME) for `mLongPressTimeout` ms after the panel is first
+     * shown, and [`mVolumeControllerLongPressEnabled`] defaults to **true**, so
+     * unless the volume controller opts out (HyperOS's SystemUI never does, and
+     * neither does ZUI's) every adjustment inside that window is dropped. That
+     * window is exactly the reported "panel appears -> frozen -> jumps": the
+     * whole ramp fits inside it, so only the tail after it expires is ever
+     * visible. Returning false for our own session removes the throttle and
+     * leaves the driver as the only owner of the cadence; presses outside a
+     * driver session keep stock behaviour.
+     */
+    private fun hookSuppressAdjustment(serviceClass: Class<*>, classLoader: ClassLoader) {
+        try {
+            val intT = Int::class.javaPrimitiveType
+            val controllerClass = serviceClass.declaredClasses
+                .firstOrNull { it.simpleName == "VolumeController" }
+                ?: classLoader.loadClass("com.android.server.audio.AudioService\$VolumeController")
+            val suppress = findMethod(
+                controllerClass,
+                "suppressAdjustment",
+                intT, intT, java.lang.Boolean.TYPE
+            )
+            suppress.isAccessible = true
+            hookWithId(suppress, HOOK_ID_SUPPRESS) { chain ->
+                if (driverActive) false else chain.proceed()
+            }
+            logger.info("Ramp: long-press suppression bypass installed")
+        } catch (t: Throwable) {
+            logger.warn("Ramp: cannot bypass long-press suppression (${t.message}); " +
+                "a held key may stay frozen until the suppression window expires")
         }
     }
 
@@ -191,10 +262,12 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
             sessionDirection = direction
             audioService = service
             argsTemplate = args.toTypedArray().copyOf()
+            sessionStartVolume = readStreamVolume(service)
             driverActive = true
             // The first step of the press is this very tick; the hook lets it
             // run natively, then the driver takes over the cadence.
             val intervalMs = (1000.0 / V0_STEPS_PER_SEC).toLong().coerceIn(MIN_TICK_MS, 1000L)
+            driverIntervalMs = intervalMs
             driverHandler.postDelayed(driverRunnable, intervalMs)
             driverHandler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS)
             logger.debug("ramp: session start direction=$direction speed0=$V0_STEPS_PER_SEC/s")
@@ -207,10 +280,28 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         driverActive = false
         driverHandler.removeCallbacks(driverRunnable)
         driverHandler.removeCallbacks(refreshRunnable)
+        val endVolume = readStreamVolume(audioService)
         logger.debug(
             "ramp: stop ($reason), applied=$sessionApplied steps in " +
-                "${SystemClock.elapsedRealtime() - sessionStart}ms"
+                "${SystemClock.elapsedRealtime() - sessionStart}ms, " +
+                "music $sessionStartVolume -> $endVolume"
         )
+    }
+
+    /**
+     * Reads the media stream volume through the captured AudioService, purely
+     * for the [stopDriver] diagnostic. `applied` counts driver ticks that ran;
+     * the volume delta says how many of them actually reached the index, which
+     * is what separates a swallowed tick from a panel that did not repaint.
+     */
+    private fun readStreamVolume(service: Any?): Int {
+        val method = streamVolumeMethod ?: return -1
+        val target = service ?: return -1
+        return try {
+            (method.invoke(target, STREAM_MUSIC) as? Int) ?: -1
+        } catch (t: Throwable) {
+            -1
+        }
     }
 
     /**
@@ -236,6 +327,10 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
 
     companion object {
         private const val HOOK_ID = "volume_key_nonlinear_adjust_suggested"
+        private const val HOOK_ID_SUPPRESS = "volume_ramp_suppress_adjustment"
+
+        /** android.media.AudioManager.STREAM_MUSIC */
+        private const val STREAM_MUSIC = 3
 
         /** Tick verdicts for [handleNativeKeyTick]. */
         const val TICK_PROCEED = 0
