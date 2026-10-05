@@ -39,8 +39,31 @@ import java.lang.reflect.Method
  *    driver stops when they stop (key released) or on the ADJUST_SAME
  *    release cue.
  *
- * Works against any fine-volume step count; with [FineVolumeSteps] at 150
- * steps and V0=8/ACCEL=16/MAX=80, the ramp reaches full speed after ~4.5s.
+ * ## The curve is anchored to the stock 15-step feel
+ *
+ * The reference is the stock behaviour traced above: **15** media steps at a
+ * constant **20 stock-steps/s** (the native ~50 ms loop), i.e. 20/15 of the
+ * range per second and a full sweep in **0.75 s**. The curve is written in
+ * those stock units and converted to fine steps, so it stays correct if the
+ * fine step count changes:
+ *
+ * | stock unit                          | stock-steps | fine steps (150-scale) |
+ * |-------------------------------------|-------------|------------------------|
+ * | start rate V0                       | 2/s         | 20/s                   |
+ * | cap MAX (= stock rate, tail parity) | 20/s        | 200/s                  |
+ * | acceleration (cap at 30% of range)  | 44/s²       | 440/s²                 |
+ *
+ * Resulting feel versus stock: the first *stock* step (1/15 of the range)
+ * arrives after 0.17 s instead of 0.05 s — about 3.4x finer control at the
+ * start; the tail runs at exactly the stock rate, so it never drags; a full
+ * sweep takes **0.93 s** instead of 0.75 s.
+ *
+ * Bound worth knowing: with one fine step per tick and the 5 ms tick floor
+ * (= 200 fine steps/s = exactly the stock rate), 0.93 s is the fastest
+ * *shaped* sweep that exists — a shaped curve cannot reach stock's 0.75 s,
+ * only a flat 200/s curve can (which is not a ramp). Going faster requires
+ * moving a whole stock step (10 fine steps) per tick, which is precisely what
+ * HyperOS does — see docs/research/hyperos-volume/README.md §7.1.
  */
 @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
 class VolumeKeyNonlinearRamp : SystemHookModule() {
@@ -221,20 +244,54 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         /** android.media.AudioManager.FLAG_FROM_KEY */
         private const val FLAG_FROM_KEY = 0x1000
 
-        /** Ramp start speed (steps/s) at the moment the key goes down. */
-        private const val V0_STEPS_PER_SEC = 8.0
+        // ---- 15-step ("stock feel") anchoring --------------------------------
+        // The curve is defined in *stock* units and converted to fine steps, so
+        // it keeps its feel if the fine step count changes. The stock reference
+        // is the native ~50 ms MediaSessionService loop on a 15-step phone.
 
-        /** Constant acceleration of the ramp speed (steps/s^2). */
-        private const val ACCEL_STEPS_PER_SEC2 = 200.0
+        /** Media steps installed by FineVolumeSteps; keep the two in sync. */
+        private const val FINE_STEPS = 150.0
 
-        /** Full-speed cap (steps/s); no longer bounded by the native loop. */
-        private const val MAX_STEPS_PER_SEC = 150.0
+        /** Stock reference: media steps before fine volume was installed. */
+        private const val STOCK_STEPS = 15.0
 
-        /** Lower bound of the driver tick interval (ms). NOTE: this clamps
-         *  the achievable speed at 1000/MIN_TICK_MS steps/s (100/s at 10ms);
-         *  each step also runs the full AudioService chain synchronously on
-         *  the main thread, so the real ceiling may be lower — check the
-         *  "ramp: stop ... applied=N in Xms" debug log to measure it. */
+        /** Stock reference rate: the native ~50 ms loop = 20 ticks/s. */
+        private const val STOCK_STEP_RATE = 20.0
+
+        /** Fine steps per stock step (= 10 on the 150-step scale). */
+        private const val FINE_PER_STOCK = FINE_STEPS / STOCK_STEPS
+
+        /** Start rate: stock/10, i.e. ten times finer at the moment of press. */
+        private const val V0_STOCK_RATE = STOCK_STEP_RATE / 10.0
+
+        /** Top rate: exactly stock, so the tail never feels slower than stock. */
+        private const val MAX_STOCK_RATE = STOCK_STEP_RATE
+
+        /** Fraction of the range covered while accelerating; the rest runs at max. */
+        private const val ACCEL_RANGE_FRACTION = 0.30
+
+        /** Ramp start speed (fine steps/s); 20 on the 150-step scale. */
+        private const val V0_STEPS_PER_SEC = V0_STOCK_RATE * FINE_PER_STOCK
+
+        /** Full-speed cap (fine steps/s); 200 on the 150-step scale. */
+        private const val MAX_STEPS_PER_SEC = MAX_STOCK_RATE * FINE_PER_STOCK
+
+        /**
+         * Constant acceleration (fine steps/s²); 440 on the 150-step scale.
+         *
+         * Solved from "the cap is reached after [ACCEL_RANGE_FRACTION] of the
+         * range": with t1 = 2·f·N/(v0+v1) and a = (v1−v0)/t1, this reduces to
+         * a = (v1² − v0²) / (2·f·N).
+         */
+        private const val ACCEL_STEPS_PER_SEC2 =
+            ((MAX_STOCK_RATE * MAX_STOCK_RATE - V0_STOCK_RATE * V0_STOCK_RATE)
+                / (2.0 * ACCEL_RANGE_FRACTION * STOCK_STEPS)) * FINE_PER_STOCK
+
+        /** Lower bound of the driver tick interval (ms). At the 150-step scale
+         *  this floor (5 ms = 200/s) is exactly [MAX_STEPS_PER_SEC], so the cap
+         *  and the floor coincide; each step also runs the full AudioService
+         *  chain synchronously on the main thread, so the real ceiling may be
+         *  lower — check the "ramp: stop ... applied=N in Xms" debug log. */
         private const val MIN_TICK_MS = 5L
 
         /** Fixed grid for ADJUST_SAME panel refreshes between real steps. */
