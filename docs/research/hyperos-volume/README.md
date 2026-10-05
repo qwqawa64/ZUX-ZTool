@@ -1,9 +1,14 @@
 # HyperOS 3 Volume System — services.jar Reverse Engineering
 
-Reverse-engineered from the Xiaomi HyperOS 3 `services.jar` loaded in the JADX MCP
-(23,787 classes / 3,730 packages, `classes.dex`). Scope: **how Xiaomi implements
-stepless (fine-grained) media volume and how the volume-change path is made smooth**.
-SystemUI-side animation is intentionally out of scope (that is the next step).
+Reverse-engineered from the Xiaomi HyperOS 3 `services.jar` (23,787 classes / 3,730
+packages) and `SystemUI.apk` (`17.03.260226.r`) loaded in the JADX MCP. Scope: **how Xiaomi
+implements stepless (fine-grained) media volume and how the volume-change path and its
+animation are made smooth.**
+
+- §0–§4: `services.jar` — the framework contract (and the MIUI stub indirection).
+- §5: how to read this APK when classes look empty (R8 inlining, not Rust).
+- §6: `SystemUI.apk` — the Compose volume panel and every animation constant.
+- §7: what still needs the MIUI stub jars.
 
 Classes that matter:
 
@@ -484,20 +489,159 @@ Two concrete takeaways for ZTool:
 
 ---
 
-## 5. Next steps
+## 5. Reading this APK: classes are not "missing", they are R8-inlined
 
-1. Load the MIUI stub jars (`miui-framework.jar`, `miui-services.jar`) and read
-   `AudioServiceStub`'s implementation + `MiAudioService`:
-   - the real `getMusicVolumeStep` / `isSupportSteplessVolume` / super-index math;
-   - the actual `ro.config.media_vol_steps` value via `getprop`;
-   - whether the ramp lives there (`updataVolumeAdjustCount`, `targetSleepLowVolumeIndex`).
-2. **Load `SystemUI.apk`** (agreed next step) and analyse the animation:
-   - `com.android.systemui.volume.VolumeDialogImpl` — how the panel is shown/dismissed and
-     how it animates between fast `IVolumeController.volumeChanged` callbacks;
-   - `VolumeDialogControllerImpl` — registration with `IVolumeController`, use of
-     `setVolumeControllerLongPressTimeoutEnabled`, and whether it drives its own ramp;
-   - the slider widget (ZUI analogue: `zui.widget.SeekBarNps` / `ToggleSliderView`) and its
-     progress-to-stream mapping (raw units vs steps);
-   - whether HyperOS uses `IAudioVolumeChangeDispatcher` / volume groups or the legacy
-     broadcast for its updates;
-   - the exact interpolation/alpha/scale animation used when the index changes by 1 of 100.
+Many volume classes decompile to **fields only, zero methods** — e.g.
+`VolumeDialogSliderViewBinder`, `VolumeDialogOverscrollViewBinder`,
+`VolumeDialogSliderInteractor`, `VolumeDialogOverscrollViewModel`, `VolumePanelFlag`.
+`get_methods_of_class` returns empty and `get_smali_of_class` confirms there is no
+`.method` block. This is **not** a Rust/native rewrite: R8 inlined the (single) method
+into its only caller and kept the class only as a Dagger field holder.
+
+Evidence: the APK's only native-library consumers anywhere are
+`miuix.flexible.tile.TileBitmapNative`, `miuix.mipalette.MiPalette`,
+`com.miui.fastplayer.FastPlayer`, `org.extra.relinker.*` and androidx
+graphics/sync-fence bindings — **nothing in the volume path loads a `.so`**. The dex
+carries `/* compiled from: go/retraceme <sha> */` (R8 `-sourcefile` mapping) and the
+`...$$ExternalSyntheticBUOutline0` helpers are Kotlin coroutine outlining.
+
+**Workaround that works** — read the *caller* instead of the class:
+
+| Empty class | Where its body actually lives |
+|---|---|
+| `VolumeDialogSliderViewBinder`, `VolumeDialogOverscrollViewBinder` | `VolumeDialogSlidersViewBinder.access$bindSlider` |
+| ctors of `VolumeDialogSliderInteractor`, `VolumeDialogOverscrollViewModel`, `VolumeDialogSliderInputEventsInteractor` | `DaggerReferenceGlobalRootComponent$VolumeDialogSliderComponentImpl$SwitchingProvider.get()` |
+| ctor of `VolumeDialogViewBinder`, `VolumeDialogRingerViewBinder` springs | `DaggerReferenceGlobalRootComponent$VolumeDialogComponentImpl$SwitchingProvider.get()` |
+
+Use `get_xrefs_to_class` / `get_xrefs_to_field` to find that caller, and
+`get_smali_of_class` whenever the Java decompiler aborts on a method.
+
+---
+
+## 6. SystemUI: how the "smooth volume animation" is actually built
+
+Source: HyperOS 3 `SystemUI.apk`, `versionName 17.03.260226.r`, `targetSdk 37`.
+The volume panel in this build is **AOSP 16's refactored, Kotlin + Compose volume
+dialog** (`com.android.systemui.volume.dialog.*`, `...sliders.*`, `...ringer.*`)
+plus a newer Compose "volume panel" (`com.android.systemui.volume.panel.*`, the expanded
+audio-tile surface). There is **no** `VolumeDialogImpl`, so older MIUI write-ups about
+`VolumeDialogImpl`/`ToggleSliderView` do not apply to HyperOS 3.
+
+Wiring: `VolumeUI` (`CoreStartable`) → `VolumeDialogComponent` (an `ExtensionController`
+extension: plugin `VolumeDialog` vs. default `VolumeDialogPlugin`; `Settings.Global
+"native_volume_bar"` selects a plugin) → `VolumeDialog` (`ComponentDialog`) →
+`VolumeDialogViewBinder.bind(...)`. `R.bool.enable_volume_ui` / `enable_safety_warning`
+gate the whole thing.
+
+### 6.1 Every hard number in the animation
+
+| What | Class | Values |
+|---|---|---|
+| Panel show / dismiss slide | `VolumeDialogViewBinder.bind` + `$animateVisibility$1` + `$animateVisibility$animation$1` | `SpringForce` stiffness **700**, dampingRatio **0.9** (`setMinimumVisibleChange(0.01f)`); animated to **1.0f** on `Visible`, **0.0f** on `Dismissed`; per frame `alpha = ceil(v)` and `translationX = lerp(v, width, 0) = width * (1 - v)`. The dialog is `dismiss()`ed only after the spring reaches 0, and a `JankListenerFactory` listener tagged `"show"`/`"dismiss"` is swapped in per direction |
+| Volume slider value | `com.android.systemui.volume.ui.compose.slider.SliderKt.Slider` | `DefaultAnimationSpec = spring(dampingRatio = 1.0f, stiffness = 1500.0f)` (critically damped, no overshoot); `Animatable(initialValue, visibilityThreshold = 0.01f)`; retarget guard in `SliderKt$$ExternalSyntheticLambda0` (skip if dragging / target already equals the debounced value); driver `SliderKt$Slider$4$1$1`: `if (!animatable.isRunning()) animatable.snapTo(sliderState.value); animatable.animateTo(debouncedValue, spec)` |
+| Incoming-value debounce | `SliderKt.debouncedValueState` (+ `$1$1`, `$2$1`) | **100 ms**. On `DragInteraction.Stop` → `debounceStartTimestamp = now`, `debouncedValue = sliderState.value`; `shouldDebounce = (now - timestamp) < 100ms`; if set → `delay(100ms)` before adopting the incoming value, else adopt immediately |
+| Slider granularity | `VolumeDialogSliderViewBinderKt.VolumeDialogSlider` | `value = state.value`, `valueRange = state.valueRange`, **`stepDistance = 1.0f`** (one volume step), `Haptics.Enabled(SliderHapticFeedbackConfig(0f, 0f, 0.1f, 0.02f, 4, 0.5f, 0f, SliderHapticFeedbackFilter(3, false)), SeekableSliderTrackerConfig(3, 0.01f, 0.99f), Orientation.Vertical)` |
+| Slider value source | `VolumeDialogSliderInteractor` | `slider = state.mapNotNull { it.streamModels[sliderType.audioStream] }`, with `level` coerced into `[levelMin, levelMax]` |
+| Overscroll (drag past the end) | `VolumeDialogOverscrollViewModel` + `VolumeDialogSlidersViewBinder.access$bindSlider` + `$bind$1` / `$bind$animation$2` | `maxDeviation = R.dimen.volume_dialog_slider_max_deviation`; `offsetInterpolator = PathInterpolator(0.15f, 0.0f, 0.2f, 1.0f)`; `delta = (touchY - startY) / 3.0f`; `offset = sign(delta) * interpolator(|delta| / maxDeviation) * maxDeviation` (only when dragging past the direction the slider cannot move); applied as `setTranslationY(offset)` on `{mainSliderContainer, background, bottomSection, topSection}`; on `Touch.End` → `SpringAnimation(FloatValueHolder(0f)).setStiffness(800f).setDampingRatio(0.6f).animateToFinalPosition(0f)` |
+| Ringer button roundness | `VolumeDialogRingerViewBinder.roundnessSpringForce` | `SpringForce(1.0f)` stiffness **800**, ζ **0.6**, `setMinimumVisibleChange(0.05f)`; drawer/button corner radius interpolated per frame |
+| Ringer button colour | `VolumeDialogRingerViewBinder.colorSpringForce` | stiffness **3800**, ζ **1.0**, plus `ArgbEvaluator` |
+| Ringer drawer open/close | `VolumeDialogRingerViewBinder.access$closeDrawer` | `MotionLayout` + `R.anim.volume_dialog_ringer_open` / `R.anim.volume_dialog_ringer_close` (`transition.mDefaultInterpolator = -2`, then `mDefaultInterpolatorID = R.anim.volume_dialog_ringer_close`) |
+| Half-opened (expanded audio tile) | `VolumeDialogViewBinder$bind$4` | `viewGroup.animate().setDuration(150L).translationY(z ? halfOpenedOffsetPx : 0f)`, `halfOpenedOffsetPx = R.dimen.volume_dialog_half_opened_offset` |
+| Panel auto-dismiss | `VolumeDialogVisibilityInteractor` | `defaultTimeout = 3 s`, overridden by `Settings.Secure "volume_dialog_dismiss_timeout"`; `computeTimeout()` then applies `AccessibilityRepository.getRecommendedTimeout(4 \| 6, t)`; `resetDismissTimeout()` = `controller.userActivity()` + re-emit; `VolumeDialog.onTouchEvent` dismisses on `ACTION_OUTSIDE` (`reason = 1`) |
+
+### 6.2 The exact key-press → animation chain
+
+```
+AudioService.sendVolumeUpdate
+  -> IVolumeController.volumeChanged(streamType, flags)
+  -> ProducingVolumeController.volumeChanged                     [settingslib, IVolumeController.Stub]
+       tryEmit(VolumeControllerEvent.VolumeChanged(streamType, flags))
+  -> AudioRepositoryImpl.volumeControllerEvents (SharedFlow)
+  -> VolumeControllerAdapter.collectToController(mVolumeController)
+       -> VolumeDialogControllerImpl.<IVolumeController>.volumeChanged(...)
+  -> VolumeDialogControllerImpl.onVolumeChangedW(stream, flags, fromKey)   [worker handler]
+       showUI   = flags & 0x1        (FLAG_SHOW_UI)
+       fromKey  = flags & 0x1000     (FLAG_FROM_KEY)
+       vibrateHint = flags & 0x800 ; silentHint = flags & 0x80
+       updateStreamLevelW(stream, mAudio.getLastAudibleStreamVolume(stream))
+       if (showUI) {
+           legacy = VolumeDialogTransformHelper.calculateHapticFeedbackState(streamState, level, flags, levelChanged, true)
+           callbacks.onPerformHapticFeedback(legacy)            // MIUI per-step tick
+           callbacks.onShowRequested(1, keyguardLocked, lockTaskModeState)
+       } else if (mLastShowUI && fromKey) {
+           callbacks.onPerformHapticFeedback(calculateHapticFeedbackState(..., false))  // release tick
+           mLastShowUI = false
+       }
+       if (levelChanged && fromKey) callbacks.onVolumeChangedFromKey()
+  -> VolumeDialogCallbacksInteractor.VolumeDialogEventModelProducer
+       callbackFlow{}.buffer(16, DROP_OLDEST).shareIn(Eagerly)  -> VolumeDialogEventModel
+  -> VolumeDialogStateInteractor: StateChanged -> VolumeDialogStateRepository.mutableState
+       VolumeDialogStateModel.streamModels : Map<stream, VolumeDialogStreamModel{level, levelMin, levelMax, muted, ...}>
+  -> VolumeDialogSliderInteractor.slider  (level coerced into [levelMin, levelMax])
+  -> VolumeDialogSliderViewModel.state    -> VolumeDialogSliderStateModel{value, valueRange, ...}
+  -> VolumeDialogSliderViewBinderKt.VolumeDialogSlider -> SliderKt.Slider(value, valueRange, stepDistance = 1f)
+  -> Animatable.animateTo(value, spring(dampingRatio = 1.0f, stiffness = 1500.0f))   <-- the smooth motion
+```
+
+So the "smooth" feel is three cooperating mechanisms, not one:
+
+1. **Step count** — because `services.jar` raises `MAX_STREAM_VOLUME[STREAM_MUSIC]`,
+   `VolumeDialogStreamModel.levelMax` is `100` (or whatever `ro.config.media_vol_steps`
+   is) instead of `15`, so a single key press moves 1/100 of the track. This is the part
+   Xiaomi actually changed on the framework side.
+2. **Spring retargeting** — `spring(dampingRatio = 1.0f, stiffness = 1500.0f)` is
+   re-targeted on every state emission. A new target does not restart an animation: it
+   redirects the running spring, so a burst of 1-step updates composes into one continuous
+   motion. `Animatable.animateTo` is only (re)launched when the target actually differs
+   and the slider is not being dragged.
+3. **Debounce** — the 100 ms post-drag debounce stops `AudioService`'s lagging echoes from
+   fighting the user's finger right after a drag, and the `callbackFlow` buffer
+   (`16, DROP_OLDEST`) keeps a fast burst from blocking the pipeline.
+
+### 6.3 MIUI/HyperOS-specific layer in SystemUI (deliberately tiny)
+
+Only three classes in `com.miui.systemui.volume`:
+
+- `VolumeDialogControllerInjector` — holds `VolumeDisplayWindowListener`; injected as the
+  last parameter of `VolumeDialogControllerImpl`'s constructor.
+- `VolumeDisplayWindowListener extends IDisplayWindowListener.Stub` — on
+  `onFixedRotationStarted` it logs and runs a callback (dismiss/refresh the volume dialog
+  when a fixed rotation begins); every other callback is empty.
+- `VolumeDialogTransformHelper.calculateHapticFeedbackState(streamState, level, flags,
+  levelChanged, isShowUI)` → bitmask `(flags & 0x4000 ? 1 : 0) | (level == levelMax ? 2 : 0)
+  | (level == levelMin ? 4 : 0) | (levelChanged ? 8 : 0) | (isShowUI ? 16 : 0)`, consumed by
+  `Callbacks.onPerformHapticFeedback`.
+
+Note also: `setVolumeControllerLongPressTimeoutEnabled` is **not called anywhere** in this
+SystemUI, so the AOSP "controller opts into long-press suppression" path is unused here —
+further evidence that HyperOS lets the service deliver every step and animates the UI
+itself instead of batching at the framework.
+
+### 6.4 Updated comparison with ZTool
+
+| Aspect | HyperOS 3 | ZTool today |
+|---|---|---|
+| Panel technology | Kotlin + Compose (`volume.dialog.*`), Compose `Slider` with a spring `Animatable` | ZUI `zui.widget.SeekBarNps` / `ToggleSliderView` (View-based) |
+| Slider motion | `spring(ζ=1.0, k=1500)` on the value, `stepDistance = 1.0f`, 100 ms post-drag debounce | no value animation; the label/colour are refreshed per event |
+| Steps | `ro.config.media_vol_steps` → `MAX_STREAM_VOLUME[3]` | `FineVolumeSteps` → `MAX_STREAM_VOLUME[3] = 150` |
+| Key ramp | *not* in SystemUI; only per-step haptics. Framework has no self-driven loop either | `VolumeKeyNonlinearRamp` self-driven accelerating loop + `ADJUST_SAME` panel refresh |
+| Panel reveal | spring stiffness 700 / ζ 0.9 on `translationX` (width→0) + `alpha = ceil(v)` | stock ZUI window animation |
+| Overscroll | `PathInterpolator(0.15,0,0.2,1)`, drag/3, capped, spring back k=800 ζ=0.6 | not implemented |
+| Per-step haptics | `calculateHapticFeedbackState` bitmask (min/max/level-changed/show) | not implemented |
+| Panel timeout | `Settings.Secure "volume_dialog_dismiss_timeout"` default 3 s, a11y-scaled | stock |
+
+---
+
+## 7. What is still unknown
+
+1. The MIUI stub jars (`miui-framework.jar` / `miui-services.jar`) — `AudioServiceStub`
+   implementation and `MiAudioService`: the real `getMusicVolumeStep`,
+   `isSupportSteplessVolume`, super-index math, and the actual
+   `ro.config.media_vol_steps` value (`adb shell getprop`).
+2. Whether `ro.config.media_vol_steps` is actually set on a shipping HyperOS 3 device
+   (if it is not, the stepless path stays inert and the framework never widens the range).
+3. `R.dimen.volume_dialog_slider_max_deviation` and
+   `R.dimen.volume_dialog_half_opened_offset` actual dp values — they live in
+   `resources.arsc`, which the JADX MCP cannot hand out as a file.
+4. Whether HyperOS also wires `IAudioVolumeChangeDispatcher` (§2.6) into the panel; the
+   SystemUI side seen here still goes through the legacy `IVolumeController` path.
