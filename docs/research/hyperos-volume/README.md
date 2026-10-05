@@ -1115,3 +1115,33 @@ slider resolution, the 150/15 = 10 anchoring, and a re-migration of the persiste
   entry point, so a driver that re-enters that entry point for its own silent
   `ADJUST_SAME` refreshes must keep a re-entry flag — otherwise its own refreshes
   terminate the session they are meant to keep alive.
+
+**Keeping the curve scale-independent** (the hook no longer carries this derivation, so
+it lives here). Read the affected stream's real `getStreamMaxVolume` at session start and
+let it drive the shape, instead of hardcoding the 150-step numbers — otherwise a stock
+15-step scale gets `stepsPerUpdate = 5`, i.e. **1/3 of the range per update, whole sweep in
+three jumps and ~0.2 s**:
+
+```
+N     = getStreamMaxVolume(STREAM_MUSIC)                  // 7 / 15 / 100 / 150 …
+q     = max(1, ceil(N / 30))                               // steps per update
+v0    = 8 * q                                              // steps/s, first update at 125 ms
+vMax  = 20 * max(1, N / 15)                                // steps/s, never below the native cadence
+accel = (vMax² − v0²) / (2 * 0.30 * N)
+intervalMs(speed) = 1000 * q / speed,  clamped to [20 ms, 1 s]
+```
+
+| N | q | per update | updates | v0 → vMax | sweep | peak updates/s |
+|---|---|---|---|---|---|---|
+| 150 | 5 | 1/30 | 30 | 40 → 200 | ~0.90 s | 40 |
+| 100 | 4 | 1/25 | 25 | 32 → 133 | ~0.89 s | 33 |
+| 15 | 1 | 1/15 | 15 | 8 → 20 | ~0.85 s | 20 |
+| 7 | 1 | 1/7 | 7 | 8 → 20 | ~0.40 s | 20 |
+
+Two properties fall out of this and are worth preserving if the constants are ever
+retuned: the sweep stays ~0.9 s for *any* scale (because `q` tracks `N`), the peak update
+rate stays under the 50/s budget (because `q ≈ N/30` while `vMax ≈ 4N/3` gives
+`vMax/q ≈ 40/s`), and the tail never runs slower than that stream's own native cadence.
+With `q == 1` the absolute-index path is pointless (`setStreamVolume` would move exactly
+one step), so the driver falls back to the plain adjust and keeps the framework's
+ringer/alias handling.

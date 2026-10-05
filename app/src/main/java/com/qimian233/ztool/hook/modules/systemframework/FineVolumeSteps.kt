@@ -9,31 +9,20 @@ import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
 /**
- * Fine volume steps hook module.
- *
  * Raises the media stream (STREAM_MUSIC) volume scale from the stock step count
- * (e.g. 15) to 150 steps (Xiaomi/HyperOS fine-volume style). The count pairs
- * with VolumeKeyNonlinearRamp, whose self-driven variable-rate loop is not
- * bounded by the native ~20 ticks/s key-repeat cadence, so a fine 150-step
- * scale and fast ramping coexist.
+ * (e.g. 15) to [TARGET_STEPS] steps, HyperOS-style.
  *
- * Mechanics (see com.android.server.audio.AudioService in services.jar):
- * - [android.media.AudioService.VolumeStreamState] derives its index range from the
- *   static `MAX_STREAM_VOLUME[stream] * 10` in its constructor, and propagates the
- *   range to the native audioserver via `AudioSystem.initStreamVolume()` inside
- *   `updateIndexFactors()`.
- * - Hooking `createStreamStates()` *before* it runs and raising the array element
- *   therefore covers the whole chain: in-memory index range, native range, binder
- *   answers to `AudioManager.getStreamMaxVolume()`, and thus every client slider
- *   (SystemUI volume panel included).
+ * [android.media.AudioService.VolumeStreamState] derives its index range from the
+ * static `MAX_STREAM_VOLUME[stream] * 10` in its constructor and propagates it to
+ * audioserver via `AudioSystem.initStreamVolume()` inside `updateIndexFactors()`,
+ * so raising the array element before `createStreamStates()` runs covers the whole
+ * chain: in-memory range, native range, `AudioManager.getStreamMaxVolume()` and
+ * therefore every client slider.
  *
- * Migration: persisted `volume_music*` Settings.System values (and the
- * `AudioSystem.DEFAULT_STREAM_VOLUME` fallback) are rescaled once by
- * TARGET/stockMax so the current loudness is preserved when the feature is first
- * enabled. A Settings.Global marker prevents repeated rescaling across reboots.
- * Disabling the module restores the stock 15-step scale; the persisted index is
- * then clamped to the old maximum, so the volume should be re-adjusted manually
- * after turning the feature off.
+ * Persisted `volume_music*` Settings.System values are rescaled once from the
+ * stock scale, guarded by a Settings.Global marker. Turning the feature off
+ * restores 15 steps and clamps the persisted index, so the volume may need
+ * re-adjusting.
  */
 @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
 class FineVolumeSteps : SystemHookModule() {
