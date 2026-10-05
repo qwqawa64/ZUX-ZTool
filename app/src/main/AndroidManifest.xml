@@ -123,6 +123,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
+        <!-- 替代桌面图标。与 LauncherAlias 互斥：开启“使用替代图标”时启用本 alias 并停用
+             默认 alias，隐藏桌面图标时两者同时停用。monochrome 图层沿用原图标，不受开关影响。 -->
+        <activity-alias
+            android:name=".LauncherAliasAlt"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_alt"
+            android:roundIcon="@mipmap/ic_launcher_round_alt"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
         <activity
             android:name=".uninstall.BatchUninstallActivity"
             android:excludeFromRecents="true"

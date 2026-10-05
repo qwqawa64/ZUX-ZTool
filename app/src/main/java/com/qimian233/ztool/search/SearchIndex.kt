@@ -1488,6 +1488,11 @@ object SearchIndex {
             titleRes = R.string.page_settings_material_palette_mode_title
         ),
         themeSettings.item(
+            id = "theme_use_alternative_icon",
+            titleRes = R.string.page_settings_use_alternative_icon_title,
+            summaryRes = R.string.page_settings_use_alternative_icon_summary
+        ),
+        themeSettings.item(
             id = "theme_predictive_back_gesture",
             titleRes = R.string.page_settings_predictive_back_gesture_title,
             summaryRes = R.string.page_settings_predictive_back_gesture_summary

@@ -284,6 +284,7 @@ class PreferenceEditorRepository(context: Context) {
             "material_palette_mode" to ThemeKeyType.STRING,
             "dynamic_color_enabled" to ThemeKeyType.BOOLEAN,
             "amoled_black_enabled" to ThemeKeyType.BOOLEAN,
+            "use_alternative_icon" to ThemeKeyType.BOOLEAN,
             "predictive_back_gesture_enabled" to ThemeKeyType.BOOLEAN,
             "manual_color_enabled" to ThemeKeyType.BOOLEAN,
             "manual_seed_color" to ThemeKeyType.LONG,

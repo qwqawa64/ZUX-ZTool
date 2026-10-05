@@ -61,7 +61,9 @@ import com.qimian233.ztool.ui.firstrun.AgreementContentCard
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
+import com.qimian233.ztool.ui.theme.LocalUseAlternativeIcon
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import com.qimian233.ztool.ui.theme.appLogoRes
 import com.qimian233.ztool.viewmodel.HomeViewModel
 import com.qimian233.ztool.viewmodel.UpdateInfo
 
@@ -358,7 +360,9 @@ private fun AboutHeaderCard(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Image(
-                bitmap = ImageBitmap.imageResource(R.drawable.splash_logo),
+                bitmap = ImageBitmap.imageResource(
+                    appLogoRes(LocalUseAlternativeIcon.current)
+                ),
                 contentDescription = stringResource(R.string.common_splash_logo_description),
                 modifier = Modifier.height(88.dp)
             )

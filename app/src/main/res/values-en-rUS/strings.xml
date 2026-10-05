@@ -735,6 +735,8 @@
     <string name="page_settings_manual_seed_color_error">Enter a valid color in #RRGGBB or #AARRGGBB format.</string>
     <string name="page_settings_amoled_black_title">AMOLED pure black mode</string>
     <string name="page_settings_amoled_black_summary">Use a pure black theme in dark mode.</string>
+    <string name="page_settings_use_alternative_icon_title">Use alternative icon</string>
+    <string name="page_settings_use_alternative_icon_summary">Use the alternative artwork for the launcher icon, splash page icon and About logo. The monochrome icon stays unchanged.</string>
     <string name="page_settings_predictive_back_gesture_title">Predictive back gesture</string>
     <string name="page_settings_predictive_back_gesture_summary">Enable predictive back gesture animation.</string>
     <string-array name="notify_num_size_options">

@@ -179,6 +179,9 @@ class MainActivity : ComponentActivity(),
         // Component states survive app updates; heal the debug-only LeakCanary
         // alias if "hidden" was enabled on a build that did not manage it yet.
         settingsRepo.applyLeakCanaryAliasState()
+        // Re-assert which launcher alias is active so a restored/updated config
+        // cannot leave the icon pointing at the wrong artwork (or at none).
+        settingsRepo.applyLauncherIconAliasState()
         settingsRepo.cleanupAppLogsIfNeeded()
         settingsRepo.syncLsposedLogs()
     }

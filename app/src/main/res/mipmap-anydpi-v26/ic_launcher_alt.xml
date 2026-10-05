@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Alternative launcher icon ("使用替代图标"). The monochrome layer stays the
+     original @mipmap/ic_launcher_monochrome on purpose: the alternative artwork
+     is not suitable for monochrome (themed-icon) rendering. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_alt_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_alt_foreground"/>
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>
+</adaptive-icon>

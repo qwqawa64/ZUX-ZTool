@@ -132,6 +132,13 @@ class SettingsViewModel(
         )
     }
 
+    fun setUseAlternativeIcon(enabled: Boolean) {
+        repository.setUseAlternativeIcon(enabled)
+        _uiState.value = _uiState.value.copy(
+            themeSettings = _uiState.value.themeSettings.copy(useAlternativeIcon = enabled)
+        )
+    }
+
     fun setPredictiveBackGestureEnabled(enabled: Boolean) {
         repository.setPredictiveBackGestureEnabled(enabled)
         _uiState.value = _uiState.value.copy(

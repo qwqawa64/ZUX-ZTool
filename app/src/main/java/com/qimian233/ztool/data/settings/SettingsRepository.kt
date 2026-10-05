@@ -97,6 +97,8 @@ class SettingsRepository(
             root.get(KEY_THEME_SETTINGS)?.let {
                 themePreferences.importSettingsJson(it.toString())
             }
+            // The imported icon choice must be reflected in the launcher alias immediately.
+            applyLauncherIconAliasState()
         } else {
             // Legacy flat backup: module config keys only, no theme section.
             ModulePreferencesUtils.restoreConfig(context, content)
@@ -106,6 +108,7 @@ class SettingsRepository(
     fun restoreDefaultConfig() {
         prefsUtils.clearAllSettings()
         themePreferences.deleteAll()
+        applyLauncherIconAliasState()
     }
 
     fun setLogLevel(level: LogLevel) {
@@ -153,27 +156,76 @@ class SettingsRepository(
      * Launcher icon visibility is stored as the enabled state of the manifest
      * activity-alias [.LAUNCHER_ALIAS_CLASS] — PackageManager persists it across
      * reboots and app updates, so no preference entry is needed.
+     *
+     * Two aliases exist: the default-icon one and [.LAUNCHER_ALIAS_ALT_CLASS]
+     * (the "使用替代图标" artwork). Exactly one of them is enabled while the icon
+     * is visible, so "hidden" means *both* are disabled.
      */
     fun isLauncherIconHidden(): Boolean {
-        return try {
-            when (context.packageManager.getComponentEnabledSetting(launcherAliasComponent())) {
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER -> true
-                else -> false
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to read launcher alias state: ${e.message}")
-            false
-        }
+        return !isAliasActive(launcherAliasComponent(), manifestDefault = true) &&
+            !isAliasActive(launcherAliasAltComponent(), manifestDefault = false)
     }
 
     fun setLauncherIconHidden(hidden: Boolean) {
-        setComponentState(
-            launcherAliasComponent(),
-            if (hidden) PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-            else PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-        )
+        if (hidden) {
+            setAliasEnabled(launcherAliasComponent(), false)
+            setAliasEnabled(launcherAliasAltComponent(), false)
+        } else {
+            applyLauncherIconAlias()
+        }
         syncLeakCanaryAlias(hidden)
+    }
+
+    /**
+     * Show exactly the alias matching the persisted icon choice (or hide both
+     * when the launcher icon is hidden).
+     */
+    private fun applyLauncherIconAlias() {
+        if (isLauncherIconHidden()) {
+            setAliasEnabled(launcherAliasComponent(), false)
+            setAliasEnabled(launcherAliasAltComponent(), false)
+            return
+        }
+        val useAlternativeIcon = themePreferences.loadSettings().useAlternativeIcon
+        setAliasEnabled(launcherAliasComponent(), !useAlternativeIcon)
+        setAliasEnabled(launcherAliasAltComponent(), useAlternativeIcon)
+    }
+
+    /**
+     * Self-heal the alias pair on app start: component states survive app
+     * updates and restore-from-backup can change the icon choice without the
+     * toggle handler running, so re-assert the persisted selection.
+     */
+    fun applyLauncherIconAliasState() {
+        if (isLauncherIconHidden()) {
+            setAliasEnabled(launcherAliasComponent(), false)
+            setAliasEnabled(launcherAliasAltComponent(), false)
+        } else {
+            applyLauncherIconAlias()
+        }
+    }
+
+    private fun isAliasActive(component: ComponentName, manifestDefault: Boolean): Boolean {
+        return try {
+            when (context.packageManager.getComponentEnabledSetting(component)) {
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED -> false
+                else -> manifestDefault
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to read component state for ${component.className}: ${e.message}")
+            manifestDefault
+        }
+    }
+
+    private fun setAliasEnabled(component: ComponentName, enabled: Boolean) {
+        setComponentState(
+            component,
+            if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        )
     }
 
     /**
@@ -237,6 +289,10 @@ class SettingsRepository(
         return ComponentName(context, LAUNCHER_ALIAS_CLASS)
     }
 
+    private fun launcherAliasAltComponent(): ComponentName {
+        return ComponentName(context, LAUNCHER_ALIAS_ALT_CLASS)
+    }
+
     fun setFrontendStyle(style: FrontendStyle) {
         themePreferences.saveFrontendStyle(style)
     }
@@ -259,6 +315,16 @@ class SettingsRepository(
 
     fun setAmoledBlackEnabled(enabled: Boolean) {
         themePreferences.saveAmoledBlackEnabled(enabled)
+    }
+
+    /**
+     * Persist the alternative-icon choice and re-point the launcher alias at the
+     * matching adaptive icon. The in-app logo follows the preference through
+     * [com.qimian233.ztool.ui.theme.LocalUseAlternativeIcon].
+     */
+    fun setUseAlternativeIcon(enabled: Boolean) {
+        themePreferences.saveUseAlternativeIcon(enabled)
+        applyLauncherIconAlias()
     }
 
     fun setPredictiveBackGestureEnabled(enabled: Boolean) {
@@ -325,6 +391,7 @@ class SettingsRepository(
         private val KEY_AUTO_CHECK_UPDATE = PreferenceKeys.AUTO_CHECK_UPDATE.name
         private val KEY_HIDE_FROM_RECENTS = PreferenceKeys.HIDE_FROM_RECENTS.name
         private const val LAUNCHER_ALIAS_CLASS = "com.qimian233.ztool.LauncherAlias"
+        private const val LAUNCHER_ALIAS_ALT_CLASS = "com.qimian233.ztool.LauncherAliasAlt"
         // LeakCanary (debugImplementation) adds this launcher activity-alias to the
         // merged manifest; the class is @InternalApi so the name must be hardcoded.
         private const val LEAKCANARY_LAUNCHER_ALIAS_CLASS =

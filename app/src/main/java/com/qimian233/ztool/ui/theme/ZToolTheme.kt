@@ -173,6 +173,7 @@ fun ZToolTheme(
         LocalIsPlatformDialog provides isPlatformDialog,
         LocalEnableFloatingBottomBar provides effectiveSettings.enableFloatingBottomBar,
         LocalEnableFloatingBottomBarBlur provides effectiveSettings.enableFloatingBottomBarBlur,
+        LocalUseAlternativeIcon provides effectiveSettings.useAlternativeIcon,
         content = themedContent
     )
 }

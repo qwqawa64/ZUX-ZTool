@@ -24,6 +24,8 @@ data class ZToolThemeSettings(
     val materialPalette: MaterialPalette = MaterialPalette.TonalSpot,
     val dynamicColorEnabled: Boolean = true,
     val amoledBlackEnabled: Boolean = false,
+    /** Use the alternative brand artwork for the launcher icon and the in-app logo. */
+    val useAlternativeIcon: Boolean = false,
     val predictiveBackGestureEnabled: Boolean = true,
     val manualColorEnabled: Boolean = false,
     val manualSeedColor: Long = DEFAULT_MANUAL_SEED_COLOR,

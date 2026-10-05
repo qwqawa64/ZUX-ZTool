@@ -34,6 +34,7 @@ class ThemePreferencesRepository(
             ),
             dynamicColorEnabled = prefs.getBoolean(KEY_DYNAMIC_COLOR_ENABLED, false),
             amoledBlackEnabled = prefs.getBoolean(KEY_AMOLED_BLACK_ENABLED, false),
+            useAlternativeIcon = prefs.getBoolean(KEY_USE_ALTERNATIVE_ICON, false),
             predictiveBackGestureEnabled = prefs.getBoolean(KEY_PREDICTIVE_BACK_GESTURE_ENABLED, true),
             manualColorEnabled = prefs.getBoolean(KEY_MANUAL_COLOR_ENABLED, false),
             manualSeedColor = prefs.getLong(
@@ -54,6 +55,7 @@ class ThemePreferencesRepository(
                 .putString(KEY_MATERIAL_PALETTE, settings.materialPalette.name)
                 .putBoolean(KEY_DYNAMIC_COLOR_ENABLED, settings.dynamicColorEnabled)
                 .putBoolean(KEY_AMOLED_BLACK_ENABLED, settings.amoledBlackEnabled)
+                .putBoolean(KEY_USE_ALTERNATIVE_ICON, settings.useAlternativeIcon)
                 .putBoolean(KEY_PREDICTIVE_BACK_GESTURE_ENABLED, settings.predictiveBackGestureEnabled)
                 .putBoolean(KEY_MANUAL_COLOR_ENABLED, settings.manualColorEnabled)
                 .putLong(KEY_MANUAL_SEED_COLOR, settings.manualSeedColor)
@@ -84,6 +86,10 @@ class ThemePreferencesRepository(
 
     fun saveAmoledBlackEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_AMOLED_BLACK_ENABLED, enabled) }
+    }
+
+    fun saveUseAlternativeIcon(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_USE_ALTERNATIVE_ICON, enabled) }
     }
 
     fun savePredictiveBackGestureEnabled(enabled: Boolean) {
@@ -149,6 +155,8 @@ class ThemePreferencesRepository(
                         ?: defaults.dynamicColorEnabled,
                     amoledBlackEnabled = (parsed.amoledBlackEnabled as Boolean?)
                         ?: defaults.amoledBlackEnabled,
+                    useAlternativeIcon = (parsed.useAlternativeIcon as Boolean?)
+                        ?: defaults.useAlternativeIcon,
                     predictiveBackGestureEnabled = (parsed.predictiveBackGestureEnabled as Boolean?)
                         ?: defaults.predictiveBackGestureEnabled,
                     manualColorEnabled = (parsed.manualColorEnabled as Boolean?)
@@ -213,6 +221,7 @@ class ThemePreferencesRepository(
         private const val KEY_MATERIAL_PALETTE_MODE = "material_palette_mode"
         private const val KEY_DYNAMIC_COLOR_ENABLED = "dynamic_color_enabled"
         private const val KEY_AMOLED_BLACK_ENABLED = "amoled_black_enabled"
+        private const val KEY_USE_ALTERNATIVE_ICON = "use_alternative_icon"
         private const val KEY_PREDICTIVE_BACK_GESTURE_ENABLED = "predictive_back_gesture_enabled"
         private const val KEY_MANUAL_COLOR_ENABLED = "manual_color_enabled"
         private const val KEY_MANUAL_SEED_COLOR = "manual_seed_color"
@@ -226,6 +235,7 @@ class ThemePreferencesRepository(
             KEY_MATERIAL_PALETTE_MODE,
             KEY_DYNAMIC_COLOR_ENABLED,
             KEY_AMOLED_BLACK_ENABLED,
+            KEY_USE_ALTERNATIVE_ICON,
             KEY_PREDICTIVE_BACK_GESTURE_ENABLED,
             KEY_MANUAL_COLOR_ENABLED,
             KEY_MANUAL_SEED_COLOR,

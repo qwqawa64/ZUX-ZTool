@@ -93,6 +93,8 @@ import com.qimian233.ztool.ui.components.ZToolOutlinedTextField
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.theme.LocalThemeRevealController
+import com.qimian233.ztool.ui.theme.LocalUseAlternativeIcon
+import com.qimian233.ztool.ui.theme.appLogoRes
 import com.qimian233.ztool.ui.theme.ztoolRevealCoverColor
 import com.qimian233.ztool.viewmodel.FirstrunAgreementViewModel
 import kotlinx.coroutines.delay
@@ -352,7 +354,9 @@ private fun SplashPage(
             verticalArrangement = Arrangement.Center
         ) {
             Image(
-                bitmap = ImageBitmap.imageResource(R.drawable.splash_logo),
+                bitmap = ImageBitmap.imageResource(
+                    appLogoRes(LocalUseAlternativeIcon.current)
+                ),
                 contentDescription = stringResource(R.string.common_splash_logo_description),
             )
             Spacer(modifier = Modifier.height(64.dp))

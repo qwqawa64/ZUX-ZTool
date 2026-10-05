@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.FormatColorFill
+import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material3.Icon
@@ -103,6 +104,7 @@ fun ThemeSettingsRoute(
             onMaterialPaletteChanged = viewModel::setMaterialPalette,
             onDynamicColorChanged = viewModel::setDynamicColorEnabled,
             onAmoledBlackChanged = viewModel::setAmoledBlackEnabled,
+            onUseAlternativeIconChanged = viewModel::setUseAlternativeIcon,
             onPredictiveBackGestureChanged = viewModel::setPredictiveBackGestureEnabled,
             onEnableFloatingBottomBarChanged = viewModel::setEnableFloatingBottomBar,
             onEnableFloatingBottomBarBlurChanged = viewModel::setEnableFloatingBottomBarBlur,
@@ -129,6 +131,7 @@ private fun ThemeSettingsScreen(
     onMaterialPaletteChanged: (MaterialPalette) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
+    onUseAlternativeIconChanged: (Boolean) -> Unit,
     onPredictiveBackGestureChanged: (Boolean) -> Unit,
     onEnableFloatingBottomBarChanged: (Boolean) -> Unit,
     onEnableFloatingBottomBarBlurChanged: (Boolean) -> Unit,
@@ -176,6 +179,7 @@ private fun ThemeSettingsScreen(
                         onMaterialPaletteChanged = onMaterialPaletteChanged,
                         onDynamicColorChanged = onDynamicColorChanged,
                         onAmoledBlackChanged = onAmoledBlackChanged,
+                        onUseAlternativeIconChanged = onUseAlternativeIconChanged,
                         onPredictiveBackGestureChanged = onPredictiveBackGestureChanged,
                         onEnableFloatingBottomBarChanged = onEnableFloatingBottomBarChanged,
                         onEnableFloatingBottomBarBlurChanged = onEnableFloatingBottomBarBlurChanged,
@@ -201,6 +205,7 @@ private fun themeSettingsSections(
     onMaterialPaletteChanged: (MaterialPalette) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onAmoledBlackChanged: (Boolean) -> Unit,
+    onUseAlternativeIconChanged: (Boolean) -> Unit,
     onPredictiveBackGestureChanged: (Boolean) -> Unit,
     onEnableFloatingBottomBarChanged: (Boolean) -> Unit,
     onEnableFloatingBottomBarBlurChanged: (Boolean) -> Unit,
@@ -331,6 +336,16 @@ private fun themeSettingsSections(
                         optionLabel = { it.label },
                         onOptionSelected = { onMaterialPaletteChanged(it.value) },
                         icon = Icons.Rounded.Style
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        key = "theme_use_alternative_icon",
+                        title = stringResource(R.string.page_settings_use_alternative_icon_title),
+                        summary = stringResource(R.string.page_settings_use_alternative_icon_summary),
+                        checked = settings.useAlternativeIcon,
+                        onCheckedChange = onUseAlternativeIconChanged,
+                        icon = Icons.Rounded.Image
                     )
                 )
                 add(
