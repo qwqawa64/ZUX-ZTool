@@ -60,15 +60,29 @@ import java.lang.reflect.Method
  *
  * Resulting feel versus stock: the first *stock* step (1/15 of the range)
  * arrives after 0.17 s instead of 0.05 s — about 3.4x finer control at the
- * start; the tail runs at exactly the stock rate, so it never drags; a full
- * sweep takes **0.93 s** instead of 0.75 s.
+ * start.
  *
- * Bound worth knowing: with one fine step per tick and the 5 ms tick floor
- * (= 200 fine steps/s = exactly the stock rate), 0.93 s is the fastest
- * *shaped* sweep that exists — a shaped curve cannot reach stock's 0.75 s,
- * only a flat 200/s curve can (which is not a ramp). Going faster requires
- * moving a whole stock step (10 fine steps) per tick, which is precisely what
- * HyperOS does — see docs/research/hyperos-volume/README.md §7.1.
+ * ## Why the sweep is ~3 s and not the ~0.93 s the shape implies
+ *
+ * The shape above wants 200 fine steps/s at the tail, but that is **not
+ * renderable** on this ROM: one tick = one AudioService adjust ≈ 2.9 ms of
+ * synchronous work plus a binder into SystemUI, so ~110 ticks/s already
+ * saturates the volume panel's UI thread and it stops repainting mid-sweep
+ * ("the head animates, then it freezes and jumps"). Measured from the
+ * `ramp: stop …` log on 2026-10-06 (150-step sweeps of 1.44-1.63 s at
+ * ~110 ticks/s, while the curve intended 0.93 s).
+ *
+ * So [MIN_TICK_MS] is the real cap, and the effective curve is
+ * **20 → 50 fine steps/s** (0.5 → 5 stock-steps/s), a full sweep in **~3.0 s**,
+ * with 150 updates and every update a real volume change the panel can draw.
+ *
+ * Getting stock's 0.75-0.93 s *and* a shaped ramp needs fewer updates, which
+ * needs more than one step per update — impossible through
+ * `adjustSuggestedStreamVolume` (fixed at one user step per call), but
+ * possible through `AudioService.setStreamVolume(stream, absoluteIndex, …)`.
+ * That is exactly the trick behind HyperOS's `getMusicVolumeStep` returning
+ * `maxVolume / 15` (10 steps per press) — see
+ * docs/research/hyperos-volume/README.md §7.1.
  */
 @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
 class VolumeKeyNonlinearRamp : SystemHookModule() {
@@ -118,14 +132,22 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
                 stopDriver("native heartbeat lost")
                 return
             }
+            val tickStart = SystemClock.elapsedRealtime()
             invokeOriginalAdjust(sessionDirection, null)
             sessionApplied++
+            val workMs = SystemClock.elapsedRealtime() - tickStart
             val elapsedSec = (SystemClock.elapsedRealtime() - sessionStart) / 1000.0
             val speed = (V0_STEPS_PER_SEC + ACCEL_STEPS_PER_SEC2 * elapsedSec)
                 .coerceAtMost(MAX_STEPS_PER_SEC)
             val intervalMs = (1000.0 / speed).toLong().coerceIn(MIN_TICK_MS, 1000L)
             driverIntervalMs = intervalMs
-            driverHandler.postDelayed(this, intervalMs)
+            // `invokeOriginalAdjust` runs the whole AudioService chain
+            // synchronously (measured ~2.9 ms on this ROM, and it grows with
+            // the tick rate). postDelayed would add that to every single
+            // period and stretch the curve — e.g. 5 ms intended + 2.9 ms work =
+            // 7.9 ms real, which is why a full sweep took 1.4 s instead of the
+            // intended 0.93 s. Subtract it so the curve means what it says.
+            driverHandler.postDelayed(this, (intervalMs - workMs).coerceAtLeast(1L))
         }
     }
 
@@ -382,12 +404,17 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
             ((MAX_STOCK_RATE * MAX_STOCK_RATE - V0_STOCK_RATE * V0_STOCK_RATE)
                 / (2.0 * ACCEL_RANGE_FRACTION * STOCK_STEPS)) * FINE_PER_STOCK
 
-        /** Lower bound of the driver tick interval (ms). At the 150-step scale
-         *  this floor (5 ms = 200/s) is exactly [MAX_STEPS_PER_SEC], so the cap
-         *  and the floor coincide; each step also runs the full AudioService
-         *  chain synchronously on the main thread, so the real ceiling may be
-         *  lower — check the "ramp: stop ... applied=N in Xms" debug log. */
-        private const val MIN_TICK_MS = 5L
+        /** Lower bound of the driver tick interval (ms).
+         *
+         *  This is the binding constraint, not [MAX_STEPS_PER_SEC]: the volume
+         *  panel can only render ~60 updates/s, and each tick costs ~2.9 ms of
+         *  synchronous AudioService work plus a binder into SystemUI, so a
+         *  driver that emits faster than this saturates the panel's UI thread
+         *  and it stops repainting mid-sweep ("frozen, then it jumps"). 20 ms
+         *  caps the driver at 50 updates/s — below the frame rate, above the
+         *  native 20/s loop. Raise it towards 30-33 ms if the panel still
+         *  stutters; the trade-off is a proportionally longer sweep. */
+        private const val MIN_TICK_MS = 20L
 
         /** Fixed grid for ADJUST_SAME panel refreshes between real steps. */
         private const val REFRESH_INTERVAL_MS = 50L
