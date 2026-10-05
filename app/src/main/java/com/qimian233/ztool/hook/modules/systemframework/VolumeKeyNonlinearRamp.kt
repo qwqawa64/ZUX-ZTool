@@ -376,11 +376,18 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
         }
 
         lastTickTime = now
-        val newSession = !driverActive && (
-            direction != sessionDirection ||
-                sessionStart == 0L ||
-                now - sessionStart > SESSION_GAP_MS
-            )
+        // A press starts a session unless the driver is currently running and
+        // the direction has not changed — in that case the tick belongs to the
+        // hold the driver already owns and must be dropped.
+        //
+        // `driverActive` is cleared by the release cue (ADJUST_SAME) at key-up,
+        // so a press after a tap always starts fresh. The previous version also
+        // required `direction != sessionDirection || sessionStart == 0 ||
+        // now - sessionStart > SESSION_GAP_MS`, and since `sessionStart` is never
+        // refreshed by dropped ticks, that swallowed every quick same-direction
+        // tap within 600 ms of the *previous session start* — i.e. tapping
+        // quickly moved the volume on every other press.
+        val newSession = !driverActive || direction != sessionDirection
         if (newSession) {
             sessionStart = now
             sessionApplied = 1
@@ -556,8 +563,5 @@ class VolumeKeyNonlinearRamp : SystemHookModule() {
 
         /** No native tick for this long while holding = key released. */
         private const val NATIVE_TICK_TIMEOUT_MS = 300L
-
-        /** Session gap (ms) separating two presses. */
-        private const val SESSION_GAP_MS = 600L
     }
 }

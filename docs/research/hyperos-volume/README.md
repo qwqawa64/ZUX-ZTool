@@ -1104,3 +1104,14 @@ update rate *falls* to 20–40/s — i.e. faster **and** cheaper than one step p
 Reducing the step count instead (150 → 100) buys only a proportional 33 % while costing
 slider resolution, the 150/15 = 10 anchoring, and a re-migration of the persisted
 `volume_music*` settings.
+
+**Two traps in the session gate**, both worth copying into any similar driver:
+
+- Decide "is this tick part of the hold I already own?" from a **liveness flag** (cleared
+  by the release cue), never from a time gap since the session start. A gap test keyed on
+  the session start reads *drop* for the next press whenever the user taps twice inside
+  the gap, so quick fine adjustment silently moves the volume on only every other press.
+- The native loop's release cue is an `ADJUST_SAME` (`direction == 0`) call on the same
+  entry point, so a driver that re-enters that entry point for its own silent
+  `ADJUST_SAME` refreshes must keep a re-entry flag — otherwise its own refreshes
+  terminate the session they are meant to keep alive.
