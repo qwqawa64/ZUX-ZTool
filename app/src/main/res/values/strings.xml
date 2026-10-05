@@ -826,7 +826,6 @@
     <string name="page_settings_amoled_black_title">AMOLED 纯黑模式</string>
     <string name="page_settings_amoled_black_summary">在暗色模式使用纯黑主题</string>
     <string name="page_settings_use_alternative_icon_title">使用替代图标</string>
-    <string name="page_settings_use_alternative_icon_summary">启动器图标、启动页图标与关于页 Logo 改用替代图标；monochrome 图标保持不变</string>
     <string name="page_settings_predictive_back_gesture_title">预测性返回手势</string>
     <string name="page_settings_predictive_back_gesture_summary">启用预测性返回手势动画</string>
     <string name="page_settings_enable_floating_bottom_bar_title">悬浮底栏</string>

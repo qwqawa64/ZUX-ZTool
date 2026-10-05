@@ -342,7 +342,6 @@ private fun themeSettingsSections(
                     SettingItem.Switch(
                         key = "theme_use_alternative_icon",
                         title = stringResource(R.string.page_settings_use_alternative_icon_title),
-                        summary = stringResource(R.string.page_settings_use_alternative_icon_summary),
                         checked = settings.useAlternativeIcon,
                         onCheckedChange = onUseAlternativeIconChanged,
                         icon = Icons.Rounded.Image
