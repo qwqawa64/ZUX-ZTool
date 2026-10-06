@@ -254,9 +254,9 @@ private fun acquireCommandSlot(): Boolean = commandLock.lock().use {  // :175-20
 | 5 | `ConfigUpgrade` 去重 + 线程安全（§3.5） | 中（需确认保留哪一个入口） | ✅ 已完成 |
 | 6 | `checkDexIndexOnEntry` 判定 → `Dispatchers.IO` | 低 | ✅ 已完成 |
 | 7 | 根检测提前到 Application（§3.7） | 中（需验证缓存命中语义） | ✅ 已完成 |
-| 8 | 旋转重跑守卫（§3.8） | 中（涉及 Manifest 契约） | 待办 |
-| 9 | Baseline Profile + Release 口径测量（§3.10） | 低 | 待办 |
-| 10 | 主题预热 / 调色板缓存（§3.9） | 低 | 待办 |
+| 8 | 旋转重跑守卫（§3.8） | 中（涉及 Manifest 契约） | ✅ 已完成 |
+| 9 | Baseline Profile + Release 口径测量（§3.10） | 低 | ✅ 基建已就位，profile 待用 Macrobenchmark 重生成 |
+| 10 | 主题预热 / 调色板缓存（§3.9） | 低 | ✅ 已完成 |
 
 第 1~4 步互不依赖，可以在同一个 `onCreate` 尾部并发发起，一次性拿掉那里
 （以及 `ConfigUpgrade` 那次调用）的主线程阻塞。
@@ -381,6 +381,66 @@ NavController 一定是"从未 setGraph 过"的那个——即 effect 抢跑，�
 
 顺带确认：全仓库只有这一处读 `navController.graph`；`ZToolNavHost` 里那几十处
 `navController.navigate(...)` 都在点击回调中，执行时 graph 必然已就绪。
+
+## 5.5 落地记录（第 8~10 步）
+
+**第 8 步 — 配置变更不再重建 Activity**
+
+Manifest 给 `MainActivity` 加了：
+
+```xml
+android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
+```
+
+- 旋转 / 分屏改尺寸 / 折叠展开 / 深浅色切换现在就地处理，不再重建 Activity，
+  于是 `onCreate` 那条启动链路（主题加载、firstrun 判定、维护任务）不会被重跑；
+  Compose 通过 `LocalConfiguration` 读取新配置。
+- **刻意不含 `locale`**：语言变更仍应重建 Activity。
+- `uiMode` 必须配 `onConfigurationChanged`：系统栏图标明暗是命令式状态，
+  只由 `setupSystemBars` 维护，不补这一刀的话应用内切换深色模式会留下上一极性的状态栏图标。
+
+同时把三项一次性维护任务改成**进程级**（`ZToolApplication.startupScope` +
+`MainActivity` companion 里的 `AtomicBoolean`）：
+
+| 任务 | 为什么必须一次性 |
+| --- | --- |
+| `syncLsposedLogs` | 一次 root `su` 往返 + 整目录复制 |
+| `healLauncherAliasState` | PackageManager 组件写事务会触发包变更广播 |
+| `cleanupAppLogsIfNeeded` | 目录全量 `listFiles()` + 逐文件 `length()` |
+
+之所以要进程级而不只是 `configChanges`：locale 变更、"不保留活动"、以及系统主动重建
+都会绕过 `configChanges`。之所以用 Application 的 scope 而不是 `lifecycleScope`：
+先置位 `AtomicBoolean` 再让 Activity 销毁取消协程，会让这批任务彻底不执行。
+
+`applyHideFromRecents()` **仍留在 Activity 且每次执行**：它必须在"本 Activity 所在的
+任务被快照进最近任务之前"生效，进程级一次性会让它以 `getAppTasks()` 为空而静默失效。
+
+**第 9 步 — Baseline Profile 基建**
+
+- 新增 `androidx.profileinstaller:profileinstaller:1.4.1`：API 31+ 平台不再直接从
+  APK 应用 baseline profile，需要这个库来安装。
+- 新增 `app/src/main/baseline-prof.txt`，覆盖冷启动路径。**这份是手写的种子**
+  （类级别条目，来自编译产物里核对过的类描述符，而不是猜的），
+  刻意保守——类级条目在方法签名变化时依然有效。
+
+要拿到真实收益，应该用 Macrobenchmark 生成而不是手写。做法：新建 `:baselineprofile`
+模块（`com.android.test` + `androidx.benchmark:benchmark-macro-junit4`），
+对 `StartupTimingMetric` 跑 `CompilationMode.Partial(BaselineProfileMode.Require)`，
+生成的 profile 覆盖回本文件。文档 §6 的测量步骤保持不变。
+
+**第 10 步 — 主题预热**
+
+- `ZToolApplication.onCreate` 在后台先读一次 `ThemePreferencesRepository.loadSettings()`。
+  它本身没有计算量，作用是把首次 `getSharedPreferences` 的 XML 解析搬到主线程之外——
+  `MainActivity` 必须在 `setContent` 之前拿到主题以避免首帧主题闪烁，所以那里无法异步化，
+  只能提前把文件读热。
+- `ZToolTheme` 里 `colorScheme.toMiuixColors(...)` / `miuixDarkColorScheme()` 原本
+  **没有** `remember`，每次重组都会重跑一遍映射；已改为 `remember(colorScheme, effectiveDarkTheme)`。
+
+未做：`buildZToolColorScheme` 的 HCT 调色板推导仍是首帧内的主线程计算。
+不加进程级缓存的理由是——**冷启动没有可复用的结果**（缓存对冷启动没有帮助），
+而第 8 步之后旋转也不再重建 Activity，所以唯一的重复计算路径已经消失；
+再叠一层跨进程缓存只会引入壁纸换色后调色板不更新的陈旧问题。
 
 ## 6. 验证方式
 

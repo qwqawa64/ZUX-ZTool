@@ -98,8 +98,14 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+        <!-- configChanges：几何变更与 uiMode 就地处理，避免旋转 / 分屏改尺寸 / 深浅色切换
+             重建 Activity 并重跑整条启动路径（root 的 LSPosed 日志同步、alias 的
+             PackageManager 写事务、主题加载）。Compose 侧通过 LocalConfiguration 读取，
+             uiMode 由 MainActivity.onConfigurationChanged 重新应用系统栏外观。
+             刻意不含 locale：语言变更仍应重建 Activity。 -->
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
             android:exported="true">
             <!-- Xposed 模块约定入口：LSPosed 管理器的“启动”菜单优先解析该 category
                  （AppHelper.getSettingsIntent），保证桌面 alias 被禁用后仍可从 LSPosed 打开，

@@ -139,12 +139,16 @@ fun ZToolTheme(
     // components receive the same scheme mapped onto Miuix color roles.
     // Circuit breaker: when dynamic color is disabled, Miuix stops consuming the
     // externally derived palette and falls back to its built-in default palette.
-    val miuixColors = if (effectiveSettings.dynamicColorEnabled) {
-        colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme)
-    } else if (effectiveDarkTheme) {
-        miuixDarkColorScheme()
-    } else {
-        miuixLightColorScheme()
+    // Remembered because [colorScheme] is itself remembered and a plain mapping of it
+    // would otherwise be redone on every recomposition of this composable.
+    val miuixColors = remember(colorScheme, effectiveDarkTheme) {
+        if (effectiveSettings.dynamicColorEnabled) {
+            colorScheme.toMiuixColors(darkTheme = effectiveDarkTheme)
+        } else if (effectiveDarkTheme) {
+            miuixDarkColorScheme()
+        } else {
+            miuixLightColorScheme()
+        }
     }
     val themedContent: @Composable () -> Unit = {
         MaterialTheme(

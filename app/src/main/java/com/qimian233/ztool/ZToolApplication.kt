@@ -2,9 +2,11 @@ package com.qimian233.ztool
 
 import android.app.Application
 import android.content.Context
+import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +40,17 @@ class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
         @Volatile
         var isModuleActivated: Boolean = false
             private set
+
+        /**
+         * Process-lifetime scope for startup work that must outlive any Activity.
+         * Never cancelled: the process going away is the only teardown.
+         *
+         * The Activity must not own this work — it can be recreated for reasons the
+         * manifest cannot suppress (locale change, "don't keep activities"), and
+         * cancelling a startup task mid-flight while a caller has already claimed a
+         * "did this run" flag would drop it entirely.
+         */
+        val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
 
     // Offline DexKit indexing triggers have been migrated to the home page entry check
@@ -47,26 +60,30 @@ class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
     // Therefore the Application startup phase no longer scans automatically.
 
     /**
-     * Process-lifetime scope for startup work that must outlive any Activity.
-     * Never cancelled: the process going away is the only teardown.
+     * Startup warm-up, all of it off the main thread and ahead of the Activity:
      *
-     * Its dispatcher is the serial shell dispatcher on purpose — a parallel root
-     * probe would race the other startup root commands, and EnhancedShellExecutor
-     * fails such a command outright instead of queueing it.
+     * 1. The root probe. `environmentReady` is `isModuleActive && isRootAvailable` and
+     *    the root half needs a `su` round trip, but the probe used to start only once
+     *    HomeRoute composed — leaving the shell thread idle for the whole Activity
+     *    startup. `checkRootAccess()` caches its outcome for 30s, so the home path then
+     *    reads it instead of paying for the round trip itself. The serial shell
+     *    dispatcher is deliberate: a parallel probe would race the other startup root
+     *    commands, and EnhancedShellExecutor fails such a command outright instead of
+     *    queueing it.
+     * 2. The theme preferences. Their first `getSharedPreferences` call parses the
+     *    backing XML, which [MainActivity] does on the main thread because it needs the
+     *    theme before `setContent` to avoid a first-frame flash — so it cannot await
+     *    this. Parsing the file here instead makes that main-thread read a memory hit.
      */
-    private val applicationScope = CoroutineScope(SupervisorJob() + EnhancedShellExecutor.shellWorkDispatcher)
-
     override fun onCreate() {
         super.onCreate()
 
-        // Warm the root probe off the main thread, ahead of the home screen's
-        // environment gate. `environmentReady` is `isModuleActive && isRootAvailable`
-        // and the root half needs a `su` round trip, but the probe used to start
-        // only once HomeRoute composed — leaving the shell thread idle for the whole
-        // Activity startup. checkRootAccess() caches its outcome for 30s, so the
-        // home path then reads it instead of paying for the round trip itself.
-        applicationScope.launch {
+        startupScope.launch(EnhancedShellExecutor.shellWorkDispatcher) {
             EnhancedShellExecutor.getInstance().checkRootAccess()
+        }
+
+        startupScope.launch(Dispatchers.IO) {
+            ThemePreferencesRepository(this@ZToolApplication).loadSettings()
         }
     }
 

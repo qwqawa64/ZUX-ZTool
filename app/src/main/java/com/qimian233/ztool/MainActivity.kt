@@ -70,6 +70,7 @@ import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.ui.theme.ztoolRevealCoverColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -174,28 +175,54 @@ class MainActivity : ComponentActivity(),
         // Everything below is off the first-frame critical path: onCreate returns
         // without waiting for any of it. The tasks are independent and run
         // concurrently, except the shell work which is serialized.
+        //
+        // Process-scoped, not Activity-scoped: these are one-shot maintenance tasks,
+        // and MainActivity can be recreated for reasons the manifest cannot suppress
+        // (locale change, "don't keep activities", a system-initiated recreation).
+        // Re-running them per recreation would mean a root `su` round trip and
+        // PackageManager component writes on every such event. The scope is the
+        // Application's so a rotation landing mid-flight cannot cancel the work after
+        // the flag below has already been claimed.
         val settingsRepo = SettingsRepository(applicationContext)
         // A freshly launched task is not excluded from recents by default;
-        // re-apply the persisted choice before the task gets snapshotted.
+        // re-apply the persisted choice before the task gets snapshotted. Stays on the
+        // main thread and runs per Activity: it must see the task this Activity lives in.
         settingsRepo.applyHideFromRecents()
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            // Component states survive app updates and a restored config can leave
-            // the icon pointing at the wrong artwork (or at none); re-assert the
-            // persisted selection. One pass, because the user-facing alias pair and
-            // the debug-only LeakCanary alias share the same PackageManager read.
-            settingsRepo.healLauncherAliasState()
-        }
+        if (maintenanceStarted.compareAndSet(false, true)) {
+            val startupScope = ZToolApplication.startupScope
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            settingsRepo.cleanupAppLogsIfNeeded()
-        }
+            startupScope.launch(Dispatchers.IO) {
+                // Component states survive app updates and a restored config can leave
+                // the icon pointing at the wrong artwork (or at none); re-assert the
+                // persisted selection. One pass, because the user-facing alias pair and
+                // the debug-only LeakCanary alias share the same PackageManager read.
+                settingsRepo.healLauncherAliasState()
+            }
 
-        // Root shell: copying the LSPosed log directory can take hundreds of
-        // milliseconds, so it must never run on the main thread.
-        lifecycleScope.launch(EnhancedShellExecutor.shellWorkDispatcher) {
-            settingsRepo.syncLsposedLogs()
+            startupScope.launch(Dispatchers.IO) {
+                settingsRepo.cleanupAppLogsIfNeeded()
+            }
+
+            // Root shell: copying the LSPosed log directory can take hundreds of
+            // milliseconds, so it must never run on the main thread.
+            startupScope.launch(EnhancedShellExecutor.shellWorkDispatcher) {
+                settingsRepo.syncLsposedLogs()
+            }
         }
+    }
+
+    /**
+     * Configuration changes listed in the manifest are handled in place instead of
+     * recreating the Activity. Compose picks the new configuration up through
+     * [androidx.compose.ui.platform.LocalConfiguration], but the system bar
+     * appearance is imperative state that only [setupSystemBars] maintains, so it has
+     * to be re-applied here — without this, toggling dark mode while the app is open
+     * would leave the status/navigation icons on the previous polarity.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        setupSystemBars(themeSettings)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -307,6 +334,12 @@ class MainActivity : ComponentActivity(),
         private const val KEY_CURRENT_ROUTE = "current_route"
         private const val KEY_ENVIRONMENT_READY = "environment_ready"
         private const val KEY_FIRSTRUN_DISPLAY_MODE = "firstrun_display_mode"
+
+        /**
+         * Guards the one-shot startup maintenance against Activity recreation.
+         * Process-scoped by virtue of being a companion property.
+         */
+        private val maintenanceStarted = AtomicBoolean(false)
     }
 }
 
