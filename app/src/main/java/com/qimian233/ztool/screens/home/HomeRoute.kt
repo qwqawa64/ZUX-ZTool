@@ -5,8 +5,11 @@ import android.content.Intent
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,8 +58,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -383,6 +389,43 @@ private fun NonZuxOsCard(onDismiss: () -> Unit) {
 }
 
 /**
+ * Press feedback for a whole card: scales it down slightly while a finger is held
+ * on it. It listens on the Initial pointer pass so it also works for containers
+ * whose children consume the press themselves (the settings list, for example).
+ */
+@Composable
+private fun Modifier.cardPressScale(pressedScale: Float = 0.98f): Modifier {
+    val isPressed = remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed.value) pressedScale else 1f,
+        label = "cardPressScale"
+    )
+    return this
+        .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+        .pointerInput(Unit) {
+            val touchSlop = viewConfiguration.touchSlop
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                isPressed.value = true
+                try {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        // A drag belongs to the surrounding scroll container, not to the card.
+                        if (!change.pressed) break
+                        if ((change.position - down.position).getDistance() > touchSlop) break
+                    }
+                } finally {
+                    isPressed.value = false
+                }
+            }
+        }
+}
+
+/**
  * Standing warning for every build that did not come out of the official release
  * pipeline (nightly / manually triggered CI, local builds). Intentionally not
  * dismissible: the fact cannot change while the APK stays installed.
@@ -390,7 +433,12 @@ private fun NonZuxOsCard(onDismiss: () -> Unit) {
 @Composable
 private fun DevBuildCard() {
     ZToolCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .cardPressScale()
+            .clickable(onClick = {}),
         containerColor = LocalZToolColorScheme.current.errorContainer
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -677,7 +725,12 @@ private fun SystemInfoCard(state: HomeUiState) {
     )
 
     ZToolSettingsList(
-        modifier = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) Modifier.padding(horizontal = 8.dp) else Modifier,
+        modifier = Modifier
+            .then(
+                if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) Modifier.padding(horizontal = 8.dp)
+                else Modifier
+            )
+            .cardPressScale(),
         sections = listOf(
             SettingSection(
                 items = infoRows.map { row ->
