@@ -45,6 +45,7 @@ import com.qimian233.ztool.ModuleActivationProbe
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.AgreementRepository
 import com.qimian233.ztool.data.home.HomeRepository
+import com.qimian233.ztool.data.home.HomeTipRepository
 import com.qimian233.ztool.screens.home.HomeViewModelFactory
 import com.qimian233.ztool.ui.components.ExpressiveSectionItems
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
@@ -81,7 +82,10 @@ fun SettingsAboutRoute(
         )
         ViewModelProvider(
             activity,
-            HomeViewModelFactory(repository)
+            HomeViewModelFactory(
+                repository = repository,
+                tipRepository = HomeTipRepository(context.applicationContext)
+            )
         )[HomeViewModel::class.java]
     }
     val homeState by homeViewModel.uiState.collectAsState()

@@ -7,6 +7,8 @@ import android.os.Looper
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.XposedServiceBridge
+import com.qimian233.ztool.data.hotreload.HotReloadNoticeBus
+import com.qimian233.ztool.data.hotreload.HotReloadTrigger
 import io.github.libxposed.service.HookedTarget
 import io.github.libxposed.service.HotReloadResult
 import io.github.libxposed.service.XposedService
@@ -65,6 +67,11 @@ class AdvancedSettingsRepository(
         val died = AtomicInteger(0)
         val details = java.util.Collections.synchronizedList(mutableListOf<HotReloadDetail>())
 
+        // Published here rather than from the ViewModel: this is the point where the request is
+        // known to be going out, and every early return above is a reload that will not happen and
+        // must not make the home card claim one. See HotReloadNoticeRepository.
+        HotReloadNoticeBus.publish(HotReloadTrigger.MANUAL)
+
         for (target in eligible) {
             val callback = object : XposedService.HotReloadCallback {
                 override fun onHotReloadResult(target: HookedTarget, result: HotReloadResult) {
@@ -112,7 +119,7 @@ class AdvancedSettingsRepository(
             }
 
             try {
-                XposedServiceBridge.hotReloadModule(target, Bundle(), callback)
+                XposedServiceBridge.hotReloadModule(target, manualReloadExtras(), callback)
             } catch (e: Exception) {
                 Log.e(TAG, "Exception while starting hot reload: ${target.processName}", e)
                 failed.incrementAndGet()
@@ -272,11 +279,33 @@ class AdvancedSettingsRepository(
 
     private data class ResetOutcome(val success: Boolean, val message: String)
 
+    /**
+     * The extras handed to a reload this app requests.
+     *
+     * Non-null on purpose. libxposed reports null extras for a reload the framework started on its
+     * own after a module update, so a non-null bundle is what lets hook code tell a reload a user
+     * asked for from one an update caused; [EXTRA_HOT_RELOAD_TRIGGER] makes that readable without
+     * relying on the distinction alone. Both values are classloader-neutral, as the API requires of
+     * anything crossing that boundary.
+     */
+    private fun manualReloadExtras(): Bundle = Bundle().apply {
+        putString(EXTRA_HOT_RELOAD_TRIGGER, HOT_RELOAD_TRIGGER_MANUAL)
+    }
+
     companion object {
         private const val TAG = "AdvancedRepo"
         private const val KEY_RESET_AOD = "doze_always_on"
         private const val KEY_RESET_AUTORUN = "autorun"
         private const val KEY_RESET_MISTOUCH = "mistouch"
+
+        /**
+         * Key the hook side reads from `HotReloadingParam.extras` to recognise a manually
+         * requested reload. Shared with hook code; keep it stable once a hook reads it.
+         */
+        const val EXTRA_HOT_RELOAD_TRIGGER = "ztool.hot_reload.trigger"
+
+        /** Value of [EXTRA_HOT_RELOAD_TRIGGER] for a reload the user requested from this screen. */
+        const val HOT_RELOAD_TRIGGER_MANUAL = "manual"
     }
 }
 

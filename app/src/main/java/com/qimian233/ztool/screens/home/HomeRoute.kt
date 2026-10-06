@@ -39,6 +39,7 @@ import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.ModuleActivationProbe
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.HomeRepository
+import com.qimian233.ztool.data.home.HomeTipRepository
 import com.qimian233.ztool.ui.components.DexIndexProgressDialog
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolFloatingActionButton
@@ -68,7 +69,10 @@ fun HomeMainRoute(
         )
         ViewModelProvider(
             activity,
-            HomeViewModelFactory(repository)
+            HomeViewModelFactory(
+                repository = repository,
+                tipRepository = HomeTipRepository(context.applicationContext)
+            )
         )[HomeViewModel::class.java]
     }
     val uiState by viewModel.uiState.collectAsState()
@@ -179,12 +183,13 @@ private fun executeReboot(
 }
 
 internal class HomeViewModelFactory(
-    private val repository: HomeRepository
+    private val repository: HomeRepository,
+    private val tipRepository: HomeTipRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
-            return HomeViewModel(repository) as T
+            return HomeViewModel(repository, tipRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

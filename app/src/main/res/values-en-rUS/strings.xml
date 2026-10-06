@@ -837,6 +837,21 @@
     <string name="page_home_non_zuxos_dismiss">Don\'t show again</string>
     <string name="page_home_dev_build_title">Development build</string>
     <string name="page_home_dev_build_warn">This is a development build. It may contain unverified changes and is not guaranteed to be stable. Switch back to an official release for daily use.</string>
+    <!--Home tip card-->
+    <string name="page_home_tip_title">Tip</string>
+    <string name="page_home_tip_extreme_refresh_rate">Enable extreme high refresh rate for the best animations</string>
+    <string name="page_home_tip_misans_font">Flash MiSans for the best MIUIx theme experience</string>
+    <string name="page_home_tip_feature_count_power">More features enabled means more battery drain</string>
+    <string name="page_home_tip_boundary_values">Don\'t rush into boundary-value options. We usually test those. Usually......</string>
+    <string name="page_home_tip_notification_permission">ZTool needs no notification permission. If you like a permanent notification... fine... nice...</string>
+    <string name="page_home_tip_report_issue">To report a problem, use About → Open Issues</string>
+    <string name="page_home_tip_freeform_priority">Launcher Force Freeform outranks the Freeform/Split rules on the settings page</string>
+    <string name="page_home_tip_nightly_build">Sign in on our GitHub Actions page for the latest nightly build</string>
+    <string name="page_home_tip_debug_leak_canary">Debug builds bundle a leak analyzer: a Leak icon appears, and ZTool asks for notification permission to report leaks</string>
+    <string name="page_home_tip_release_performance">Release builds of Compose apps far outperform debug builds</string>
+    <string name="page_home_tip_pull_request">PRs welcome, or just watch our progress: https://github.com/qwqawa64/ZUX-ZTool</string>
+    <string name="page_home_tip_crash_log">Can\'t export crash logs from the app? Capture them with LogFox and report.</string>
+    <string name="page_home_tip_hot_reload_warning">Don\'t trust hot reload, we\'re still taming it! Restart the scope manually to apply new features.</string>
     <!--Home card preview (dev-build-only visual debugging screen)-->
     <string name="home_card_preview_title">Home card preview</string>
     <string name="home_card_preview_note">This screen shares the home screen\'s card code and container. Mock the environment to reproduce cards that cannot be produced on demand and check spacing and geometry.</string>
@@ -847,6 +862,7 @@
     <string name="home_card_preview_module_active">Module active</string>
     <string name="home_card_preview_root_available">Root available</string>
     <string name="home_card_preview_update_available">Update available</string>
+    <string name="home_card_preview_tip">Tip card</string>
     <string name="home_card_preview_variant_hint">This variant is not part of the home layout; it only checks the update card\'s minimum height with a single changelog line. Its width matches the home update card exactly.</string>
     <string name="home_card_preview_ignored_placeholder">Ignored in the preview; the card would not appear on the home screen right now</string>
     <string name="home_card_preview_restore">Show again</string>

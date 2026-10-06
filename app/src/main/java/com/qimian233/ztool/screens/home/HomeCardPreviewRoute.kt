@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.home.HomeTip
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolCard
@@ -292,6 +293,14 @@ private fun MockStateDialog(
                                             state.copy(updateInfo = if (it) previewUpdateLong() else null)
                                         )
                                     }
+                                ),
+                                SettingItem.Switch(
+                                    key = "deco_preview_tip",
+                                    title = stringResource(R.string.home_card_preview_tip),
+                                    checked = state.tip != null,
+                                    onCheckedChange = {
+                                        onStateChange(state.copy(tip = if (it) previewTip() else null))
+                                    }
                                 )
                             )
                         )
@@ -335,7 +344,18 @@ private fun previewHomeState() = HomeUiState(
     isCheckingAppUpdate = false,
     updateCheckCompleted = true,
     updateCheckError = null,
-    updateInfo = previewUpdateLong()
+    updateInfo = previewUpdateLong(),
+    tip = previewTip()
+)
+
+/**
+ * An ordinary tip, not the hot reload warning: the warning reuses the error container the two
+ * cards above it already use, while this variant's palette appears nowhere else in the column, so
+ * it is the one worth looking at.
+ */
+private fun previewTip() = HomeTip(
+    messageRes = R.string.page_home_tip_extreme_refresh_rate,
+    hotReloadWarning = false
 )
 
 private fun previewUpdateLong() = UpdateInfo(

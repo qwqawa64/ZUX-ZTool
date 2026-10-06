@@ -8,6 +8,8 @@ import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.R
 import com.qimian233.ztool.ZToolApplication
 import com.qimian233.ztool.data.home.HomeRepository
+import com.qimian233.ztool.data.home.HomeTip
+import com.qimian233.ztool.data.home.HomeTipRepository
 import com.qimian233.ztool.data.home.UpdateCheckResult
 import com.qimian233.ztool.dexindex.base.DexIndexManager
 import com.qimian233.ztool.dexindex.base.DexIndexProgress
@@ -16,12 +18,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
 class HomeViewModel(
-    private val repository: HomeRepository
+    private val repository: HomeRepository,
+    private val tipRepository: HomeTipRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -53,6 +57,17 @@ class HomeViewModel(
                 _dexIndexState.value = _dexIndexState.value.copy(progress = p)
             }
         }
+
+        // A hot reload triggered from the Advanced options screen has to reach this card at once.
+        // The launch decision in start() ran long before it, and this ViewModel outlives the home
+        // destination, so there is nothing left that would look again.
+        viewModelScope.launch {
+            tipRepository.pendingHotReload.collect { notice ->
+                if (notice != null) {
+                    _uiState.value = _uiState.value.copy(tip = tipRepository.takeHotReloadTip())
+                }
+            }
+        }
     }
 
     fun start() {
@@ -62,8 +77,25 @@ class HomeViewModel(
             isNonZuxOsWarningDismissed = repository.isNonZuxOsWarningDismissed()
         )
         checkEnvironment()
+        resolveLaunchTip()
         if (repository.isAutoCheckUpdateEnabled()) {
             checkAppUpdate()
+        }
+    }
+
+    /**
+     * The one-shot tip decision for this app launch.
+     *
+     * Off the main thread: deciding it reads the package's install time from PackageManager and
+     * touches a marker file, and the card is worth nothing if waiting for it delays the first frame.
+     */
+    private fun resolveLaunchTip() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val tip = tipRepository.resolveLaunchTip() ?: return@launch
+            // Not an unconditional overwrite: a manual reload landing in the same window already
+            // set the warning, and losing it to a dice roll is the one outcome this exists to
+            // prevent.
+            _uiState.update { state -> if (state.tip == null) state.copy(tip = tip) else state }
         }
     }
 
@@ -337,7 +369,9 @@ data class HomeUiState(
     val updateCheckError: String? = null,
     val updateInfo: UpdateInfo? = null,
     val configUpgradeDialogVisible: Boolean = false,
-    val rebootConfirmation: RebootTarget? = null
+    val rebootConfirmation: RebootTarget? = null,
+    /** The tip card to show, or null on the launches that show none. */
+    val tip: HomeTip? = null
 ) {
     val environmentReady: Boolean
         get() = isModuleActive && isRootAvailable

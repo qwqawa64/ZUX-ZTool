@@ -919,6 +919,23 @@
     <string name="page_home_non_zuxos_dismiss">不再提示</string>
     <string name="page_home_dev_build_title">开发版本</string>
     <string name="page_home_dev_build_warn">当前安装的是开发版本，可能包含未经验证的改动，无法保证稳定性！如需稳定体验请切换回正式版。</string>
+    <!--首页小提示卡片-->
+    <string name="page_home_tip_title">小提示</string>
+    <string name="page_home_tip_extreme_refresh_rate">开启极致高刷新率模式获取最佳动画体验</string>
+    <string name="page_home_tip_misans_font">刷入 MiSans 字体获取最佳 MIUIx 主题使用体验</string>
+    <string name="page_home_tip_feature_count_power">开启的功能数和耗电量呈正相关</string>
+    <string name="page_home_tip_boundary_values">不要贸然尝试边界值选项，虽然大多数时候我们会做边界测试，大多数时候......</string>
+    <string name="page_home_tip_notification_permission">本应用不需要通知权限。如果你喜欢有个通知常驻的话，好吧......挺好的......</string>
+    <string name="page_home_tip_set_tag" translatable="false">setTag(10086);</string>
+    <string name="page_home_tip_report_issue">如果你需要反馈问题，请使用关于页面的快捷打开 Issues 页面功能</string>
+    <string name="page_home_tip_freeform_priority">桌面强制小窗功能优先级高于设置功能页中的小窗/分屏规则功能</string>
+    <string name="page_home_tip_nightly_build">可在我们 GitHub 仓库的 Actions 页面登录账号下载最新的每夜构建版</string>
+    <string name="page_home_tip_debug_leak_canary">Debug 版本捆绑了内存泄漏分析插件，桌面会多出一个名为 Leak 的图标，且 ZTool 将会请求通知权限以便通知你检测到内存泄漏</string>
+    <string name="page_home_tip_release_performance">Compose 应用的 release 构建性能远优于 debug 构建</string>
+    <string name="page_home_tip_pull_request">欢迎 PR 或者围观我们的开发进度：https://github.com/qwqawa64/ZUX-ZTool</string>
+    <string name="page_home_tip_crash_log">无法在应用内导出崩溃日志？请使用 LogFox 记录问题日志并汇报。</string>
+    <string name="page_home_tip_not_zuxceiler" translatable="false">Not ZUXCeiler or ZaUXiliary.</string>
+    <string name="page_home_tip_hot_reload_warning">不要相信热重载，我们仍在驯服它！要让新功能生效请手动重启作用域。</string>
     <!--首页卡片预览（仅开发构建可见的观感调试页）-->
     <string name="home_card_preview_title">首页卡片预览</string>
     <string name="home_card_preview_note">本页与首页共用同一份卡片代码与容器，可用模拟状态复现真机上无法随时出现的卡片，检查间距与几何观感。</string>
@@ -929,6 +946,7 @@
     <string name="home_card_preview_module_active">模块已激活</string>
     <string name="home_card_preview_root_available">Root 可用</string>
     <string name="home_card_preview_update_available">有可用更新</string>
+    <string name="home_card_preview_tip">小提示卡片</string>
     <string name="home_card_preview_variant_hint">该变体不属于首页布局，仅用于检查更新卡在单行更新日志时的最小高度；卡片宽度与首页更新卡完全一致。</string>
     <string name="home_card_preview_ignored_placeholder">已模拟忽略，首页上该卡片此时不会出现</string>
     <string name="home_card_preview_restore">恢复显示</string>

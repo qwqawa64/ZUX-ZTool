@@ -156,6 +156,13 @@ internal fun HomeCardStack(
 
         ModuleStatusCard(state, onRefreshEnvironment)
 
+        // Between the module status and the system info, and only when this launch has something
+        // to say: the tip is rare by design, and the hot reload warning replaces the roll entirely.
+        state.tip?.let { tip ->
+            Spacer(modifier = Modifier.height(16.dp))
+            TipCard(tip)
+        }
+
         if (state.environmentReady) {
             Spacer(modifier = Modifier.height(16.dp))
             SystemInfoCard(state)
