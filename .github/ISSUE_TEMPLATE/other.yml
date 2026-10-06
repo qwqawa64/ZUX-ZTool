@@ -1,0 +1,30 @@
+name: 其它反馈 (Other)
+description: 提交其它类型的反馈或讨论 / Submit other feedback or discussion
+title: "[OTHER] <简短描述您的反馈主题 / Short description of the topic>"
+labels: ["discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提示：本类别用于不适用缺陷反馈、新功能建议与问题咨询的其它内容，例如文档纠错、翻译改进、维护性建议或一般性讨论。
+        Tip: Use this category for content that does not fit bug reports, feature requests, or support questions, such as documentation fixes, translation improvements, maintenance suggestions, or general discussion.
+  - type: input
+    id: topic
+    attributes:
+      label: 反馈主题 / Feedback Topic
+    validations:
+      required: true
+  - type: textarea
+    id: content
+    attributes:
+      label: 详细内容说明 / Detailed Specifications
+      description: |
+        请提供足够的信息以便我们理解并处理您的反馈，不要只留一句概括。
+        Provide enough information for us to understand and handle your feedback. Do not leave only a one-line summary.
+    validations:
+      required: true
+  - type: textarea
+    id: attachments
+    attributes:
+      label: 相关附件或截图 / Relevant Attachments or Screenshots
+      placeholder: 拖拽附件至此处上传... (Drag & drop attachments here to upload...)

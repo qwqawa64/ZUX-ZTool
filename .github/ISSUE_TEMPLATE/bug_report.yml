@@ -1,0 +1,106 @@
+name: 缺陷反馈 (Bug Report)
+description: 提交 ZTool 在使用过程中遇到的 Bug 反馈 / Submit bug reports for ZTool
+title: "[BUG] <简短描述您遇到的问题 / Short description of the issue>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        注意：本项目主要面向联想 ZUXOS/ZUI 设备，不接受第三方移植包、官改包以及被其它模块改写过的系统组件的问题反馈。
+        Note: This project targets Lenovo ZUXOS/ZUI devices. Bug reports from ported ROMs, modified official ROMs, or system components rewritten by other modules are not accepted.
+
+        提示：请在导出日志前，先在应用「设置 -> 日志设置」内将「日志等级」改为 `TRACE`，然后复现一次您遇到的问题，再使用「导出日志」导出日志包。
+        Tip: Before exporting logs, change "Log Level" to `TRACE` in "Settings -> Log Settings", reproduce the issue once, and then use "Export Logs" to export the log package.
+  - type: dropdown
+    id: system_platform
+    attributes:
+      label: 系统平台 / System Platform
+      options:
+        - ZUXOS 2.x
+        - ZUXOS 1.x
+        - ZUI
+        - 其他安卓系统（模块功能不保证可用） (Other Android Systems / Functionality not guaranteed)
+    validations:
+      required: true
+  - type: input
+    id: system_version
+    attributes:
+      label: 系统版本与设备型号 / System Version and Device Model
+      description: |
+        例如：ZUXOS 2.0.1.0 / 拯救者 Y700 三代 (TB321FU)。
+        Example: ZUXOS 2.0.1.0 / Legion Y700 (TB321FU).
+    validations:
+      required: true
+  - type: input
+    id: ztool_version
+    attributes:
+      label: ZTool 版本 / ZTool Version
+      description: |
+        请填写 设置 -> 关于 中显示的版本号，或您下载的 Releases / Actions 构建标识。
+        Fill in the version shown in Settings -> About, or the Releases / Actions build identifier you downloaded.
+    validations:
+      required: true
+  - type: dropdown
+    id: bug_aspect
+    attributes:
+      label: 问题属于哪一方面 / Which part does the bug relate to?
+      options:
+        - 系统界面 SystemUI（状态栏 / 控制中心 / 锁屏 / 音量亮度面板）
+        - 系统框架 System Framework
+        - 桌面启动器 Launcher
+        - 系统更新 / OTA / UDS 引擎
+        - 游戏与性能优化
+        - 应用界面与设置项 (App UI / Settings)
+        - 模块安装、激活或作用域 (Module installation / activation / scope)
+        - 其他 (Other)
+    validations:
+      required: true
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Xposed 框架 / Xposed Framework
+      options:
+        - LSPosed
+        - LSPosed (Zygisk)
+        - 其他基于 libxposed API 102 的框架 (Other libxposed API 102 based framework)
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题详细描述 / Detailed Description of the Issue
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to Reproduce
+      description: |
+        请写明操作路径与相关设置项，并说明问题是否稳定复现。
+        State the operation path and the related setting items, and whether the issue reproduces reliably.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期效果 / Expected Behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: ZTool 日志或 LSPosed 日志 / ZTool Logs or LSPosed Logs
+      description: |
+        请将应用内「导出日志」生成的日志包，或从 LSPosed 管理器导出的日志文件以选择或拖动文件方式直接上传，或者在此处直接粘贴您的网盘分享链接。
+        Please upload the log package exported from within the app, or the log file exported from the LSPosed manager, by selecting/dragging files, or paste your cloud drive sharing link here directly.
+      placeholder: 拖拽上传文件，或在此直接粘贴网盘分享链接 (Drag & drop files here, or paste cloud drive link directly)
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图 / 录屏 / 网盘链接 / Screenshots / Screen Recordings / Cloud Drive Links
+      description: |
+        如果有的话，请将相关的错误截图或操作录屏拖入本框中上传，或者在此处直接粘贴您的网盘分享链接、屏幕录制分享链接。
+        If any, please drag & drop screenshots/recordings here, or paste cloud drive links / video sharing links directly.
+      placeholder: 拖拽上传文件，或在此直接粘贴网盘分享链接 (Drag & drop files here, or paste cloud drive link directly)

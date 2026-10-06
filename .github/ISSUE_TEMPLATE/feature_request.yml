@@ -1,0 +1,56 @@
+name: 新功能建议 (Feature Request)
+description: 为 ZTool 提交新功能改进建议 / Submit feature suggestions for ZTool
+title: "[FEAT] <简短描述您的功能建议 / Short description of feature suggestion>"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提示：ZTool 的功能大多需要 Hook 系统组件，请尽量说明您期望功能生效的应用或界面，以便我们评估可行性。
+        Tip: Most ZTool features require hooking system components. Please state the app or UI where you expect the feature to take effect so we can evaluate feasibility.
+  - type: dropdown
+    id: feature_aspect
+    attributes:
+      label: 功能所属方面 / Which part does the suggestion relate to?
+      options:
+        - 系统界面 SystemUI（状态栏 / 控制中心 / 锁屏 / 音量亮度面板）
+        - 系统框架 System Framework
+        - 桌面启动器 Launcher
+        - 系统更新 / OTA / UDS 引擎
+        - 游戏与性能优化
+        - 一视界 / 平行视窗 / 小窗
+        - 应用界面与设置项 (App UI / Settings)
+        - 新增功能模块 (New feature module)
+        - 其他 (Other)
+    validations:
+      required: true
+  - type: textarea
+    id: feature_description
+    attributes:
+      label: 功能建议具体描述 / Detailed Description of Feature Suggestion
+      description: |
+        请说明期望的交互方式、可配置项与默认行为。
+        Describe the expected interaction, configurable options, and default behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: 使用场景与必要性 / Use Case and Motivation
+      description: |
+        请说明当前遇到的痛点，以及该功能为什么值得实现。
+        Describe the pain point you currently hit and why this feature is worth implementing.
+    validations:
+      required: true
+  - type: textarea
+    id: design_drafts
+    attributes:
+      label: 界面设计或效果图 / UI Design or Mockups
+      placeholder: 拖拽图片附件至此处上传... (Drag & drop image attachments here to upload...)
+  - type: textarea
+    id: references
+    attributes:
+      label: 参考实现或相关资料 / Reference Implementations or Materials
+      description: |
+        如果其它模块或项目已经实现过类似功能，欢迎附上链接或说明。
+        If other modules or projects already implement something similar, feel free to attach links or notes here.
