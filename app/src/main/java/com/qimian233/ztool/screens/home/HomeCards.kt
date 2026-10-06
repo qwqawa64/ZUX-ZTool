@@ -84,9 +84,28 @@ import com.qimian233.ztool.viewmodel.UpdateInfo
  */
 
 /**
- * The scrollable card column of the home page, in home-screen order. The width cap
- * and paddings are part of the extracted geometry, so callers only have to supply the
- * page surface around it (see `HomeScreen` and `HomeCardPreviewRoute`).
+ * Container of the home card column. The width cap and the paddings are part of the
+ * geometry, so every mirrored rendering (the home screen and the preview) must use
+ * this exact chain — a card rendered through any other container cannot be compared
+ * with the home page.
+ */
+@Composable
+internal fun Modifier.homeCardColumn(): Modifier {
+    val isMiuixStyle = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
+    return this
+        .fillMaxHeight()
+        .fillMaxWidth()
+        .then(
+            // Miuix scaffold ignores widthIn on this chain; the cap only holds in Material mode.
+            if (isMiuixStyle) Modifier else Modifier.widthIn(max = 1120.dp)
+        )
+        .verticalScroll(rememberScrollState())
+        .padding(horizontal = 32.dp, vertical = 32.dp)
+}
+
+/**
+ * The card column of the home page, in home-screen order. Callers only have to supply
+ * the page surface around it (see `HomeScreen` and `HomeCardPreviewRoute`).
  */
 @Composable
 internal fun HomeCardStack(
@@ -97,18 +116,7 @@ internal fun HomeCardStack(
     onOpenUpdate: (String) -> Unit,
     onRefreshEnvironment: () -> Unit
 ) {
-    val isMiuixStyle = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
-    Column(
-        modifier = Modifier
-            .fillMaxHeight()
-            .fillMaxWidth()
-            .then(
-                // Miuix scaffold ignores widthIn on this chain; the cap only holds in Material mode.
-                if (isMiuixStyle) Modifier else Modifier.widthIn(max = 1120.dp)
-            )
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 32.dp, vertical = 32.dp)
-    ) {
+    Column(modifier = Modifier.homeCardColumn()) {
 
         Spacer(modifier = Modifier.height(24.dp))
 

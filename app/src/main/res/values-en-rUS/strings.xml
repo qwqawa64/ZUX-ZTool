@@ -839,18 +839,15 @@
     <string name="page_home_dev_build_warn">This is a development build. It may contain unverified changes and is not guaranteed to be stable. Switch back to an official release for daily use.</string>
     <!--Home card preview (dev-build-only visual debugging screen)-->
     <string name="home_card_preview_title">Home card preview</string>
-    <string name="home_card_preview_note">This screen renders the whole home card column in home-screen order from the same code the home screen uses. Use the console above to mock the environment and check spacing and geometry.</string>
+    <string name="home_card_preview_note">This screen shares the home screen\'s card code and container. Mock the environment to reproduce cards that cannot be produced on demand and check spacing and geometry.</string>
     <string name="home_card_preview_console_title">Mock state</string>
-    <string name="home_card_preview_expand">Expand</string>
-    <string name="home_card_preview_collapse">Collapse</string>
-    <string name="home_card_preview_show">Show</string>
-    <string name="home_card_preview_hide">Hide</string>
+    <string name="home_card_preview_view_stack">Home card stack</string>
+    <string name="home_card_preview_view_variant">One-line variant</string>
     <string name="home_card_preview_not_zuxos">Non-ZUXOS/ZUI device</string>
     <string name="home_card_preview_module_active">Module active</string>
     <string name="home_card_preview_root_available">Root available</string>
     <string name="home_card_preview_update_available">Update available</string>
-    <string name="home_card_preview_variant_title">Variant: one-line changelog</string>
-    <string name="home_card_preview_variant_hint">Not part of the home layout; rendered separately to check the update card\'s minimum height.</string>
+    <string name="home_card_preview_variant_hint">This variant is not part of the home layout; it only checks the update card\'s minimum height with a single changelog line. Its width matches the home update card exactly.</string>
     <string name="home_card_preview_ignored_placeholder">Ignored in the preview; the card would not appear on the home screen right now</string>
     <string name="home_card_preview_restore">Show again</string>
     <string name="page_settings_display_entry_in_settings">Display module entrance in settings</string>

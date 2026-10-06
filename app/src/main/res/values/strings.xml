@@ -921,18 +921,15 @@
     <string name="page_home_dev_build_warn">当前安装的是开发版本，可能包含未经验证的改动，无法保证稳定性！如需稳定体验请切换回正式版。</string>
     <!--首页卡片预览（仅开发构建可见的观感调试页）-->
     <string name="home_card_preview_title">首页卡片预览</string>
-    <string name="home_card_preview_note">本页按首页顺序完整渲染整列卡片，与首页共用同一份代码，可用上方控制台模拟环境状态，检查间距与几何观感。</string>
+    <string name="home_card_preview_note">本页与首页共用同一份卡片代码与容器，可用模拟状态复现真机上无法随时出现的卡片，检查间距与几何观感。</string>
     <string name="home_card_preview_console_title">模拟状态</string>
-    <string name="home_card_preview_expand">展开</string>
-    <string name="home_card_preview_collapse">收起</string>
-    <string name="home_card_preview_show">显示</string>
-    <string name="home_card_preview_hide">隐藏</string>
+    <string name="home_card_preview_view_stack">首页卡片栈</string>
+    <string name="home_card_preview_view_variant">单行日志变体</string>
     <string name="home_card_preview_not_zuxos">非 ZUXOS/ZUI 设备</string>
     <string name="home_card_preview_module_active">模块已激活</string>
     <string name="home_card_preview_root_available">Root 可用</string>
     <string name="home_card_preview_update_available">有可用更新</string>
-    <string name="home_card_preview_variant_title">变体：更新日志仅 1 行</string>
-    <string name="home_card_preview_variant_hint">不属于首页布局，单独渲染以检查更新卡的最小高度。</string>
+    <string name="home_card_preview_variant_hint">该变体不属于首页布局，仅用于检查更新卡在单行更新日志时的最小高度；卡片宽度与首页更新卡完全一致。</string>
     <string name="home_card_preview_ignored_placeholder">已模拟忽略，首页上该卡片此时不会出现</string>
     <string name="home_card_preview_restore">恢复显示</string>
     <string name="page_settings_display_entry_in_settings">在设置中显示入口</string>

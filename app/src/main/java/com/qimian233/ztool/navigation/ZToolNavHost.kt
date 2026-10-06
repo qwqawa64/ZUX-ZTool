@@ -343,11 +343,12 @@ internal fun MainRouteNavHost(
         // in official releases, matching the Settings → Advanced entry that opens it.
         if (BuildConfig.IS_DEV_BUILD) {
             composable(
-                route = HiddenRoute.SETTINGS_HOME_CARD_PREVIEW,
+                route = routeWithTarget(HiddenRoute.SETTINGS_HOME_CARD_PREVIEW),
                 enterTransition = horizontalEnter,
                 exitTransition = horizontalExit,
                 popEnterTransition = horizontalPopEnter,
-                popExitTransition = horizontalPopExit
+                popExitTransition = horizontalPopExit,
+                arguments = highlightTargetArguments
             ) {
                 HomeCardPreviewRoute(
                     onBack = {
@@ -947,6 +948,7 @@ private fun navigationRouteIndex(rawRoute: String?): Int {
         HiddenRoute.SETTINGS_MISC -> 4
         HiddenRoute.SETTINGS_ENGINEERING_CODES -> 5
         HiddenRoute.SETTINGS_PREFERENCE_EDITOR -> 5
+        HiddenRoute.SETTINGS_HOME_CARD_PREVIEW -> 5
         else -> 0
     }
 }

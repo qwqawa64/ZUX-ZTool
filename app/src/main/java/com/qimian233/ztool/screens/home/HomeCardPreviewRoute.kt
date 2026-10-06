@@ -1,17 +1,20 @@
 package com.qimian233.ztool.screens.home
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,33 +29,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.R
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolCard
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
-import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
-import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.viewmodel.HomeUiState
 import com.qimian233.ztool.viewmodel.UpdateInfo
 
 /**
  * Developer-only preview of the home screen's card stack.
  *
- * The stack is rendered by the same `HomeCardStack` the home screen uses — same
- * order, same width cap, same paddings — from a mock [HomeUiState], so spacing and
- * geometry problems can be diagnosed on any device, including the states that cannot
- * be produced on demand (a non-ZUX OS device, a pending update, a missing root or
- * module). The console at the top edits that mock state; the section at the bottom
- * shows the one-line-changelog variant of the update card, which is not visible in
- * the stack itself.
+ * The stack is rendered by the same `HomeCardStack` (and the same `homeCardColumn`
+ * container) the home screen uses, from a mock [HomeUiState], so spacing and geometry
+ * problems can be diagnosed on any device — including the states that cannot be
+ * produced on demand (a non-ZUX OS device, a pending update, a missing root or
+ * module). The mock state is edited in a dialog, so no permanent panel steals height
+ * from the mirrored column, and the one-line-changelog variant is a separate view
+ * rather than a block below the stack.
  *
  * Reachable from Settings → Advanced; that row, this screen and its nav destination
  * exist only in `BuildConfig.IS_DEV_BUILD` builds.
@@ -60,8 +61,16 @@ import com.qimian233.ztool.viewmodel.UpdateInfo
 @Composable
 fun HomeCardPreviewRoute(onBack: () -> Unit) {
     var mockState by remember { mutableStateOf(previewHomeState()) }
-    var consoleExpanded by rememberSaveable { mutableStateOf(false) }
-    var variantVisible by rememberSaveable { mutableStateOf(true) }
+    var selectedView by rememberSaveable { mutableStateOf(PreviewView.Stack) }
+    var consoleVisible by rememberSaveable { mutableStateOf(false) }
+
+    if (consoleVisible) {
+        MockStateDialog(
+            state = mockState,
+            onStateChange = { mockState = it },
+            onDismiss = { consoleVisible = false }
+        )
+    }
 
     ZToolScaffold(
         topBar = {
@@ -74,6 +83,14 @@ fun HomeCardPreviewRoute(onBack: () -> Unit) {
                             contentDescription = null
                         )
                     }
+                },
+                actions = {
+                    IconButton(onClick = { consoleVisible = true }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Tune,
+                            contentDescription = stringResource(R.string.home_card_preview_console_title)
+                        )
+                    }
                 }
             )
         }
@@ -83,209 +100,34 @@ fun HomeCardPreviewRoute(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Text(
-                text = stringResource(R.string.home_card_preview_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalZToolColorScheme.current.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
-            )
-
-            MockConsole(
-                state = mockState,
-                expanded = consoleExpanded,
-                onExpandedChange = { consoleExpanded = it },
-                onStateChange = { mockState = it }
-            )
-
+            PreviewViewTabs(selected = selectedView, onSelect = { selectedView = it })
             HorizontalDivider()
 
-            // The mirrored home stack keeps ownership of its own scroll container, so
-            // it stays inside this weighted box rather than a parent scroller.
+            // The mirrored column owns its scroll container, so the preview never wraps
+            // it in another scroller: each view gets the full page height instead.
             Box(modifier = Modifier.weight(1f)) {
                 ZToolPageSurface(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.TopCenter
                 ) {
-                    HomeCardStack(
-                        state = mockState,
-                        onDismissNonZuxOsWarning = {
-                            mockState = mockState.copy(isNonZuxOsWarningDismissed = true)
-                        },
-                        onToggleUpdateExpanded = {
-                            mockState = mockState.copy(
-                                updateInfo = mockState.updateInfo?.let { it.copy(expanded = !it.expanded) }
-                            )
-                        },
-                        // Mirrors the home behaviour: ignoring removes the card.
-                        onIgnoreUpdate = { mockState = mockState.copy(updateInfo = null) },
-                        onOpenUpdate = { /* Dev preview: never open an external browser. */ },
-                        onRefreshEnvironment = { /* The console drives the mocked environment. */ }
-                    )
-                }
-            }
-
-            HorizontalDivider()
-
-            OneLineChangelogVariant(
-                visible = variantVisible,
-                onVisibleChange = { variantVisible = it }
-            )
-        }
-    }
-}
-
-/**
- * Switches that drive the mocked [HomeUiState]. Collapsed it shows one summary line,
- * so the mirrored stack normally gets the full preview height.
- */
-@Composable
-private fun MockConsole(
-    state: HomeUiState,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    onStateChange: (HomeUiState) -> Unit
-) {
-    val notZuxOs = !state.isZuxOsDevice
-    val moduleActive = state.isModuleActive
-    val rootAvailable = state.isRootAvailable
-    val updateAvailable = state.updateInfo != null
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        PreviewStripHeader(
-            title = stringResource(R.string.home_card_preview_console_title),
-            actionLabel = stringResource(
-                if (expanded) R.string.home_card_preview_collapse
-                else R.string.home_card_preview_expand
-            ),
-            onAction = { onExpandedChange(!expanded) }
-        )
-
-        if (expanded) {
-            ZToolSettingsList(
-                modifier = Modifier
-                    .heightIn(max = 240.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 8.dp),
-                sections = listOf(
-                    SettingSection(
-                        items = listOf(
-                            SettingItem.Switch(
-                                key = "deco_preview_not_zuxos",
-                                title = stringResource(R.string.home_card_preview_not_zuxos),
-                                checked = notZuxOs,
-                                // Re-arm the dismissible warning whenever the device
-                                // state is toggled, so the card can be inspected again.
-                                onCheckedChange = {
-                                    onStateChange(
-                                        state.copy(
-                                            isZuxOsDevice = !it,
-                                            isNonZuxOsWarningDismissed = false
-                                        )
-                                    )
-                                }
-                            ),
-                            SettingItem.Switch(
-                                key = "deco_preview_module_active",
-                                title = stringResource(R.string.home_card_preview_module_active),
-                                checked = moduleActive,
-                                onCheckedChange = { onStateChange(state.copy(isModuleActive = it)) }
-                            ),
-                            SettingItem.Switch(
-                                key = "deco_preview_root_available",
-                                title = stringResource(R.string.home_card_preview_root_available),
-                                checked = rootAvailable,
-                                onCheckedChange = { onStateChange(state.copy(isRootAvailable = it)) }
-                            ),
-                            SettingItem.Switch(
-                                key = "deco_preview_update_available",
-                                title = stringResource(R.string.home_card_preview_update_available),
-                                checked = updateAvailable,
-                                onCheckedChange = {
-                                    onStateChange(
-                                        state.copy(
-                                            updateInfo = if (it) previewUpdateLong() else null
-                                        )
-                                    )
-                                }
-                            )
+                    when (selectedView) {
+                        PreviewView.Stack -> HomeCardStack(
+                            state = mockState,
+                            onDismissNonZuxOsWarning = {
+                                mockState = mockState.copy(isNonZuxOsWarningDismissed = true)
+                            },
+                            onToggleUpdateExpanded = {
+                                mockState = mockState.copy(
+                                    updateInfo = mockState.updateInfo?.let { it.copy(expanded = !it.expanded) }
+                                )
+                            },
+                            // Mirrors the home behaviour: ignoring removes the card.
+                            onIgnoreUpdate = { mockState = mockState.copy(updateInfo = null) },
+                            onOpenUpdate = { /* Dev preview: never open an external browser. */ },
+                            onRefreshEnvironment = { /* The mock state drives the environment. */ }
                         )
-                    )
-                )
-            )
-        } else {
-            val activeLabels = buildList {
-                if (notZuxOs) add(stringResource(R.string.home_card_preview_not_zuxos))
-                if (moduleActive) add(stringResource(R.string.home_card_preview_module_active))
-                if (rootAvailable) add(stringResource(R.string.home_card_preview_root_available))
-                if (updateAvailable) add(stringResource(R.string.home_card_preview_update_available))
-            }
-            Text(
-                text = activeLabels.joinToString(" · "),
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalZToolColorScheme.current.onSurfaceVariant,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 12.dp)
-            )
-        }
-    }
-}
 
-/**
- * The one-line-changelog case of [UpdateCard], rendered outside the stack: the home
- * page has exactly one update card, so this variant is deliberately not part of the
- * mirrored layout. It only exists to check the card's minimum height.
- */
-@Composable
-private fun OneLineChangelogVariant(
-    visible: Boolean,
-    onVisibleChange: (Boolean) -> Unit
-) {
-    var ignored by remember { mutableStateOf(false) }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        PreviewStripHeader(
-            title = stringResource(R.string.home_card_preview_variant_title),
-            actionLabel = stringResource(
-                if (visible) R.string.home_card_preview_hide
-                else R.string.home_card_preview_show
-            ),
-            onAction = { onVisibleChange(!visible) }
-        )
-
-        if (visible) {
-            Text(
-                text = stringResource(R.string.home_card_preview_variant_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalZToolColorScheme.current.onSurfaceVariant,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Column(
-                    modifier = Modifier
-                        // Same insets as the mirrored stack, minus the scroll: this
-                        // block is short enough to size itself.
-                        .then(
-                            if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
-                                Modifier
-                            } else {
-                                Modifier.widthIn(max = 1120.dp)
-                            }
-                        )
-                        .padding(horizontal = 32.dp)
-                ) {
-                    if (ignored) {
-                        PreviewResetRow(onReset = { ignored = false })
-                    } else {
-                        UpdateCard(
-                            update = previewUpdateShort(),
-                            onToggleExpanded = { /* A single changelog line cannot expand. */ },
-                            onIgnore = { ignored = true },
-                            onOpenUpdate = { /* Dev preview: never open an external browser. */ }
-                        )
+                        PreviewView.OneLineVariant -> OneLineChangelogView()
                     }
                 }
             }
@@ -293,37 +135,69 @@ private fun OneLineChangelogVariant(
     }
 }
 
+/** The two renderings of this screen; each gets the whole page height. */
+private enum class PreviewView { Stack, OneLineVariant }
+
 @Composable
-private fun PreviewStripHeader(
-    title: String,
-    actionLabel: String,
-    onAction: () -> Unit
+private fun PreviewViewTabs(
+    selected: PreviewView,
+    onSelect: (PreviewView) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 24.dp, end = 12.dp, top = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = LocalZToolColorScheme.current.onSurface,
-            modifier = Modifier.weight(1f)
+        ZToolTextButton(
+            text = stringResource(R.string.home_card_preview_view_stack),
+            onClick = { onSelect(PreviewView.Stack) },
+            isPrimary = selected == PreviewView.Stack
         )
-        ZToolTextButton(onClick = onAction, text = actionLabel, isPrimary = false)
+        ZToolTextButton(
+            text = stringResource(R.string.home_card_preview_view_variant),
+            onClick = { onSelect(PreviewView.OneLineVariant) },
+            isPrimary = selected == PreviewView.OneLineVariant
+        )
+    }
+}
+
+/**
+ * The one-line-changelog case of [UpdateCard]. It reuses the home column container, so
+ * the card is laid out at exactly the width it has in the mirrored stack — the home
+ * page only ever has one update card, which is why this variant is a separate view
+ * instead of an extra card inside the stack.
+ */
+@Composable
+private fun OneLineChangelogView() {
+    var ignored by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.homeCardColumn()) {
+        Text(
+            text = stringResource(R.string.home_card_preview_variant_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = LocalZToolColorScheme.current.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (ignored) {
+            PreviewResetRow(onReset = { ignored = false })
+        } else {
+            UpdateCard(
+                update = previewUpdateShort(),
+                onToggleExpanded = { /* A single changelog line cannot expand. */ },
+                onIgnore = { ignored = true },
+                onOpenUpdate = { /* Dev preview: never open an external browser. */ }
+            )
+        }
     }
 }
 
 /** Placeholder that takes the card's place after "ignore" was pressed in the preview. */
 @Composable
 private fun PreviewResetRow(onReset: () -> Unit) {
-    ZToolCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp)
-    ) {
+    ZToolCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -343,6 +217,91 @@ private fun PreviewResetRow(onReset: () -> Unit) {
             )
         }
     }
+}
+
+/**
+ * Edits the mocked [HomeUiState]. Deliberately a dialog: an inline panel would either
+ * cover the mirrored column or leave it too little height to render the whole stack.
+ */
+@Composable
+private fun MockStateDialog(
+    state: HomeUiState,
+    onStateChange: (HomeUiState) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val notZuxOs = !state.isZuxOsDevice
+    val moduleActive = state.isModuleActive
+    val rootAvailable = state.isRootAvailable
+    val updateAvailable = state.updateInfo != null
+
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.home_card_preview_console_title)) },
+        text = {
+            Column {
+                Text(
+                    text = stringResource(R.string.home_card_preview_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LocalZToolColorScheme.current.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                ZToolSettingsList(
+                    modifier = Modifier
+                        .heightIn(max = 320.dp)
+                        .verticalScroll(rememberScrollState()),
+                    sections = listOf(
+                        SettingSection(
+                            items = listOf(
+                                SettingItem.Switch(
+                                    key = "deco_preview_not_zuxos",
+                                    title = stringResource(R.string.home_card_preview_not_zuxos),
+                                    checked = notZuxOs,
+                                    // Re-arm the dismissible warning whenever the device
+                                    // state is toggled, so the card can be inspected again.
+                                    onCheckedChange = {
+                                        onStateChange(
+                                            state.copy(
+                                                isZuxOsDevice = !it,
+                                                isNonZuxOsWarningDismissed = false
+                                            )
+                                        )
+                                    }
+                                ),
+                                SettingItem.Switch(
+                                    key = "deco_preview_module_active",
+                                    title = stringResource(R.string.home_card_preview_module_active),
+                                    checked = moduleActive,
+                                    onCheckedChange = { onStateChange(state.copy(isModuleActive = it)) }
+                                ),
+                                SettingItem.Switch(
+                                    key = "deco_preview_root_available",
+                                    title = stringResource(R.string.home_card_preview_root_available),
+                                    checked = rootAvailable,
+                                    onCheckedChange = { onStateChange(state.copy(isRootAvailable = it)) }
+                                ),
+                                SettingItem.Switch(
+                                    key = "deco_preview_update_available",
+                                    title = stringResource(R.string.home_card_preview_update_available),
+                                    checked = updateAvailable,
+                                    onCheckedChange = {
+                                        onStateChange(
+                                            state.copy(updateInfo = if (it) previewUpdateLong() else null)
+                                        )
+                                    }
+                                )
+                            )
+                        )
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            ZToolTextButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.common_confirm)
+            )
+        }
+    )
 }
 
 /*
