@@ -65,7 +65,6 @@ import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
-import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import com.qimian233.ztool.viewmodel.HomeUiState
@@ -82,6 +81,17 @@ import com.qimian233.ztool.viewmodel.UpdateInfo
  * Keep the composables here free of repository/network access: they take plain
  * values and lambdas so the preview and the home screen stay identical.
  */
+
+/**
+ * Horizontal gutter every home card is inset by, relative to the card column. It is
+ * shared on purpose: the surfaces in the column (the warning, dev-build, update and
+ * module-status cards, plus the system-info list) have to line up with each other, and
+ * a card that forgets its gutter silently renders 16dp wider than its neighbours.
+ */
+internal val HomeCardGutter = 8.dp
+
+/** Applies [HomeCardGutter] around a full-width home card surface. */
+internal fun Modifier.homeCardGutter(): Modifier = this.padding(horizontal = HomeCardGutter)
 
 /**
  * Container of the home card column. The width cap and the paddings are part of the
@@ -166,7 +176,7 @@ internal fun NonZuxOsCard(onDismiss: () -> Unit) {
         // press before this card-level one and the card stays inert there.
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
+            .homeCardGutter()
             .cardPressScale()
             .clickable(onClick = {}),
         containerColor = LocalZToolColorScheme.current.errorContainer
@@ -211,7 +221,7 @@ internal fun DevBuildCard() {
     ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
+            .homeCardGutter()
             .cardPressScale()
             .clickable(onClick = {}),
         containerColor = LocalZToolColorScheme.current.errorContainer
@@ -259,7 +269,7 @@ internal fun UpdateCard(
     ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
+            .homeCardGutter()
             .clickable(onClick = onToggleExpanded),
         containerColor = LocalZToolColorScheme.current.tertiaryContainer
     ) {
@@ -359,7 +369,7 @@ internal fun ModuleStatusCard(
     ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
+            .homeCardGutter()
             .cardPressScale()
             .then(
                 if (!bothActive) Modifier.clickable { onRefreshEnvironment() }
@@ -509,7 +519,6 @@ private fun SystemInfoCard(state: HomeUiState) {
     )
 
     ZToolSettingsList(
-        modifier = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) Modifier.padding(horizontal = 8.dp) else Modifier,
         sections = listOf(
             SettingSection(
                 items = infoRows.map { row ->
@@ -522,7 +531,9 @@ private fun SystemInfoCard(state: HomeUiState) {
                     )
                 }
             )
-        )
+        ),
+        // Same gutter as the cards above it, so the rows line up with their edges.
+        gutter = HomeCardGutter
     )
 }
 

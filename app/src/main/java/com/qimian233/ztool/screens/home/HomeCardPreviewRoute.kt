@@ -200,7 +200,7 @@ private fun PreviewResetRow(onReset: () -> Unit) {
     ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
+            .homeCardGutter()
     ) {
         Row(
             modifier = Modifier

@@ -161,7 +161,14 @@ fun ZToolSettingsList(
     modifier: Modifier = Modifier,
     sectionSpacing: Dp = 16.dp,
     bottomPadding: Dp = 0.dp,
-    highlightRegistry: HighlightAnchorRegistry? = null
+    highlightRegistry: HighlightAnchorRegistry? = null,
+    /**
+     * Horizontal gutter this list is meant to sit in inside its host, when the host
+     * aligns it with other surfaces (the home screen lines its cards up on an 8dp
+     * gutter, for example). Null keeps the list's own default insets, which is what
+     * every full-page settings screen wants.
+     */
+    gutter: Dp? = null
 ) {
     androidx.compose.runtime.CompositionLocalProvider(
         LocalHighlightRegistry provides highlightRegistry
@@ -173,7 +180,7 @@ fun ZToolSettingsList(
             ) {
                 HighlightContainerMarker(registry = highlightRegistry)
                 sections.forEach { section ->
-                    ZToolSettingsSection(section = section)
+                    ZToolSettingsSection(section = section, gutter = gutter)
                 }
                 if (bottomPadding > 0.dp) {
                     Spacer(modifier = Modifier.height(bottomPadding))
@@ -200,22 +207,36 @@ fun ZToolSettingsNavigationEventProvider(content: @Composable () -> Unit) {
     )
 }
 
+/** Content inset of a Material Expressive settings section, i.e. its row gutter. */
+private val ExpressiveSectionContentPadding = 12.dp
+
 @Composable
 fun ZToolSettingsSection(
     section: SettingSection,
     modifier: Modifier = Modifier,
-    titlePadding: PaddingValues = PaddingValues(horizontal = 24.dp, vertical = 8.dp)
+    titlePadding: PaddingValues = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+    gutter: Dp? = null
 ) {
     if (LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive) {
         MaterialExpressiveSettingsSection(
             section = section,
             modifier = modifier,
-            titlePadding = titlePadding
+            titlePadding = titlePadding,
+            // The expressive section draws every row as its own surface, so the
+            // gutter has to become the section's content inset.
+            contentPadding = gutter ?: ExpressiveSectionContentPadding
         )
         return
     }
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    // Miuix draws one surface per section, so the gutter has to be applied around
+    // that surface instead of inside it.
+    val sectionModifier = if (gutter != null) {
+        modifier.padding(horizontal = gutter)
+    } else {
+        modifier
+    }
+    Column(modifier = sectionModifier.fillMaxWidth()) {
         if (section.title != null) {
             Text(
                 text = section.title,
@@ -248,7 +269,8 @@ fun ZToolSettingsSection(
 private fun MaterialExpressiveSettingsSection(
     section: SettingSection,
     modifier: Modifier = Modifier,
-    titlePadding: PaddingValues
+    titlePadding: PaddingValues,
+    contentPadding: Dp
 ) {
     ZToolCard(
         modifier = modifier.fillMaxWidth()
@@ -257,7 +279,7 @@ private fun MaterialExpressiveSettingsSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .animateContentSize()
-                .padding(12.dp)
+                .padding(contentPadding)
         ) {
             if (section.title != null) {
                 Text(
