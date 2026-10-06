@@ -68,7 +68,6 @@ import com.qimian233.ztool.ui.theme.ThemeMode
 import com.qimian233.ztool.ui.theme.ZToolTheme
 import com.qimian233.ztool.ui.theme.ZToolThemeSettings
 import com.qimian233.ztool.ui.theme.ztoolRevealCoverColor
-import com.qimian233.ztool.utils.ConfigUpgrade
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.blur.Backdrop
@@ -97,13 +96,6 @@ class MainActivity : ComponentActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
-        // Config migration may shell out (copying a legacy XSharedPreferences
-        // directory needs root), so it goes on the serial shell dispatcher rather
-        // than a bare IO dispatcher — see EnhancedShellExecutor.MAX_CONCURRENT_COMMANDS.
-        lifecycleScope.launch(EnhancedShellExecutor.shellWorkDispatcher) {
-            ConfigUpgrade.configUpgrader(this@MainActivity)
-        }
 
         if (savedInstanceState != null) {
             currentRoute = savedInstanceState.getString(KEY_CURRENT_ROUTE)

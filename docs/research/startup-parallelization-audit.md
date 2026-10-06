@@ -251,9 +251,9 @@ private fun acquireCommandSlot(): Boolean = commandLock.lock().use {  // :175-20
 | 2 | `cleanupAppLogsIfNeeded` → `Dispatchers.IO` | 低 | ✅ 已完成 |
 | 3 | 合并 + 后台化 alias 自愈（§3.2） | 低 | ✅ 已完成 |
 | 4 | `EdgeBubbleService.maybeStart` → `Dispatchers.IO` | 低 | ✅ 已完成 |
-| 5 | `ConfigUpgrade` 去重 + 线程安全（§3.5） | 中（需确认保留哪一个入口） | 待办 |
-| 6 | `checkDexIndexOnEntry` 判定 → `Dispatchers.IO` | 低 | 待办 |
-| 7 | 根检测提前到 Application（§3.7） | 中（需验证缓存命中语义） | 待办 |
+| 5 | `ConfigUpgrade` 去重 + 线程安全（§3.5） | 中（需确认保留哪一个入口） | ✅ 已完成 |
+| 6 | `checkDexIndexOnEntry` 判定 → `Dispatchers.IO` | 低 | ✅ 已完成 |
+| 7 | 根检测提前到 Application（§3.7） | 中（需验证缓存命中语义） | ✅ 已完成 |
 | 8 | 旋转重跑守卫（§3.8） | 中（涉及 Manifest 契约） | 待办 |
 | 9 | Baseline Profile + Release 口径测量（§3.10） | 低 | 待办 |
 | 10 | 主题预热 / 调色板缓存（§3.9） | 低 | 待办 |
@@ -281,6 +281,66 @@ PackageManager / `startForegroundService`，可以真正并行。
   生效，且只有两个 binder 调用，不属于第 1~4 步。
 - 旋转重跑（§3.8）尚未处理，所以这些 `lifecycleScope` 任务仍随 Activity 重建重跑一次；
   这是第 8 步要收掉的问题。
+
+## 5.2 落地记录（第 5~7 步）
+
+**第 5 步 — `ConfigUpgrade` 单一入口 + 线程安全**
+
+- `configUpgrader` 现在**每进程最多真正执行一次**：`synchronized(lock)` + 缓存
+  `autoUpgradeResult`，后续调用直接复用首次结果。原来的两个入口会并发重置并改写
+  `mPreferencesUtils` / `mCachedXSharedPrefsDir` 两个 object 级可变字段，且在旧配置
+  上会并发跑同一套 `find` / `cp` / 配置重写 root 命令——`upgradeConfigFormat` 是
+  "清空全部设置再写回"，交错执行有丢配置的风险。
+- `isConfigFormatUpgradeRequired` 改为 `private`：它读写上述 scratch 字段，
+  必须只在 `lock` 内执行（原先公开但无外部调用方）。
+- `manualMigrate` 共用同一把锁；成功后把 `autoUpgradeResult` 钉为 `false`。
+- **保留的入口是首页路径**：删除了 `MainActivity` 里那次无条件调用，
+  并把 `HomeViewModel.checkEnvironment` 中的 `checkConfigUpgrade()` 移到
+  `moduleActive && rootAvailable` 判断**之外**——格式升级这一半不需要 root，
+  留在守卫内会让无 root 用户丢掉迁移。
+- 行为变化（有意）：`ConfigUpgradeDialog` 现在真的会出现。此前 Activity 那次
+  无条件调用会先把 `isConfigUpgraded` 标志写掉，首页随后必然读到"已升级"并返回
+  `false`，对话框实际上是死代码。这与 `ConfigUpgrade.kt` 里
+  "The return value decides whether the frontend shows the config upgrade dialog"
+  的注释意图一致。
+- 顺带把 `AdvancedSettingsViewModel.performImport` 也移到了 shell 调度器上，
+  理由同 §4。
+
+**第 6 步 — DexIndex 判定下沉**
+
+`checkDexIndexOnEntry` 的探测阶段（每 scope 一次文件读 + PackageManager 指纹 +
+签名 SHA-256）改为 `viewModelScope.launch(Dispatchers.IO)`；真正的索引任务仍在
+`Dispatchers.Default`。§3.6 末尾提到的 `needsReindex` 重复读同一文件**未改**，
+留作后续：那是 `DexIndexManager` 的数据完整性敏感路径，与"搬离主线程"是两件事。
+
+**第 7 步 — 根检测提前**
+
+`ZToolApplication` 新增 `onCreate`，用进程级 `applicationScope`
+（`SupervisorJob() + shellWorkDispatcher`）在后台预热
+`EnhancedShellExecutor.checkRootAccess()`。于是 `su` 往返与整个 Activity 启动重叠，
+首页 `checkEnvironment` 直接命中 30 s 缓存。
+
+已知取舍：`checkRootAccess()` **连失败结果也缓存 30 s**。首次运行若 root 授权弹窗
+超时，`environmentReady` 会被这个负缓存挡住最多 30 s，而首页的"刷新环境"按钮
+（`onRefreshEnvironment` → `checkEnvironment`）清不掉它——只有 `ON_DESTROY` 时的
+`clearShellCache()` 会清。这是改造前就存在的陷阱（探测点从首页组合提前到
+Application，时间差约数百毫秒），但预热会让它稍微更容易被触发。彻底修掉需要给
+`checkRootAccess` 加"失败不缓存"的语义，属于独立改动。
+
+## 5.3 顺带修复：`setLauncherIconHidden` 无法取消隐藏
+
+不属于启动路径，但重构 §3.2 时发现，一并修掉。
+
+`isLauncherIconHidden()` 的值完全由两个 alias 的组件状态推导，而
+`setLauncherIconHidden` 正是改写这两个状态的函数。取消隐藏时，两个 alias 还停在
+上一个分支刚设置的 `DISABLED`，因此 `isLauncherIconHidden()` 必然返回 `true`，
+`applyLauncherIconAlias()` 走 hidden 分支又禁用一遍——**图标一旦隐藏就再也回不来**。
+`getComponentEnabledSetting` 返回的是上次显式设置的值，不会回落到 `DEFAULT`，
+所以这个判断在这里没有退路。
+
+修法：取消隐藏的分支不再查询 alias 状态，改为从**唯一能存活下来的状态**——
+持久化的图标选择（`useAlternativeIcon`）——重建这对 alias。隐藏分支抽成
+`hideLauncherIconAliases()` 供三条路径复用。
 
 ## 6. 验证方式
 

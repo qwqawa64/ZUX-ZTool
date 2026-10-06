@@ -18,6 +18,20 @@ object ConfigUpgrade {
     private var mPreferencesUtils: ModulePreferencesUtils? = null
     private var mCachedXSharedPrefsDir: String? = null
 
+    /**
+     * Serializes every upgrade pass and remembers the automatic one's outcome.
+     *
+     * Startup used to reach [configUpgrader] from two places at once (the
+     * Activity's unconditional auto-upgrade and the home screen's check). Both
+     * reset and then mutate the scratch fields above, and on a legacy install
+     * both ran the same `find` / `cp` / config-rewrite commands — the format
+     * upgrade clears and rewrites the whole config, so an interleaved second
+     * pass could drop settings. Running the automatic upgrade at most once per
+     * process removes both the race and the duplicated root work.
+     */
+    private val lock = Any()
+    private var autoUpgradeResult: Boolean? = null
+
     private fun getPreferencesUtils(context: Context): ModulePreferencesUtils {
         val appContext = context.applicationContext
         return mPreferencesUtils ?: ModulePreferencesUtils(appContext).also { mPreferencesUtils = it }
@@ -132,8 +146,9 @@ object ConfigUpgrade {
         return mCachedXSharedPrefsDir
     }
 
-    // Combined detection gate for the two config upgrade checkpoints
-    fun isConfigFormatUpgradeRequired(context: Context): Boolean {
+    // Combined detection gate for the two config upgrade checkpoints.
+    // Private: it touches the scratch fields above, so it must only run under [lock].
+    private fun isConfigFormatUpgradeRequired(context: Context): Boolean {
         val prefs = getPreferencesUtils(context)
         // If the config is empty, no upgrade is needed (user may have tapped "clear config"
         // or this is a fresh install). In that case, set the upgrade flag along the way
@@ -163,20 +178,33 @@ object ConfigUpgrade {
     // Checks RemotePrefs and Prefs format upgrades in order and upgrades when needed.
     // The return value decides whether the frontend shows the config upgrade dialog.
     // Is the "New" prefix considered old config too... a bit confusing.
-    fun configUpgrader(context: Context): Boolean {
-        // The Java version created a new instance per call; reset instance state to keep behavior consistent
-        mPreferencesUtils = null
-        mCachedXSharedPrefsDir = null
-
-        if (isRemotePrefsUpgradeRequired(context)) { // upgrading to RemotePrefs needs no dialog
-            upgradeRemotePrefs(context)
-        }
-
-        return if (isConfigFormatUpgradeRequired(context)) {
-            upgradeConfigFormat(context)
-            true
+    //
+    // Runs at most once per process: startup reaches this from more than one place,
+    // and the first run already writes the isConfigUpgraded flag, so a second run
+    // could only observe a half-migrated config. Later callers get the first
+    // outcome instead of re-running the migration (see [lock]).
+    fun configUpgrader(context: Context): Boolean = synchronized(lock) {
+        val lastResult = autoUpgradeResult
+        if (lastResult != null) {
+            Log.d(TAG, "Config upgrade already ran in this process, reusing result: $lastResult")
+            lastResult
         } else {
-            false
+            // The Java version created a new instance per call; reset instance state to keep behavior consistent
+            mPreferencesUtils = null
+            mCachedXSharedPrefsDir = null
+
+            if (isRemotePrefsUpgradeRequired(context)) { // upgrading to RemotePrefs needs no dialog
+                upgradeRemotePrefs(context)
+            }
+
+            val result = if (isConfigFormatUpgradeRequired(context)) {
+                upgradeConfigFormat(context)
+                true
+            } else {
+                false
+            }
+            autoUpgradeResult = result
+            result
         }
     }
 
@@ -184,7 +212,7 @@ object ConfigUpgrade {
     // configUpgrader, the remote prefs migration runs unconditionally (the auto
     // path skips it once the user has already modified settings), the format
     // upgrade still runs afterwards, and the isConfigUpgraded flag is always set.
-    fun manualMigrate(context: Context): MigrationResult {
+    fun manualMigrate(context: Context): MigrationResult = synchronized(lock) {
         mPreferencesUtils = null
         mCachedXSharedPrefsDir = null
 
@@ -194,7 +222,10 @@ object ConfigUpgrade {
                 upgradeConfigFormat(context)
             }
             getPreferencesUtils(context).saveBooleanSetting("isConfigUpgraded", true)
+            // The migration just completed, so a later automatic check has nothing
+            // left to do — pin the cached outcome instead of letting it re-run.
+            autoUpgradeResult = false
         }
-        return result
+        result
     }
 }

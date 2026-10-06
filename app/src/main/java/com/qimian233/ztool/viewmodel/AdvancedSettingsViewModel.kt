@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.R
 import com.qimian233.ztool.XposedServiceBridge
 import com.qimian233.ztool.data.advanced.AdvancedSettingsRepository
@@ -178,7 +179,10 @@ class AdvancedSettingsViewModel(
             importInProgress = true,
             importResultRes = null
         )
-        viewModelScope.launch(Dispatchers.IO) {
+        // Serial shell dispatcher: the migration issues root commands, and
+        // EnhancedShellExecutor rejects — rather than queues — a command that would
+        // exceed its concurrency limit.
+        viewModelScope.launch(EnhancedShellExecutor.shellWorkDispatcher) {
             val result = try {
                 ConfigUpgrade.manualMigrate(context)
             } catch (t: Throwable) {

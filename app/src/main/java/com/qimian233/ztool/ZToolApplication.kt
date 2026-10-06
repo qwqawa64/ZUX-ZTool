@@ -4,6 +4,9 @@ import android.app.Application
 import android.content.Context
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +45,30 @@ class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
     // - Firstrun (no index file): full background indexing, with a Toast of the result after entering home;
     // - Non-Firstrun but stale/corrupted cache: foreground progress Dialog refresh.
     // Therefore the Application startup phase no longer scans automatically.
+
+    /**
+     * Process-lifetime scope for startup work that must outlive any Activity.
+     * Never cancelled: the process going away is the only teardown.
+     *
+     * Its dispatcher is the serial shell dispatcher on purpose — a parallel root
+     * probe would race the other startup root commands, and EnhancedShellExecutor
+     * fails such a command outright instead of queueing it.
+     */
+    private val applicationScope = CoroutineScope(SupervisorJob() + EnhancedShellExecutor.shellWorkDispatcher)
+
+    override fun onCreate() {
+        super.onCreate()
+
+        // Warm the root probe off the main thread, ahead of the home screen's
+        // environment gate. `environmentReady` is `isModuleActive && isRootAvailable`
+        // and the root half needs a `su` round trip, but the probe used to start
+        // only once HomeRoute composed — leaving the shell thread idle for the whole
+        // Activity startup. checkRootAccess() caches its outcome for 30s, so the
+        // home path then reads it instead of paying for the round trip itself.
+        applicationScope.launch {
+            EnhancedShellExecutor.getInstance().checkRootAccess()
+        }
+    }
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)

@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.R
 import com.qimian233.ztool.ZToolApplication
 import com.qimian233.ztool.data.home.HomeRepository
@@ -70,21 +71,30 @@ class HomeViewModel(
      * Decide whether the DexKit index needs to be generated/refreshed when entering the home page:
      * - Firstrun (no index files at all): full background indexing, Toast the result when done;
      * - Non-Firstrun but some scopes are stale/corrupted: foreground progress Dialog refresh, Toast the result when done.
+     *
+     * The decision itself does I/O (one file read per scope, plus a PackageManager
+     * fingerprint and a signature hash per scope) and used to run on the main
+     * thread from a `LaunchedEffect`. Only the resulting task stays on
+     * [Dispatchers.Default]; the probing happens on [Dispatchers.IO].
      */
     fun checkDexIndexOnEntry(context: Context) {
         if (isDexIndexTaskRunning.get()) return
 
-        val anyIndexed = DexIndexRegistry.indexers.any {
-            DexIndexManager.lastIndexedAt(context, it.scopePackage) > 0L
-        }
-        val needRefresh = if (anyIndexed) {
-            // Non-Firstrun: cache exists but fingerprint/schema is stale or the file is corrupted
-            DexIndexRegistry.indexers.any { DexIndexManager.needsReindex(context, it.scopePackage) }
-        } else {
-            true // Firstrun: index files do not exist at all
-        }
-        if (needRefresh) {
-            startDexIndexTask(context, foreground = anyIndexed)
+        viewModelScope.launch(Dispatchers.IO) {
+            if (isDexIndexTaskRunning.get()) return@launch
+
+            val anyIndexed = DexIndexRegistry.indexers.any {
+                DexIndexManager.lastIndexedAt(context, it.scopePackage) > 0L
+            }
+            val needRefresh = if (anyIndexed) {
+                // Non-Firstrun: cache exists but fingerprint/schema is stale or the file is corrupted
+                DexIndexRegistry.indexers.any { DexIndexManager.needsReindex(context, it.scopePackage) }
+            } else {
+                true // Firstrun: index files do not exist at all
+            }
+            if (needRefresh) {
+                startDexIndexTask(context, foreground = anyIndexed)
+            }
         }
     }
 
@@ -139,8 +149,13 @@ class HomeViewModel(
                 if (status.moduleActive && status.rootAvailable) {
                     updateModuleStatusAsync()
                     updateSystemInfoAsync()
-                    checkConfigUpgrade()
                 }
+                // Unconditional: this is now the only place the automatic config
+                // migration is triggered, and its format-upgrade half needs no root
+                // (only the legacy RemotePreferences half does). Running it inside
+                // the module/root guard above would silently drop the migration for
+                // users without root. ConfigUpgrade itself runs it once per process.
+                checkConfigUpgrade()
             } catch (e: Exception) {
                 Log.e(TAG, "Environment check failed", e)
                 _uiState.value = _uiState.value.copy(
@@ -240,7 +255,10 @@ class HomeViewModel(
     }
 
     private fun checkConfigUpgrade() {
-        Thread {
+        // Serial shell dispatcher: the legacy RemotePreferences migration in here
+        // issues root commands, and EnhancedShellExecutor rejects — rather than
+        // queues — a command that would exceed its concurrency limit.
+        viewModelScope.launch(EnhancedShellExecutor.shellWorkDispatcher) {
             try {
                 if (repository.checkConfigUpgrade()) {
                     _uiState.value = _uiState.value.copy(configUpgradeDialogVisible = true)
@@ -248,7 +266,7 @@ class HomeViewModel(
             } catch (e: Exception) {
                 Log.e(TAG, "Config upgrade check failed", e)
             }
-        }.start()
+        }
     }
 
     fun checkAppUpdate(force: Boolean = false) {
