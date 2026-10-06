@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -355,7 +356,13 @@ private fun HomeScreen(
 @Composable
 private fun NonZuxOsCard(onDismiss: () -> Unit) {
     ZToolCard(
-        modifier = Modifier.fillMaxWidth(),
+        // The dismiss button inside keeps its own clickable, so it consumes the
+        // press before this card-level one and the card stays inert there.
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+            .cardPressScale()
+            .clickable(onClick = {}),
         containerColor = LocalZToolColorScheme.current.errorContainer
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -391,10 +398,18 @@ private fun NonZuxOsCard(onDismiss: () -> Unit) {
 /**
  * Press feedback for a whole card: scales it down slightly while a finger is held
  * on it. It listens on the Initial pointer pass so it also works for containers
- * whose children consume the press themselves (the settings list, for example).
+ * whose children consume the press themselves (a card that hosts its own buttons,
+ * for example).
+ *
+ * The shape is clipped by the same layer that scales. A separate `Modifier.clip`
+ * in front of the scale layer loses the clip, which leaves the click ripple of a
+ * following `clickable` square inside a rounded card.
  */
 @Composable
-private fun Modifier.cardPressScale(pressedScale: Float = 0.98f): Modifier {
+private fun Modifier.cardPressScale(
+    clipShape: Shape = RoundedCornerShape(16.dp),
+    pressedScale: Float = 0.98f
+): Modifier {
     val isPressed = remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (isPressed.value) pressedScale else 1f,
@@ -404,6 +419,8 @@ private fun Modifier.cardPressScale(pressedScale: Float = 0.98f): Modifier {
         .graphicsLayer {
             scaleX = scale
             scaleY = scale
+            shape = clipShape
+            clip = true
         }
         .pointerInput(Unit) {
             val touchSlop = viewConfiguration.touchSlop
@@ -436,7 +453,6 @@ private fun DevBuildCard() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
-            .clip(RoundedCornerShape(16.dp))
             .cardPressScale()
             .clickable(onClick = {}),
         containerColor = LocalZToolColorScheme.current.errorContainer
@@ -576,7 +592,7 @@ private fun ModuleStatusCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .cardPressScale()
             .then(
                 if (!bothActive) Modifier.clickable { onRefreshEnvironment() }
                 else Modifier.clickable(onClick = {})
@@ -725,12 +741,7 @@ private fun SystemInfoCard(state: HomeUiState) {
     )
 
     ZToolSettingsList(
-        modifier = Modifier
-            .then(
-                if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) Modifier.padding(horizontal = 8.dp)
-                else Modifier
-            )
-            .cardPressScale(),
+        modifier = if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) Modifier.padding(horizontal = 8.dp) else Modifier,
         sections = listOf(
             SettingSection(
                 items = infoRows.map { row ->
