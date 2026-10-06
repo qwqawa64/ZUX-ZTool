@@ -168,10 +168,15 @@ class SettingsRepository(
 
     fun setLauncherIconHidden(hidden: Boolean) {
         if (hidden) {
-            setAliasEnabled(launcherAliasComponent(), false)
-            setAliasEnabled(launcherAliasAltComponent(), false)
+            hideLauncherIconAliases()
         } else {
-            applyLauncherIconAlias()
+            // Deliberately NOT isLauncherIconHidden() here: that value is derived
+            // from the very component states this call changes. Hiding leaves both
+            // aliases explicitly DISABLED, so consulting it on the way back would
+            // always report "hidden", take the hide branch again, and the icon
+            // could never be restored. The persisted icon choice is the only
+            // state that survives the hide, so rebuild the pair from it.
+            applyLauncherIconAlias(hidden = false)
         }
         syncLeakCanaryAlias(hidden)
     }
@@ -191,13 +196,18 @@ class SettingsRepository(
      */
     private fun applyLauncherIconAlias(hidden: Boolean) {
         if (hidden) {
-            setAliasEnabled(launcherAliasComponent(), false)
-            setAliasEnabled(launcherAliasAltComponent(), false)
+            hideLauncherIconAliases()
             return
         }
         val useAlternativeIcon = themePreferences.loadSettings().useAlternativeIcon
         setAliasEnabled(launcherAliasComponent(), !useAlternativeIcon)
         setAliasEnabled(launcherAliasAltComponent(), useAlternativeIcon)
+    }
+
+    /** The icon is hidden exactly when neither alias is enabled. */
+    private fun hideLauncherIconAliases() {
+        setAliasEnabled(launcherAliasComponent(), false)
+        setAliasEnabled(launcherAliasAltComponent(), false)
     }
 
     /**
@@ -206,12 +216,7 @@ class SettingsRepository(
      * toggle handler running, so re-assert the persisted selection.
      */
     fun applyLauncherIconAliasState() {
-        if (isLauncherIconHidden()) {
-            setAliasEnabled(launcherAliasComponent(), false)
-            setAliasEnabled(launcherAliasAltComponent(), false)
-        } else {
-            applyLauncherIconAlias()
-        }
+        applyLauncherIconAlias(isLauncherIconHidden())
     }
 
     private fun isAliasActive(component: ComponentName, manifestDefault: Boolean): Boolean {
@@ -273,13 +278,11 @@ class SettingsRepository(
      *   re-asserted whenever the icon is hidden.
      */
     fun healLauncherAliasState() {
-        if (isLauncherIconHidden()) {
-            setAliasEnabled(launcherAliasComponent(), false)
-            setAliasEnabled(launcherAliasAltComponent(), false)
+        val hidden = isLauncherIconHidden()
+        applyLauncherIconAlias(hidden)
+        if (hidden) {
             syncLeakCanaryAlias(hidden = true)
-            return
         }
-        applyLauncherIconAlias(hidden = false)
     }
 
     private fun setComponentState(component: ComponentName, state: Int) {
