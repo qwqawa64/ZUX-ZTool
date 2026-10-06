@@ -53,14 +53,14 @@ if (!releaseSigningEnabled && partialReleaseSigningEnvironment.isNotEmpty()) {
     )
 }
 
-// Unofficial-build marking. Everything the project ships except the release APK
-// produced by .github/workflows/draft-release.yml is considered unofficial and
-// shows the on-screen warning card on the home screen. Only that one Gradle
-// invocation gets ZTOOL_OFFICIAL_RELEASE=1 (draft-release.yml passes the
+// Development-build marking. Everything the project ships except the release APK
+// produced by .github/workflows/draft-release.yml is considered a development
+// build and shows the on-screen warning card on the home screen. Only that one
+// Gradle invocation gets ZTOOL_OFFICIAL_RELEASE=1 (draft-release.yml passes the
 // `official-release` input to the reusable Android CI workflow). Local builds are
-// unofficial by default and can opt out with -Pztool.nightlyDebug=false.
+// development builds by default and can opt out with -Pztool.devWarning=false.
 val isOfficialReleaseBuild = System.getenv("ZTOOL_OFFICIAL_RELEASE") == "1" ||
-    providers.gradleProperty("ztool.nightlyDebug").orNull?.equals("false", ignoreCase = true) == true
+    providers.gradleProperty("ztool.devWarning").orNull?.equals("false", ignoreCase = true) == true
 
 android {
     namespace = "com.qimian233.ztool"
@@ -75,7 +75,7 @@ android {
         versionName = "Beta/${getBuildTime()}"
         buildConfigField("int", "GIT_COMMIT_COUNT", "${getGitCommitCount()}")
         buildConfigField("String", "GIT_COMMIT_HASH", "\"${getGitCommitHash()}\"")
-        buildConfigField("boolean", "IS_UNOFFICIAL_BUILD", "${!isOfficialReleaseBuild}")
+        buildConfigField("boolean", "IS_DEV_BUILD", "${!isOfficialReleaseBuild}")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

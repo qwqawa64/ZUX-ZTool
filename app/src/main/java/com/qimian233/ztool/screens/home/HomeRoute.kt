@@ -314,8 +314,8 @@ private fun HomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                if (BuildConfig.IS_UNOFFICIAL_BUILD) {
-                    UnofficialBuildCard()
+                if (BuildConfig.IS_DEV_BUILD) {
+                    DevBuildCard()
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
@@ -388,7 +388,7 @@ private fun NonZuxOsCard(onDismiss: () -> Unit) {
  * dismissible: the fact cannot change while the APK stays installed.
  */
 @Composable
-private fun UnofficialBuildCard() {
+private fun DevBuildCard() {
     ZToolCard(
         modifier = Modifier.fillMaxWidth(),
         containerColor = LocalZToolColorScheme.current.errorContainer
@@ -402,7 +402,7 @@ private fun UnofficialBuildCard() {
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = stringResource(R.string.page_home_unofficial_build_title),
+                    text = stringResource(R.string.page_home_dev_build_title),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = LocalZToolColorScheme.current.onErrorContainer
@@ -410,7 +410,7 @@ private fun UnofficialBuildCard() {
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.page_home_unofficial_build_warn),
+                text = stringResource(R.string.page_home_dev_build_warn),
                 style = MaterialTheme.typography.bodyMedium,
                 color = LocalZToolColorScheme.current.onErrorContainer
             )
