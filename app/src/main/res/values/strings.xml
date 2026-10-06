@@ -759,6 +759,7 @@
     <string name="system_framework_disable_zui_applist_title">安全相关</string>
     <string name="system_framework_disable_flag_secure_title">强制允许截屏</string>
     <string name="system_framework_disable_flag_secure_summary">移除安全窗口标志，解决安全窗口截屏为全黑问题</string>
+    <string name="system_framework_disable_volume_warn_title">移除高音量警告</string>
     <string name="system_framework_volume_key_nonlinear_title">非线性音量调节</string>
     <string name="system_framework_volume_key_nonlinear_summary">若使用系统默认音量阶数则效果不会很明显</string>
     <string name="system_framework_fine_volume_steps_title">精细音量调节</string>

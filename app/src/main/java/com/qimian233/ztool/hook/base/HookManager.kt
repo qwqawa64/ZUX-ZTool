@@ -71,6 +71,7 @@ import com.qimian233.ztool.hook.modules.systemframework.AllowUntrustedTouch
 import com.qimian233.ztool.hook.modules.systemframework.DisableFlagSecure
 import com.qimian233.ztool.hook.modules.systemframework.DisableGameAudio
 import com.qimian233.ztool.hook.modules.systemframework.DisableHbmThermalLimit
+import com.qimian233.ztool.hook.modules.systemframework.DisableVolumeWarnDialog
 import com.qimian233.ztool.hook.modules.systemframework.FineVolumeSteps
 import com.qimian233.ztool.hook.modules.systemframework.FreeformEdgeBubbleHook
 import com.qimian233.ztool.hook.modules.systemframework.FreeformKeepAliveSystemHook
@@ -163,6 +164,7 @@ object HookManager {
         registerHookModule(AllowGetPackages())
         registerHookModule(AllowUntrustedTouch())
         registerHookModule(ForceScreenOnOffAnimation())
+        registerHookModule(DisableVolumeWarnDialog())
         registerHookModule(AiInputExpand())
         registerHookModule(HalfWidthPunctHook())
         registerHookModule(KeepRotation())

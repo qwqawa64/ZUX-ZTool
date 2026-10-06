@@ -97,6 +97,11 @@ class FrameworkSettingsViewModel(
         repository.saveDisableHbmThermalLimit(enabled)
     }
 
+    fun setDisableVolumeWarn(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableSafeVolumeWarn = enabled)
+        repository.saveDisableVolumeWarn(enabled)
+    }
+
     fun setFineVolumeSteps(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(fineVolumeSteps = enabled)
         repository.saveFineVolumeSteps(enabled)
@@ -200,6 +205,7 @@ data class FrameworkSettingsUiState(
     val allowRelativeAppLaunch: Boolean = false,
     val forceRelativeAppFreeform: Boolean = false,
     val disableHbmThermalLimit: Boolean = false,
+    val disableSafeVolumeWarn: Boolean = false,
     val fineVolumeSteps: Boolean = false,
     val volumeKeyNonlinear: Boolean = false,
     val pkgMgrAllowDowngrade: Boolean = false,

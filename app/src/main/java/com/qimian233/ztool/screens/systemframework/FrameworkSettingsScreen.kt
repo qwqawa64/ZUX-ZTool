@@ -110,6 +110,7 @@ fun FrameworkSettingsRoute(
             onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
             onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
             onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit,
+            onDisableVolumeWarnChanged = viewModel::setDisableVolumeWarn,
             onFineVolumeStepsChanged = viewModel::setFineVolumeSteps,
             onVolumeKeyNonlinearChanged = viewModel::setVolumeKeyNonlinear,
             onPkgMgrAllowDowngradeChanged = viewModel::setPkgMgrAllowDowngrade,
@@ -176,6 +177,7 @@ private fun FrameworkSettingsScreen(
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
+    onDisableVolumeWarnChanged: (Boolean) -> Unit,
     onFineVolumeStepsChanged: (Boolean) -> Unit,
     onVolumeKeyNonlinearChanged: (Boolean) -> Unit,
     onPkgMgrAllowDowngradeChanged: (Boolean) -> Unit,
@@ -241,6 +243,7 @@ private fun FrameworkSettingsScreen(
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
                         onForceRelativeAppFreeformChanged = onForceRelativeAppFreeformChanged,
                         onDisableHbmThermalLimitChanged = onDisableHbmThermalLimitChanged,
+                        onDisableVolumeWarnChanged = onDisableVolumeWarnChanged,
                         onFineVolumeStepsChanged = onFineVolumeStepsChanged,
                         onVolumeKeyNonlinearChanged = onVolumeKeyNonlinearChanged,
                         onPkgMgrAllowDowngradeChanged = onPkgMgrAllowDowngradeChanged,
@@ -274,6 +277,7 @@ private fun frameworkSettingsSections(
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
+    onDisableVolumeWarnChanged: (Boolean) -> Unit,
     onFineVolumeStepsChanged: (Boolean) -> Unit,
     onVolumeKeyNonlinearChanged: (Boolean) -> Unit,
     onPkgMgrAllowDowngradeChanged: (Boolean) -> Unit,
@@ -459,6 +463,12 @@ private fun frameworkSettingsSections(
                     checked = state.forceRelativeAppFreeform,
                     onCheckedChange = onForceRelativeAppFreeformChanged,
                     key = "framework_force_relative_app_freeform"
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_framework_disable_volume_warn_title),
+                    checked = state.disableSafeVolumeWarn,
+                    onCheckedChange = onDisableVolumeWarnChanged,
+                    key = "framework_disable_volume_warn"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_framework_volume_key_nonlinear_title),

@@ -677,6 +677,7 @@
     <string name="system_framework_disable_zui_applist_title">Security</string>
     <string name="system_framework_disable_flag_secure_title">Force allow screenshots</string>
     <string name="system_framework_disable_flag_secure_summary">Remove secure window flags to fix black screenshots in secure windows.</string>
+    <string name="system_framework_disable_volume_warn_title">Remove high volume warning dialog</string>
     <string name="system_framework_volume_key_nonlinear_title">Non-linear volume ramp</string>
     <string name="system_framework_volume_key_nonlinear_summary">The effect is not very noticeable on the system default volume step count.</string>
     <string name="system_framework_fine_volume_steps_title">Fine volume adjustment</string>

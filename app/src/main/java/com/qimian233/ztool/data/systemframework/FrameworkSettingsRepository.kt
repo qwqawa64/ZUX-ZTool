@@ -4,8 +4,8 @@ import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.EnhancedShellExecutor.ShellResult
 import com.qimian233.ztool.R
-import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 
 class FrameworkSettingsRepository(
@@ -29,6 +29,7 @@ class FrameworkSettingsRepository(
             allowRelativeAppLaunch = prefsUtils.loadBooleanSetting(ALLOW_RELATIVE_APP_LAUNCH, false),
             forceRelativeAppFreeform = prefsUtils.loadBooleanSetting(FORCE_RELATIVE_APP_FREEFORM, false),
             disableHbmThermalLimit = prefsUtils.loadBooleanSetting(KEY_DISABLE_HBM_THERMAL_LIMIT, false),
+            disableSafeVolumeWarn = prefsUtils.loadBooleanSetting(KEY_DISABLE_SAFE_VOLUME_WARNING, false),
             fineVolumeSteps = prefsUtils.loadBooleanSetting(KEY_FINE_VOLUME_STEPS, false),
             volumeKeyNonlinear = prefsUtils.loadBooleanSetting(KEY_VOLUME_KEY_NONLINEAR, false),
             pkgMgrAllowDowngrade = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_ALLOW_DOWNGRADE, false),
@@ -98,6 +99,10 @@ class FrameworkSettingsRepository(
 
     fun saveVolumeKeyNonlinear(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_VOLUME_KEY_NONLINEAR, enabled)
+    }
+
+    fun saveDisableVolumeWarn(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_DISABLE_SAFE_VOLUME_WARNING, enabled)
     }
 
     fun savePkgMgrAllowDowngrade(enabled: Boolean) {
@@ -219,6 +224,7 @@ class FrameworkSettingsRepository(
         private val KEY_DISABLE_HBM_THERMAL_LIMIT = PreferenceKeys.DISABLE_HBM_THERMAL_LIMIT.name
         private val KEY_FINE_VOLUME_STEPS = PreferenceKeys.FINE_VOLUME_STEPS.name
         private val KEY_VOLUME_KEY_NONLINEAR = PreferenceKeys.VOLUME_KEY_NONLINEAR.name
+        private val KEY_DISABLE_SAFE_VOLUME_WARNING = PreferenceKeys.DISABLE_SAFE_VOLUME_WARNING.name
 
         private val KEY_PKG_MGR_ALLOW_DOWNGRADE = PreferenceKeys.PKG_MGR_ALLOW_DOWNGRADE.name
         private val KEY_PKG_MGR_BYPASS_VERIFICATION = PreferenceKeys.PKG_MGR_BYPASS_VERIFICATION.name
