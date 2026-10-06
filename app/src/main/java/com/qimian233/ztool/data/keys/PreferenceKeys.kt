@@ -42,6 +42,9 @@ object PreferenceKeys {
     val VOLUME_KEY_NONLINEAR = BoolKey("volume_key_nonlinear", false)
     // Remove system server safe volume limitation
     val DISABLE_SAFE_VOLUME_WARNING = BoolKey("disable_safe_volume_warning", false)
+    // Keep the control-center volume slider showing the real stream level when a
+    // volume write is rejected (see VolumeSliderFidelityHook)
+    val VOLUME_SLIDER_FIDELITY = BoolKey("volume_slider_fidelity", false)
     // One-shot maintenance action marker: clears stale ZUI night-mode override
     // (ui_night_mode_override_on/off) via root; not read by any hook module
     val FIX_NIGHT_MODE_OVERRIDE = BoolKey("fix_night_mode_override", false)
@@ -313,7 +316,7 @@ object PreferenceKeys {
         LAUNCHER_FORCE_FREEFORM_ENTRY, FREEFORM_EDGE_BUBBLE,
         FREEFORM_KEEP_ALIVE_ENABLED,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
-        VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING,
+        VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
         PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,
         PKG_MGR_DISABLE_VERIFICATION_AGENT, PKG_MGR_BYPASS_DIGEST,
         PKG_MGR_USE_PREVIOUS_SIGNATURES, PKG_MGR_BYPASS_EXACT_SIG_MATCH,

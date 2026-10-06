@@ -219,6 +219,9 @@ class VolumeSliderLongPressHook : AppHookModule() {
         // VolumeSliderPercentageHook's label colors mirror the stock slider
         // icon filter against this raw-progress range; keep both in sync.
         private const val STOCK_VOLUME_RAW_RANGE = 100_000
+        // ZUI's SeekBarNps settle animation runs for 150 ms; a re-align scheduled
+        // past that survives it when VolumeSliderFidelityHook is not enabled.
+        private const val SETTLE_ANIMATION_GUARD_MS = 200L
         private const val BASE_PERCENT_COLOR = 0xffd8d8d8.toInt()
         private const val ICON_BASE_COLOR = 0x4Dffffff
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"
@@ -1074,6 +1077,26 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
     }
 
+    /**
+     * Snaps one stream column back to the level AudioManager actually holds.
+     *
+     * A write above the safe-volume limit is dropped rather than applied: the
+     * framework posts the high-volume warning and discards the command, and a
+     * dropped write emits no VOLUME_CHANGED_ACTION, so [refreshStreamColumns]
+     * never fires and the bar would keep the level the user dragged. Re-reading
+     * the stream level on release is the only way to realign it.
+     */
+    private fun alignStreamColumn(stream: Int) {
+        val am = panelAudioManager ?: return
+        val level = try {
+            am.getStreamVolume(stream)
+        } catch (t: Throwable) {
+            logger.debug("volume panel: align stream $stream failed: ${t.message}")
+            return
+        }
+        streamHandles[stream]?.applyLevel(level)
+    }
+
     private fun unregisterVolumeChangeReceiver() {
         val receiver = volumeChangeReceiver ?: return
         val context = dialogContext ?: return
@@ -1116,6 +1139,18 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 }
             },
             onHandleReady = { handle -> streamHandles[stream] = handle },
+            onStop = {
+                // SeekBarNps calls onStopTrackingTouch before setPressed(false),
+                // and SliderHandle.applyLevel skips a pressed bar, so align on the
+                // next main-thread pass. The delayed pass covers ZUI's 150 ms
+                // SeekBarNps settle animation, which overwrites the first
+                // correction unless VolumeSliderFidelityHook drops it.
+                mainHandler.post { alignStreamColumn(stream) }
+                mainHandler.postDelayed(
+                    { alignStreamColumn(stream) },
+                    SETTLE_ANIMATION_GUARD_MS
+                )
+            },
             handleLevelMax = streamMax
         )
         (column.layoutParams as? LinearLayout.LayoutParams)?.marginStart =

@@ -115,6 +115,7 @@ import com.qimian233.ztool.hook.modules.systemui.qs.QsPanelWidthHook
 import com.qimian233.ztool.hook.modules.systemui.qs.ControlCenterLongPressHook
 import com.qimian233.ztool.hook.modules.systemui.qs.HideDetailIndicatorHook
 import com.qimian233.ztool.hook.modules.systemui.qs.SliderStyleHook
+import com.qimian233.ztool.hook.modules.systemui.qs.VolumeSliderFidelityHook
 import com.qimian233.ztool.hook.modules.systemui.qs.VolumeSliderLongPressHook
 import com.qimian233.ztool.hook.modules.systemui.qs.VolumeSliderPercentageHook
 import com.qimian233.ztool.hook.modules.systemui.statusbar.CustomStatusBarClock
@@ -211,6 +212,7 @@ object HookManager {
         registerHookModule(CustomQsRoundCorner())
         registerHookModule(BrightnessSliderPercentageHook())
         registerHookModule(VolumeSliderPercentageHook())
+        registerHookModule(VolumeSliderFidelityHook())
         registerHookModule(ControlCenterLongPressHook())
         registerHookModule(VolumeSliderLongPressHook())
         registerHookModule(HideDetailIndicatorHook())

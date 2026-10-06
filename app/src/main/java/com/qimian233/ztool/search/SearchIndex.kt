@@ -583,6 +583,11 @@ object SearchIndex {
             titleRes = R.string.system_ui_control_center_show_volume_slider_percentage
         ),
         systemUiControlCenter.item(
+            id = "volume_slider_fidelity",
+            titleRes = R.string.system_ui_volume_slider_fidelity_title,
+            summaryRes = R.string.system_ui_volume_slider_fidelity_summary
+        ),
+        systemUiControlCenter.item(
             id = "control_center_long_press",
             titleRes = R.string.system_ui_control_center_long_press_title
         ),

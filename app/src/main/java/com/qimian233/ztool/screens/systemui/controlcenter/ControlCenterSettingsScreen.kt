@@ -163,6 +163,7 @@ fun ControlCenterSettingsRoute(
             onNotificationCenterBlurPercentChanged = viewModel::setNotificationCenterBlurPercent,
             onBrightnessSliderPercentageChanged = viewModel::setBrightnessSliderPercentageEnabled,
             onVolumeSliderPercentageChanged = viewModel::setVolumeSliderPercentageEnabled,
+            onVolumeSliderFidelityChanged = viewModel::setVolumeSliderFidelityEnabled,
             onControlCenterLongPressChanged = viewModel::setControlCenterLongPressEnabled,
             onVolumeDetailPanelChanged = viewModel::setVolumeDetailPanelEnabled,
             onHideDetailIndicatorChanged = viewModel::setHideDetailIndicatorEnabled,
@@ -267,6 +268,7 @@ private fun ControlCenterSettingsScreen(
     onFinishControlCenterClockTextColorEditing: () -> Unit,
     onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
     onVolumeSliderPercentageChanged: (Boolean) -> Unit,
+    onVolumeSliderFidelityChanged: (Boolean) -> Unit,
     onControlCenterLongPressChanged: (Boolean) -> Unit,
     onVolumeDetailPanelChanged: (Boolean) -> Unit,
     onHideDetailIndicatorChanged: (Boolean) -> Unit,
@@ -348,6 +350,7 @@ private fun ControlCenterSettingsScreen(
                         onControlCenterClockColorChange = onControlCenterClockColorChange,
                         onBrightnessSliderPercentageChanged = onBrightnessSliderPercentageChanged,
                         onVolumeSliderPercentageChanged = onVolumeSliderPercentageChanged,
+                        onVolumeSliderFidelityChanged = onVolumeSliderFidelityChanged,
                         onControlCenterLongPressChanged = onControlCenterLongPressChanged,
                         onVolumeDetailPanelChanged = onVolumeDetailPanelChanged,
                         onHideDetailIndicatorChanged = onHideDetailIndicatorChanged,
@@ -398,6 +401,7 @@ private fun controlCenterSettingsSections(
     onNotificationCenterBlurEnabledChanged: (Boolean) -> Unit,
     onNotificationCenterBlurPercentChanged: (Int) -> Unit,
     onVolumeSliderPercentageChanged: (Boolean) -> Unit,
+    onVolumeSliderFidelityChanged: (Boolean) -> Unit,
     onBrightnessSliderPercentageChanged: (Boolean) -> Unit,
     onControlCenterLongPressChanged: (Boolean) -> Unit,
     onVolumeDetailPanelChanged: (Boolean) -> Unit,
@@ -478,6 +482,15 @@ private fun controlCenterSettingsSections(
                         checked = state.volumeSliderPercentageEnabled,
                         onCheckedChange = onVolumeSliderPercentageChanged,
                         key = "control_center_volume_slider_percentage"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_volume_slider_fidelity_title),
+                        summary = stringResource(R.string.system_ui_volume_slider_fidelity_summary),
+                        checked = state.volumeSliderFidelityEnabled,
+                        onCheckedChange = onVolumeSliderFidelityChanged,
+                        key = "volume_slider_fidelity"
                     )
                 )
                 add(

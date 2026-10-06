@@ -55,6 +55,7 @@ class ControlCenterSettingsRepository(
             ).coerceIn(NOTIFICATION_CENTER_BLUR_MIN_PERCENT, NOTIFICATION_CENTER_BLUR_MAX_PERCENT),
             brightnessSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_BRIGHTNESS_SLIDER_PERCENTAGE, false),
             volumeSliderPercentageEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, false),
+            volumeSliderFidelityEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_SLIDER_FIDELITY, false),
             controlCenterLongPressEnabled = prefsUtils.loadBooleanSetting(KEY_CONTROL_CENTER_LONG_PRESS, false),
             volumeDetailPanelEnabled = prefsUtils.loadBooleanSetting(KEY_VOLUME_DETAIL_PANEL, false),
             hideDetailIndicatorEnabled = prefsUtils.loadBooleanSetting(KEY_HIDE_DETAIL_INDICATOR, false),
@@ -187,6 +188,10 @@ class ControlCenterSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_VOLUME_SLIDER_PERCENTAGE, enabled)
     }
 
+    fun saveVolumeSliderFidelityEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_VOLUME_SLIDER_FIDELITY, enabled)
+    }
+
     fun saveControlCenterLongPressEnabled(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_CONTROL_CENTER_LONG_PRESS, enabled)
     }
@@ -295,6 +300,7 @@ class ControlCenterSettingsRepository(
         private val KEY_NOTIFICATION_CENTER_BLUR_ENABLED = PreferenceKeys.NOTIFICATION_CENTER_BLUR.name
         private val KEY_NOTIFICATION_CENTER_BLUR_PERCENT = PreferenceKeys.NOTIFICATION_CENTER_BLUR_PERCENT.name
         private val KEY_VOLUME_SLIDER_PERCENTAGE = PreferenceKeys.VOLUME_SLIDER_PERCENTAGE.name
+        private val KEY_VOLUME_SLIDER_FIDELITY = PreferenceKeys.VOLUME_SLIDER_FIDELITY.name
         private val KEY_BRIGHTNESS_SLIDER_PERCENTAGE = PreferenceKeys.BRIGHTNESS_SLIDER_PERCENTAGE.name
         private val KEY_CONTROL_CENTER_LONG_PRESS = PreferenceKeys.CONTROL_CENTER_LONG_PRESS.name
         private val KEY_VOLUME_DETAIL_PANEL = PreferenceKeys.VOLUME_DETAIL_PANEL.name

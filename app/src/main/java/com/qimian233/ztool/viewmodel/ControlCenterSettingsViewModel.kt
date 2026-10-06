@@ -191,6 +191,11 @@ class ControlCenterSettingsViewModel(
         repository.saveVolumeSliderPercentageEnabled(enabled)
     }
 
+    fun setVolumeSliderFidelityEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(volumeSliderFidelityEnabled = enabled)
+        repository.saveVolumeSliderFidelityEnabled(enabled)
+    }
+
     fun setControlCenterLongPressEnabled(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(controlCenterLongPressEnabled = enabled)
         repository.saveControlCenterLongPressEnabled(enabled)
@@ -386,6 +391,7 @@ data class ControlCenterSettingsUiState(
     val notificationCenterBlurEnabled: Boolean = false,
     val notificationCenterBlurPercent: Int = ControlCenterSettingsRepository.DEFAULT_NOTIFICATION_CENTER_BLUR_PERCENT,
     val volumeSliderPercentageEnabled: Boolean = false,
+    val volumeSliderFidelityEnabled: Boolean = false,
     val controlCenterLongPressEnabled: Boolean = false,
     val volumeDetailPanelEnabled: Boolean = false,
     val hideDetailIndicatorEnabled: Boolean = false,
