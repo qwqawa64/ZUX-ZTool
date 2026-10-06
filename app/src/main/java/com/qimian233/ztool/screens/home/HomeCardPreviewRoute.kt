@@ -197,7 +197,11 @@ private fun OneLineChangelogView() {
 /** Placeholder that takes the card's place after "ignore" was pressed in the preview. */
 @Composable
 private fun PreviewResetRow(onReset: () -> Unit) {
-    ZToolCard(modifier = Modifier.fillMaxWidth()) {
+    ZToolCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

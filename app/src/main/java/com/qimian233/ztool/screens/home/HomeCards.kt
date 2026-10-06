@@ -88,20 +88,20 @@ import com.qimian233.ztool.viewmodel.UpdateInfo
  * geometry, so every mirrored rendering (the home screen and the preview) must use
  * this exact chain — a card rendered through any other container cannot be compared
  * with the home page.
+ *
+ * The cap is applied *before* `fillMaxWidth`: the other order locks min/max to the
+ * page width first, after which `widthIn` can only lower the maximum and the cap
+ * silently stops binding. With this order the column is capped and centered by the
+ * surrounding [com.qimian233.ztool.ui.components.ZToolPageSurface] in both frontend
+ * styles, so no style branch is needed here.
  */
 @Composable
-internal fun Modifier.homeCardColumn(): Modifier {
-    val isMiuixStyle = LocalZToolThemeSpec.current.style == FrontendStyle.Miuix
-    return this
-        .fillMaxHeight()
-        .fillMaxWidth()
-        .then(
-            // Miuix scaffold ignores widthIn on this chain; the cap only holds in Material mode.
-            if (isMiuixStyle) Modifier else Modifier.widthIn(max = 1120.dp)
-        )
-        .verticalScroll(rememberScrollState())
-        .padding(horizontal = 32.dp, vertical = 32.dp)
-}
+internal fun Modifier.homeCardColumn(): Modifier = this
+    .fillMaxHeight()
+    .widthIn(max = 1120.dp)
+    .fillMaxWidth()
+    .verticalScroll(rememberScrollState())
+    .padding(horizontal = 32.dp, vertical = 32.dp)
 
 /**
  * The card column of the home page, in home-screen order. Callers only have to supply
@@ -245,6 +245,9 @@ internal fun DevBuildCard() {
  * App-update notice. [update] carries the changelog text fetched from the release
  * feed; `expanded` decides whether it is clamped to four lines or shown in full.
  * Tapping the card toggles that state, so there is one card, not one per state.
+ *
+ * The 8dp side inset is the same one the warning, dev-build and module-status cards
+ * use: without it this card renders 16dp wider than every other card in the column.
  */
 @Composable
 internal fun UpdateCard(
@@ -256,6 +259,7 @@ internal fun UpdateCard(
     ZToolCard(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 8.dp)
             .clickable(onClick = onToggleExpanded),
         containerColor = LocalZToolColorScheme.current.tertiaryContainer
     ) {
