@@ -96,7 +96,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
     /** AudioManager bound to the open panel, used by the volume refresh receiver. */
     private var panelAudioManager: AudioManager? = null
 
-    /** Live stream-slider handles (media/ring) refreshed by [VolumeChangeReceiver]. */
+    /** Live stream-slider handles (media/ring) refreshed by VolumeChangeReceiver. */
     private val streamHandles = mutableMapOf<Int, SliderHandle>()
 
     /**
@@ -220,7 +220,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         // icon filter against this raw-progress range; keep both in sync.
         private const val STOCK_VOLUME_RAW_RANGE = 100_000
         private const val BASE_PERCENT_COLOR = 0xffd8d8d8.toInt()
-        private const val ICON_BASE_COLOR = 0x4Dffffff.toInt()
+        private const val ICON_BASE_COLOR = 0x4Dffffff
         private const val SYSTEMUI_PACKAGE = "com.android.systemui"
         private const val MODULE_PACKAGE = "com.qimian233.ztool"
         private const val MEDIA_OUTPUT_RECEIVER_CLASS =
@@ -438,7 +438,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
         }
 
         behindListener = resolveBehindListener(triggerView)
-        registerVolumeChangeReceiver(context, am)
+        registerVolumeChangeReceiver(context)
         dialog.setOnDismissListener {
             panelShowing = false
             currentDialog = null
@@ -1023,7 +1023,7 @@ class VolumeSliderLongPressHook : AppHookModule() {
      * stream columns re-read AudioManager afterwards — exactly what the QS
      * slider does.
      */
-    private fun registerVolumeChangeReceiver(context: Context, am: AudioManager) {
+    private fun registerVolumeChangeReceiver(context: Context) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
                 if (!panelShowing) return
@@ -2002,11 +2002,11 @@ class VolumeSliderLongPressHook : AppHookModule() {
             val styles = context.obtainStyledAttributes(
                 intArrayOf(android.R.attr.colorControlHighlight)
             )
-            val color = styles.getColor(0, 0x33888888.toInt())
+            val color = styles.getColor(0, 0x33888888)
             styles.recycle()
-            (color and 0x00FFFFFF) or 0x28000000.toInt() // ~16% alpha
+            (color and 0x00FFFFFF) or 0x28000000 // ~16% alpha
         } catch (_: Throwable) {
-            0x33888888.toInt()
+            0x33888888
         }
         // ViewOverlay draws above the view's own content regardless of the
         // tile's draw overrides; the drawable requests its own invalidations.
