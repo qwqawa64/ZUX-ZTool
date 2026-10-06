@@ -449,14 +449,106 @@ android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|ke
 ```powershell
 # 冷启动总时长（多次取中位数）
 adb shell am force-stop com.qimian233.ztool
-adb shell am start -W -n com.qimian233.ztool/.LauncherAlias
+adb shell am start -W -n com.qimian233.ztool/.MainActivity
 ```
 
-更细的定位用 Perfetto/Macrobenchmark 的 `cold_start` 轨迹，重点看两类区间：
+`am start -W` 的 `TotalTime` 只到**第一个绘制出来的帧**为止（实测约 174~199 ms），
+它量不到应用自己的入场动画——肉眼看到的 1.2 s / 5 s 是首帧之后还在连续出帧的时间。
+量动画必须用 Perfetto 的帧轨道，见 §6.1。
 
-1. `MainActivity.onCreate` 的**绝对时长**（应显著下降）；
-2. 主线程 `Choreographer#doFrame` 首次回调相对 `ActivityThread.handleBindApplication` 的偏移
-   （衡量首帧是否提前）。
+### 6.0 测量纪律：三种"冷启动"不能混着比
+
+| 场景 | 额外成本 | 怎么得到 |
+| --- | --- | --- |
+| 安装后**第一次**启动 | dex 校验 + dex2oat + baseline profile 安装 | `adb install -r` 之后立刻启动 |
+| 之后的普通冷启动 | 只有 profile 已生效的类预编译收益 | force-stop 后启动 |
+| 完全 AOT 基线 | 无（全量 speed 编译） | `adb shell cmd package compile -m speed -f com.qimian233.ztool` 之后再测 |
+
+第三行是用来**验证 baseline profile 到底有没有生效**的：如果 prefile 生效，
+"普通冷启动" 与 "全量 speed 编译" 的差距应该很小；差距很大说明 profile 没装上
+（检查 APK 里是否有 `assets/dexopt/baseline.prof`，以及 `profileinstaller` 是否被打进去）。
+
+### 6.1 Perfetto 抓冷启动
+
+配置放在 `tools/perfetto/startup-trace.cfg`（已提交）。`duration_ms` 按要抓的
+启动次数调整，默认 60 s 够 force-stop ×3。
+
+```powershell
+adb push tools/perfetto/startup-trace.cfg /data/local/tmp/startup-trace.cfg
+adb shell rm -f /data/misc/perfetto-traces/ztool-startup.perfetto-trace
+adb shell perfetto -c /data/local/tmp/startup-trace.cfg --txt `
+    -o /data/misc/perfetto-traces/ztool-startup.perfetto-trace -d
+Start-Sleep -Seconds 3          # 等 ftrace 真的开起来再启动应用，否则丢了前半段
+
+for ($i = 1; $i -le 3; $i++) {
+  adb shell am force-stop com.qimian233.ztool
+  Start-Sleep -Seconds 2
+  adb shell am start -W -n com.qimian233.ztool/.MainActivity
+  Start-Sleep -Seconds 3
+}
+# trace 到 duration_ms 会自己结束
+adb pull /data/misc/perfetto-traces/ztool-startup.perfetto-trace
+```
+
+两个设备相关的坑（在 TB710FU / Android 16 / Perfetto v49 上实测确认）：
+
+- `perfetto -d` 起的进程是 **root** 身份，shell 用 `kill -TERM` 停不掉它，
+  所以 `duration_ms` 必须给够，靠它自己结束。
+- 这个版本的 `perfetto` **没有 `-i/--query-file/--query-string`**（61 行 `--help`
+  里一个都没有），所以 SQL 不能在设备上跑——要么丢进
+  [ui.perfetto.dev](https://ui.perfetto.dev) 的 Query (SQL) 页，要么在本地跑
+  `trace_processor_shell`。
+- atrace 类别必须是设备真的支持的（`adb shell atrace --list_categories`）；
+  写错类别会让 perfetto 拒绝启动该 data source。配置里的类别都是在这台机器上核对过的。
+
+### 6.2 在 Perfetto UI 里量什么
+
+打开 trace 后：
+
+1. 找 `com.qimian233.ztool` 的进程轨道。起点是 **`launching: com.qimian233.ztool`**
+   （来自 `am` 类别），终点看两个不同的东西：
+   - **首帧**：主线程第一段 `Choreographer#doFrame`，配合 `FrameTimeline` 轨道上
+     第一帧的 actual present 时间。"启动到能用" 的严格定义就是这个。
+   - **动画结束**：`FrameTimeline` 轨道上该进程持续出帧的最后一段。你肉眼计的
+     1.2 s / 5 s splash 就是这一段——它不属于启动耗时，属于入场动画时长，
+     两个指标要分开报，否则优化动画会被误读成启动变快。
+2. `MainActivity.onCreate` 主线程没有 atrace 切片（应用没插桩），
+   所以"onCreate 耗时"要么读 `activityStart` → 首个 `Choreographer#doFrame` 的间隔，
+   要么临时加 `Trace.beginSection`。改造前后的**差值**是可信的，绝对值不必较真。
+3. root shell 的代价看 `su` 子进程：`linux.process_stats` 给的 `process_start`
+   加上 `sched` 的 `sched_switch`，能看到主线程（改前）或
+   `ShellExecutor-*` 线程（改后）在 `su` 往返期间是 sleeping 还是 running——
+   这正是 §3.1 那一步的收益所在。
+
+SQL（在 UI 的 Query 页或本地 trace_processor_shell 里跑）。**不依赖 stdlib 视图**的
+写法最稳，直接查 `slice` 表：
+
+```sql
+-- 系统记录的每次应用启动，来自 'am' 类别的 launching: 切片
+SELECT ts, dur / 1e6 AS launch_ms, name
+FROM slice
+WHERE name LIKE 'launching: %qimian233%'
+ORDER BY ts;
+```
+
+如果要用 Perfetto 现成的启动表，先确认视图名再查（不同版本命名不完全一致）：
+
+```sql
+SELECT name FROM sqlite_master WHERE name LIKE '%startup%';
+-- 常见结果：android_startups / android.startup.startups
+SELECT package, startup_type, ts, dur / 1e6 AS dur_ms
+FROM android_startups
+WHERE package = 'com.qimian233.ztool'
+ORDER BY ts;
+```
+
+### 6.3 Debug 包与 Release 包的读法不同
+
+- **Release**（当前设备上装的就是：`dumpsys package` 里没有 `DEBUGGABLE`）：
+  `proguard-android-optimize.txt` 会 `-assumenosideeffects` 掉 `android.util.Log`，
+  所以 trace 里**看不到应用自己的日志**。只能靠 `launching:` / 帧轨道 / `su` 子进程定位。
+- **Debug**：应用日志都在，关联代码位置方便；但 LSPosed 注入会额外拉长
+  `handleBindApplication` 段，这一段的绝对值不能代表 Release。
 
 `environmentReady` 的到达时间用现有 UI 观测即可（导航栏 + 系统信息卡出现），
 或用 §3.7 改造后的 `checkRootAccess` 缓存命中日志
@@ -475,3 +567,4 @@ adb shell am start -W -n com.qimian233.ztool/.LauncherAlias
 - `app/src/main/java/com/qimian233/ztool/service/EdgeBubbleService.kt`
 - `app/src/main/java/com/qimian233/ztool/dexindex/base/DexIndexManager.kt`
 - `app/src/main/java/com/qimian233/ztool/ui/theme/ZToolTheme.kt`
+- `tools/perfetto/startup-trace.cfg` — 冷启动 trace 配置（§6.1）
