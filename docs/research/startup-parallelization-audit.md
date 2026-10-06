@@ -234,7 +234,8 @@ private fun acquireCommandSlot(): Boolean = commandLock.lock().use {  // :175-20
 **因此正确的并行策略是：**
 
 - root/shell 工作统一走**单并发**的调度器（`Dispatchers.IO.limitedParallelism(1)`，
-  或一个 `Mutex`），保证不触发 `MAX_CONCURRENT_COMMANDS` 拒绝路径；
+  已作为 `EnhancedShellExecutor.shellWorkDispatcher` 提供），保证不触发
+  `MAX_CONCURRENT_COMMANDS` 拒绝路径；
 - 只有**不碰 shell**的工作才真正并行：文件 I/O（§3.3）、PackageManager 事务（§3.2）、
   `startForegroundService` / `canDrawOverlays`（§3.4）、DexIndex 判定（§3.6）、
   `detectFrameworkVersionAndMode`（纯 `XposedServiceBridge` binder，`HomeRepository.kt:248-261`）。
@@ -244,21 +245,42 @@ private fun acquireCommandSlot(): Boolean = commandLock.lock().use {  // :175-20
 
 ## 5. 建议的落地顺序
 
-| 步骤 | 内容 | 风险 |
-| --- | --- | --- |
-| 1 | `syncLsposedLogs` → `Dispatchers.IO` | 低 |
-| 2 | `cleanupAppLogsIfNeeded` → `Dispatchers.IO` | 低 |
-| 3 | 合并 + 后台化 alias 自愈（§3.2） | 低 |
-| 4 | `EdgeBubbleService.maybeStart` → `Dispatchers.IO` | 低 |
-| 5 | `ConfigUpgrade` 去重 + 线程安全（§3.5） | 中（需确认保留哪一个入口） |
-| 6 | `checkDexIndexOnEntry` 判定 → `Dispatchers.IO` | 低 |
-| 7 | 根检测提前到 Application（§3.7） | 中（需验证缓存命中语义） |
-| 8 | 旋转重跑守卫（§3.8） | 中（涉及 Manifest 契约） |
-| 9 | Baseline Profile + Release 口径测量（§3.10） | 低 |
-| 10 | 主题预热 / 调色板缓存（§3.9） | 低 |
+| 步骤 | 内容 | 风险 | 状态 |
+| --- | --- | --- | --- |
+| 1 | `syncLsposedLogs` → 后台（shell 调度器） | 低 | ✅ 已完成 |
+| 2 | `cleanupAppLogsIfNeeded` → `Dispatchers.IO` | 低 | ✅ 已完成 |
+| 3 | 合并 + 后台化 alias 自愈（§3.2） | 低 | ✅ 已完成 |
+| 4 | `EdgeBubbleService.maybeStart` → `Dispatchers.IO` | 低 | ✅ 已完成 |
+| 5 | `ConfigUpgrade` 去重 + 线程安全（§3.5） | 中（需确认保留哪一个入口） | 待办 |
+| 6 | `checkDexIndexOnEntry` 判定 → `Dispatchers.IO` | 低 | 待办 |
+| 7 | 根检测提前到 Application（§3.7） | 中（需验证缓存命中语义） | 待办 |
+| 8 | 旋转重跑守卫（§3.8） | 中（涉及 Manifest 契约） | 待办 |
+| 9 | Baseline Profile + Release 口径测量（§3.10） | 低 | 待办 |
+| 10 | 主题预热 / 调色板缓存（§3.9） | 低 | 待办 |
 
-第 1~4 步互不依赖，可以在一个 `coroutineScope` 里并发发起（都不碰 shell，
-不会撞 §4 的并发上限），一次性拿掉 `onCreate` 尾部的主线程阻塞。
+第 1~4 步互不依赖，可以在同一个 `onCreate` 尾部并发发起，一次性拿掉那里
+（以及 `ConfigUpgrade` 那次调用）的主线程阻塞。
+其中只有第 1 步碰 shell，走 §4 的单并发调度器；第 2~4 步是纯文件 I/O /
+PackageManager / `startForegroundService`，可以真正并行。
+
+## 5.1 落地记录（第 1~4 步）
+
+已完成，见 `MainActivity.onCreate` 尾部与 `EnhancedShellExecutor`：
+
+- 新增 `EnhancedShellExecutor.shellWorkDispatcher`（`Dispatchers.IO.limitedParallelism(1)`），
+  作为 §4 那个并发约束的唯一出口；`MainActivity` 里原有的 `ConfigUpgrade`
+  调用也一并改走它，避免和 `syncLsposedLogs` 争抢 shell 槽位。
+- 第 1 步 `syncLsposedLogs()`、第 2 步 `cleanupAppLogsIfNeeded()`、第 4 步
+  `EdgeBubbleService.maybeStart()` 分别改为 `lifecycleScope.launch` 到
+  后台调度器。
+- 第 3 步把 `applyLauncherIconAliasState()` + `applyLeakCanaryAliasState()`
+  合并为 `SettingsRepository.healLauncherAliasState()`：`isLauncherIconHidden()`
+  只读一次（原路径要读 2~3 次，每次两个 PackageManager 事务），
+  旧的两个方法保留给其余调用点（`restoreFromJson`、`restoreDefaultConfig`）。
+- `applyHideFromRecents()` 仍留在主线程：它的语义要求"在任务被快照进最近任务之前"
+  生效，且只有两个 binder 调用，不属于第 1~4 步。
+- 旋转重跑（§3.8）尚未处理，所以这些 `lifecycleScope` 任务仍随 Activity 重建重跑一次；
+  这是第 8 步要收掉的问题。
 
 ## 6. 验证方式
 

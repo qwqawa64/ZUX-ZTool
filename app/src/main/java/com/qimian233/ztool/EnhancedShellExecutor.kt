@@ -1,6 +1,8 @@
 package com.qimian233.ztool
 
 import android.util.Log
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -445,6 +447,18 @@ class EnhancedShellExecutor private constructor() {
         // Singleton instance
         @Volatile
         private var instance: EnhancedShellExecutor? = null
+
+        /**
+         * Serial dispatcher for root/shell work — launch shell commands on this
+         * instead of a bare [Dispatchers.IO].
+         *
+         * [acquireCommandSlot] rejects a command that would push the concurrency
+         * counter past [MAX_CONCURRENT_COMMANDS] (it fails with "系统繁忙" rather
+         * than queueing), and it throttles callers on a lock held across a
+         * [MIN_COMMAND_INTERVAL] sleep. Fanning independent shell work out across
+         * threads therefore turns into spurious failures instead of throughput.
+         */
+        val shellWorkDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
 
         fun getInstance(): EnhancedShellExecutor {
             if (instance == null) {

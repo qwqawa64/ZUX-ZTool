@@ -181,7 +181,16 @@ class SettingsRepository(
      * when the launcher icon is hidden).
      */
     private fun applyLauncherIconAlias() {
-        if (isLauncherIconHidden()) {
+        applyLauncherIconAlias(isLauncherIconHidden())
+    }
+
+    /**
+     * Overload taking an already-read [isLauncherIconHidden] result. Every such
+     * read is two PackageManager transactions, so callers that need the answer
+     * anyway must not let this re-read it.
+     */
+    private fun applyLauncherIconAlias(hidden: Boolean) {
+        if (hidden) {
             setAliasEnabled(launcherAliasComponent(), false)
             setAliasEnabled(launcherAliasAltComponent(), false)
             return
@@ -249,16 +258,28 @@ class SettingsRepository(
     }
 
     /**
-     * Self-heal after app updates: PackageManager component states survive updates,
-     * so a hidden choice made on an older build may leave the LeakCanary alias
-     * (unknown to that build's toggle code) still enabled. Re-assert it from the
-     * persisted alias state; the user-facing alias is left untouched because
-     * PackageManager itself is its source of truth.
+     * One-pass launcher-alias self-heal for app start.
+     *
+     * Folds what used to be two back-to-back calls ([applyLauncherIconAliasState]
+     * and [applyLeakCanaryAliasState]) into a single [isLauncherIconHidden] read:
+     * each read costs two PackageManager transactions and both paths need the
+     * same answer.
+     *
+     * - component states survive app updates and restore-from-backup can change
+     *   the icon choice without the toggle handler running, so the persisted
+     *   selection is re-asserted; and
+     * - a hidden choice made on an older build may leave the debug-only LeakCanary
+     *   alias (unknown to that build's toggle code) still enabled, so it is
+     *   re-asserted whenever the icon is hidden.
      */
-    fun applyLeakCanaryAliasState() {
+    fun healLauncherAliasState() {
         if (isLauncherIconHidden()) {
+            setAliasEnabled(launcherAliasComponent(), false)
+            setAliasEnabled(launcherAliasAltComponent(), false)
             syncLeakCanaryAlias(hidden = true)
+            return
         }
+        applyLauncherIconAlias(hidden = false)
     }
 
     private fun setComponentState(component: ComponentName, state: Int) {

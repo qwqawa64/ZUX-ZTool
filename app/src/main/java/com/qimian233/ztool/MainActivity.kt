@@ -98,7 +98,10 @@ class MainActivity : ComponentActivity(),
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        lifecycleScope.launch(Dispatchers.IO) {
+        // Config migration may shell out (copying a legacy XSharedPreferences
+        // directory needs root), so it goes on the serial shell dispatcher rather
+        // than a bare IO dispatcher — see EnhancedShellExecutor.MAX_CONCURRENT_COMMANDS.
+        lifecycleScope.launch(EnhancedShellExecutor.shellWorkDispatcher) {
             ConfigUpgrade.configUpgrader(this@MainActivity)
         }
 
@@ -169,21 +172,38 @@ class MainActivity : ComponentActivity(),
 
         // Restart the edge-bubble overlay service on app launch; EdgeBubbleBootReceiver
         // covers the boot / APK-update paths so opening ZTool is not required.
-        EdgeBubbleService.maybeStart(this)
+        // Off the main thread: the enable check reads RemotePreferences (a binder
+        // call to LSPosed when the module is active) and queries the overlay
+        // permission before starting the service.
+        lifecycleScope.launch(Dispatchers.IO) {
+            EdgeBubbleService.maybeStart(this@MainActivity.applicationContext)
+        }
 
-        // Clean up excess logs at startup + sync LSPosed logs
+        // Everything below is off the first-frame critical path: onCreate returns
+        // without waiting for any of it. The tasks are independent and run
+        // concurrently, except the shell work which is serialized.
         val settingsRepo = SettingsRepository(applicationContext)
         // A freshly launched task is not excluded from recents by default;
         // re-apply the persisted choice before the task gets snapshotted.
         settingsRepo.applyHideFromRecents()
-        // Component states survive app updates; heal the debug-only LeakCanary
-        // alias if "hidden" was enabled on a build that did not manage it yet.
-        settingsRepo.applyLeakCanaryAliasState()
-        // Re-assert which launcher alias is active so a restored/updated config
-        // cannot leave the icon pointing at the wrong artwork (or at none).
-        settingsRepo.applyLauncherIconAliasState()
-        settingsRepo.cleanupAppLogsIfNeeded()
-        settingsRepo.syncLsposedLogs()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            // Component states survive app updates and a restored config can leave
+            // the icon pointing at the wrong artwork (or at none); re-assert the
+            // persisted selection. One pass, because the user-facing alias pair and
+            // the debug-only LeakCanary alias share the same PackageManager read.
+            settingsRepo.healLauncherAliasState()
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            settingsRepo.cleanupAppLogsIfNeeded()
+        }
+
+        // Root shell: copying the LSPosed log directory can take hundreds of
+        // milliseconds, so it must never run on the main thread.
+        lifecycleScope.launch(EnhancedShellExecutor.shellWorkDispatcher) {
+            settingsRepo.syncLsposedLogs()
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
