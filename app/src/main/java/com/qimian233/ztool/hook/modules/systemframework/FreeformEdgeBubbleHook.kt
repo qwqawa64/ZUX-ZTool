@@ -745,7 +745,10 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
             if (internalMove.get() == true || !taskClass.isInstance(task)) {
                 return@hookWithId chain.proceed()
             }
-            val newBounds = chain.getArg(0) as Rect
+            // AOSP clears a container's bounds override by passing null to
+            // ConfigurationContainer.setBounds(Rect) (e.g. a freshly built task without
+            // launch bounds). A null Rect is not a drag candidate - delegate unchanged.
+            val newBounds = chain.getArg(0) as? Rect ?: return@hookWithId chain.proceed()
             val windowingMode = try {
                 taskClass.getMethod("getWindowingMode").invoke(task) as Int
             } catch (_: Throwable) { -1 }
@@ -794,12 +797,13 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         }
     }
 
-    private fun Any.taskIdCompat(): Int {
+    private fun Any?.taskIdCompat(): Int {
+        val self = this ?: return -1
         return try {
-            this.javaClass.getMethod("getTaskId").invoke(this) as Int
+            self.javaClass.getMethod("getTaskId").invoke(self) as Int
         } catch (_: Throwable) {
-            val f = this.javaClass.getField("mTaskId")
-            f.getInt(this)
+            val f = self.javaClass.getField("mTaskId")
+            f.getInt(self)
         }
     }
 
