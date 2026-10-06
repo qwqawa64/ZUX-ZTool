@@ -1,6 +1,11 @@
-# String Resource Rename Plan
+# String Resource Naming Convention
 
-Approved convention (user confirmed):
+Standing discipline (promoted out of `docs/archive/` on 2026-02; the rename
+campaign itself is complete — the grammar below stays normative for every new or
+edited string resource). Scope and locale rules live in `AGENTS.md`
+("String Resource Discipline").
+
+Grammar:
 
 - Grammar (all tiers): `<ownership-prefix>_<path>_<meaning>_<role>`, lowercase
   snake_case, role suffix from closed set
@@ -48,7 +53,10 @@ Approved convention (user confirmed):
 - [x] 5. `ztool` -- ram_formatter/ram_unavailable -> `ztool_*` + Hook constants.
        Commit 6d6f8f4c.
 
-## Status: COMPLETE
+## Rename Campaign Status: COMPLETE
+
+The one-off rename below is finished; the grammar above remains the standing rule
+for all future string work.
 
 - 3340a736: leftover manual deletions committed (clean baseline).
 - 819 strings now namespaced: nav 3 / page 209 / common 47 / scope 535 /

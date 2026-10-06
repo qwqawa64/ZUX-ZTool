@@ -34,7 +34,7 @@ For any Miuix API or component behavior, consult the official [Dokka site](https
 
 Do not rely on a memorized file tree; explore the repository directly when needed. The durable structural rules are:
 
-- All project documentation lives under `docs/` (`hook/`, `preference_key/`, `dex_index/`, `logging/` are active guides; `archive/` holds outdated docs; `research/` holds analysis notes). The active guides referenced below are the canonical reading list — prefer them over scanning source.
+- All project documentation lives under `docs/` (`hook/`, `preference_key/`, `dex_index/`, `logging/`, `strings/` are active guides; `archive/` holds outdated docs; `research/` holds analysis notes). The active guides referenced below are the canonical reading list — prefer them over scanning source.
 - Reference AARs are under `reference/` and maintenance scripts are under `tools/`.
 - Keystore/signing files (`*.jks`, `*.keystore`) are gitignored and intentionally not stored in the repository — never commit them.
 - Single sources of truth in code:
@@ -175,14 +175,65 @@ General UI rules:
 
 ## Resources And Assets
 
-- `res/values/` + localized values dirs (e.g. `values-en/`, `values-night/`): strings, colors, themes, arrays.
+- `res/values/` (default, Chinese) + `res/values-en-rUS/` (English) are the two string locales; non-string resources also use `values-night/`.
 - `res/drawable/`, `res/mipmap-*`: icons; `res/raw/`: demo video and user agreement; `res/xml/`: backup/extraction/locale config.
 - `assets/embedding/` + `assets/embedding/zuxos_embedding/`: embedded Magisk module config, scripts, sepolicy rules, installer metadata.
 
 Do not edit embedded module assets unless the task is specifically about Magisk/embedding behavior.
 
-- **When adding new user-facing strings**, always add entries to both `res/values/strings.xml` (default/Chinese) AND non-default language files such as `res/values-en/strings.xml` (English). Use the same `name` attribute in both files.
-- Developer-only or debug strings that should never be translated must use `translatable="false"`.
+## Code Comments And KDoc Discipline
+
+Commenting discipline is a standing requirement for every `.kt` file you touch. Out of
+scope: `reference/**`, `assets/embedding/**`.
+
+- **A KDoc block is a label, not an essay.** It may say *what* a class or function does
+  (one sentence) plus optional `@param` / `@return` / `@throws` for non-obvious inputs,
+  units, ranges, and failure behavior. It must never explain *how* the code works, why
+  the host platform behaves that way, call chains, or framework semantics.
+- **Hard cap: 8 lines per KDoc block**, including the `/**` and `*/` lines. If the
+  content does not fit, it does not belong in code — move it to `docs/research/` and
+  leave a one-line pointer (`// See docs/research/<name>.md`).
+- **Allowed and required when applicable:** magic values and their derivation (e.g. a
+  measured ratio), version branches, timing/race constraints, and counter-intuitive
+  workarounds. Everything else follows "the code explains itself".
+- **Reverse-engineering findings go to `docs/research/`, never into KDoc.** Deleting
+  this knowledge from code without migrating it is not acceptable.
+- **Never list reflection targets in KDoc square brackets.** `[SomeHostClass]` is parsed
+  as a link to a symbol this project does not own. Use plain text or backticks.
+- **Chinese is allowed in KDoc only when quoting host UI text verbatim** (a ZUI menu
+  path, a Chinese format token). Everything else is English.
+- **`//` and `/* */` obey the same rules** and get no exemption for being consecutive
+  lines. Restating comments ("check whether X is enabled" above `isXEnabled()`) are
+  deleted on sight; commented-out dead code is deleted, not kept.
+- **Only clean comments in files you already touch.** No repo-wide comment sweeps and no
+  opening untouched files just to tidy them.
+- Private/internal members carry KDoc only when they hold a magic value worth
+  explaining.
+
+## String Resource Discipline
+
+Out of scope: `reference/**`, `assets/embedding/**`, `tools/*.py`, `更新日志.txt`,
+`UpdateCheck.json`, `res/raw/*.md`. Non-UI user-visible text (Repository / Service /
+shell-command messages) is **not** covered by this round — do not expand a string change
+into the data layer.
+
+- **Naming follows `docs/strings/rename_strings_plan.md` exactly** —
+  `<ownership-prefix>_<path>_<meaning>_<role>` with its closed role set. Recognize an
+  existing compliant name before inventing a new one; a new `role` or tier needs user
+  approval first.
+- **Every new or edited user-visible string is written to both**
+  `res/values/strings.xml` (default, Chinese) and `res/values-en-rUS/strings.xml`,
+  with the identical `name` attribute, in the same change.
+- **Placeholders are always numbered** (`%1$s`, `%2$d`); a bare `%s`/`%d` is forbidden.
+  Quantity-dependent text uses `<plurals>`.
+- **`translatable="false"` is only for brand names, technical format strings, and pure
+  symbols.** Translatable prose never uses it.
+- **Do not write "需要重启…" / "restart required" hints into strings** unless the user
+  asks for them; scope-restart behavior is baseline knowledge for Xposed module users.
+- **Cross-process (Hook-side) strings:** `strings.xml` is the single source of truth.
+  Hook code stores only the resource name (`STRING_*` constants); its `FALLBACK_*`
+  literal must match the resource character-for-character and must be updated in the
+  same commit as the resource. Fallbacks may never diverge.
 
 ## Verification
 
@@ -194,10 +245,19 @@ Follow the steps below:
     - Hook classes, Hook registration, or Hook preference wiring.
     - Manifest, resources, Gradle files, or embedded assets.
 
-    For documentation-only changes, a build is usually unnecessary; verify with `git diff --check` at minimum.
-2. If a setting row or feature entry was added, moved, or renamed, run
+    For documentation-only changes, a build is usually unnecessary; verify with `git diff --check` at minimum. Comment/KDoc-only edits inside `.kt` files do not require a build either.
+2. If a string resource was added, renamed, or removed, run
+   `python tools/check_unused_strings.py` and confirm the report shows `values/` and
+   `values-en-rUS/` in sync (0 missing) and no new UNUSED entries. When the string is a
+   `ztool_*` cross-process contract, diff the hook-side `FALLBACK_*` literal against the
+   resource text in the same review.
+3. If a setting row or feature entry was added, moved, or renamed, run
    `.\gradlew.bat testDebugUnitTest --tests "com.qimian233.ztool.SearchIndexConsistencyTest"`.
-3. Commit your changes.
+4. Commit your changes.
+
+Not automated yet (no CI gate — decided later): the KDoc line cap, the `Text("...")`
+hardcoded-literal check, and the hook-fallback sync check are currently review-time
+disciplines.
 
 ## Git And Workflow Rules
 
