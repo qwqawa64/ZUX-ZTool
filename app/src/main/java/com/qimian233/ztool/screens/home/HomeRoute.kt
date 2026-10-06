@@ -68,6 +68,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.ModuleActivationProbe
 import com.qimian233.ztool.R
@@ -313,6 +314,11 @@ private fun HomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
+                if (BuildConfig.IS_UNOFFICIAL_BUILD) {
+                    UnofficialBuildCard()
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 AnimatedVisibility(visible = state.environmentReady && state.updateInfo != null) {
                     state.updateInfo?.let { update ->
                         Column {
@@ -372,6 +378,42 @@ private fun NonZuxOsCard(onDismiss: () -> Unit) {
                     isPrimary = false
                 )
             }
+        }
+    }
+}
+
+/**
+ * Standing warning for every build that did not come out of the official release
+ * pipeline (nightly / manually triggered CI, local builds). Intentionally not
+ * dismissible: the fact cannot change while the APK stays installed.
+ */
+@Composable
+private fun UnofficialBuildCard() {
+    ZToolCard(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = LocalZToolColorScheme.current.errorContainer
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Rounded.Warning,
+                    contentDescription = null,
+                    tint = LocalZToolColorScheme.current.onErrorContainer
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = stringResource(R.string.page_home_unofficial_build_title),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = LocalZToolColorScheme.current.onErrorContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.page_home_unofficial_build_warn),
+                style = MaterialTheme.typography.bodyMedium,
+                color = LocalZToolColorScheme.current.onErrorContainer
+            )
         }
     }
 }

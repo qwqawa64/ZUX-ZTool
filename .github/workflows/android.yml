@@ -5,6 +5,13 @@ on:
     - cron: '0 16 * * *'         # UTC 16:00 = 北京时间 (UTC+8) 次日 0:00
   workflow_dispatch:              # 手动触发（总是构建）
   workflow_call:                  # 供其他工作流复用（如 Draft a Release）
+    inputs:
+      # 仅当调用方（draft-release.yml）声明本次产出的是最终发布的 Release APK 时置 true。
+      # 官方发布不计入"非官方构建"，因此其 APK 不显示主页提示卡片。
+      official-release:
+        description: 'Set by draft-release.yml when this run produces the official release APK'
+        type: boolean
+        default: false
   pull_request:
     branches: [ "master" ]        # PR 触发 Debug 构建
 
@@ -127,6 +134,9 @@ jobs:
       - name: Build signed release APK
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.check.outputs.should_build == 'true'
         env:
+          # 直接触发（schedule / workflow_dispatch）时 inputs 为空 → '0' → 非官方构建；
+          # 只有 draft-release.yml 传入 official-release=true 才标记为官方发布。
+          ZTOOL_OFFICIAL_RELEASE: ${{ inputs.official-release && '1' || '0' }}
           ZTOOL_RELEASE_STORE_FILE: ${{ runner.temp }}/ztool-release.jks
           ZTOOL_RELEASE_STORE_PASSWORD: ${{ secrets.ZTOOL_RELEASE_STORE_PASSWORD }}
           ZTOOL_RELEASE_KEY_ALIAS: ${{ secrets.ZTOOL_RELEASE_KEY_ALIAS }}

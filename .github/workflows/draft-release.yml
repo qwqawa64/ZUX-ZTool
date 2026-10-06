@@ -10,8 +10,12 @@ jobs:
   build:
     name: Build Debug & Release
     # 复用 Android CI 工作流：workflow_call 事件下其内部逻辑等价于手动触发，总是构建
+    # official-release=true 是本次与"手动紧急触发 CI"的唯一区别：它让 release APK
+    # 不带主页的非官方构建提示卡片
     # secrets: inherit —— secrets 不会自动透传给可复用工作流，签名密钥必须显式继承
     uses: ./.github/workflows/android.yml
+    with:
+      official-release: true
     secrets: inherit
 
   draft-release:
