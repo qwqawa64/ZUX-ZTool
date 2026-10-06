@@ -1,15 +1,14 @@
 package com.qimian233.ztool.data.home
 
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
-import android.system.Os
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.ModuleActivationProbe
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.utils.ConfigUpgrade
+import com.qimian233.ztool.utils.SystemInfoProbe
 import com.qimian233.ztool.viewmodel.UpdateInfo
 import org.json.JSONException
 import org.json.JSONObject
@@ -45,12 +44,17 @@ class HomeRepository(
     }
 
     fun updateModuleStatus(): ModuleStatus {
-        val version = getModuleVersionInfo()
+        val version = SystemInfoProbe.appVersionLabel(context)
         if (cachedRootSource.isEmpty() || isSystemInfoCacheExpired()) {
-            cachedRootSource = detectRootSource()
+            cachedRootSource = SystemInfoProbe.rootSource(context, shellExecutor)
         }
         if (cachedFrameworkVersion.isEmpty() || isSystemInfoCacheExpired()) {
-            cachedFrameworkVersion = detectFrameworkVersionAndMode()
+            val framework = SystemInfoProbe.frameworkInfo()
+            cachedFrameworkVersion = if (framework == null) {
+                context.getString(R.string.page_home_unknown_framework)
+            } else {
+                SystemInfoProbe.formatFramework(context, framework)
+            }
         }
         return ModuleStatus(
             moduleVersion = version,
@@ -68,13 +72,13 @@ class HomeRepository(
         val buildVersion = Build.DISPLAY.ifBlank { unknown }
 
         if (cachedKernelVersion.isEmpty() || isSystemInfoCacheExpired()) {
-            cachedKernelVersion = getKernelVersion()
+            cachedKernelVersion = SystemInfoProbe.kernelVersion()
         }
         if (cachedCurrentSlot.isEmpty() || isSystemInfoCacheExpired()) {
             cachedCurrentSlot = getCurrentBootSlot()
         }
         if (cachedRomRegion.isEmpty() || isSystemInfoCacheExpired()) {
-            cachedRomRegion = getRomRegion()
+            cachedRomRegion = SystemInfoProbe.romRegion(context, shellExecutor)
         }
         if (isSystemInfoCacheExpired()) {
             cachedIsZuxOsDevice = isZuxOsBuild(Build.DISPLAY)
@@ -204,66 +208,6 @@ class HomeRepository(
         }
     }
 
-    private fun getModuleVersionInfo(): String {
-        return try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                packageInfo.longVersionCode.toInt()
-            } else {
-                @Suppress("DEPRECATION")
-                packageInfo.versionCode
-            }
-            "${packageInfo.versionName} ($versionCode)"
-        } catch (e: PackageManager.NameNotFoundException) {
-            Log.e(TAG, "Failed to get module version: ${e.message}")
-            ""
-        }
-    }
-
-    private fun detectRootSource(): String {
-        val detectionCommands = arrayOf("magisk -v", "su -v", "apd -v")
-        for (cmd in detectionCommands) {
-            try {
-                val result = shellExecutor.executeRootCommand(cmd, 3)
-                if (result.isSuccess && !result.output.isBlank()) {
-                    val output = result.output.trim()
-                    if (cmd.contains("magisk")) {
-                        return context.getString(R.string.page_home_magisk_su_format, output)
-                    }
-                    if (cmd.contains("su -v") && output.contains("KernelSU")) {
-                        val endPosition = output.indexOf("KernelSU")
-                        return context.getString(R.string.page_home_kernelsu_format, output.substring(0, endPosition - 1))
-                    }
-                    if (cmd.contains("apd")) {
-                        return context.getString(R.string.page_home_apatch_format, output)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to detect root source: ${e.message}")
-            }
-        }
-        return context.getString(R.string.page_home_unknown_root_available)
-    }
-
-    private fun detectFrameworkVersionAndMode(): String {
-        try {
-            val apiVersion: Int = XposedServiceBridge.getApiVersion()
-            val frameworkName: String? = XposedServiceBridge.getFrameworkName()
-            val frameworkVersion: String? = XposedServiceBridge.getFrameworkVersion()
-            val frameworkVersionCode: Long = XposedServiceBridge.getFrameworkVersionCode()
-            Log.i(TAG, "Successfully fetched API information: API version: ${apiVersion}, framework name: ${frameworkName}, framework version: ${frameworkVersion}, framework version code: $frameworkVersionCode")
-            return context.getString(R.string.page_home_lsposed_standard_format, frameworkName, frameworkVersion, frameworkVersionCode, apiVersion)
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to detect framework property: ${e.message}")
-        }
-
-        return context.getString(R.string.page_home_unknown_framework)
-    }
-
-    private fun getKernelVersion(): String {
-        return Os.uname().release
-    }
-
     private fun getCurrentBootSlot(): String {
         val result = shellExecutor.executeRootCommand("getprop ro.boot.slot_suffix", 3)
         return if (result.isSuccess && !result.output.isBlank()) {
@@ -273,23 +217,6 @@ class HomeRepository(
                 else -> context.getString(R.string.common_unknown)
             }
         } else {
-            context.getString(R.string.common_unknown)
-        }
-    }
-
-    private fun getRomRegion(): String {
-        return try {
-            val commands = listOf(
-                "getprop ro.boot.region",
-                "getprop ro.config.zui.region",
-                "getprop ro.vendor.config.zui.region"
-            )
-            commands.firstNotNullOfOrNull { command ->
-                val result = shellExecutor.executeRootCommand(command, 3)
-                result.output.trim().takeIf { it.isNotEmpty() }
-            } ?: context.getString(R.string.common_unknown)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch ROM region: ${e.message}")
             context.getString(R.string.common_unknown)
         }
     }

@@ -42,7 +42,15 @@ object LogUtils {
         syncLsposedLogs(context)
         dumpSystemLogcat(context)
 
-        val zipFile = zipLogDir(context) ?: return false
+        val systemBrief = try {
+            SystemBriefBuilder.build(context)
+        } catch (e: Exception) {
+            // The brief is an extra; never let it block an otherwise valid log export.
+            Log.w(TAG, "failed to build system brief: ${e.message}")
+            null
+        }
+
+        val zipFile = zipLogDir(context, systemBrief) ?: return false
         return FileManager.exportFileWithSAF(
             context,
             uri,
@@ -51,7 +59,7 @@ object LogUtils {
         )
     }
 
-    private fun zipLogDir(context: Context): File? {
+    private fun zipLogDir(context: Context, systemBrief: String?): File? {
         val dir = logDir(context)
         if (!dir.exists() || !dir.isDirectory()) return null
 
@@ -65,7 +73,12 @@ object LogUtils {
             outputDir,
             "logs_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date()) + ".zip"
         )
-        return if (FileUtils.createZipFromDirectory(dir, zipFile)) zipFile else null
+        val extraEntries = if (systemBrief == null) {
+            emptyMap()
+        } else {
+            mapOf(SystemBriefBuilder.FILE_NAME to systemBrief.toByteArray(Charsets.UTF_8))
+        }
+        return if (FileUtils.createZipFromDirectory(dir, zipFile, extraEntries)) zipFile else null
     }
 
     /**

@@ -163,6 +163,29 @@
     <string name="page_settings_delete_logs_failed">Failed to delete logs</string>
     <string name="page_settings_delete_logs_confirmation">Are you sure you want to delete all logs? This cannot be undone.</string>
     <string name="common_lsposed_log_sync_failed">Failed to sync LSPosed logs. Please check root permission.</string>
+
+    <!--System brief bundled into an exported log zip-->
+    <string name="page_settings_brief_title">ZTool System Brief</string>
+    <string name="page_settings_brief_generated_at">Generated at: %s</string>
+    <string name="page_settings_brief_section_device">[Device]</string>
+    <string name="page_settings_brief_device_model">Device model: %s</string>
+    <string name="page_settings_brief_android_version">Android version: %s</string>
+    <string name="page_settings_brief_kernel_version">Kernel version: %s</string>
+    <string name="page_settings_brief_build_number">Build number: %s</string>
+    <string name="page_settings_brief_rom_region">ROM region: %s</string>
+    <string name="page_settings_brief_uptime">Uptime: %1$d d %2$d h %3$d min</string>
+    <string name="page_settings_brief_section_root">[Root and framework]</string>
+    <string name="page_settings_brief_root_source">Root source: %s</string>
+    <string name="page_settings_brief_framework_name">LSPosed framework: %s</string>
+    <string name="page_settings_brief_framework_version">LSPosed framework version: %1$s (%2$d)</string>
+    <string name="page_settings_brief_framework_api">API Level: %d</string>
+    <string name="page_settings_brief_section_ztool">[ZTool]</string>
+    <string name="page_settings_brief_ztool_version">Version: %s</string>
+    <string name="page_settings_brief_ztool_commit">Build commit: %1$d - %2$s</string>
+    <string name="page_settings_brief_section_scope">[In-scope app versions]</string>
+    <string name="page_settings_brief_scope_entry">%1$s: %2$s</string>
+    <string name="page_settings_brief_scope_not_installed">not installed</string>
+    <string name="page_settings_brief_scope_empty">(scope list unavailable)</string>
     <string name="page_settings_title">Settings</string>
     <string name="page_settings_log_level">Log level</string>
     <string name="page_settings_log_level_summary">Set the log level to TRACE when reporting issues</string>

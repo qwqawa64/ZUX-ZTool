@@ -175,6 +175,29 @@
     <string name="page_settings_delete_logs_confirmation">确定要删除所有日志吗？此操作不可撤销。</string>
     <string name="common_lsposed_log_sync_failed">无法同步 LSPosed 日志，请检查 Root 权限</string>
 
+    <!--系统简报（随日志导出）-->
+    <string name="page_settings_brief_title">ZTool 系统简报</string>
+    <string name="page_settings_brief_generated_at">生成时间：%s</string>
+    <string name="page_settings_brief_section_device">[设备信息]</string>
+    <string name="page_settings_brief_device_model">设备型号：%s</string>
+    <string name="page_settings_brief_android_version">安卓版本：%s</string>
+    <string name="page_settings_brief_kernel_version">内核版本：%s</string>
+    <string name="page_settings_brief_build_number">构建号：%s</string>
+    <string name="page_settings_brief_rom_region">ROM 地区：%s</string>
+    <string name="page_settings_brief_uptime">开机时长：%1$d 天 %2$d 小时 %3$d 分钟</string>
+    <string name="page_settings_brief_section_root">[Root 与框架]</string>
+    <string name="page_settings_brief_root_source">Root 来源：%s</string>
+    <string name="page_settings_brief_framework_name">LSPosed 框架名称：%s</string>
+    <string name="page_settings_brief_framework_version">LSPosed 框架版本：%1$s (%2$d)</string>
+    <string name="page_settings_brief_framework_api">API Level：%d</string>
+    <string name="page_settings_brief_section_ztool">[ZTool]</string>
+    <string name="page_settings_brief_ztool_version">版本：%s</string>
+    <string name="page_settings_brief_ztool_commit">构建提交：%1$d - %2$s</string>
+    <string name="page_settings_brief_section_scope">[作用域内应用版本]</string>
+    <string name="page_settings_brief_scope_entry">%1$s：%2$s</string>
+    <string name="page_settings_brief_scope_not_installed">未安装</string>
+    <string name="page_settings_brief_scope_empty">（未读取到作用域列表）</string>
+
     <!--设置页资源值-->
     <string name="page_settings_title">设置</string>
     <string name="page_settings_log_level">日志等级</string>

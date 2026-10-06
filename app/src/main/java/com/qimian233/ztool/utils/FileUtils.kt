@@ -54,7 +54,23 @@ object FileUtils {
      * @param outputZip output zip file
      * @return whether it succeeded
      */
-    fun createZipFromDirectory(sourceDir: File?, outputZip: File?): Boolean {
+    fun createZipFromDirectory(sourceDir: File?, outputZip: File?): Boolean =
+        createZipFromDirectory(sourceDir, outputZip, emptyMap())
+
+    /**
+     * Package a directory into a zip, preserving the subdirectory structure, then append
+     * [extraEntries] (entry path -> raw bytes) at the archive root. Used to ship a
+     * generated system brief alongside the collected logs.
+     * @param sourceDir source directory to package
+     * @param outputZip output zip file
+     * @param extraEntries additional root-level entries, written after the directory content
+     * @return whether it succeeded
+     */
+    fun createZipFromDirectory(
+        sourceDir: File?,
+        outputZip: File?,
+        extraEntries: Map<String, ByteArray>
+    ): Boolean {
         if (sourceDir == null || !sourceDir.exists() || !sourceDir.isDirectory || outputZip == null) return false
 
         try {
@@ -64,6 +80,12 @@ object FileUtils {
                     val basePath = sourceDir.absolutePath
 
                     addFilesToZip(sourceDir, basePath, zos, buffer)
+
+                    for ((entryName, content) in extraEntries) {
+                        zos.putNextEntry(ZipEntry(entryName))
+                        zos.write(content)
+                        zos.closeEntry()
+                    }
                 }
             }
             return true
