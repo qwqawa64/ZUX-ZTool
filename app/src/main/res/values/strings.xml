@@ -919,6 +919,20 @@
     <string name="page_home_non_zuxos_dismiss">不再提示</string>
     <string name="page_home_dev_build_title">开发版本</string>
     <string name="page_home_dev_build_warn">当前安装的是开发版本，可能包含未经验证的改动，无法保证稳定性！如需稳定体验请切换回正式版。</string>
+    <!--首页卡片预览（仅开发构建可见的观感调试页）-->
+    <string name="home_card_preview_title">首页卡片预览</string>
+    <string name="home_card_preview_note">本页用示例数据渲染首页上无法随时复现的两张卡片，可在浅色/深色、Miuix/Material 之间反复切换对照观感。</string>
+    <string name="home_card_preview_non_zuxos_title">非 ZUXOS/ZUI 警告卡</string>
+    <string name="home_card_preview_non_zuxos_hint">首页上仅当设备不是 ZUXOS/ZUI 且未点过「不再提示」时出现。</string>
+    <string name="home_card_preview_update_expanded_title">更新卡 · 展开态</string>
+    <string name="home_card_preview_update_expanded_hint">展开态显示完整更新日志，点按卡片可折叠。</string>
+    <string name="home_card_preview_update_collapsed_title">更新卡 · 折叠态</string>
+    <string name="home_card_preview_update_collapsed_hint">更新日志超过 4 行时截断并显示省略号，点按卡片可展开。</string>
+    <string name="home_card_preview_update_short_title">更新卡 · 单行更新日志</string>
+    <string name="home_card_preview_update_short_hint">更新日志只有一行时卡片的最小高度。</string>
+    <string name="home_card_preview_ignored_placeholder">卡片已被模拟忽略</string>
+    <string name="home_card_preview_restore">恢复显示</string>
+    <string name="home_card_preview_dismissed_hint">已在预览中模拟忽略，首页上它此时不会出现。</string>
     <string name="page_settings_display_entry_in_settings">在设置中显示入口</string>
     <string name="page_settings_display_entry_in_settings_summary">需要重启系统设置 APP</string>
     <string name="page_settings_show_all_apps">显示全部应用</string>
@@ -1004,6 +1018,8 @@
     <string name="page_settings_advanced_api_version">libxposed API 版本</string>
     <string name="page_settings_advanced_open_firstrun_title">打开首次运行向导</string>
     <string name="page_settings_advanced_open_firstrun_summary">重新进入首次运行引导（OOBE），用于开发调试</string>
+    <string name="page_settings_advanced_home_card_preview_title">首页卡片预览</string>
+    <string name="page_settings_advanced_home_card_preview_summary">用示例数据查看非 ZUXOS 警告卡与更新卡的观感，仅开发构建可见</string>
     <string name="page_settings_advanced_import_title">从 new XSharedPreferences 导入</string>
     <string name="page_settings_advanced_import_summary">手动强制触发一次从旧版 new XSharedPreferences 配置到 RemotePreferences 的迁移</string>
     <string name="page_settings_advanced_import_confirm_title">确认导入旧配置？</string>
@@ -1104,6 +1120,7 @@
     <string name="search_requires_parent_switch_off">需先关闭「%1$s」</string>
     <string name="search_condition_m3_expressive_only">仅 Material 3 Expressive 风格下可见</string>
     <string name="search_condition_miuix_only">仅 Miuix 风格下可见</string>
+    <string name="search_condition_dev_build_only">仅开发构建可见</string>
     <string name="about_dev_qimian233">Qimian233</string>
     <string name="about_dev_wasd_destroy">WASDDestroy</string>
     <string name="about_dev_uuuddddl">uuuddddl</string>

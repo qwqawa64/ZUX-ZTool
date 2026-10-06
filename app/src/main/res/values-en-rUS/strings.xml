@@ -837,6 +837,20 @@
     <string name="page_home_non_zuxos_dismiss">Don\'t show again</string>
     <string name="page_home_dev_build_title">Development build</string>
     <string name="page_home_dev_build_warn">This is a development build. It may contain unverified changes and is not guaranteed to be stable. Switch back to an official release for daily use.</string>
+    <!--Home card preview (dev-build-only visual debugging screen)-->
+    <string name="home_card_preview_title">Home card preview</string>
+    <string name="home_card_preview_note">This screen renders the two home cards that cannot be reproduced on demand with sample data. Switch between light/dark and Miuix/Material to compare how they look.</string>
+    <string name="home_card_preview_non_zuxos_title">Non-ZUXOS/ZUI warning card</string>
+    <string name="home_card_preview_non_zuxos_hint">Appears on the home screen only when the device is not ZUXOS/ZUI and "Don\'t show again" has not been tapped.</string>
+    <string name="home_card_preview_update_expanded_title">Update card · expanded</string>
+    <string name="home_card_preview_update_expanded_hint">The expanded state shows the full changelog; tap the card to collapse it.</string>
+    <string name="home_card_preview_update_collapsed_title">Update card · collapsed</string>
+    <string name="home_card_preview_update_collapsed_hint">Changelogs longer than 4 lines are truncated with an ellipsis; tap the card to expand it.</string>
+    <string name="home_card_preview_update_short_title">Update card · one-line changelog</string>
+    <string name="home_card_preview_update_short_hint">The minimum card height with a single-line changelog.</string>
+    <string name="home_card_preview_ignored_placeholder">Card ignored in this preview</string>
+    <string name="home_card_preview_restore">Show again</string>
+    <string name="home_card_preview_dismissed_hint">Ignored in the preview; it would not appear on the home screen right now.</string>
     <string name="page_settings_display_entry_in_settings">Display module entrance in settings</string>
     <string name="page_settings_display_entry_in_settings_summary">A restart of settings APP is required</string>
     <string name="page_settings_show_all_apps">Show all apps</string>
@@ -897,6 +911,8 @@
     <string name="page_settings_advanced_api_version">libxposed API version</string>
     <string name="page_settings_advanced_open_firstrun_title">Open first-run wizard</string>
     <string name="page_settings_advanced_open_firstrun_summary">Re-enter the first-run onboarding (OOBE) for development and testing</string>
+    <string name="page_settings_advanced_home_card_preview_title">Home card preview</string>
+    <string name="page_settings_advanced_home_card_preview_summary">Inspect the non-ZUXOS warning card and the update card with sample data; dev builds only</string>
     <string name="page_settings_advanced_import_title">Import from new XSharedPreferences</string>
     <string name="page_settings_advanced_import_summary">Manually force one migration from the legacy new XSharedPreferences config to RemotePreferences</string>
     <string name="page_settings_advanced_import_confirm_title">Import the legacy config?</string>
@@ -1053,6 +1069,7 @@
     <string name="search_requires_parent_switch_off">Requires "%1$s" disabled</string>
     <string name="search_condition_m3_expressive_only">Only visible in Material 3 Expressive style</string>
     <string name="search_condition_miuix_only">Only visible in Miuix style</string>
+    <string name="search_condition_dev_build_only">Only visible in development builds</string>
     <string name="about_dev_qimian233">Qimian233</string>
     <string name="about_dev_wasd_destroy">WASDDestroy</string>
     <string name="about_dev_uuuddddl">uuuddddl</string>

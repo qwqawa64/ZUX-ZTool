@@ -15,11 +15,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.screens.features.FeaturesMainRoute
 import com.qimian233.ztool.screens.gametool.GameToolSettingsRoute
+import com.qimian233.ztool.screens.home.HomeCardPreviewRoute
 import com.qimian233.ztool.screens.home.HomeMainRoute
 import com.qimian233.ztool.screens.launcher.LauncherSettingsRoute
 import com.qimian233.ztool.screens.mobiledesktop.MobileDesktopSettingsRoute
@@ -329,8 +331,34 @@ internal fun MainRouteNavHost(
                         launchSingleTop = true
                     }
                 },
+                onOpenHomeCardPreview = {
+                    navController.navigate(HiddenRoute.SETTINGS_HOME_CARD_PREVIEW) {
+                        launchSingleTop = true
+                    }
+                },
                 targetId = backStackEntry.highlightTarget(),
             )
+        }
+        // Dev-build-only home-card visual preview. Registration is skipped entirely
+        // in official releases, matching the Settings → Advanced entry that opens it.
+        if (BuildConfig.IS_DEV_BUILD) {
+            composable(
+                route = HiddenRoute.SETTINGS_HOME_CARD_PREVIEW,
+                enterTransition = horizontalEnter,
+                exitTransition = horizontalExit,
+                popEnterTransition = horizontalPopEnter,
+                popExitTransition = horizontalPopExit
+            ) {
+                HomeCardPreviewRoute(
+                    onBack = {
+                        if (!navController.popBackStack()) {
+                            navController.navigate(HiddenRoute.SETTINGS_ADVANCED) {
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                )
+            }
         }
         composable(
             route = routeWithTarget(HiddenRoute.SETTINGS_MISC),

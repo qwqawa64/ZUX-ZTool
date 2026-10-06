@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.RocketLaunch
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SettingsBackupRestore
+import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +47,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.R
 import com.qimian233.ztool.dexindex.base.DexIndexManager
@@ -74,6 +76,7 @@ import java.util.Locale
 fun SettingsAdvancedRoute(
     onBack: () -> Unit,
     onOpenPreferenceEditor: () -> Unit = {},
+    onOpenHomeCardPreview: () -> Unit = {},
     targetId: String? = null
 ) {
     val context = LocalContext.current
@@ -186,6 +189,7 @@ fun SettingsAdvancedRoute(
             onRefreshDexIndex = { viewModel.refreshDexIndex(context) },
             onOpenFirstrun = { activity.reopenFirstrun() },
             onOpenPreferenceEditor = onOpenPreferenceEditor,
+            onOpenHomeCardPreview = onOpenHomeCardPreview,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
         )
@@ -205,6 +209,7 @@ private fun SettingsAdvancedScreen(
     onRefreshDexIndex: () -> Unit,
     onOpenFirstrun: () -> Unit,
     onOpenPreferenceEditor: () -> Unit,
+    onOpenHomeCardPreview: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
 ) {
@@ -249,7 +254,8 @@ private fun SettingsAdvancedScreen(
                         dexIndexSummary = dexIndexSummary,
                         onRefreshDexIndex = onRefreshDexIndex,
                         onOpenFirstrun = onOpenFirstrun,
-                        onOpenPreferenceEditor = onOpenPreferenceEditor
+                        onOpenPreferenceEditor = onOpenPreferenceEditor,
+                        onOpenHomeCardPreview = onOpenHomeCardPreview
                     ),
                     bottomPadding = 32.dp
                 )
@@ -270,7 +276,8 @@ private fun advancedSettingsSections(
     dexIndexSummary: String,
     onRefreshDexIndex: () -> Unit,
     onOpenFirstrun: () -> Unit,
-    onOpenPreferenceEditor: () -> Unit
+    onOpenPreferenceEditor: () -> Unit,
+    onOpenHomeCardPreview: () -> Unit
 ): List<SettingSection> {
     val hotReloadSupported = state.apiVersion >= 102
     val hasTargets = state.runningTargetCount > 0
@@ -389,10 +396,30 @@ private fun advancedSettingsSections(
                         )
                     }
                 )
-            )
+            ) + if (BuildConfig.IS_DEV_BUILD) {
+                devOnlyAdvancedRows(onOpenHomeCardPreview)
+            } else {
+                emptyList()
+            }
         )
     ) + buildResetDetailSection(state) + buildHotReloadDetailSection(state)
 }
+
+/**
+ * Rows that exist only in development builds. `BuildConfig.IS_DEV_BUILD` is a
+ * constant per build, so the official release both hides the entry and lets R8
+ * drop the code behind it (the home-card preview screen).
+ */
+@Composable
+private fun devOnlyAdvancedRows(onOpenHomeCardPreview: () -> Unit): List<SettingItem> = listOf(
+    SettingItem.Action(
+        key = "advanced_home_card_preview",
+        title = stringResource(R.string.page_settings_advanced_home_card_preview_title),
+        summary = stringResource(R.string.page_settings_advanced_home_card_preview_summary),
+        onClick = onOpenHomeCardPreview,
+        icon = Icons.Rounded.Widgets
+    )
+)
 
 @Composable
 private fun buildResetDetailSection(

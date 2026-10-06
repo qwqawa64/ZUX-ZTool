@@ -1560,6 +1560,12 @@ object SearchIndex {
             titleRes = R.string.page_settings_advanced_open_firstrun_title,
             summaryRes = R.string.page_settings_advanced_open_firstrun_summary
         ),
+        advancedSettings.item(
+            id = "advanced_home_card_preview",
+            titleRes = R.string.page_settings_advanced_home_card_preview_title,
+            summaryRes = R.string.page_settings_advanced_home_card_preview_summary,
+            conditionNoteRes = R.string.search_condition_dev_build_only
+        ),
 
         miscSettings.item(
             id = "misc_delete_ota_package",
