@@ -49,6 +49,16 @@ jobs:
           echo "path=$apk" >> $GITHUB_OUTPUT
           echo "Found release APK: $apk"
 
+      # R8 映射与 APK 同源（同一工件），随 Release 一同发布，供用户 retrace 崩溃栈。
+      - name: Extract R8 mapping
+        id: mapping
+        run: |
+          set -euo pipefail
+          mapping=$(find release-apk -name 'mapping.txt' | head -n 1)
+          test -n "$mapping"
+          echo "path=$mapping" >> $GITHUB_OUTPUT
+          echo "Found R8 mapping: $mapping"
+
       # ---- 提取 更新日志.txt 最新一批并渲染为 Release 正文 ----
       # 最新一批 = 首行版本头（"Beta/…）到下一个版本头之前。
       # 渲染规则：
@@ -104,7 +114,9 @@ jobs:
           draft: true
           prerelease: false
           body_path: latest-changelog.md
-          files: ${{ steps.apk.outputs.path }}
+          files: |
+            ${{ steps.apk.outputs.path }}
+            ${{ steps.mapping.outputs.path }}
           fail_on_unmatched_files: true
 
       # ---- 将更新后的 UpdateCheck.json 推送到远程 ----

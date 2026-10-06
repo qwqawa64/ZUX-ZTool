@@ -143,7 +143,9 @@ jobs:
           ZTOOL_RELEASE_KEY_PASSWORD: ${{ secrets.ZTOOL_RELEASE_KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
-      - name: Upload signed release APK
+      # R8 混淆映射随 APK 一起上传：没有它，用户上报的 release 崩溃栈无法 retrace
+      # （r8-map-id-<hash> 只能靠对应构建的 mapping.txt 还原）。
+      - name: Upload signed release APK and R8 mapping
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.check.outputs.should_build == 'true'
         uses: actions/upload-artifact@v7
         with:
@@ -151,6 +153,7 @@ jobs:
           path: |
             app/build/outputs/apk/release/*.apk
             app/build/outputs/apk/release/output-metadata.json
+            app/build/outputs/mapping/release/mapping.txt
           if-no-files-found: error
 
       # ---- 保存本次 commit SHA 供下次 nightly 使用（仅当构建成功） ----
