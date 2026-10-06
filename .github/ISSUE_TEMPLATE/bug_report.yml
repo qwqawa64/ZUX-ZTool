@@ -1,34 +1,46 @@
 name: 缺陷反馈 (Bug Report)
 description: 提交 ZTool 在使用过程中遇到的 Bug 反馈 / Submit bug reports for ZTool
 title: "[BUG] <简短描述您遇到的问题 / Short description of the issue>"
-labels: ["bug"]
+labels: ["Bug/问题"]
 body:
   - type: markdown
     attributes:
       value: |
-        注意：本项目主要面向联想 ZUXOS/ZUI 设备，不接受第三方移植包、官改包以及被其它模块改写过的系统组件的问题反馈。
+        注意：本项目面向联想 ZUXOS/ZUI 设备，不接受第三方移植包、官改包以及被其它模块改写过的系统组件的问题反馈。
         Note: This project targets Lenovo ZUXOS/ZUI devices. Bug reports from ported ROMs, modified official ROMs, or system components rewritten by other modules are not accepted.
 
         提示：请在导出日志前，先在应用「设置 -> 日志设置」内将「日志等级」改为 `TRACE`，然后复现一次您遇到的问题，再使用「导出日志」导出日志包。
         Tip: Before exporting logs, change "Log Level" to `TRACE` in "Settings -> Log Settings", reproduce the issue once, and then use "Export Logs" to export the log package.
-  - type: dropdown
-    id: system_platform
+
+        提交前请确认您正在使用 GitHub Actions 上 master 分支的最新构建，或 [Releases](https://github.com/qwqawa64/ZUX-ZTool/releases) 中的最新版本。
+        Before submitting, please make sure you are running the latest build from the master branch on GitHub Actions, or the latest version from [Releases](https://github.com/qwqawa64/ZUX-ZTool/releases).
+  - type: checkboxes
+    id: check
     attributes:
-      label: 系统平台 / System Platform
+      label: 须知 / Notice
+      description: |
+        请确认已经遵守所有必选项，否则 Issue 可能被无理由直接关闭。
+        Make sure that all necessary options have been followed; otherwise, the issue may be closed without any reason.
       options:
-        - ZUXOS 2.x
-        - ZUXOS 1.x
-        - ZUI
-        - 其他安卓系统（模块功能不保证可用） (Other Android Systems / Functionality not guaranteed)
-    validations:
-      required: true
+        - label: |
+            I confirm that this issue still exists in the latest version |
+            我确认最新版依然存在此问题
+          required: true
+        - label: |
+            I checked all installed modules and confirmed that this module is the cause |
+            我已排查已安装的所有模块的可能性，确认由本模块造成
+          required: true
+        - label: |
+            I searched the Issue Tracker and couldn't find an issue that submitted the same issue |
+            我已经搜索过 Issue Tracker，且并未查询到提交相同问题的 Issue
+          required: true
   - type: input
     id: system_version
     attributes:
       label: 系统版本与设备型号 / System Version and Device Model
       description: |
-        例如：ZUXOS 2.0.1.0 / 拯救者 Y700 三代 (TB321FU)。
-        Example: ZUXOS 2.0.1.0 / Legion Y700 (TB321FU).
+        例如：ZUXOS 1.5.04.366 / 联想小新平板 Pro GT (TB710FU)。
+        Example: ZUXOS 1.5.04.366 / Lenovo Yoga Tab (TB710FU).
     validations:
       required: true
   - type: input
@@ -50,7 +62,7 @@ body:
         - 桌面启动器 Launcher
         - 系统更新 / OTA / UDS 引擎
         - 游戏与性能优化
-        - 应用界面与设置项 (App UI / Settings)
+        - 应用界面与设置项 (APP UI / Settings)
         - 模块安装、激活或作用域 (Module installation / activation / scope)
         - 其他 (Other)
     validations:
@@ -61,8 +73,8 @@ body:
       label: Xposed 框架 / Xposed Framework
       options:
         - LSPosed
-        - LSPosed (Zygisk)
-        - 其他基于 libxposed API 102 的框架 (Other libxposed API 102 based framework)
+        - Vector
+        - 其他基于 libxposed API 101+ 的框架 (Other libxposed API 101+ based framework)
     validations:
       required: true
   - type: textarea

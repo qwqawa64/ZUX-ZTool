@@ -1,7 +1,7 @@
 name: 问题咨询与支持 (Support)
 description: 提交有关 ZTool 的使用疑问与咨询 / Submit questions and support requests for ZTool
 title: "[SUPPORT] <简短描述您的问题 / Short description of the issue>"
-labels: ["help wanted"]
+labels: ["Question/有待商榷"]
 body:
   - type: markdown
     attributes:
@@ -22,8 +22,8 @@ body:
     attributes:
       label: 系统版本与设备型号 / System Version and Device Model
       description: |
-        例如：ZUXOS 2.0.1.0 / 拯救者 Y700 三代 (TB321FU)。
-        Example: ZUXOS 2.0.1.0 / Legion Y700 (TB321FU).
+        例如：ZUXOS 1.5.04.366 / 联想小新平板 Pro GT (TB710FU)。
+        Example: ZUXOS 1.5.04.366 / Lenovo Yoga Tab (TB710FU).
     validations:
       required: true
   - type: input

@@ -1,7 +1,7 @@
 name: 新功能建议 (Feature Request)
 description: 为 ZTool 提交新功能改进建议 / Submit feature suggestions for ZTool
 title: "[FEAT] <简短描述您的功能建议 / Short description of feature suggestion>"
-labels: ["enhancement"]
+labels: ["Enhancement/功能改进"]
 body:
   - type: markdown
     attributes:
@@ -21,6 +21,7 @@ body:
         - 一视界 / 平行视窗 / 小窗
         - 应用界面与设置项 (App UI / Settings)
         - 新增功能模块 (New feature module)
+        - 从其它模块或 ROM 移植功能 (Port a feature from other modules or ROMs)
         - 其他 (Other)
     validations:
       required: true

@@ -1,13 +1,14 @@
 name: 其它反馈 (Other)
 description: 提交其它类型的反馈或讨论 / Submit other feedback or discussion
 title: "[OTHER] <简短描述您的反馈主题 / Short description of the topic>"
-labels: ["discussion"]
 body:
   - type: markdown
     attributes:
       value: |
         提示：本类别用于不适用缺陷反馈、新功能建议与问题咨询的其它内容，例如文档纠错、翻译改进、维护性建议或一般性讨论。
+        本模板不会自动打标签，维护者会根据内容为 Issue 添加合适的 Tag（Documentation/文档、Port/移植 等）。
         Tip: Use this category for content that does not fit bug reports, feature requests, or support questions, such as documentation fixes, translation improvements, maintenance suggestions, or general discussion.
+        This template does not apply a label automatically; maintainers will add the appropriate tag (Documentation/文档, Port/移植, ...) based on the content.
   - type: input
     id: topic
     attributes:
