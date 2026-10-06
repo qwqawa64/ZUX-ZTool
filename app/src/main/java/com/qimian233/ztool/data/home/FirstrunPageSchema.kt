@@ -9,6 +9,11 @@ package com.qimian233.ztool.data.home
  * AGREEMENT.schemaVersion tracks the packaged agreement markdown version
  * (res/raw/agreement.md, "协议版本：x.y"); keep the two in sync when bumping.
  *
+ * Fixing a defect in an existing page's logic (for example widening the set of
+ * accepted answers) is not a reason to bump: the user learns nothing new and
+ * the page must not be replayed. Bump only when the page shows new content or
+ * changes semantics the user has to acknowledge again.
+ *
  * New pages must be inserted here with their position in [order]; the flow
  * decision in MainActivity and the page wiring in FirstrunAgreementRoute both
  * derive from this registry.

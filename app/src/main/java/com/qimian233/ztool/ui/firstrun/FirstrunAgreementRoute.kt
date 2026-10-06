@@ -1,5 +1,6 @@
 package com.qimian233.ztool.ui.firstrun
 
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
@@ -87,6 +88,8 @@ import com.qimian233.ztool.data.home.FirstrunAgreementRepository
 import com.qimian233.ztool.data.home.FirstrunCheckState
 import com.qimian233.ztool.data.home.FirstrunPageSchema
 import com.qimian233.ztool.data.home.FirstrunSchemaRepository
+import com.qimian233.ztool.data.home.ZToolSource
+import com.qimian233.ztool.data.home.isVerifiedSourceInput
 import com.qimian233.ztool.ui.components.ZToolButton
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolOutlinedTextField
@@ -279,6 +282,7 @@ fun FirstrunAgreementRoute(
                         input = sourceVerifyInput.value,
                         onInputChange = { sourceVerifyInput.value = it },
                         isLastPage = page == pages.last(),
+                        onOpenRepository = { openSourceRepository(context) },
                         onNext = { tapAnchor ->
                             navigateForward(tapAnchor) { viewModel.completeSourceVerifyPage() }
                         },
@@ -444,10 +448,20 @@ private fun SourceVerifyPage(
     input: String,
     onInputChange: (String) -> Unit,
     isLastPage: Boolean,
+    onOpenRepository: () -> Unit,
     onNext: (Offset) -> Unit,
     onBack: (Offset) -> Unit
 ) {
-    val verified = input.trim() == ExpectedRepoName
+    val verified = isVerifiedSourceInput(input)
+
+    // Described as forms only: the page must never print the accepted answer,
+    // otherwise the verification proves nothing.
+    val acceptedFormats = listOf(
+        stringResource(R.string.page_firstrun_verify_format_repo_name),
+        stringResource(R.string.page_firstrun_verify_format_owner_repo),
+        stringResource(R.string.page_firstrun_verify_format_url),
+        stringResource(R.string.page_firstrun_verify_format_url_suffix)
+    )
 
     Box(
         modifier = Modifier
@@ -486,6 +500,25 @@ private fun SourceVerifyPage(
                 text = stringResource(R.string.page_firstrun_verify_instruction),
                 style = MaterialTheme.typography.bodyMedium
             )
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                acceptedFormats.forEachIndexed { index, format ->
+                    Text(
+                        text = "${index + 1}. $format",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            // Users who do not know any of the accepted answers can open the
+            // repository straight from here instead of guessing.
+            ZToolButton(
+                onClick = onOpenRepository,
+                modifier = Modifier.fillMaxWidth(),
+                isPrimary = false
+            ) {
+                Text(stringResource(R.string.page_firstrun_verify_open_repository))
+            }
 
             ZToolOutlinedTextField(
                 value = input,
@@ -858,6 +891,13 @@ private val ReplayPagesSaver = listSaver<List<FirstrunPage>, String>(
     restore = { names -> names.map(FirstrunPage::valueOf) }
 )
 
-private const val ExpectedRepoName = "ZUX-ZTool"
-
 private const val FirstrunPageTransitionMillis = 320
+
+/** Opens the project's GitHub page so users can look up the verification answer. */
+private fun openSourceRepository(context: Context) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, ZToolSource.GITHUB_URL.toUri()))
+    } catch (_: Exception) {
+        Toast.makeText(context, R.string.common_open_web_link_failed, Toast.LENGTH_SHORT).show()
+    }
+}
