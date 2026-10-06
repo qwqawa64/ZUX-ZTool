@@ -1,0 +1,74 @@
+# Baseline profile for the cold-start path (ZToolApplication -> MainActivity ->
+# ZToolTheme -> MainRouteNavHost -> Home).
+#
+# HAND-AUTHORED SEED. It was written from the code, not generated from a running
+# device, so it is conservative on purpose: class-level entries only, which stay
+# valid when method signatures change. Regenerate it from a real device before
+# treating the numbers as final — see docs/research/startup-parallelization-audit.md,
+# "Baseline Profile" section, for the Macrobenchmark route.
+#
+# AGP folds this file into assets/dexopt/baseline.prof and R8 rewrites the class
+# names for the minified release build; unmatched entries are dropped with a
+# warning rather than failing the build.
+
+# --- Application / entry point ---------------------------------------------
+Lcom/qimian233/ztool/ZToolApplication;
+Lcom/qimian233/ztool/ZToolApplication$Companion;
+Lcom/qimian233/ztool/MainActivity;
+Lcom/qimian233/ztool/MainActivity$Companion;
+Lcom/qimian233/ztool/MainActivityKt;
+Lcom/qimian233/ztool/XposedServiceBridge;
+Lcom/qimian233/ztool/ModuleActivationProbe;
+
+# --- Shell / root probe ----------------------------------------------------
+Lcom/qimian233/ztool/EnhancedShellExecutor;
+Lcom/qimian233/ztool/EnhancedShellExecutor$Companion;
+Lcom/qimian233/ztool/EnhancedShellExecutor$ShellResult;
+
+# --- Theme ----------------------------------------------------------------
+Lcom/qimian233/ztool/ui/theme/ZToolThemeKt;
+Lcom/qimian233/ztool/ui/theme/ZToolColorSchemeFactoryKt;
+Lcom/qimian233/ztool/ui/theme/ZToolThemeSettings;
+Lcom/qimian233/ztool/ui/theme/ZToolThemeSpec;
+Lcom/qimian233/ztool/data/theme/ThemePreferencesRepository;
+
+# --- Navigation / home shell ----------------------------------------------
+Lcom/qimian233/ztool/navigation/ZToolNavHostKt;
+Lcom/qimian233/ztool/navigation/MainRoute;
+Lcom/qimian233/ztool/navigation/MainRoute$Companion;
+
+# --- Home screen ----------------------------------------------------------
+Lcom/qimian233/ztool/screens/home/HomeRouteKt;
+Lcom/qimian233/ztool/screens/home/HomeCardsKt;
+Lcom/qimian233/ztool/screens/home/HomeViewModelFactory;
+Lcom/qimian233/ztool/viewmodel/HomeViewModel;
+Lcom/qimian233/ztool/viewmodel/HomeUiState;
+Lcom/qimian233/ztool/data/home/HomeRepository;
+Lcom/qimian233/ztool/data/home/EnvironmentStatus;
+Lcom/qimian233/ztool/data/home/ModuleStatus;
+Lcom/qimian233/ztool/data/home/SystemInfo;
+
+# --- Firstrun decision (runs before setContent) ---------------------------
+Lcom/qimian233/ztool/data/home/FirstrunSchemaRepository;
+Lcom/qimian233/ztool/data/home/FirstrunPageSchema;
+Lcom/qimian233/ztool/data/home/AgreementRepository;
+
+# --- Startup maintenance / preferences ------------------------------------
+Lcom/qimian233/ztool/data/settings/SettingsRepository;
+Lcom/qimian233/ztool/utils/ModulePreferencesUtils;
+Lcom/qimian233/ztool/utils/ConfigUpgrade;
+Lcom/qimian233/ztool/utils/LogUtils;
+Lcom/qimian233/ztool/data/keys/PreferenceKeys;
+Lcom/qimian233/ztool/service/LogServiceManager;
+Lcom/qimian233/ztool/service/EdgeBubbleService;
+Lcom/qimian233/ztool/service/EdgeBubbleService$Companion;
+
+# --- Framework hot path ---------------------------------------------------
+Landroidx/activity/ComponentActivity;
+Landroidx/activity/compose/ComponentActivityKt;
+Landroidx/compose/runtime/Recomposer;
+Landroidx/compose/runtime/ComposerImpl;
+Landroidx/compose/runtime/SlotTable;
+Landroidx/compose/runtime/changelist/ChangeList;
+Landroidx/compose/ui/platform/AndroidComposeView;
+Landroidx/core/view/WindowCompat;

@@ -180,6 +180,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.savedstate)
+    // Installs the baseline profile shipped in assets/dexopt on API 31+, where the
+    // platform no longer applies it straight from the APK.
+    implementation(libs.androidx.profileinstaller)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.leakcanary.android)
     testImplementation(libs.junit)
