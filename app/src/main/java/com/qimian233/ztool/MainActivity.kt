@@ -330,10 +330,22 @@ private fun MainTabletShell(
             ?.let(onRouteChanged)
     }
 
-    LaunchedEffect(environmentReady, selectedRoute) {
+    // NavHost installs navController.graph during its own composition, and it sits inside a
+    // Scaffold subcomposition, so this effect can be launched during a pass in which the
+    // graph is not installed yet — most visibly on the first composition after an Activity
+    // recreation (configuration change). popUpTo below reads navController.graph and then
+    // throws "You must call setGraph() before calling getGraph()".
+    //
+    // navController.currentDestination is null exactly while the graph is missing, so the
+    // body bails out instead of reading it. Keying on backStackReady re-runs the effect once
+    // NavHost has installed the graph; keying on backStackEntry itself would instead make the
+    // effect re-fire on every navigation and fight the back stack with a stale selectedRoute.
+    val backStackReady = backStackEntry != null
+    LaunchedEffect(environmentReady, selectedRoute, backStackReady) {
         val targetRoute = if (environmentReady) selectedRoute else MainRoute.Home
         // Routes may carry the optional ?target= highlight arg; compare paths only.
-        if (navController.currentDestination?.route?.substringBefore('?') != targetRoute.name) {
+        val currentRoute = navController.currentDestination?.route?.substringBefore('?')
+        if (currentRoute != null && currentRoute != targetRoute.name) {
             navController.navigate(targetRoute.name) {
                 launchSingleTop = true
                 restoreState = true

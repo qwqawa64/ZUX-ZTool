@@ -342,6 +342,46 @@ Application，时间差约数百毫秒），但预热会让它稍微更容易被
 持久化的图标选择（`useAlternativeIcon`）——重建这对 alias。隐藏分支抽成
 `hideLauncherIconAliases()` 供三条路径复用。
 
+## 5.4 崩溃修复：Activity 重建时 `navController.graph` 尚未就绪
+
+实测崩溃（配置变更后立即发生）：
+
+```
+java.lang.IllegalStateException: You must call setGraph() before calling getGraph()
+    at NavControllerImpl.getGraph$navigation_runtime(NavControllerImpl.kt:78)
+    at MainActivityKt$MainTabletShell$2$1.invokeSuspend(MainActivity.kt:340)
+```
+
+**根因**：`NavHost` 是在**自己的 composition 里**安装 graph 的
+（`navigation-compose` 的 `NavHost.kt:819`：`navController.graph = graph`），
+而这个 `NavHost` 位于 `Scaffold` 的 **subcomposition** 内——`Scaffold` 用
+`SubcomposeLayout`，content 要到测量阶段才被 subcompose。于是 `MainTabletShell`
+里声明在 NavHost **之前**的 `LaunchedEffect` 完全可能在 graph 写入之前就被
+派发（栈里的 `AndroidUiDispatcher.performTrampolineDispatch` 就是这个时机）。
+
+**关键证据**：`NavControllerImpl._graph` 全仓库只在 `setGraph` 里被赋值一次
+（`NavControllerImpl.kt:886`），**从不置回 null**。所以能抛出这个异常的
+NavController 一定是"从未 setGraph 过"的那个——即 effect 抢跑，而不是 graph 被清空。
+
+**触发条件**：配置变更 → `MainActivity` 重建（未声明 `configChanges`，见 §3.8）→
+`savedInstanceState` 恢复出的 `selectedRoute` 不是 Home → 首个 effect 立刻尝试
+`navigate` → `popUpTo(navController.graph.startDestinationId)` 读到未安装的 graph → 抛异常。
+冷启动时 `selectedRoute` 通常是 Home，守卫恰好挡住了导航，所以只在重建/恢复到子页面时炸。
+
+**修法**（`MainTabletShell`）：
+
+- body 用 `navController.currentDestination` 做守卫：graph 未安装时它为 `null`
+  （`currentDestination = currentBackStackEntry?.destination`，而 `findDestination`
+  在 `_graph == null` 时返回 null 而不是抛异常），于是直接跳过，不读 `graph`；
+- 增加 `backStackReady = backStackEntry != null` 作为 `LaunchedEffect` 的 key，
+  让 graph 装好、back stack 出现后 effect 重新收敛一次，待处理的导航不会丢。
+
+**不能**把 `backStackEntry` 本身当 key：那样每次导航都会重跑该 effect，用户按返回键时
+会带着过期的 `selectedRoute` 判定"目标路由不一致"，把用户直接顶回上一页。
+
+顺带确认：全仓库只有这一处读 `navController.graph`；`ZToolNavHost` 里那几十处
+`navController.navigate(...)` 都在点击回调中，执行时 graph 必然已就绪。
+
 ## 6. 验证方式
 
 改造前后用同一口径测量，避免用 Debug 包下结论：
