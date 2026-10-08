@@ -91,7 +91,29 @@ Consequence for the preview: while the custom grid switch is on, the real grid *
 ZTool's own `customGridColumn/customGridRow`, and no external source is needed. When the
 switch is off, the hook is not installed, the provider numbers are clean and may be used.
 
-## 5. What ZTool actually reads
+## 5. Measured desktop proportions (TB710FU, 2590x1619 screenshot)
+
+Used as the ratio constants of the preview renderer:
+
+| Element | Measured | Ratio |
+|---|---|---|
+| Status-bar band above the wallpaper | 160 px | 9.9 % of the height |
+| Workspace side dead space (wide grid on, inset 16 dp) | 32 px | 1.2 % of the width |
+| Icon plate | 120 x 120 px | 4.6 % of the width |
+| Column pitch (8 columns) | 317 px | icon / cell width = 0.38 |
+| Row pitch (6 rows) | 188 px | icon / cell height = 0.64 |
+| Icon + label block | 166 px | 0.88 of the row pitch |
+| Dock pill | 1445 x 195 px, centered | 55.8 % of the width, 12 % of the height |
+| Dock slots | 8 (5 icons, separator, 3 icons) | icons the size of desktop icons |
+
+The 32 px side dead space equals `wideGridSideInset` 16 dp at density 2, i.e. the
+wide-grid hook applied; a square-mode run would instead pad by
+`(availableWidth - columns * cellHeightPx) / 2`.
+
+Measurements were taken from a screenshot the user provided; the pixel columns were read
+with a run-length scan rather than by eye.
+
+## 6. What ZTool actually reads
 
 `data/launcher/LauncherPreviewRepository.kt` reads the `Settings.System` mirror and the
 provider (both no-root). `data/launcher/LauncherGridResolver.kt` resolves the grid in this

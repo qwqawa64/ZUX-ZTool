@@ -329,7 +329,9 @@ data class LauncherSettingsUiState(
             iconScale = if (iconScaleOverride) iconScaleValue else 1f,
             noLabel = noLabelMode,
             bluePointVisible = !hideBluePoint,
-            dockVisible = !disableDockBar
+            dockVisible = !disableDockBar,
+            // Dock expansion forces 20 hotseat columns; 8 slots is the on-device dock.
+            dockIconCount = if (moreBigDock) 8 else 5
         )
 }
 
@@ -344,4 +346,5 @@ data class LauncherPreviewConfig(
     val noLabel: Boolean,
     val bluePointVisible: Boolean,
     val dockVisible: Boolean,
+    val dockIconCount: Int,
 )
