@@ -99,13 +99,16 @@ visible".
 
 ## 4. What the module does instead
 
-Two hooks remain:
+One hook remains, on `DisplayPowerController.animateScreenStateChange`, doing two things:
 
-1. `DisplayPowerController.initialize` — overwrite both animator durations with the
-   configured value (`mColorFadeOnDurations`/`mColorFadeOffDurations` are static and only
-   read when the animators are created).
-2. `DisplayPowerController.animateScreenStateChange` — let the host run, then rebuild the
-   fade it dropped:
+1. **On entry** — re-read the preference and apply the duration to both animators, skipping any
+   animator that is already running (`ValueAnimator` derives its progress from `mDuration` on
+   every frame, so re-timing a fade mid-flight would make it jump). Both animators are started
+   only from this method (smali source lines 2780 and 2871 are the only `start()` call sites),
+   and `initialize(int)` has exactly one caller, immediately before this method inside
+   `updatePowerStateInternal`, so applying here covers screen off and screen on and keeps a
+   preference change live — `initialize` runs once per DisplayPowerController and cannot.
+2. **After `proceed()`** — rebuild the fade the host dropped:
 
 ```text
 level = getColorFadeLevel()             # before proceed()
@@ -126,8 +129,15 @@ thread, so both the panel unblank and the first ColorFade frame already observe 
 level. `ColorFade.draw(level)` in mode `2` is `showSurface(1.0f - level)` — a solid color
 layer with alpha `1 - level`, i.e. level `0` is opaque black and level `1` is transparent.
 
+Reading the preference on every state change is free: `LSPosedRemotePreferences.getInt` is a
+plain in-memory map lookup (the daemon pushes updates to the injected process through a binder
+callback), so no throttling is needed.
+
 ### Dropped along the way
 
+- **The `initialize` hook** — it existed only to apply the durations, which is now done on the
+  way into every state change; that is what makes a screen-off duration change take effect
+  without a system_server restart.
 - **The whole constructor hook** — it only wrote `mColorFadeEnabled` and `mColorFadeFadesConfig`
   after `chain.proceed()` to work around a host that ships the fade disabled. Both fields are
   already `true` on this device (see section 6), verified by reading them before writing:
@@ -141,9 +151,9 @@ layer with alpha `1 - level`, i.e. level `0` is opaque black and level `1` is tr
   `setColorFadeLevel(1.0f)`, so a "live fade" test on the level never fires on this ROM.
 
 If a device ever ships the fade disabled (low RAM, or ODM boolean `0x111014c` false), the
-animators are never created and neither remaining hook has anything to work on. The cheap way
-back is a three-line hook on `Injector.isColorFadeEnabled` returning `true`, which is
-preferable to writing the `final` field from the constructor hook.
+animators are never created and the remaining hook has nothing to work on. The cheap way back
+is a three-line hook on `Injector.isColorFadeEnabled` returning `true`, which is preferable to
+writing the `final` field from the constructor hook.
 
 ### Rejected: forcing `MotoDesktopManager.isReadyForDisplay` to `true`
 
@@ -198,7 +208,7 @@ Every prerequisite and what provides it:
 | --- | --- |
 | `mColorFadeEnabled == true` (else the level is snapped to `0` and the panel blanks immediately) | the host itself on this device; the module used to force it and no longer does |
 | `mColorFadeOffAnimator != null` (created in `initialize()` only when `mColorFadeEnabled`) | same |
-| off duration | the remaining `initialize` hook (`mColorFadeOffDurations` is static, read at creation) |
+| off duration | the `animateScreenStateChange` hook entry (`mColorFadeOffDurations` is static and read only when the animators are created, so `initialize` cannot keep it live) |
 | `shouldPerformScreenOffTransition()` | `DisplayStateController.mPerformScreenOffTransition`, set to `!mShouldSkipScreenOffTransition` whenever the request policy is `OFF`; the module does not touch it |
 | `prepareColorFade(...)` success | mode `2` needs only `createSurfaceControl`; mode `1` (when `mColorFadeFadesConfig` is false) runs the full EGL/screenshot pipeline |
 
