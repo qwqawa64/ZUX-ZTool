@@ -81,7 +81,17 @@ cell counts. Window insets are dispatched before the first measure, so the first
 have no measured page: it falls back to `availableWidthPx/availableHeightPx` and a
 `postOnAnimation` re-check re-solves from live geometry once the layout has run.
 
-## 6. Runtime field notes
+## 6. The icon box is the container's cell size
+
+`ShortcutAndWidgetContainer#measureChild` measures every workspace item with
+`lp.width x lp.height`, and `CellLayoutLayoutParams#setup` derives those from the
+container's own cell size (`mCellWidth/mCellHeight`, set through
+`ShortcutAndWidgetContainer#setCellDimensions`). So the box a layout inspector reports for
+`DoubleShadowBubbleTextView` is the container's cell size, which is *not* necessarily the
+pitch the page box implies. The hook therefore also rewrites that call
+(`WideGrid: cell container WxH -> SxS …`) and forces `S = min(page-derived width, height)`.
+
+## 7. Runtime field notes
 
 `WideGrid: square solve|recheck …` logs the whole decision:
 

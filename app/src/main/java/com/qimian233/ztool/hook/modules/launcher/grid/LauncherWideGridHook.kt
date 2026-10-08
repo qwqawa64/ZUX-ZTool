@@ -168,7 +168,102 @@ class LauncherWideGridHook : AppHookModule() {
             }
             null
         }
+
+        // The icon views themselves are laid out at the cell size the page's
+        // ShortcutAndWidgetContainer holds, which is where the visible icon box comes
+        // from. Keep it square too, and log what it was asked to use.
+        val containerClass = squareFields?.let {
+            try {
+                classLoader.loadClass("com.android.launcher3.ShortcutAndWidgetContainer")
+            } catch (th: Throwable) {
+                logger.error("WideGrid: ShortcutAndWidgetContainer not found", th)
+                null
+            }
+        }
+        val setCellDimensions = containerClass?.let {
+            try {
+                findMethod(
+                    it, "setCellDimensions",
+                    Int::class.javaPrimitiveType, Int::class.javaPrimitiveType,
+                    Int::class.javaPrimitiveType, Int::class.javaPrimitiveType,
+                    Point::class.java
+                )
+            } catch (th: Throwable) {
+                logger.error("WideGrid: setCellDimensions not found", th)
+                null
+            }
+        }
+        val square = squareFields
+        if (containerClass != null && setCellDimensions != null && square != null) {
+            val inCellRewrite = ThreadLocal.withInitial { false }
+            hookWithId(setCellDimensions, "workspace_grid_cell_size") { chain ->
+                chain.proceed()
+                if (inCellRewrite.get() == true) return@hookWithId null
+                try {
+                    val container = chain.thisObject as? ViewGroup
+                    val page = container?.parent as? View
+                    val args = chain.args
+                    if (container == null || page == null || !square.pageClass.isInstance(page)) {
+                        return@hookWithId null
+                    }
+                    if (!workspaceClass.isInstance(page.parent)) return@hookWithId null
+                    if (args.size < 5) return@hookWithId null
+                    val cellWidth = args[0] as? Int ?: return@hookWithId null
+                    val cellHeight = args[1] as? Int ?: return@hookWithId null
+                    val cols = args[2] as? Int ?: return@hookWithId null
+                    val rows = args[3] as? Int ?: return@hookWithId null
+                    val border = args[4] as? Point ?: return@hookWithId null
+                    val pageWidth = page.measuredWidth
+                    val pageHeight = page.measuredHeight
+                    if (pageWidth <= 0 || pageHeight <= 0 || cols <= 0 || rows <= 0) {
+                        return@hookWithId null
+                    }
+                    val byBox = (pageWidth - page.paddingLeft - page.paddingRight -
+                        border.x * (cols - 1)) / cols
+                    val byHeight = (pageHeight - page.paddingTop - page.paddingBottom -
+                        border.y * (rows - 1)) / rows
+                    if (byBox <= 0 || byHeight <= 0) return@hookWithId null
+                    val side = minOf(byBox, byHeight)
+                    logger.info(
+                        "WideGrid: cell container ${cellWidth}x$cellHeight -> ${side}x$side " +
+                            "page=${pageWidth}x$pageHeight pad=" +
+                            "${page.paddingLeft},${page.paddingTop},${page.paddingRight},${page.paddingBottom} " +
+                            "cols=$cols rows=$rows border=${border.x},${border.y} ${firstChild(container)}"
+                    )
+                    if (remotePreferences.getBoolean(
+                            PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.name,
+                            PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.default
+                        ) && (cellWidth != side || cellHeight != side)
+                    ) {
+                        inCellRewrite.set(true)
+                        try {
+                            setCellDimensions.invoke(container, side, side, cols, rows, border)
+                        } finally {
+                            inCellRewrite.set(false)
+                        }
+                    }
+                } catch (th: Throwable) {
+                    logger.error("WideGrid: cell container rewrite failed", th)
+                }
+                null
+            }
+        }
         logger.info("LauncherWideGridHook installed (hooking Workspace#setInsets)")
+    }
+
+    /** Diagnostic description of the first icon view inside a cell container. */
+    private fun firstChild(container: ViewGroup): String {
+        if (container.childCount == 0) return "child=none"
+        val child = container.getChildAt(0) ?: return "child=none"
+        val lp = child.layoutParams
+        val margins = if (lp is ViewGroup.MarginLayoutParams) {
+            "${lp.leftMargin},${lp.topMargin},${lp.rightMargin},${lp.bottomMargin}"
+        } else {
+            "n/a"
+        }
+        return "child=${child.javaClass.simpleName} ${child.width}x${child.height} " +
+            "lp=${lp?.width}x${lp?.height} margin=$margins " +
+            "pad=${child.paddingLeft},${child.paddingTop},${child.paddingRight},${child.paddingBottom}"
     }
 
     /**
