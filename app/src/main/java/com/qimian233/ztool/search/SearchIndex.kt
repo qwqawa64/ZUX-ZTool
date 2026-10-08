@@ -538,12 +538,10 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_notification_blur",
             titleRes = R.string.system_ui_control_center_notification_center_blur_title,
-            summaryRes = R.string.system_ui_control_center_notification_center_blur_summary
         ),
         systemUiControlCenter.item(
             id = "control_center_notification_blur_strength",
             titleRes = R.string.system_ui_control_center_notification_center_blur_strength_title,
-            summaryRes = R.string.system_ui_control_center_notification_center_blur_strength_summary,
             parentTitleRes = R.string.system_ui_control_center_notification_center_blur_title,
             parentKey = "control_center_notification_blur"
         ),
@@ -592,7 +590,6 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_customize_slider_style",
             titleRes = R.string.system_ui_control_center_customize_slider_style_title,
-            summaryRes = R.string.system_ui_control_center_customize_slider_style_summary
         ),
         systemUiControlCenter.item(
             id = "control_center_slider_style_direction",
@@ -607,7 +604,6 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_custom_qs_color",
             titleRes = R.string.system_ui_control_center_custom_qs_color_title,
-            summaryRes = R.string.system_ui_control_center_custom_qs_color_summary,
             parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch,
             parentKey = "control_center_custom_qs_color_general"
         ),
@@ -620,7 +616,6 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_custom_label_color",
             titleRes = R.string.system_ui_control_center_custom_label_color_title,
-            summaryRes = R.string.system_ui_control_center_custom_label_color_summary,
             parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch,
             parentKey = "control_center_custom_qs_color_general"
         ),
@@ -633,7 +628,6 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_custom_second_label_color",
             titleRes = R.string.system_ui_control_center_custom_second_label_color_title,
-            summaryRes = R.string.system_ui_control_center_custom_second_label_color_summary,
             parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch,
             parentKey = "control_center_custom_qs_color_general"
         ),
@@ -646,7 +640,6 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_no_tile_labels",
             titleRes = R.string.system_ui_control_center_no_tile_labels_title,
-            summaryRes = R.string.system_ui_control_center_no_tile_labels_summary,
             parentTitleRes = R.string.system_ui_control_center_custom_qs_color_general_switch,
             parentKey = "control_center_custom_qs_color_general"
         ),
@@ -658,7 +651,6 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_custom_date_setting",
             titleRes = R.string.system_ui_control_center_custom_date_setting_title,
-            summaryRes = R.string.system_ui_control_center_custom_date_setting_summary
         ),
         systemUiControlCenter.item(
             id = "control_center_custom_clock_text_size",
@@ -681,30 +673,25 @@ object SearchIndex {
         systemUiControlCenter.item(
             id = "control_center_custom_clock_text_bold",
             titleRes = R.string.system_ui_control_center_custom_clock_text_bold_title,
-            summaryRes = R.string.system_ui_control_center_use_bold_date,
             parentTitleRes = R.string.system_ui_control_center_custom_date_setting_title,
             parentKey = "control_center_custom_date_setting"
         ),
         systemUiControlCenter.item(
             id = "control_center_expand_qs_panel_portrait",
             titleRes = R.string.system_ui_control_center_expand_qs_panel_portrait_title,
-            summaryRes = R.string.system_ui_control_center_expand_qs_panel_portrait_summary
         ),
         systemUiControlCenter.item(
             id = "control_center_panel_width_percent",
             titleRes = R.string.system_ui_control_center_panel_width_percent_title,
-            summaryRes = R.string.system_ui_control_center_panel_width_percent_summary,
             parentTitleRes = R.string.system_ui_control_center_expand_qs_panel_portrait_title,
             parentKey = "control_center_expand_qs_panel_portrait"
         ),
         systemUiControlCenter.item(
             id = "control_center_tile_columns",
             titleRes = R.string.system_ui_control_center_tile_columns_title,
-            summaryRes = R.string.system_ui_control_center_tile_columns_summary,
             parentTitleRes = R.string.system_ui_control_center_expand_qs_panel_portrait_title,
             parentKey = "control_center_expand_qs_panel_portrait"
         ),
-
         systemUiAnimationWallpaper.item(
             id = "animation_no_charging_animation",
             titleRes = R.string.system_ui_animation_no_charging_animation_enable_title,

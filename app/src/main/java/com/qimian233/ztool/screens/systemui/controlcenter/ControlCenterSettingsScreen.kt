@@ -419,7 +419,6 @@ private fun controlCenterSettingsSections(
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_control_center_notification_center_blur_title),
-                        summary = stringResource(R.string.system_ui_control_center_notification_center_blur_summary),
                         checked = state.notificationCenterBlurEnabled,
                         onCheckedChange = onNotificationCenterBlurEnabledChanged,
                         key = "control_center_notification_blur"
@@ -429,7 +428,6 @@ private fun controlCenterSettingsSections(
                     add(
                         SettingItem.Slider(
                             title = stringResource(R.string.system_ui_control_center_notification_center_blur_strength_title),
-                            summary = stringResource(R.string.system_ui_control_center_notification_center_blur_strength_summary),
                             value = state.notificationCenterBlurPercent.toFloat(),
                             valueText = stringResource(
                                 R.string.system_ui_control_center_percent_unit,
@@ -447,6 +445,66 @@ private fun controlCenterSettingsSections(
         SettingSection(
             title = stringResource(R.string.system_ui_control_center_tiles),
             items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_control_center_hide_detail_indicator_title),
+                        checked = state.hideDetailIndicatorEnabled,
+                        onCheckedChange = onHideDetailIndicatorChanged,
+                        key = "control_center_hide_detail_indicator"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_control_center_long_press_title),
+                        checked = state.controlCenterLongPressEnabled,
+                        onCheckedChange = onControlCenterLongPressChanged,
+                        key = "control_center_long_press"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_media_output_dialog_center_title),
+                        summary = stringResource(R.string.system_ui_media_output_dialog_center_summary),
+                        checked = state.mediaOutputDialogCenter,
+                        onCheckedChange = onMediaOutputDialogCenterChanged,
+                        key = "control_center_media_output_dialog_center"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_control_center_expand_qs_panel_portrait_title),
+                        checked = state.expandQsPanelPortrait,
+                        onCheckedChange = onExpandQsPanelPortraitChanged,
+                        key = "control_center_expand_qs_panel_portrait"
+                    )
+                )
+                if (state.expandQsPanelPortrait) {
+                    add(
+                        SettingItem.Slider(
+                            title = stringResource(R.string.system_ui_control_center_panel_width_percent_title),
+                            value = state.qsPanelWidthPercent.toFloat(),
+                            valueText = stringResource(
+                                R.string.system_ui_control_center_percent_unit,
+                                state.qsPanelWidthPercent
+                            ),
+                            valueRange = 0f..100f,
+                            steps = 19,
+                            onValueChange = { onQsPanelWidthPercentChanged(snapToAccuratePercent(it)) },
+                            key = "control_center_panel_width_percent"
+                        )
+                    )
+                    add(
+                        SettingItem.Slider(
+                            title = stringResource(R.string.system_ui_control_center_tile_columns_title),
+                            value = state.qsTileColumns.toFloat(),
+                            valueText = state.qsTileColumns.toString(),
+                            valueRange = 0f..10f,
+                            steps = 9,
+                            onValueChange = { onQsTileColumnsChanged(it.toInt()) },
+                            key = "control_center_tile_columns"
+                        )
+                    )
+                }
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_control_center_custom_control_center_tile_radius),
@@ -468,6 +526,107 @@ private fun controlCenterSettingsSections(
                         key = "control_center_head_up_corner_radius"
                     )
                 )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_control_center_custom_qs_color_general_switch),
+                        checked = state.customQsColorGeneralSwitch,
+                        onCheckedChange = onCustomQsColorSwitchChanged,
+                        key = "control_center_custom_qs_color_general"
+                    )
+                )
+                if (state.customQsColorGeneralSwitch) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_control_center_custom_qs_color_title),
+                            checked = state.customQsColor,
+                            onCheckedChange = onCustomQsColorChanged,
+                            key = "control_center_custom_qs_color"
+                        )
+                    )
+                    if (state.customQsColor) {
+                        add(
+                            SettingItem.Custom(
+                                content = {
+                                    ZToolArgbColorTextFieldRow(
+                                        label = stringResource(R.string.system_ui_control_center_custom_qs_active_color_title),
+                                        value = state.customQsActiveColorText,
+                                        onValueChange = onCustomQsActiveColorTextChanged,
+                                        defaultText = "BFADD8E6",
+                                        summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
+                                        errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
+                                        onEditingFinished = onCustomQsActiveColorEditingFinished
+                                    )
+                                },
+                                key = "control_center_custom_qs_active_color"
+                            )
+                        )
+                    }
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_control_center_custom_label_color_title),
+                            checked = state.customLabelColor,
+                            onCheckedChange = onCustomLabelColorChanged,
+                            key = "control_center_custom_label_color"
+                        )
+                    )
+                    if (state.customLabelColor) {
+                        add(
+                            SettingItem.Custom(
+                                content = {
+                                    ZToolArgbColorTextFieldRow(
+                                        label = stringResource(R.string.system_ui_control_center_custom_label_active_color_title),
+                                        value = state.customLabelActiveColorText,
+                                        onValueChange = onCustomLabelActiveColorTextChanged,
+                                        defaultText = "FFFFFFFF",
+                                        summary = stringResource(R.string.system_ui_control_center_custom_label_active_color_summary),
+                                        errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
+                                        onEditingFinished = onCustomLabelActiveColorEditingFinished
+                                    )
+                                },
+                                key = "control_center_custom_label_active_color"
+                            )
+                        )
+                    }
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_control_center_custom_second_label_color_title),
+                            checked = state.customSecondLabelColor,
+                            onCheckedChange = onCustomSecondLabelColorChanged,
+                            key = "control_center_custom_second_label_color"
+                        )
+                    )
+                    if (state.customSecondLabelColor) {
+                        add(
+                            SettingItem.Custom(
+                                content = {
+                                    ZToolArgbColorTextFieldRow(
+                                        label = stringResource(R.string.system_ui_control_center_custom_second_label_active_color_title),
+                                        value = state.customSecondLabelActiveColorText,
+                                        onValueChange = onCustomSecondLabelActiveColorTextChanged,
+                                        defaultText = "BFFFFFFF",
+                                        summary = stringResource(R.string.system_ui_control_center_custom_second_label_active_color_summary),
+                                        errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
+                                        onEditingFinished = onCustomSecondLabelActiveColorEditingFinished
+                                    )
+                                },
+                                key = "control_center_custom_second_label_active_color"
+                            )
+                        )
+                    }
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_control_center_no_tile_labels_title),
+                            checked = state.noTileLabels,
+                            onCheckedChange = onNoTileLabelsChanged,
+                            key = "control_center_no_tile_labels"
+                        )
+                    )
+                }
+            }
+        ),
+        SettingSection(
+            title = stringResource(R.string.system_ui_control_center_sliders),
+            items = buildList {
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_control_center_show_brightness_slider_percentage),
@@ -495,14 +654,6 @@ private fun controlCenterSettingsSections(
                 )
                 add(
                     SettingItem.Switch(
-                        title = stringResource(R.string.system_ui_control_center_long_press_title),
-                        checked = state.controlCenterLongPressEnabled,
-                        onCheckedChange = onControlCenterLongPressChanged,
-                        key = "control_center_long_press"
-                    )
-                )
-                add(
-                    SettingItem.Switch(
                         title = stringResource(R.string.system_ui_volume_detail_panel_title),
                         checked = state.volumeDetailPanelEnabled,
                         onCheckedChange = onVolumeDetailPanelChanged,
@@ -511,16 +662,7 @@ private fun controlCenterSettingsSections(
                 )
                 add(
                     SettingItem.Switch(
-                        title = stringResource(R.string.system_ui_control_center_hide_detail_indicator_title),
-                        checked = state.hideDetailIndicatorEnabled,
-                        onCheckedChange = onHideDetailIndicatorChanged,
-                        key = "control_center_hide_detail_indicator"
-                    )
-                )
-                add(
-                    SettingItem.Switch(
                         title = stringResource(R.string.system_ui_control_center_customize_slider_style_title),
-                        summary = stringResource(R.string.system_ui_control_center_customize_slider_style_summary),
                         checked = state.customizeSliderStyle,
                         onCheckedChange = onCustomizeSliderStyleChanged,
                         enabled = !state.sliderStyleForcedByQsPanel,
@@ -556,115 +698,6 @@ private fun controlCenterSettingsSections(
                         )
                     )
                 }
-                add(
-                    SettingItem.Switch(
-                        title = stringResource(R.string.system_ui_control_center_custom_qs_color_general_switch),
-                        checked = state.customQsColorGeneralSwitch,
-                        onCheckedChange = onCustomQsColorSwitchChanged,
-                        key = "control_center_custom_qs_color_general"
-                    )
-                )
-                if (state.customQsColorGeneralSwitch) {
-                    add(
-                        SettingItem.Switch(
-                            title = stringResource(R.string.system_ui_control_center_custom_qs_color_title),
-                            summary = stringResource(R.string.system_ui_control_center_custom_qs_color_summary),
-                            checked = state.customQsColor,
-                            onCheckedChange = onCustomQsColorChanged,
-                            key = "control_center_custom_qs_color"
-                        )
-                    )
-                    if (state.customQsColor) {
-                        add(
-                            SettingItem.Custom(
-                                content = {
-                                    ZToolArgbColorTextFieldRow(
-                                        label = stringResource(R.string.system_ui_control_center_custom_qs_active_color_title),
-                                        value = state.customQsActiveColorText,
-                                        onValueChange = onCustomQsActiveColorTextChanged,
-                                        defaultText = "BFADD8E6",
-                                        summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
-                                        errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
-                                        onEditingFinished = onCustomQsActiveColorEditingFinished
-                                    )
-                                },
-                                key = "control_center_custom_qs_active_color"
-                            )
-                        )
-                    }
-                    add(
-                        SettingItem.Switch(
-                            title = stringResource(R.string.system_ui_control_center_custom_label_color_title),
-                            summary = stringResource(R.string.system_ui_control_center_custom_label_color_summary),
-                            checked = state.customLabelColor,
-                            onCheckedChange = onCustomLabelColorChanged,
-                            key = "control_center_custom_label_color"
-                        )
-                    )
-                    if (state.customLabelColor) {
-                        add(
-                            SettingItem.Custom(
-                                content = {
-                                    ZToolArgbColorTextFieldRow(
-                                        label = stringResource(R.string.system_ui_control_center_custom_label_active_color_title),
-                                        value = state.customLabelActiveColorText,
-                                        onValueChange = onCustomLabelActiveColorTextChanged,
-                                        defaultText = "FFFFFFFF",
-                                        summary = stringResource(R.string.system_ui_control_center_custom_label_active_color_summary),
-                                        errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
-                                        onEditingFinished = onCustomLabelActiveColorEditingFinished
-                                    )
-                                },
-                                key = "control_center_custom_label_active_color"
-                            )
-                        )
-                    }
-                    add(
-                        SettingItem.Switch(
-                            title = stringResource(R.string.system_ui_control_center_custom_second_label_color_title),
-                            summary = stringResource(R.string.system_ui_control_center_custom_second_label_color_summary),
-                            checked = state.customSecondLabelColor,
-                            onCheckedChange = onCustomSecondLabelColorChanged,
-                            key = "control_center_custom_second_label_color"
-                        )
-                    )
-                    if (state.customSecondLabelColor) {
-                        add(
-                            SettingItem.Custom(
-                                content = {
-                                    ZToolArgbColorTextFieldRow(
-                                        label = stringResource(R.string.system_ui_control_center_custom_second_label_active_color_title),
-                                        value = state.customSecondLabelActiveColorText,
-                                        onValueChange = onCustomSecondLabelActiveColorTextChanged,
-                                        defaultText = "BFFFFFFF",
-                                        summary = stringResource(R.string.system_ui_control_center_custom_second_label_active_color_summary),
-                                        errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
-                                        onEditingFinished = onCustomSecondLabelActiveColorEditingFinished
-                                    )
-                                },
-                                key = "control_center_custom_second_label_active_color"
-                            )
-                        )
-                    }
-                    add(
-                        SettingItem.Switch(
-                            title = stringResource(R.string.system_ui_control_center_no_tile_labels_title),
-                            summary = stringResource(R.string.system_ui_control_center_no_tile_labels_summary),
-                            checked = state.noTileLabels,
-                            onCheckedChange = onNoTileLabelsChanged,
-                            key = "control_center_no_tile_labels"
-                        )
-                    )
-                }
-                add(
-                    SettingItem.Switch(
-                        title = stringResource(R.string.system_ui_media_output_dialog_center_title),
-                        summary = stringResource(R.string.system_ui_media_output_dialog_center_summary),
-                        checked = state.mediaOutputDialogCenter,
-                        onCheckedChange = onMediaOutputDialogCenterChanged,
-                        key = "control_center_media_output_dialog_center"
-                    )
-                )
             }
         ),
         SettingSection(
@@ -684,14 +717,16 @@ private fun controlCenterSettingsSections(
                         key = "control_center_custom_date_setting"
                     )
                 )
-                add(
-                    SettingItem.Switch(
-                        title = stringResource(R.string.system_ui_control_center_custom_clock_text_size_title),
-                        checked = state.textSizeEnabled,
-                        onCheckedChange = onTextSizeEnabledChanged,
-                        key = "control_center_custom_clock_text_size"
+                if (state.customDate) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_control_center_custom_clock_text_size_title),
+                            checked = state.textSizeEnabled,
+                            onCheckedChange = onTextSizeEnabledChanged,
+                            key = "control_center_custom_clock_text_size"
+                        )
                     )
-                )
+                }
                 if (state.textSizeEnabled) {
                     add(
                         SettingItem.Custom(
@@ -708,14 +743,16 @@ private fun controlCenterSettingsSections(
                         )
                     )
                 }
-                add(
-                    SettingItem.Switch(
-                        title = stringResource(R.string.system_ui_control_center_custom_clock_letter_spacing_title),
-                        checked = state.letterSpacingEnabled,
-                        onCheckedChange = onLetterSpacingEnabledChanged,
-                        key = "control_center_custom_clock_letter_spacing"
+                if (state.customDate) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_control_center_custom_clock_letter_spacing_title),
+                            checked = state.letterSpacingEnabled,
+                            onCheckedChange = onLetterSpacingEnabledChanged,
+                            key = "control_center_custom_clock_letter_spacing"
+                        )
                     )
-                )
+                }
                 if (state.letterSpacingEnabled) {
                     add(
                         SettingItem.Custom(
@@ -732,89 +769,47 @@ private fun controlCenterSettingsSections(
                         )
                     )
                 }
-                add(
-                    SettingItem.Custom(
-                        key = "control_center_custom_clock_text_color",
-                        content = {
-                            ZToolSwitchRow(
-                                title = stringResource(R.string.system_ui_control_center_custom_clock_text_color_title),
-                                summary = "#%08X".format(state.controlCenterTextColor),
-                                checked = state.controlCenterTextColorEnabled,
-                                onCheckedChange = onTextColorEnabledChanged
-                            )
-                            if (state.controlCenterTextColorEnabled) {
-                                ZToolArgbColorTextFieldRow(
-                                    label = stringResource(R.string.system_ui_common_select_font_color_title),
-                                    value = state.controlCenterTextColorText,
-                                    onValueChange = onControlCenterClockColorChange,
-                                    defaultText = "FFFFFFFF",
-                                    summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
-                                    errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
-                                    onEditingFinished = onFinishControlCenterClockTextColorEditing
+                if (state.customDate) {
+                    add(
+                        SettingItem.Custom(
+                            key = "control_center_custom_clock_text_bold",
+                            content = {
+                                ZToolSwitchRow(
+                                    title = stringResource(R.string.system_ui_control_center_custom_clock_text_bold_title),
+                                    checked = state.textBold,
+                                    onCheckedChange = onTextBoldChanged
                                 )
                             }
-                        }
+                        )
                     )
-                )
-                add(
-                    SettingItem.Custom(
-                        key = "control_center_custom_clock_text_bold",
-                        content = {
-                            ZToolSwitchRow(
-                                title = stringResource(R.string.system_ui_control_center_custom_clock_text_bold_title),
-                                summary = stringResource(R.string.system_ui_control_center_use_bold_date),
-                                checked = state.textBold,
-                                onCheckedChange = onTextBoldChanged
-                            )
-                        }
-                    )
-                )
-            }
-        ),
-        SettingSection(
-                title = stringResource(R.string.system_ui_control_center_expand_qs_panel_portrait_title),
-                items = buildList {
                     add(
-                        SettingItem.Switch(
-                            title = stringResource(R.string.system_ui_control_center_expand_qs_panel_portrait_title),
-                            summary = stringResource(R.string.system_ui_control_center_expand_qs_panel_portrait_summary),
-                            checked = state.expandQsPanelPortrait,
-                            onCheckedChange = onExpandQsPanelPortraitChanged,
-                            key = "control_center_expand_qs_panel_portrait"
+                        SettingItem.Custom(
+                            key = "control_center_custom_clock_text_color",
+                            content = {
+                                ZToolSwitchRow(
+                                    title = stringResource(R.string.system_ui_control_center_custom_clock_text_color_title),
+                                    summary = "#%08X".format(state.controlCenterTextColor),
+                                    checked = state.controlCenterTextColorEnabled,
+                                    onCheckedChange = onTextColorEnabledChanged
+                                )
+                                if (state.controlCenterTextColorEnabled) {
+                                    ZToolArgbColorTextFieldRow(
+                                        label = stringResource(R.string.system_ui_common_select_font_color_title),
+                                        value = state.controlCenterTextColorText,
+                                        onValueChange = onControlCenterClockColorChange,
+                                        defaultText = "FFFFFFFF",
+                                        summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
+                                        errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
+                                        onEditingFinished = onFinishControlCenterClockTextColorEditing
+                                    )
+                                }
+                            }
                         )
                     )
-                    if (state.expandQsPanelPortrait) {
-                        add(
-                            SettingItem.Slider(
-                                title = stringResource(R.string.system_ui_control_center_panel_width_percent_title),
-                                summary = stringResource(R.string.system_ui_control_center_panel_width_percent_summary),
-                                value = state.qsPanelWidthPercent.toFloat(),
-                                valueText = stringResource(
-                                    R.string.system_ui_control_center_percent_unit,
-                                    state.qsPanelWidthPercent
-                                ),
-                                valueRange = 0f..100f,
-                                steps = 19,
-                                onValueChange = { onQsPanelWidthPercentChanged(snapToAccuratePercent(it)) },
-                                key = "control_center_panel_width_percent"
-                            )
-                        )
-                        add(
-                            SettingItem.Slider(
-                                title = stringResource(R.string.system_ui_control_center_tile_columns_title),
-                                summary = stringResource(R.string.system_ui_control_center_tile_columns_summary),
-                                value = state.qsTileColumns.toFloat(),
-                                valueText = state.qsTileColumns.toString(),
-                                valueRange = 0f..10f,
-                                steps = 9,
-                                onValueChange = { onQsTileColumnsChanged(it.toInt()) },
-                                key = "control_center_tile_columns"
-                            )
-                        )
-                    }
                 }
-            )
+            }
         )
+    )
 }
 
 @Composable
@@ -888,7 +883,6 @@ private fun CustomDateSettingsContent(
 ) {
     ZToolSwitchRow(
         title = stringResource(R.string.system_ui_control_center_custom_date_setting_title),
-        summary = stringResource(R.string.system_ui_control_center_custom_date_setting_summary),
         checked = state.customDate,
         onCheckedChange = onCustomDateChanged
     )
