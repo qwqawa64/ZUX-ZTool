@@ -138,9 +138,23 @@ reference (10x6):
 
 The available grid height (1104 px over 6 rows) allows a square side of only 184 px, while
 the width budget is 259 px per column: **square cells and ColorOS's width fill cannot both
-hold on a 16:10 tablet at 6 rows**. `LauncherWideGridHook` therefore applies the square
-solve only when `byWidth <= byHeight` and otherwise leaves the host's per-axis cells, which
-is what ColorOS/OPlus and stock ZUI both produce.
+hold on a 16:10 tablet at 6 rows**.
+
+### 7.1 What the icon box actually is
+
+On workspace pages the icon box is the cell `CellLayout.onMeasure` hands to
+`ShortcutAndWidgetContainer.setCellDimensions`, i.e. `CellLayout.getCellWidth/Height`:
+the cell is **not** frozen for the workspace (`CellLayout.setCellDimensions(int,int)`, the
+freezing setter, is only called by `FolderPagedView` and `ZuiHotseat`, and `setFixedSize`
+only by `Folder`/`FolderPagedView`). A hook that re-derives the cell from the raw
+MeasureSpec therefore disagrees with the launcher whenever the page has padding: on the
+6x4 report the raw-box arithmetic gave 520 px while the real cell was 448 px.
+
+`LauncherWideGridHook` now reads `CellLayout.getCellWidth/getCellHeight` for the decision
+and squares the cell only when that cell is clearly wide (width/height above
+`squareAspectThreshold = 1.2`; measured 10x6 ~1.16 -> kept per-axis, 6x4 ~1.29 -> squared).
+The square side and the centring padding are taken from the height budget and the raw box
+respectively, so the pass converges instead of drifting.
 
 ## 8. Host crash: big-folder blur on long-press
 

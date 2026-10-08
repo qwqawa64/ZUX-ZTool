@@ -27,11 +27,13 @@ Implementation notes:
   raised from 16 dp to 160 dp to make that reachable.
 - Decision after the 10x6 screenshot comparison (see
   `docs/research/zui_vs_oplus_launcher_grid_and_big_folder.md` section 7): square mode is
-  an auto trade-off. The solve runs only when `byWidth <= byHeight`, i.e. when a square
-  cell still fills the page width; on dense grids (6 rows x 10 columns) it logs
-  `square skipped: byWidth=... > byHeight=...` and leaves the host's per-axis
-  (ColorOS-like) cells untouched. A forced square there wastes `byWidth - byHeight` per
-  column (measured: 1840 px vs 2120 px grid width).
+  an auto trade-off driven by the **cell the page handed to its container**
+  (`CellLayout.getCellWidth/getCellHeight`). The solve runs when that cell's width/height
+  exceeds `squareAspectThreshold` (1.2): 10x6 measures ~1.16 and keeps the host's per-axis
+  (ColorOS-like) cells, 6x4 measures ~1.29 and is squared. A forced square on a mild
+  rectangle wastes `cellWidth - cellHeight` per column (10x6: 1840 px vs 2120 px grid
+  width), which is what the threshold avoids. Square mode requires a launcher restart, so
+  the padding it writes never leaks into another grid.
 - C4 uses `gap = (bgAxis - n*childSize) / (n + 1)` instead of the planned `/(n - 1)`: the
   centered host layout puts the leftover into the two outer margins, and `n + 1` makes
   those margins equal to the inner gaps, so the child grid never touches the background

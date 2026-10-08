@@ -19,12 +19,19 @@ import kotlin.math.roundToInt
 /**
  * Rewrites the workspace side padding to the configured inset, or — in square mode — makes
  * every icon's cell box square by solving the cell size in the page's own measure pass.
- * Square mode applies only when the width-driven side already fits the page height, so a
- * dense grid keeps the host's per-axis (ColorOS-like) cells instead of wasting width.
+ * Square mode reads the cell the page handed to its container and only applies it to a
+ * clearly wide rectangle; a mild one keeps the host's per-axis (ColorOS-like) cells.
  * See docs/research/zui_launcher_wide_grid_geometry.md. Needs a launcher restart.
  */
 @SuppressLint("PrivateApi")
 class LauncherWideGridHook : AppHookModule() {
+
+    /**
+     * Cell width/height ratio above which square mode overrides the host cell. Measured
+     * 10 columns x 6 rows gives ~1.16 (kept per-axis, as ColorOS does) and 6 x 4 gives ~1.29
+     * (squared).
+     */
+    private val squareAspectThreshold = 1.2f
 
     /** Last square-mode geometry applied, so a measure pass never re-triggers itself. */
     @Volatile
@@ -188,47 +195,49 @@ class LauncherWideGridHook : AppHookModule() {
                         val rows = callInt(square.getCountY, page)
                         val dp = resolver.resolve(page.context)
                         val border = dp?.let { square.borderSpace.get(it) as? Point }
-                        if (boxWidth <= 0 || boxHeight <= 0 || cols <= 0 || rows <= 0 || border == null) {
+                        // The icon box is the cell the page handed to its container, so the
+                        // decision reads that cell instead of re-deriving it from the raw box.
+                        val cellWidth = callInt(square.getCellWidth, page)
+                        val cellHeight = callInt(square.getCellHeight, page)
+                        if (boxWidth <= 0 || boxHeight <= 0 || cols <= 0 || rows <= 0 ||
+                            border == null || cellWidth <= 0 || cellHeight <= 0
+                        ) {
                             reportLimited(
                                 "box", 3,
-                                "page measure skipped: box=${boxWidth}x$boxHeight cols=$cols rows=$rows"
+                                "page measure skipped: box=${boxWidth}x$boxHeight cols=$cols " +
+                                    "rows=$rows cell=${cellWidth}x$cellHeight"
                             )
                             return@hookWithId null
                         }
                         // The host's own cells are width-driven in X and height-driven in Y,
-                        // which is the ColorOS/OPlus behaviour. Forcing them square costs
-                        // (byWidth - byHeight) per column, so the square solve only runs when
-                        // the width-driven side already fits the page vertically.
+                        // which is what ColorOS/OPlus produce, and squaring them costs
+                        // (cellWidth - cellHeight) per column. Only a clearly wide cell is
+                        // squared; a mild rectangle stays as the vendor lays it out.
+                        val aspect = cellWidth.toFloat() / cellHeight
+                        if (aspect <= squareAspectThreshold) {
+                            val verdict =
+                                if (aspect >= 0.98f) "already square"
+                                else "kept per-axis (ColorOS) cells"
+                            reportLimited(
+                                "perAxis", 3,
+                                "square skipped: cell=${cellWidth}x$cellHeight aspect=$aspect " +
+                                    "cols=$cols rows=$rows -> $verdict"
+                            )
+                            return@hookWithId null
+                        }
                         val byHeight = (boxHeight - page.paddingTop - page.paddingBottom -
                             border.y * (rows - 1)) / rows
-                        val byWidth = (boxWidth - border.x * (cols - 1)) / cols
-                        if (byWidth > byHeight) {
-                            // Only pay for the effective-cell read while the log line is due;
-                            // the on-screen cell can differ from the raw box (page padding).
-                            if ((counts["perAxis"] ?: 0) < 3) {
-                                val effective = LauncherGridMetrics.fromPage(page, dp)
-                                reportLimited(
-                                    "perAxis", 3,
-                                    "square skipped: byWidth=$byWidth > byHeight=$byHeight " +
-                                        "cols=$cols rows=$rows" +
-                                        " effective=${effective?.cellWidth}x${effective?.cellHeight}" +
-                                        " -> per-axis (ColorOS) cells"
-                                )
-                            }
-                            return@hookWithId null
-                        }
-                        val side = byWidth
-                        if (side <= 0) {
-                            reportLimited("side", 3, "page measure skipped: side=$side")
-                            return@hookWithId null
-                        }
+                        // The height budget is padding-independent, so the square side and the
+                        // centring padding converge in one pass instead of drifting.
+                        val side = if (byHeight > 0) byHeight else cellHeight
                         val padding = ((boxWidth - (cols * side + border.x * (cols - 1))) / 2)
                             .coerceAtLeast(0)
-                        val container = square.getContainer?.invoke(page) as? ViewGroup
+                        val container = square.getContainer.invoke(page) as? ViewGroup
                         reportLimited(
                             "page", 12,
                             "page measure box=${boxWidth}x$boxHeight pad=${page.paddingLeft}->$padding " +
-                                "side=$side cols=$cols rows=$rows border=${border.x},${border.y} " +
+                                "cell=${cellWidth}x$cellHeight side=$side cols=$cols rows=$rows " +
+                                "border=${border.x},${border.y} " +
                                 (if (container != null) containerChildren(container) else "children=none")
                         )
                         var relayout = false
@@ -310,6 +319,9 @@ class LauncherWideGridHook : AppHookModule() {
         val borderSpace = tryField(dpClass, "cellLayoutBorderSpacePx") ?: return null
         val getCountX = tryMethod(pageClass, "getCountX") ?: return null
         val getCountY = tryMethod(pageClass, "getCountY") ?: return null
+        // The icon box is the cell the page handed to its container; these are that cell.
+        val getCellWidth = tryMethod(pageClass, "getCellWidth") ?: return null
+        val getCellHeight = tryMethod(pageClass, "getCellHeight") ?: return null
         val getContainer = tryMethod(pageClass, "getShortcutsAndWidgets") ?: return null
         val setCellDimensions = try {
             findMethod(
@@ -323,7 +335,8 @@ class LauncherWideGridHook : AppHookModule() {
             return null
         }
         return SquareFields(
-            pageClass, borderSpace, getCountX, getCountY, getContainer, setCellDimensions
+            pageClass, borderSpace, getCountX, getCountY, getCellWidth, getCellHeight,
+            getContainer, setCellDimensions
         )
     }
 
@@ -411,6 +424,8 @@ class LauncherWideGridHook : AppHookModule() {
         val borderSpace: Field,
         val getCountX: Method,
         val getCountY: Method,
+        val getCellWidth: Method,
+        val getCellHeight: Method,
         val getContainer: Method,
         val setCellDimensions: Method
     )
