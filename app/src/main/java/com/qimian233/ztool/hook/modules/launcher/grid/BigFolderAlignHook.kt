@@ -269,7 +269,7 @@ class BigFolderAlignHook : AppHookModule() {
 
         // Background top/bottom edges align with the graphic edges of the top/bottom icon rows.
         val artInset = artInsetPx(metrics)
-        val newOffsetY = metrics.rowInset + artInset
+        val newOffsetY = metrics.rowInset + artInset + TUNE_OFFSET_Y_EXTRA
         val newPreviewSizeY = backgroundHeight(metrics, spanY)
         val oldOffsetY = pbOffsetY.getInt(pb)
         val oldPreviewSizeY = pbPreviewSizeY.getInt(pb)
@@ -303,6 +303,8 @@ class BigFolderAlignHook : AppHookModule() {
                 " folderIcon=${metrics.folderIconSizePx} icon=${metrics.iconSizePx}" +
                 " widgetPadL=${metrics.widgetPaddingLeft} widgetPadT=${metrics.widgetPaddingTop}" +
                 " bgBottom=${pbOffsetY.getInt(pb) + pbPreviewSizeY.getInt(pb)}" +
+                (if (tuningActive()) " tune=insetX$TUNE_INSET_X_EXTRA,height$TUNE_HEIGHT_EXTRA," +
+                    "offsetY$TUNE_OFFSET_Y_EXTRA,gapH$TUNE_GAP_H_SCALE,gapV$TUNE_GAP_V_SCALE" else "") +
                 " labelTop=$labelTopMargin iconPadT=$iconPaddingTop"
         )
     }
@@ -325,13 +327,13 @@ class BigFolderAlignHook : AppHookModule() {
      * alternative alignments.
      */
     private fun backgroundInsetX(metrics: LauncherGridMetrics.Metrics): Int =
-        when (backgroundAlign) {
+        (when (backgroundAlign) {
             BackgroundAlign.HOST ->
                 if (metrics.widgetPaddingLeft > 0) metrics.widgetPaddingLeft
                 else metrics.insetToSmallFolder
             BackgroundAlign.SMALL_FOLDER -> metrics.insetToSmallFolder
             BackgroundAlign.ICON_BOX -> metrics.insetToIcon
-        }
+        } + TUNE_INSET_X_EXTRA).coerceAtLeast(0)
 
     /** Big-folder background width, the x extent the child grid is centred in. */
     private fun backgroundWidth(metrics: LauncherGridMetrics.Metrics, spanX: Int): Int =
@@ -339,7 +341,8 @@ class BigFolderAlignHook : AppHookModule() {
 
     /** Big-folder background height, the y extent the child grid is centred in. */
     private fun backgroundHeight(metrics: LauncherGridMetrics.Metrics, spanY: Int): Int =
-        (spanY - 1) * metrics.cellPitchY + metrics.iconSizePx - 2 * artInsetPx(metrics)
+        (spanY - 1) * metrics.cellPitchY + metrics.iconSizePx - 2 * artInsetPx(metrics) +
+            TUNE_HEIGHT_EXTRA
 
     /** Style sheet convergence rewrite: one rewrite makes layout/preview count/click hit-testing/drop capacity all take effect. */
     private fun hookChildCountRewrite() {
@@ -440,8 +443,10 @@ class BigFolderAlignHook : AppHookModule() {
                     else backgroundHeight(metrics, spanY)
                     val childSize = metrics.folderIconSizePx * bfcChildIconScale.getFloat(null)
                     // (n + 1) splits the free space over the n-1 inner gaps and the two outer
-                    // margins equally, so the grid never touches the background edge.
-                    val newGap = maxOf(0f, (bgAxis - n * childSize) / (n + 1))
+                    // margins equally, so the grid never touches the background edge; the hand
+                    // tuning scale then trims or widens the spacing per axis.
+                    val scale = if (isH) TUNE_GAP_H_SCALE else TUNE_GAP_V_SCALE
+                    val newGap = maxOf(0f, (bgAxis - n * childSize) / (n + 1) * scale)
                     val logKey = "${if (isH) "h" else "v"}Gap$spanKey"
                     if (loggedSpans.add(logKey) && newGap != (result as Float)) {
                         logger.debug(
@@ -585,6 +590,26 @@ class BigFolderAlignHook : AppHookModule() {
 
         /** Transparent margin ratio around the artwork inside the icon box; fallback only (measured ~21px in a 190px box). */
         private const val ART_INSET_RATIO = 0.11f
+
+        // ── Hand tuning (launcher-local px, the space the BigFolderAlign log prints) ──
+        // See docs/research/big_folder_tuning.md for what each value feeds.
+
+        /** Narrowing of the background horizontally; the child horizontal gap follows it. */
+        private const val TUNE_INSET_X_EXTRA = 0
+
+        /** Extra height added below the background: shifts the child grid down by half of it. */
+        private const val TUNE_HEIGHT_EXTRA = 0
+
+        /** Moves background and child grid down together, without changing sizes or gaps. */
+        private const val TUNE_OFFSET_Y_EXTRA = 0
+
+        /** Child gap scales on the solved gaps: 1 = solved value, <1 tighter, >1 wider. */
+        private const val TUNE_GAP_H_SCALE = 1f
+        private const val TUNE_GAP_V_SCALE = 1f
+
+        /** True when any hand tuning value differs from its default (log marker). */
+        private fun tuningActive(): Boolean = TUNE_INSET_X_EXTRA != 0 || TUNE_HEIGHT_EXTRA != 0 ||
+            TUNE_OFFSET_Y_EXTRA != 0 || TUNE_GAP_H_SCALE != 1f || TUNE_GAP_V_SCALE != 1f
 
         /** One-shot log dedup (childCount/gap calls are very frequent; each key is logged once). */
         private val loggedSpans: MutableSet<String> =
