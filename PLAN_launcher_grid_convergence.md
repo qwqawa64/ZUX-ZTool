@@ -7,8 +7,9 @@ AGENT-oriented implementation plan. Background:
 
 ## Status
 
-Implemented: **A, B3, B4, C1, C3, C4** (build `assembleDebug` green). Remaining: B1, B2,
-B5, B6, B7, C2, C5-C9.
+Implemented: **A, B3, B4, C1, C3, C4** (build `assembleDebug` green), plus the
+`FolderIcon.A` big-folder blur guard (C10, added after an on-device NPE report).
+Remaining: B1, B2, B5, B6, B7, C2, C5-C9.
 
 Implementation notes:
 - A lives in `hook/modules/launcher/grid/LauncherGridMetrics.kt`

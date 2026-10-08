@@ -142,7 +142,27 @@ hold on a 16:10 tablet at 6 rows**. `LauncherWideGridHook` therefore applies the
 solve only when `byWidth <= byHeight` and otherwise leaves the host's per-axis cells, which
 is what ColorOS/OPlus and stock ZUI both produce.
 
-## 8. Open items
+## 8. Host crash: big-folder blur on long-press
+
+`FolderIcon.getBlurAreaData()` calls `FolderIcon.A()`, which dereferences the drag object
+whenever the icon's own drag flag is set:
+
+```java
+if (this.S) {                                    // icon-side "dragging" flag
+    DragController dc = launcher.getDragController();
+    if (dc.getDragObject().dragView != null) {   // NPE when no drag object exists yet
+```
+
+`DragController.getDragObject()` is still null while the workspace builds the drag preview
+(`beginDragShared` -> `DragPreviewProvider.createDrawable` -> `getSourceVisualDragBounds` ->
+`FolderIcon.getPreviewBounds` -> `PreviewItemManager.recomputePreviewDrawingParams` ->
+`updateBgBlur` -> `Launcher.updateAreaBlur` -> `getBlurAreaData`), so long-pressing a big
+folder with dynamic blur enabled can crash the launcher. `BigFolderAlignHook` guards it:
+`FolderIcon.S` is cleared for the duration of `A()` when the controller has no drag object
+(the idle branch computes the blur rect from the icon's own bounds instead), and any
+remaining null-pointer failure inside that cosmetic update is suppressed and logged.
+
+## 9. Open items
 
 * Which ZUI cell branch is live on the tablet (`f2246f` responsive spec vs `f2244d`
   scalable vs legacy) — readable from the `DeviceProfile.updateIconSize` telemetry line.

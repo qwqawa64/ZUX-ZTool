@@ -203,11 +203,18 @@ class LauncherWideGridHook : AppHookModule() {
                             border.y * (rows - 1)) / rows
                         val byWidth = (boxWidth - border.x * (cols - 1)) / cols
                         if (byWidth > byHeight) {
-                            reportLimited(
-                                "perAxis", 3,
-                                "square skipped: byWidth=$byWidth > byHeight=$byHeight " +
-                                    "cols=$cols rows=$rows -> per-axis (ColorOS) cells"
-                            )
+                            // Only pay for the effective-cell read while the log line is due;
+                            // the on-screen cell can differ from the raw box (page padding).
+                            if ((counts["perAxis"] ?: 0) < 3) {
+                                val effective = LauncherGridMetrics.fromPage(page, dp)
+                                reportLimited(
+                                    "perAxis", 3,
+                                    "square skipped: byWidth=$byWidth > byHeight=$byHeight " +
+                                        "cols=$cols rows=$rows" +
+                                        " effective=${effective?.cellWidth}x${effective?.cellHeight}" +
+                                        " -> per-axis (ColorOS) cells"
+                                )
+                            }
                             return@hookWithId null
                         }
                         val side = byWidth

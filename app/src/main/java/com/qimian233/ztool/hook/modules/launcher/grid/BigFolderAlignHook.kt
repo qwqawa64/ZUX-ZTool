@@ -35,6 +35,7 @@ class BigFolderAlignHook : AppHookModule() {
     private var ruleReady = false
     private var bfcReady = false
     private var folderIconReady = false
+    private var blurGuardReady = false
 
     // PreviewBackground: o=bg width p=offsetX q=offsetY
     private lateinit var pbWidth: Field
@@ -86,6 +87,12 @@ class BigFolderAlignHook : AppHookModule() {
     private lateinit var fiSpanY: Field
     private lateinit var fiZ: Method
 
+    // FolderIcon blur: A() reads getDragObject().dragView whenever the S drag flag is set
+    private lateinit var fiBlurData: Method
+    private lateinit var fiDragFlag: Field
+    private lateinit var launcherGetDragController: Method
+    private lateinit var dragControllerGetDragObject: Method
+
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
@@ -98,12 +105,14 @@ class BigFolderAlignHook : AppHookModule() {
         ruleReady = resolveRuleRefs(classLoader)
         bfcReady = resolveBfcRefs(classLoader)
         folderIconReady = resolveFolderIconRefs(classLoader)
+        blurGuardReady = resolveBlurGuardRefs(classLoader)
 
         hookSetupGeometry()
         hookChildCountRewrite()
         if (ruleReady) hookChildGridRule()
         if (bfcReady) hookFolderGaps()
         if (folderIconReady) hookFolderLabel()
+        if (blurGuardReady) hookBlurGuard()
         hookAvailableWh()
         hookIsUpdatePreviewSize()
         hookDeviceProfileTelemetry()
@@ -228,6 +237,84 @@ class BigFolderAlignHook : AppHookModule() {
             logger.error("resolve FolderIcon refs failed, label hook skipped", t)
             false
         }
+    }
+
+    /** Blur group: FolderIcon.A plus the drag state it dereferences. */
+    private fun resolveBlurGuardRefs(classLoader: ClassLoader): Boolean {
+        return try {
+            val fi = classLoader.loadClass("com.android.launcher3.folder.FolderIcon")
+            fiActivityContext = findField(fi, "b")
+            fiDragFlag = findField(fi, "S")
+            fiBlurData = findMethod(fi, "A")
+            val launcher = classLoader.loadClass("com.android.launcher3.Launcher")
+            launcherGetDragController = findMethod(launcher, "getDragController")
+            dragControllerGetDragObject = findMethod(
+                classLoader.loadClass("com.android.launcher3.dragndrop.DragController"),
+                "getDragObject"
+            )
+            true
+        } catch (t: Throwable) {
+            logger.error("resolve blur guard refs failed, blur guard skipped", t)
+            false
+        }
+    }
+
+    /**
+     * Runs the host's idle blur branch when its drag flag is set but the controller has no
+     * drag object — the state long-pressing a big folder crashes in.
+     */
+    private fun hookBlurGuard() {
+        hookWithId(fiBlurData, "big_folder_blur_guard") { chain ->
+            val icon = chain.thisObject
+            var flipped = false
+            try {
+                if (fiDragFlag.getBoolean(icon)) {
+                    val context = fiActivityContext.get(icon)
+                    val dragController = context?.let { launcherGetDragController.invoke(it) }
+                    val dragObject = dragController?.let { dragControllerGetDragObject.invoke(it) }
+                    if (dragObject == null) {
+                        fiDragFlag.setBoolean(icon, false)
+                        flipped = true
+                        if (loggedSpans.add("blurGuardFlip")) {
+                            logger.debug("blur guard: drag flag set with no drag object, idle branch used")
+                        }
+                    }
+                }
+            } catch (t: Throwable) {
+                logger.debug("blur guard check failed: $t")
+            }
+            try {
+                chain.proceed()
+            } catch (t: Throwable) {
+                // Last resort: a null drag object must never kill the launcher; anything else
+                // still surfaces to the framework.
+                if (!isNullPointer(t)) throw t
+                if (loggedSpans.add("blurGuardNpe")) {
+                    logger.warn("big folder blur update hit a null drag object, suppressed: $t")
+                }
+            } finally {
+                if (flipped) {
+                    try {
+                        fiDragFlag.setBoolean(icon, true)
+                    } catch (_: Throwable) {
+                    }
+                }
+            }
+            null
+        }
+        logger.debug("hooked FolderIcon.A (big folder blur guard)")
+    }
+
+    /** True when [t] or its cause chain is a NullPointerException. */
+    private fun isNullPointer(t: Throwable): Boolean {
+        var cause: Throwable? = t
+        var depth = 0
+        while (cause != null && depth < 4) {
+            if (cause is NullPointerException) return true
+            cause = cause.cause
+            depth++
+        }
+        return false
     }
 
     private fun hookSetupGeometry() {
