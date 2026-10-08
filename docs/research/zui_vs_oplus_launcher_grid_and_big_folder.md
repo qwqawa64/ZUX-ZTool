@@ -122,7 +122,27 @@ measured cell), so square mode and the big folder can no longer disagree.
   than the stock cell height. The existing telemetry logs (`cellHeightPx`, `iconSizePx`,
   `cellW`, `gap`, `widgetPad`) are enough to check this on device.
 
-## 6. Open items
+## 7. Measured 10x6 tablet geometry (2590x1619 screenshots, TB710FU)
+
+Read per pixel from a ZUX screenshot (10x6, CustomGridSize, square mode on) and a ColorOS
+reference (10x6):
+
+| | ZUX + square hook | ColorOS |
+|---|---|---|
+| icon plate | 122 px | ~112 px |
+| column pitch | 184 px | ~212 px |
+| row pitch | 184 px (forced equal to the column pitch) | ~181 px |
+| grid width | 1840 px (71 % of 2590) | 2120 px (82 %) |
+| side margin | ~375 px | ~235 px |
+| label gap under icon | ~30 px | ~25-30 px |
+
+The available grid height (1104 px over 6 rows) allows a square side of only 184 px, while
+the width budget is 259 px per column: **square cells and ColorOS's width fill cannot both
+hold on a 16:10 tablet at 6 rows**. `LauncherWideGridHook` therefore applies the square
+solve only when `byWidth <= byHeight` and otherwise leaves the host's per-axis cells, which
+is what ColorOS/OPlus and stock ZUI both produce.
+
+## 8. Open items
 
 * Which ZUI cell branch is live on the tablet (`f2246f` responsive spec vs `f2244d`
   scalable vs legacy) — readable from the `DeviceProfile.updateIconSize` telemetry line.

@@ -19,6 +19,8 @@ import kotlin.math.roundToInt
 /**
  * Rewrites the workspace side padding to the configured inset, or — in square mode — makes
  * every icon's cell box square by solving the cell size in the page's own measure pass.
+ * Square mode applies only when the width-driven side already fits the page height, so a
+ * dense grid keeps the host's per-axis (ColorOS-like) cells instead of wasting width.
  * See docs/research/zui_launcher_wide_grid_geometry.md. Needs a launcher restart.
  */
 @SuppressLint("PrivateApi")
@@ -193,12 +195,22 @@ class LauncherWideGridHook : AppHookModule() {
                             )
                             return@hookWithId null
                         }
-                        // Cell height is fixed by the page box; cells then become the same
-                        // size in both axes and the grid is centred with the side padding.
+                        // The host's own cells are width-driven in X and height-driven in Y,
+                        // which is the ColorOS/OPlus behaviour. Forcing them square costs
+                        // (byWidth - byHeight) per column, so the square solve only runs when
+                        // the width-driven side already fits the page vertically.
                         val byHeight = (boxHeight - page.paddingTop - page.paddingBottom -
                             border.y * (rows - 1)) / rows
                         val byWidth = (boxWidth - border.x * (cols - 1)) / cols
-                        val side = minOf(byHeight, byWidth)
+                        if (byWidth > byHeight) {
+                            reportLimited(
+                                "perAxis", 3,
+                                "square skipped: byWidth=$byWidth > byHeight=$byHeight " +
+                                    "cols=$cols rows=$rows -> per-axis (ColorOS) cells"
+                            )
+                            return@hookWithId null
+                        }
+                        val side = byWidth
                         if (side <= 0) {
                             reportLimited("side", 3, "page measure skipped: side=$side")
                             return@hookWithId null

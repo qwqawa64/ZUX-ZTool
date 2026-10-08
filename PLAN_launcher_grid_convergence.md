@@ -14,6 +14,13 @@ Implementation notes:
 - A lives in `hook/modules/launcher/grid/LauncherGridMetrics.kt`
   (`install` / `pageOf` / `fromPage` / `publish` / `contentHeightPx` / `cellYPaddingPx` /
   `writeCellYPaddingPx`), with memoized `Utilities.calculateTextHeight`.
+- Decision after the 10x6 screenshot comparison (see
+  `docs/research/zui_vs_oplus_launcher_grid_and_big_folder.md` section 7): square mode is
+  an auto trade-off. The solve runs only when `byWidth <= byHeight`, i.e. when a square
+  cell still fills the page width; on dense grids (6 rows x 10 columns) it logs
+  `square skipped: byWidth=... > byHeight=...` and leaves the host's per-axis
+  (ColorOS-like) cells untouched. A forced square there wastes `byWidth - byHeight` per
+  column (measured: 1840 px vs 2120 px grid width).
 - C4 uses `gap = (bgAxis - n*childSize) / (n + 1)` instead of the planned `/(n - 1)`: the
   centered host layout puts the leftover into the two outer margins, and `n + 1` makes
   those margins equal to the inner gaps, so the child grid never touches the background
