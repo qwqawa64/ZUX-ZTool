@@ -385,12 +385,10 @@ object SearchIndex {
         systemUiStatusBar.item(
             id = "status_bar_display_seconds",
             titleRes = R.string.system_ui_status_bar_display_seconds_title,
-            summaryRes = R.string.system_ui_status_bar_display_seconds_summary
         ),
         systemUiStatusBar.item(
             id = "status_bar_custom_clock",
             titleRes = R.string.system_ui_status_bar_custom_clock_title,
-            summaryRes = R.string.system_ui_status_bar_custom_clock_summary
         ),
         systemUiStatusBar.item(
             id = "status_bar_clock_text_size",
@@ -450,7 +448,6 @@ object SearchIndex {
         systemUiStatusBar.item(
             id = "status_bar_network_hide_slow",
             titleRes = R.string.system_ui_status_bar_network_hide_slow_title,
-            summaryRes = R.string.system_ui_status_bar_network_hide_slow_summary
         ),
         systemUiStatusBar.item(
             id = "status_bar_network_hide_threshold",

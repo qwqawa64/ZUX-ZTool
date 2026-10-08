@@ -331,7 +331,6 @@ private fun statusBarSettingsSections(
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_status_bar_display_seconds_title),
-                summary = stringResource(R.string.system_ui_status_bar_display_seconds_summary),
                 checked = state.displaySeconds,
                 onCheckedChange = onDisplaySecondsChanged,
                 key = "status_bar_display_seconds"
@@ -342,7 +341,6 @@ private fun statusBarSettingsSections(
                 content = {
                     ZToolSwitchRow(
                         title = stringResource(R.string.system_ui_status_bar_custom_clock_title),
-                        summary = stringResource(R.string.system_ui_status_bar_custom_clock_summary),
                         checked = state.customClock,
                         onCheckedChange = onCustomClockChanged
                     )
@@ -537,7 +535,6 @@ private fun statusBarSettingsSections(
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_status_bar_network_hide_slow_title),
-                        summary = stringResource(R.string.system_ui_status_bar_network_hide_slow_summary),
                         checked = state.networkSpeedHideSlow,
                         onCheckedChange = onNetworkSpeedHideSlowChanged,
                         key = "status_bar_network_hide_slow"

@@ -511,16 +511,14 @@
     <string name="system_ui_misc_shade_rebound_fix_title">修复控制中心回弹延迟</string>
     <string name="system_ui_misc_shade_rebound_fix_summary">用 AOSP 标准下拉动画替代 ZUI 自定义弹簧动画，消除铺满后回弹延迟</string>
     <!--系统界面 状态栏时钟页资源值-->
-    <string name="system_ui_status_bar_clock_settings_title">状态栏时钟设置</string>
+    <string name="system_ui_status_bar_clock_settings_title">状态栏时钟</string>
     <string name="system_ui_status_bar_display_seconds_title">显示秒数</string>
-    <string name="system_ui_status_bar_display_seconds_summary">在状态栏时钟中显示秒数</string>
     <string name="system_ui_status_bar_custom_clock_title">自定义时钟</string>
-    <string name="system_ui_status_bar_custom_clock_summary">对状态栏时钟的显示进行自定义</string>
     <string name="system_ui_status_bar_clock_format_hint">输入时钟格式</string>
     <!--系统界面 状态栏通知资源值-->
-    <string name="system_ui_status_bar_notification_settings_title">状态栏通知设置</string>
+    <string name="system_ui_status_bar_notification_settings_title">状态栏通知</string>
     <string name="system_ui_status_bar_notification_icon_limit_title">通知图标数量限制</string>
-    <string name="system_ui_status_bar_notification_icon_limit_summary">设置状态栏显示的通知图标最大数量，系统默认为4</string>
+    <string name="system_ui_status_bar_notification_icon_limit_summary">系统默认为4</string>
     <string name="system_ui_status_bar_notification_icon_native_title">使用原生通知图标</string>
     <string name="system_ui_status_bar_notification_icon_native_summary">对未适配APP无效</string>
     <string name="system_ui_status_bar_title_suffix">\ - 状态栏设置</string>
@@ -542,19 +540,18 @@
         <item>无限制</item>
     </string-array>
     <!--系统界面 状态栏网速显示资源值-->
-    <string name="system_ui_status_bar_network_title">状态栏网速</string>
+    <string name="system_ui_status_bar_network_title">网速</string>
     <string name="system_ui_status_bar_network_size_title">优化网速显示比例</string>
     <string name="system_ui_status_bar_network_size_summary">让数字尽可能大，让单位尽可能小，和双层网速同时启用会有奇怪的效果</string>
     <string name="system_ui_status_bar_network_size_double_layer">双层网速</string>
     <string name="system_ui_status_bar_network_size_double_layer_summary">能够显示上行和下行的流量</string>
     <string name="system_ui_status_bar_network_refresh_title">自定义网速刷新间隔</string>
-    <string name="system_ui_status_bar_network_refresh_summary">开启后可以调整状态栏网速的刷新频率，默认 3 秒刷新一次</string>
+    <string name="system_ui_status_bar_network_refresh_summary">系统默认 3 秒刷新一次</string>
     <string name="system_ui_status_bar_network_refresh_interval_title">刷新间隔</string>
-    <string name="system_ui_status_bar_network_hide_slow_title">隐藏慢速网速</string>
-    <string name="system_ui_status_bar_network_hide_slow_summary">当网速低于阈值时隐藏状态栏网速指示器，恢复后重新显示</string>
+    <string name="system_ui_status_bar_network_hide_slow_title">隐藏慢速</string>
     <string name="system_ui_status_bar_network_hide_threshold_title">隐藏阈值</string>
     <string name="system_ui_status_bar_network_hide_both_title">上下行均慢速才隐藏</string>
-    <string name="system_ui_status_bar_network_hide_both_summary">关闭时仅下行低于阈值即隐藏；开启时需上下行同时低于阈值才隐藏</string>
+    <string name="system_ui_status_bar_network_hide_both_summary">关闭时仅下行低于阈值即隐藏</string>
     <!--系统界面 状态栏电池显示资源值-->
     <string name="system_ui_status_bar_battery_title">电池</string>
     <string name="system_ui_status_bar_syatus_battery_external_title">强制电池外百分比</string>
