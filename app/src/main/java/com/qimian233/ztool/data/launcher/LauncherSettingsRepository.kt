@@ -9,6 +9,7 @@ import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.ForceStopMode
 import com.qimian233.ztool.viewmodel.LauncherSettingsUiState
 import androidx.core.content.edit
+import kotlin.math.roundToInt
 
 class LauncherSettingsRepository(
     private val context: Context
@@ -50,6 +51,8 @@ class LauncherSettingsRepository(
             disableRecentAppDisplay = prefsUtils.loadBooleanSetting(KEY_DISABLE_RECENT_APP_DISPLAY, false),
             launcherBatchUninstall = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_BATCH_UNINSTALL, false),
             bigFolderAlign = prefsUtils.loadBooleanSetting(KEY_BIG_FOLDER_ALIGN, false),
+            bigFolderBlurGuard =
+                prefsUtils.loadBooleanSetting(KEY_LAUNCHER_BIG_FOLDER_BLUR_GUARD, true),
             appIconUnmask = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK, false),
             appIconUnmaskDynamic = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC, false),
             wideGrid = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_WIDE_GRID, false),
@@ -185,6 +188,21 @@ class LauncherSettingsRepository(
         )
     }
 
+    /**
+     * Side inset (dp) that reproduces the ColorOS side margins on this screen: the measured
+     * ColorOS reference leaves ~9 % of the width free on each side (2590 px screen, ~235 px).
+     */
+    fun paritySideInsetDp(): Int {
+        val metrics = context.resources.displayMetrics
+        return (metrics.widthPixels * PARITY_MARGIN_FRACTION / metrics.density)
+            .roundToInt()
+            .coerceIn(WIDE_GRID_INSET_MIN, WIDE_GRID_INSET_MAX)
+    }
+
+    fun saveBigFolderBlurGuard(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_BIG_FOLDER_BLUR_GUARD, enabled)
+    }
+
     fun saveIconScaleOverride(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_ICON_SCALE_OVERRIDE, enabled)
     }
@@ -261,10 +279,14 @@ class LauncherSettingsRepository(
         const val GRID_MAX = 10
 
         // Side inset slider bounds, in dp: 0 = flush to the screen edge.
-        // The hook converts dp to px with the launcher process density.
+        // The hook converts dp to px with the launcher process density. The upper bound
+        // covers the ColorOS-like parity margin (~9 % of the width per side).
         const val WIDE_GRID_INSET_MIN = 0
-        const val WIDE_GRID_INSET_MAX = 16
+        const val WIDE_GRID_INSET_MAX = 160
         private const val WIDE_GRID_INSET_DEFAULT = 0
+
+        /** Free width per side that ColorOS leaves in the measured 10x6 tablet reference. */
+        private const val PARITY_MARGIN_FRACTION = 0.09f
         private const val DEFAULT_ROW = 4
         private const val DEFAULT_COLUMN = 6
 
@@ -293,6 +315,8 @@ class LauncherSettingsRepository(
         private val KEY_DISABLE_RECENT_APP_DISPLAY = PreferenceKeys.DISABLE_RECENT_APPS_DISPLAY.name
         private val KEY_LAUNCHER_BATCH_UNINSTALL = PreferenceKeys.LAUNCHER_BATCH_UNINSTALL.name
         private val KEY_BIG_FOLDER_ALIGN = PreferenceKeys.LAUNCHER_BIG_FOLDER_ALIGN.name
+        private val KEY_LAUNCHER_BIG_FOLDER_BLUR_GUARD =
+            PreferenceKeys.LAUNCHER_BIG_FOLDER_BLUR_GUARD.name
         private val KEY_LAUNCHER_APP_ICON_UNMASK = PreferenceKeys.LAUNCHER_APP_ICON_UNMASK.name
         private val KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC =
             PreferenceKeys.LAUNCHER_APP_ICON_UNMASK_DYNAMIC.name

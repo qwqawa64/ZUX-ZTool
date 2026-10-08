@@ -157,12 +157,23 @@ if (this.S) {                                    // icon-side "dragging" flag
 (`beginDragShared` -> `DragPreviewProvider.createDrawable` -> `getSourceVisualDragBounds` ->
 `FolderIcon.getPreviewBounds` -> `PreviewItemManager.recomputePreviewDrawingParams` ->
 `updateBgBlur` -> `Launcher.updateAreaBlur` -> `getBlurAreaData`), so long-pressing a big
-folder with dynamic blur enabled can crash the launcher. `BigFolderAlignHook` guards it:
-`FolderIcon.S` is cleared for the duration of `A()` when the controller has no drag object
-(the idle branch computes the blur rect from the icon's own bounds instead), and any
-remaining null-pointer failure inside that cosmetic update is suppressed and logged.
+folder with dynamic blur enabled can crash the launcher. `BigFolderAlignHook` guards it: `FolderIcon.S` is cleared for the duration of `A()` when
+the controller has no drag object (the idle branch computes the blur rect from the icon's
+own bounds instead), and any remaining null-pointer failure inside that cosmetic update is
+suppressed and logged. The guard now lives in its own module
+(`LauncherBigFolderBlurGuardHook`, key `launcher_big_folder_blur_guard`, default on) so it
+also protects users who do not enable the big-folder alignment feature.
 
-## 9. Open items
+## 9. Child grids and background insets (ZTool implementation)
+
+* The child grid is derived from the span for every big-folder layout
+  (`3 x 3`; a capsule folder's single axis stays 1) rather than only for 2x2, because the
+  host's per-grid style table has no entry for custom workspace grids.
+* The background's horizontal inset defaults to the host's own `widgetPadding`, and
+  `backgroundWidth` / `backgroundHeight` are shared by the background write and the child
+  gap solve, so the grid stays centred in exactly the box the background covers.
+
+## 10. Open items
 
 * Which ZUI cell branch is live on the tablet (`f2246f` responsive spec vs `f2244d`
   scalable vs legacy) — readable from the `DeviceProfile.updateIconSize` telemetry line.

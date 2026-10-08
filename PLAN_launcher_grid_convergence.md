@@ -7,14 +7,24 @@ AGENT-oriented implementation plan. Background:
 
 ## Status
 
-Implemented: **A, B3, B4, C1, C3, C4** (build `assembleDebug` green), plus the
-`FolderIcon.A` big-folder blur guard (C10, added after an on-device NPE report).
-Remaining: B1, B2, B5, B6, B7, C2, C5-C9.
+Implemented: **A, B3, B4, C1, C2, C3, C4, C6, C10, C10b**, plus the ColorOS parity
+side-margin preset (frontend). Remaining: B1, B2, B5, B6, B7, C5, C7, C8, C9.
 
 Implementation notes:
 - A lives in `hook/modules/launcher/grid/LauncherGridMetrics.kt`
   (`install` / `pageOf` / `fromPage` / `publish` / `contentHeightPx` / `cellYPaddingPx` /
   `writeCellYPaddingPx`), with memoized `Utilities.calculateTextHeight`.
+- C2: `backgroundInsetX` defaults to the host's `widgetPadding` (fallback the measured
+  insets); `backgroundWidth` / `backgroundHeight` are the single source for the background
+  and for the child-gap axis, so the two cannot drift apart.
+- C6: the child grid is derived from the span for every big-folder layout
+  (`3 x 3`, single axis kept at 1 for capsule folders) instead of matching only 2x2.
+- C10b: the blur guard moved to `hook/modules/launcher/grid/LauncherBigFolderBlurGuardHook.kt`
+  with its own key (`launcher_big_folder_blur_guard`, **default on**) and a settings switch,
+  so it no longer depends on the big-folder alignment feature.
+- Parity preset: `LauncherSettingsRepository.paritySideInsetDp()` writes 9 % of the screen
+  width (the measured ColorOS margin) into the side-inset key; the slider upper bound was
+  raised from 16 dp to 160 dp to make that reachable.
 - Decision after the 10x6 screenshot comparison (see
   `docs/research/zui_vs_oplus_launcher_grid_and_big_folder.md` section 7): square mode is
   an auto trade-off. The solve runs only when `byWidth <= byHeight`, i.e. when a square

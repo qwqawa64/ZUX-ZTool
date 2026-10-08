@@ -28,14 +28,16 @@ class BigFolderAlignHook : AppHookModule() {
 
     override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
-    /** Horizontal alignment target: true = small folder background circle (folderIconSizePx), false = app icon (iconSizePx). */
-    private val alignToSmallFolder = true
+    /** Horizontal background alignment target; see [backgroundInsetX]. */
+    private val backgroundAlign = BackgroundAlign.HOST
+
+    /** Big-folder background alignment choices. */
+    private enum class BackgroundAlign { HOST, SMALL_FOLDER, ICON_BOX }
 
     private var coreReady = false
     private var ruleReady = false
     private var bfcReady = false
     private var folderIconReady = false
-    private var blurGuardReady = false
 
     // PreviewBackground: o=bg width p=offsetX q=offsetY
     private lateinit var pbWidth: Field
@@ -87,12 +89,6 @@ class BigFolderAlignHook : AppHookModule() {
     private lateinit var fiSpanY: Field
     private lateinit var fiZ: Method
 
-    // FolderIcon blur: A() reads getDragObject().dragView whenever the S drag flag is set
-    private lateinit var fiBlurData: Method
-    private lateinit var fiDragFlag: Field
-    private lateinit var launcherGetDragController: Method
-    private lateinit var dragControllerGetDragObject: Method
-
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
@@ -105,14 +101,12 @@ class BigFolderAlignHook : AppHookModule() {
         ruleReady = resolveRuleRefs(classLoader)
         bfcReady = resolveBfcRefs(classLoader)
         folderIconReady = resolveFolderIconRefs(classLoader)
-        blurGuardReady = resolveBlurGuardRefs(classLoader)
 
         hookSetupGeometry()
         hookChildCountRewrite()
         if (ruleReady) hookChildGridRule()
         if (bfcReady) hookFolderGaps()
         if (folderIconReady) hookFolderLabel()
-        if (blurGuardReady) hookBlurGuard()
         hookAvailableWh()
         hookIsUpdatePreviewSize()
         hookDeviceProfileTelemetry()
@@ -239,84 +233,6 @@ class BigFolderAlignHook : AppHookModule() {
         }
     }
 
-    /** Blur group: FolderIcon.A plus the drag state it dereferences. */
-    private fun resolveBlurGuardRefs(classLoader: ClassLoader): Boolean {
-        return try {
-            val fi = classLoader.loadClass("com.android.launcher3.folder.FolderIcon")
-            fiActivityContext = findField(fi, "b")
-            fiDragFlag = findField(fi, "S")
-            fiBlurData = findMethod(fi, "A")
-            val launcher = classLoader.loadClass("com.android.launcher3.Launcher")
-            launcherGetDragController = findMethod(launcher, "getDragController")
-            dragControllerGetDragObject = findMethod(
-                classLoader.loadClass("com.android.launcher3.dragndrop.DragController"),
-                "getDragObject"
-            )
-            true
-        } catch (t: Throwable) {
-            logger.error("resolve blur guard refs failed, blur guard skipped", t)
-            false
-        }
-    }
-
-    /**
-     * Runs the host's idle blur branch when its drag flag is set but the controller has no
-     * drag object — the state long-pressing a big folder crashes in.
-     */
-    private fun hookBlurGuard() {
-        hookWithId(fiBlurData, "big_folder_blur_guard") { chain ->
-            val icon = chain.thisObject
-            var flipped = false
-            try {
-                if (fiDragFlag.getBoolean(icon)) {
-                    val context = fiActivityContext.get(icon)
-                    val dragController = context?.let { launcherGetDragController.invoke(it) }
-                    val dragObject = dragController?.let { dragControllerGetDragObject.invoke(it) }
-                    if (dragObject == null) {
-                        fiDragFlag.setBoolean(icon, false)
-                        flipped = true
-                        if (loggedSpans.add("blurGuardFlip")) {
-                            logger.debug("blur guard: drag flag set with no drag object, idle branch used")
-                        }
-                    }
-                }
-            } catch (t: Throwable) {
-                logger.debug("blur guard check failed: $t")
-            }
-            try {
-                chain.proceed()
-            } catch (t: Throwable) {
-                // Last resort: a null drag object must never kill the launcher; anything else
-                // still surfaces to the framework.
-                if (!isNullPointer(t)) throw t
-                if (loggedSpans.add("blurGuardNpe")) {
-                    logger.warn("big folder blur update hit a null drag object, suppressed: $t")
-                }
-            } finally {
-                if (flipped) {
-                    try {
-                        fiDragFlag.setBoolean(icon, true)
-                    } catch (_: Throwable) {
-                    }
-                }
-            }
-            null
-        }
-        logger.debug("hooked FolderIcon.A (big folder blur guard)")
-    }
-
-    /** True when [t] or its cause chain is a NullPointerException. */
-    private fun isNullPointer(t: Throwable): Boolean {
-        var cause: Throwable? = t
-        var depth = 0
-        while (cause != null && depth < 4) {
-            if (cause is NullPointerException) return true
-            cause = cause.cause
-            depth++
-        }
-        return false
-    }
-
     private fun hookSetupGeometry() {
         hookWithId(pbSetup, "big_folder_align_setup") { chain ->
             chain.proceed()
@@ -344,8 +260,8 @@ class BigFolderAlignHook : AppHookModule() {
         // Static host methods (gap queries) have no page reference; they read this snapshot.
         LauncherGridMetrics.publish(metrics)
 
-        val inset = if (alignToSmallFolder) metrics.insetToSmallFolder else metrics.insetToIcon
-        val newWidth = spanX * metrics.cellWidth + (spanX - 1) * metrics.borderX - 2 * inset
+        val inset = backgroundInsetX(metrics)
+        val newWidth = backgroundWidth(metrics, spanX)
         val oldWidth = pbWidth.getInt(pb)
         val oldOffsetX = pbOffsetX.getInt(pb)
         pbWidth.setInt(pb, newWidth)
@@ -354,8 +270,7 @@ class BigFolderAlignHook : AppHookModule() {
         // Background top/bottom edges align with the graphic edges of the top/bottom icon rows.
         val artInset = artInsetPx(metrics)
         val newOffsetY = metrics.rowInset + artInset
-        val newPreviewSizeY = (spanY - 1) * metrics.cellPitchY +
-            metrics.rowInset + metrics.iconSizePx - artInset - newOffsetY
+        val newPreviewSizeY = backgroundHeight(metrics, spanY)
         val oldOffsetY = pbOffsetY.getInt(pb)
         val oldPreviewSizeY = pbPreviewSizeY.getInt(pb)
         if (newPreviewSizeY > 0) {
@@ -402,6 +317,30 @@ class BigFolderAlignHook : AppHookModule() {
         if (metrics.widgetPaddingTop > 0) metrics.widgetPaddingTop
         else (metrics.iconSizePx * ART_INSET_RATIO).roundToInt()
 
+    /**
+     * Horizontal inset of the background inside its cell box.
+     *
+     * [BackgroundAlign.HOST] keeps DeviceProfile.widgetPadding, the value the host itself
+     * uses for a big-folder background; the measured insets remain the fallback and the
+     * alternative alignments.
+     */
+    private fun backgroundInsetX(metrics: LauncherGridMetrics.Metrics): Int =
+        when (backgroundAlign) {
+            BackgroundAlign.HOST ->
+                if (metrics.widgetPaddingLeft > 0) metrics.widgetPaddingLeft
+                else metrics.insetToSmallFolder
+            BackgroundAlign.SMALL_FOLDER -> metrics.insetToSmallFolder
+            BackgroundAlign.ICON_BOX -> metrics.insetToIcon
+        }
+
+    /** Big-folder background width, the x extent the child grid is centred in. */
+    private fun backgroundWidth(metrics: LauncherGridMetrics.Metrics, spanX: Int): Int =
+        spanX * metrics.cellWidth + (spanX - 1) * metrics.borderX - 2 * backgroundInsetX(metrics)
+
+    /** Big-folder background height, the y extent the child grid is centred in. */
+    private fun backgroundHeight(metrics: LauncherGridMetrics.Metrics, spanY: Int): Int =
+        (spanY - 1) * metrics.cellPitchY + metrics.iconSizePx - 2 * artInsetPx(metrics)
+
     /** Style sheet convergence rewrite: one rewrite makes layout/preview count/click hit-testing/drop capacity all take effect. */
     private fun hookChildCountRewrite() {
         hookWithId(bfcGetChildCount, "big_folder_align_child_count") { chain ->
@@ -414,28 +353,23 @@ class BigFolderAlignHook : AppHookModule() {
                 if (out != null) {
                     stockGrids[key] = intArrayOf(out[0], out[1])
                 }
-                val rewrite: IntArray? = when {
-                    spanX == TARGET_SPAN_X && spanY == TARGET_SPAN_Y ->
-                        intArrayOf(CHILD_COLS, CHILD_ROWS)
-                    spanY == TARGET_SPAN_Y && spanX >= 2 -> {
-                        val stock = stockGrids[key]
-                        if (stock != null && stock[1] == 2) intArrayOf(stock[0], CHILD_ROWS)
-                        else null
-                    }
-                    else -> null
+                // Geometry-derived child grid for every big-folder layout: 3 subdivisions per
+                // multi-cell axis, and the single axis of a capsule folder (span 1) kept at 1.
+                // The host table is per-workspace-grid and falls back to 6x4 for custom grids.
+                val rewrite = intArrayOf(
+                    if (spanX <= 1) 1 else CHILD_COLS,
+                    if (spanY <= 1) 1 else CHILD_ROWS
+                )
+                out?.set(0, rewrite[0])
+                out?.set(1, rewrite[1])
+                rewrittenGrids[key] = rewrite
+                val newCount = rewrite[0] * rewrite[1]
+                if ((result as Int) != newCount && loggedSpans.add(key)) {
+                    logger.debug(
+                        "childCount($key) $result -> $newCount (cols=${rewrite[0]} rows=${rewrite[1]})"
+                    )
                 }
-                if (rewrite != null) {
-                    out?.set(0, rewrite[0])
-                    out?.set(1, rewrite[1])
-                    rewrittenGrids[key] = rewrite
-                    val newCount = rewrite[0] * rewrite[1]
-                    if ((result as Int) != newCount && loggedSpans.add(key)) {
-                        logger.debug(
-                            "childCount($key) $result -> $newCount (cols=${rewrite[0]} rows=${rewrite[1]})"
-                        )
-                    }
-                    return@hookWithId newCount
-                }
+                return@hookWithId newCount
             } catch (t: Throwable) {
                 logger.error("childCount rewrite failed", t)
             }
@@ -500,11 +434,10 @@ class BigFolderAlignHook : AppHookModule() {
                     if (metrics.cellWidth <= 0) return@hookWithId result
                     val n = if (isH) grid[0] else grid[1]
                     if (n <= 1) return@hookWithId 0f
-                    val bgAxis = if (isH) {
-                        (spanX - 1) * metrics.cellPitchX + metrics.folderIconSizePx
-                    } else {
-                        (spanY - 1) * metrics.cellPitchY + metrics.iconSizePx - 2 * artInsetPx(metrics)
-                    }
+                    // Same box the background is sized with, so the grid and the background
+                    // cannot drift apart.
+                    val bgAxis = if (isH) backgroundWidth(metrics, spanX)
+                    else backgroundHeight(metrics, spanY)
                     val childSize = metrics.folderIconSizePx * bfcChildIconScale.getFloat(null)
                     // (n + 1) splits the free space over the n-1 inner gaps and the two outer
                     // margins equally, so the grid never touches the background edge.
@@ -583,9 +516,8 @@ class BigFolderAlignHook : AppHookModule() {
                     ?: return@hookWithId null
                 val spanX = args[1] as Int
                 if (spanX > 1) {
-                    val inset = if (alignToSmallFolder) metrics.insetToSmallFolder else metrics.insetToIcon
                     val old = wh[0]
-                    wh[0] = spanX * metrics.cellWidth + (spanX - 1) * metrics.borderX - 2 * inset
+                    wh[0] = backgroundWidth(metrics, spanX)
                     logger.debug("availableWh spanX=$spanX width $old -> ${wh[0]} (h=${wh[1]})")
                 }
             } catch (t: Throwable) {
@@ -647,9 +579,7 @@ class BigFolderAlignHook : AppHookModule() {
     }
 
     companion object {
-        /** 2x2 big folder child icon grid = CHILD_COLS per row x CHILD_ROWS rows (3x3=9). */
-        private const val TARGET_SPAN_X = 2
-        private const val TARGET_SPAN_Y = 2
+        /** Child icon grid of a multi-cell big-folder axis: CHILD_COLS per row x CHILD_ROWS rows. */
         private const val CHILD_COLS = 3
         private const val CHILD_ROWS = 3
 
@@ -660,10 +590,10 @@ class BigFolderAlignHook : AppHookModule() {
         private val loggedSpans: MutableSet<String> =
             java.util.Collections.newSetFromMap(java.util.concurrent.ConcurrentHashMap())
 
-        /** Learned stock child grids (span -> [cols, rows]), consulted by calls with out=null. */
+        /** Learned stock child grids (span -> [cols, rows]), kept for telemetry only. */
         private val stockGrids = java.util.concurrent.ConcurrentHashMap<String, IntArray>()
 
-        /** Spans with rewritten child grids (span -> [cols, rows]); gap recomputation prefers them. */
+        /** Spans with rewritten child grids (span -> [cols, rows]); gap recomputation reads them. */
         private val rewrittenGrids = java.util.concurrent.ConcurrentHashMap<String, IntArray>()
     }
 }

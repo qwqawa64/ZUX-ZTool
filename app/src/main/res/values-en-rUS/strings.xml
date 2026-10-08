@@ -600,6 +600,8 @@
     <string name="launcher_custom_grid_summary">Adjust the spacious icon layout. May cause some widgets to display incorrectly.</string>
     <string name="launcher_big_folder_align_title">Big folder alignment</string>
     <string name="launcher_big_folder_align_summary">Make big folders look better.</string>
+    <string name="launcher_big_folder_blur_guard_title">Big folder blur crash guard</string>
+    <string name="launcher_big_folder_blur_guard_summary">Works around a launcher defect: long-pressing a big folder crashes when dynamic blur is on</string>
     <string name="launcher_app_icon_unmask_title">Remove desktop icon mask</string>
     <string name="launcher_app_icon_unmask_summary">Third-party icon pack icons are no longer re-cropped by the system shape and render as original squares. Clear launcher data to rebuild cached icons if unchanged</string>
     <string name="launcher_app_icon_unmask_dynamic_title">Include dynamic icons</string>
@@ -611,6 +613,8 @@
     <string name="launcher_wide_grid_side_inset_title">Side margin</string>
     <string name="launcher_wide_grid_side_inset_summary">Gap kept between the grid and the left/right screen edges; 0 = flush to the edges</string>
     <string name="launcher_wide_grid_side_inset_value">%1$d dp</string>
+    <string name="launcher_wide_grid_parity_preset_title">Match ColorOS margins</string>
+    <string name="launcher_wide_grid_parity_preset_summary">Set the side margin to 9% of the screen width, the ratio measured on the reference device</string>
     <string name="launcher_icon_scale_override_title">Take over icon size setting</string>
     <string name="launcher_icon_scale_override_summary">May not take effect for non-system-default icons</string>
     <string name="launcher_icon_scale_value_title">Icon scale factor</string>

@@ -681,6 +681,8 @@
     <string name="launcher_custom_grid_summary">你看图标之间不是很宽敞吗（可能导致部分小组件显示异常）</string>
     <string name="launcher_big_folder_align_title">大文件夹对齐</string>
     <string name="launcher_big_folder_align_summary">让大文件夹样式更接近主流系统</string>
+    <string name="launcher_big_folder_blur_guard_title">大文件夹模糊崩溃保护</string>
+    <string name="launcher_big_folder_blur_guard_summary">修复系统桌面的缺陷：开启动态模糊后长按大文件夹会闪退</string>
     <string name="launcher_app_icon_unmask_title">去除桌面图标蒙版</string>
     <string name="launcher_app_icon_unmask_summary">第三方图标包图标不再被系统形状二次裁切，显示为原始方形。图标未变化时可清除桌面数据重建缓存</string>
     <string name="launcher_app_icon_unmask_dynamic_title">包含动态图标</string>
@@ -692,6 +694,8 @@
     <string name="launcher_wide_grid_side_inset_title">左右留白</string>
     <string name="launcher_wide_grid_side_inset_summary">网格与屏幕左右边缘保留的间距，0 为完全贴边</string>
     <string name="launcher_wide_grid_side_inset_value">%1$d dp</string>
+    <string name="launcher_wide_grid_parity_preset_title">对齐 ColorOS 留白</string>
+    <string name="launcher_wide_grid_parity_preset_summary">按参考机型实测比例，把左右留白设为屏幕宽度的 9%%</string>
     <string name="launcher_icon_scale_override_title">接管图标大小设置</string>
     <string name="launcher_icon_scale_override_summary">针对非系统默认图标可能无法生效</string>
     <string name="launcher_icon_scale_value_title">图标缩放倍率</string>

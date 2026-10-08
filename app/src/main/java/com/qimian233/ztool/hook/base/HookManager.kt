@@ -18,6 +18,7 @@ import com.qimian233.ztool.hook.modules.launcher.grid.DismissCloudFolderConfirma
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherDrawerNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherNoLabelMode
 import com.qimian233.ztool.hook.modules.launcher.grid.LauncherWideGridHook
+import com.qimian233.ztool.hook.modules.launcher.grid.LauncherBigFolderBlurGuardHook
 import com.qimian233.ztool.hook.modules.launcher.grid.IconScaleOverrideHook
 import com.qimian233.ztool.hook.modules.launcher.misc.BatchUninstall
 import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
@@ -262,6 +263,7 @@ object HookManager {
         registerHookModule(BluePointRemovalHook())
         registerHookModule(DismissCloudFolderConfirmation())
         registerHookModule(BigFolderAlignHook())
+        registerHookModule(LauncherBigFolderBlurGuardHook())
         registerHookModule(DisableRecentAppsDisplay())
         registerHookModule(BatchUninstall())
         registerHookModule(LauncherWideGridHook())

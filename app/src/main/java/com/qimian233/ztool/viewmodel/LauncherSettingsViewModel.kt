@@ -210,6 +210,16 @@ class LauncherSettingsViewModel(
         repository.saveWideGridSideInset(inset)
     }
 
+    /** Writes the ColorOS-like side inset for this screen; takes effect after a restart. */
+    fun applyColorOsSideInsetPreset() {
+        setWideGridSideInset(repository.paritySideInsetDp())
+    }
+
+    fun setBigFolderBlurGuard(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(bigFolderBlurGuard = enabled)
+        repository.saveBigFolderBlurGuard(enabled)
+    }
+
     fun setIconScaleOverride(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(iconScaleOverride = enabled)
         repository.saveIconScaleOverride(enabled)
@@ -301,6 +311,8 @@ data class LauncherSettingsUiState(
     val disableRecentAppDisplay: Boolean = false,
     val launcherBatchUninstall: Boolean = false,
     val bigFolderAlign: Boolean = false,
+    /** Host big-folder blur crash guard; on by default (key launcher_big_folder_blur_guard). */
+    val bigFolderBlurGuard: Boolean = true,
     val appIconUnmask: Boolean = false,
     val appIconUnmaskDynamic: Boolean = false,
     val wideGrid: Boolean = false,

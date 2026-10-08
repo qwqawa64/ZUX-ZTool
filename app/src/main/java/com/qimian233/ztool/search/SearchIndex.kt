@@ -1216,6 +1216,11 @@ object SearchIndex {
             summaryRes = R.string.launcher_big_folder_align_summary
         ),
         launcher.item(
+            id = "launcher_big_folder_blur_guard",
+            titleRes = R.string.launcher_big_folder_blur_guard_title,
+            summaryRes = R.string.launcher_big_folder_blur_guard_summary
+        ),
+        launcher.item(
             id = "launcher_app_icon_unmask",
             titleRes = R.string.launcher_app_icon_unmask_title,
             summaryRes = R.string.launcher_app_icon_unmask_summary
@@ -1243,6 +1248,13 @@ object SearchIndex {
             id = "launcher_wide_grid_side_inset",
             titleRes = R.string.launcher_wide_grid_side_inset_title,
             summaryRes = R.string.launcher_wide_grid_side_inset_summary,
+            parentTitleRes = R.string.launcher_wide_grid_title,
+            parentKey = "launcher_wide_grid"
+        ),
+        launcher.item(
+            id = "launcher_wide_grid_parity_preset",
+            titleRes = R.string.launcher_wide_grid_parity_preset_title,
+            summaryRes = R.string.launcher_wide_grid_parity_preset_summary,
             parentTitleRes = R.string.launcher_wide_grid_title,
             parentKey = "launcher_wide_grid"
         ),

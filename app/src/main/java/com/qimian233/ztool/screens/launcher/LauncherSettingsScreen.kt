@@ -154,11 +154,13 @@ fun LauncherSettingsRoute(
             },
             onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall,
             onBigFolderAlignChanged = viewModel::setBigFolderAlign,
+            onBigFolderBlurGuardChanged = viewModel::setBigFolderBlurGuard,
             onAppIconUnmaskChanged = viewModel::setAppIconUnmask,
             onAppIconUnmaskDynamicChanged = viewModel::setAppIconUnmaskDynamic,
             onWideGridChanged = viewModel::setWideGrid,
             onWideGridSquareChanged = viewModel::setWideGridSquare,
             onWideGridSideInsetChanged = viewModel::setWideGridSideInset,
+            onWideGridParityPreset = viewModel::applyColorOsSideInsetPreset,
             onIconScaleOverrideChanged = viewModel::setIconScaleOverride,
             onIconScaleValueChanged = viewModel::setIconScaleValue,
             scrollState = scrollState,
@@ -239,11 +241,13 @@ private fun LauncherSettingsScreen(
     onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
+    onBigFolderBlurGuardChanged: (Boolean) -> Unit,
     onAppIconUnmaskChanged: (Boolean) -> Unit,
     onAppIconUnmaskDynamicChanged: (Boolean) -> Unit,
     onWideGridChanged: (Boolean) -> Unit,
     onWideGridSquareChanged: (Boolean) -> Unit,
     onWideGridSideInsetChanged: (Int) -> Unit,
+    onWideGridParityPreset: () -> Unit,
     onIconScaleOverrideChanged: (Boolean) -> Unit,
     onIconScaleValueChanged: (Float) -> Unit,
     scrollState: ScrollState,
@@ -312,11 +316,13 @@ private fun LauncherSettingsScreen(
                         onSelectKeepAlivePackages = onSelectKeepAlivePackages,
                         onLauncherBatchUninstallChanged = onLauncherBatchUninstallChanged,
                         onBigFolderAlignChanged = onBigFolderAlignChanged,
+                        onBigFolderBlurGuardChanged = onBigFolderBlurGuardChanged,
                         onAppIconUnmaskChanged = onAppIconUnmaskChanged,
                         onAppIconUnmaskDynamicChanged = onAppIconUnmaskDynamicChanged,
                         onWideGridChanged = onWideGridChanged,
                         onWideGridSquareChanged = onWideGridSquareChanged,
                         onWideGridSideInsetChanged = onWideGridSideInsetChanged,
+                        onWideGridParityPreset = onWideGridParityPreset,
                         onIconScaleOverrideChanged = onIconScaleOverrideChanged,
                         onIconScaleValueChanged = onIconScaleValueChanged,
                     ),
@@ -353,11 +359,13 @@ private fun launcherSettingsSections(
     onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
+    onBigFolderBlurGuardChanged: (Boolean) -> Unit,
     onAppIconUnmaskChanged: (Boolean) -> Unit,
     onAppIconUnmaskDynamicChanged: (Boolean) -> Unit,
     onWideGridChanged: (Boolean) -> Unit,
     onWideGridSquareChanged: (Boolean) -> Unit,
     onWideGridSideInsetChanged: (Int) -> Unit,
+    onWideGridParityPreset: () -> Unit,
     onIconScaleOverrideChanged: (Boolean) -> Unit,
     onIconScaleValueChanged: (Float) -> Unit,
 ): List<SettingSection> {
@@ -467,6 +475,15 @@ private fun launcherSettingsSections(
                     key = "launcher_wide_grid_side_inset"
                 )
             )
+            add(
+                SettingItem.Action(
+                    title = stringResource(R.string.launcher_wide_grid_parity_preset_title),
+                    summary = stringResource(R.string.launcher_wide_grid_parity_preset_summary),
+                    onClick = onWideGridParityPreset,
+                    enabled = !state.wideGridSquare,
+                    key = "launcher_wide_grid_parity_preset"
+                )
+            )
         }
         add(
             SettingItem.Switch(
@@ -501,6 +518,15 @@ private fun launcherSettingsSections(
                 checked = state.bigFolderAlign,
                 onCheckedChange = onBigFolderAlignChanged,
                 key = "launcher_big_folder_align"
+            )
+        )
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_big_folder_blur_guard_title),
+                summary = stringResource(R.string.launcher_big_folder_blur_guard_summary),
+                checked = state.bigFolderBlurGuard,
+                onCheckedChange = onBigFolderBlurGuardChanged,
+                key = "launcher_big_folder_blur_guard"
             )
         )
         add(
