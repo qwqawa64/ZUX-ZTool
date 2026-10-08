@@ -614,7 +614,7 @@
     <string name="launcher_wide_grid_side_inset_summary">Gap kept between the grid and the left/right screen edges; 0 = flush to the edges</string>
     <string name="launcher_wide_grid_side_inset_value">%1$d dp</string>
     <string name="launcher_wide_grid_parity_preset_title">Match ColorOS margins</string>
-    <string name="launcher_wide_grid_parity_preset_summary">Set the side margin to 9% of the screen width, the ratio measured on the reference device</string>
+    <string name="launcher_wide_grid_parity_preset_summary">Fill the side margin above with the ratio measured on the reference device</string>
     <string name="launcher_icon_scale_override_title">Take over icon size setting</string>
     <string name="launcher_icon_scale_override_summary">May not take effect for non-system-default icons</string>
     <string name="launcher_icon_scale_value_title">Icon scale factor</string>

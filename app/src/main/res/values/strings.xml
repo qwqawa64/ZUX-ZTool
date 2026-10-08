@@ -695,7 +695,7 @@
     <string name="launcher_wide_grid_side_inset_summary">网格与屏幕左右边缘保留的间距，0 为完全贴边</string>
     <string name="launcher_wide_grid_side_inset_value">%1$d dp</string>
     <string name="launcher_wide_grid_parity_preset_title">对齐 ColorOS 留白</string>
-    <string name="launcher_wide_grid_parity_preset_summary">按参考机型实测比例，把左右留白设为屏幕宽度的 9%%</string>
+    <string name="launcher_wide_grid_parity_preset_summary">按参考机型的实测留白比例，自动填入上方的左右留白</string>
     <string name="launcher_icon_scale_override_title">接管图标大小设置</string>
     <string name="launcher_icon_scale_override_summary">针对非系统默认图标可能无法生效</string>
     <string name="launcher_icon_scale_value_title">图标缩放倍率</string>
