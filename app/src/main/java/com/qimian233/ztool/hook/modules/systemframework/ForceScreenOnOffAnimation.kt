@@ -121,8 +121,8 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
                     Boolean::class.javaPrimitiveType
                 )
             hookWithId(animateMethod, "animate_screen_state") { chain ->
-                if (tryStartPreparedScreenOnAnimation(chain.thisObject, chain.getArg(0) as Int)) {
-                    return@hookWithId null
+                if (chain.getArg(0) as Int == DISPLAY_STATE_ON) {
+                    startScreenOnColorFade(chain.thisObject)
                 }
                 chain.proceed()
             }
@@ -131,48 +131,72 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
         }
     }
 
-    private fun tryStartPreparedScreenOnAnimation(controller: Any, targetState: Int): Boolean {
-        if (targetState != 2) {
-            return false
-        }
-        val powerState = runCatching {
-            findField(controller.javaClass, "mPowerState").get(controller)
-        }.getOrNull()
-        val currentColorFadeLevel = powerState?.let { state ->
-            runCatching {
-                findMethod(state.javaClass, "getColorFadeLevel").invoke(state) as? Float
-            }.getOrNull()
-        }
-        if (powerState == null
-            || !findField(powerState.javaClass, "mColorFadePrepared").getBoolean(powerState)
-            || (currentColorFadeLevel ?: 1.0f) >= 1.0f
+    /**
+     * Starts the prepared color fade before the host applies the screen-on state change.
+     * The host drops a prepared fade unless its ON animator is already running, so the
+     * animator has to be started first; see docs/research/screen-on-off-animation.md.
+     *
+     * @return true when this call started the fade animator.
+     */
+    private fun startScreenOnColorFade(controller: Any): Boolean {
+        val reportedState = intField(controller, "mReportedScreenStateToPolicy")
+        // These values mean this call is about to block the panel until WindowManager has
+        // drawn; the fade must not run while that wait is pending.
+        if (reportedState == null
+            || reportedState == REPORTED_STATE_SCREEN_OFF
+            || reportedState == REPORTED_STATE_UNKNOWN
         ) {
             return false
         }
-        val onAnimator = runCatching {
-            findField(controller.javaClass, "mColorFadeOnAnimator").get(controller)
-        }.getOrNull()
-        if (onAnimator == null) {
+        if (fieldValue(controller, "mPendingScreenOnUnblocker") != null) {
+            return false
+        }
+
+        val powerState = fieldValue(controller, "mPowerState") ?: return false
+        val screenState = invokeNoArgs(powerState, "getScreenState") as? Int ?: return false
+        if (screenState == DISPLAY_STATE_DOZE
+            || screenState == DISPLAY_STATE_ON_SUSPEND
+            || screenState == DISPLAY_STATE_DOZE_SUSPEND
+        ) {
+            return false
+        }
+        if (booleanField(powerState, "mColorFadePrepared") != true) {
+            return false
+        }
+        val colorFadeLevel = invokeNoArgs(powerState, "getColorFadeLevel") as? Float ?: return false
+        if (colorFadeLevel >= 1.0f) {
+            return false
+        }
+
+        val onAnimator = fieldValue(controller, "mColorFadeOnAnimator") ?: return false
+        if (invokeNoArgs(onAnimator, "isStarted") as? Boolean == true) {
             return false
         }
 
         return try {
-            findMethod(onAnimator.javaClass, "cancel").invoke(onAnimator)
             findMethod(onAnimator.javaClass, "setDuration", Long::class.javaPrimitiveType)
                 .invoke(onAnimator, SCREEN_ON_ANIMATION_DURATION_MS)
             findMethod(onAnimator.javaClass, "setFloatValues", FloatArray::class.java)
-                .invoke(
-                    onAnimator,
-                    floatArrayOf(currentColorFadeLevel ?: 0.0f, 1.0f)
-                )
+                .invoke(onAnimator, floatArrayOf(colorFadeLevel, 1.0f))
             findMethod(onAnimator.javaClass, "start").invoke(onAnimator)
-            logger.debug("Started prepared screen-on color fade animation.")
+            logger.debug("Started the screen-on color fade at level " + colorFadeLevel)
             true
         } catch (t: Throwable) {
-            logger.error("Failed to start prepared screen-on color fade animation: ", t)
+            logger.error("Failed to start the screen-on color fade: ", t)
             false
         }
     }
+
+    private fun fieldValue(target: Any, name: String): Any? =
+        runCatching { findField(target.javaClass, name).get(target) }.getOrNull()
+
+    private fun booleanField(target: Any, name: String): Boolean? =
+        fieldValue(target, name) as? Boolean
+
+    private fun intField(target: Any, name: String): Int? = fieldValue(target, name) as? Int
+
+    private fun invokeNoArgs(target: Any, name: String): Any? =
+        runCatching { findMethod(target.javaClass, name).invoke(target) }.getOrNull()
 
     private fun updateAnimationDurationFromPrefs() {
         try {
@@ -194,6 +218,12 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
             "com.android.server.display.DisplayPowerController"
         private const val DISPLAY_POWER_CONTROLLER_INJECTOR =
             $$"$$DISPLAY_POWER_CONTROLLER$Injector"
+        private const val DISPLAY_STATE_ON = 2
+        private const val DISPLAY_STATE_DOZE = 3
+        private const val DISPLAY_STATE_ON_SUSPEND = 4
+        private const val DISPLAY_STATE_DOZE_SUSPEND = 6
+        private const val REPORTED_STATE_SCREEN_OFF = 0
+        private const val REPORTED_STATE_UNKNOWN = -1
         private const val DEFAULT_ANIMATION_DURATION_MS = 400L
         private var SCREEN_ON_ANIMATION_DURATION_MS = DEFAULT_ANIMATION_DURATION_MS
         private var SCREEN_OFF_ANIMATION_DURATION_MS = DEFAULT_ANIMATION_DURATION_MS
