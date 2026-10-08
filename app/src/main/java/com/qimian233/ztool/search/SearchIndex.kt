@@ -480,12 +480,10 @@ object SearchIndex {
         systemUiLockScreen.item(
             id = "lock_screen_aod_native",
             titleRes = R.string.system_ui_lock_screen_aod_native_enable_title,
-            summaryRes = R.string.system_ui_lock_screen_aod_native_enable_summary
         ),
         systemUiLockScreen.item(
             id = "lock_screen_aod_lenovo",
             titleRes = R.string.system_ui_lock_screen_aod_lenovo_enable_title,
-            summaryRes = R.string.system_ui_lock_screen_aod_lenovo_enable_summary
         ),
         systemUiLockScreen.item(
             id = "lock_screen_aod_lenovo_activity",
@@ -502,21 +500,18 @@ object SearchIndex {
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_show_power",
             titleRes = R.string.system_ui_lock_screen_realwatts_show_power,
-            summaryRes = R.string.system_ui_lock_screen_realwatts_show_power_summary,
             parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
             parentKey = "lock_screen_charge_watts"
         ),
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_show_voltage",
             titleRes = R.string.system_ui_lock_screen_realwatts_show_voltage,
-            summaryRes = R.string.system_ui_lock_screen_realwatts_show_voltage_summary,
             parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
             parentKey = "lock_screen_charge_watts"
         ),
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_show_current",
             titleRes = R.string.system_ui_lock_screen_realwatts_show_current,
-            summaryRes = R.string.system_ui_lock_screen_realwatts_show_current_summary,
             parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
             parentKey = "lock_screen_charge_watts"
         ),
@@ -530,14 +525,12 @@ object SearchIndex {
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_show_indicator",
             titleRes = R.string.system_ui_lock_screen_realwatts_show_indicator,
-            summaryRes = R.string.system_ui_lock_screen_realwatts_show_indicator_summary,
             parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
             parentKey = "lock_screen_charge_watts"
         ),
         systemUiLockScreen.item(
             id = "lock_screen_realwatts_custom_format",
             titleRes = R.string.system_ui_lock_screen_realwatts_custom_format_enabled,
-            summaryRes = R.string.system_ui_lock_screen_realwatts_custom_format_enabled_summary,
             parentTitleRes = R.string.system_ui_lock_screen_charge_watts_enable_title,
             parentKey = "lock_screen_charge_watts"
         ),

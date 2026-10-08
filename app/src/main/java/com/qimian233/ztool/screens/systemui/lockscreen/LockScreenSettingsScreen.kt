@@ -360,7 +360,6 @@ private fun lockScreenSettingsSections(
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_lock_screen_aod_native_enable_title),
-                summary = stringResource(R.string.system_ui_lock_screen_aod_native_enable_summary),
                 checked = state.nativeAod,
                 onCheckedChange = onNativeAodChanged,
                 key = "lock_screen_aod_native"
@@ -369,7 +368,6 @@ private fun lockScreenSettingsSections(
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_lock_screen_aod_lenovo_enable_title),
-                summary = stringResource(R.string.system_ui_lock_screen_aod_lenovo_enable_summary),
                 checked = state.lenovoAod,
                 onCheckedChange = onLenovoAodChanged,
                 key = "lock_screen_aod_lenovo"
@@ -414,7 +412,6 @@ private fun lockScreenSettingsSections(
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_lock_screen_realwatts_show_power),
-                        summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_power_summary),
                         checked = state.showPower,
                         onCheckedChange = onShowPowerChanged,
                         key = "lock_screen_realwatts_show_power"
@@ -423,7 +420,6 @@ private fun lockScreenSettingsSections(
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage),
-                        summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_voltage_summary),
                         checked = state.showVoltage,
                         onCheckedChange = onShowVoltageChanged,
                         key = "lock_screen_realwatts_show_voltage"
@@ -432,10 +428,17 @@ private fun lockScreenSettingsSections(
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_lock_screen_realwatts_show_current),
-                        summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_current_summary),
                         checked = state.showCurrent,
                         onCheckedChange = onShowCurrentChanged,
                         key = "lock_screen_realwatts_show_current"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator),
+                        checked = state.showIndicator,
+                        onCheckedChange = onShowIndicatorChanged,
+                        key = "lock_screen_realwatts_show_indicator"
                     )
                 )
                 add(
@@ -447,21 +450,11 @@ private fun lockScreenSettingsSections(
                         key = "lock_screen_realwatts_show_temperature"
                     )
                 )
-                add(
-                    SettingItem.Switch(
-                        title = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator),
-                        summary = stringResource(R.string.system_ui_lock_screen_realwatts_show_indicator_summary),
-                        checked = state.showIndicator,
-                        onCheckedChange = onShowIndicatorChanged,
-                        key = "lock_screen_realwatts_show_indicator"
-                    )
-                )
             }
             // Advanced custom format
             add(
                 SettingItem.Switch(
                     title = stringResource(R.string.system_ui_lock_screen_realwatts_custom_format_enabled),
-                    summary = stringResource(R.string.system_ui_lock_screen_realwatts_custom_format_enabled_summary),
                     checked = state.customFormatEnabled,
                     onCheckedChange = onCustomFormatEnabledChanged,
                     key = "lock_screen_realwatts_custom_format"
