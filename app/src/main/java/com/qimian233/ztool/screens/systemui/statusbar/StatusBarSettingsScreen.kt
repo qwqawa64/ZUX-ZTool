@@ -327,136 +327,140 @@ private fun statusBarSettingsSections(
     onNetworkSpeedHideBothChanged: (Boolean) -> Unit,
     onBatteryExternalChanged: (Boolean) -> Unit
 ): List<SettingSection> {
-    val clockItems = buildList {
-        add(
-            SettingItem.Switch(
-                title = stringResource(R.string.system_ui_status_bar_display_seconds_title),
-                checked = state.displaySeconds,
-                onCheckedChange = onDisplaySecondsChanged,
-                key = "status_bar_display_seconds"
-            )
-        )
-        add(
-            SettingItem.Custom(
-                content = {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.system_ui_status_bar_custom_clock_title),
-                        checked = state.customClock,
-                        onCheckedChange = onCustomClockChanged
-                    )
-                    if (state.customClock) {
-                        IconButton(
-                            onClick = onShowFormatHelp,
-                            modifier = Modifier.padding(start = 12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Info,
-                                contentDescription = null,
-                                tint = LocalZToolColorScheme.current.onSurfaceVariant
-                            )
-                        }
-                        CustomClockConfig(
-                            clockFormat = state.clockFormat,
-                            clockPreview = state.clockPreview,
-                            onClockFormatChanged = onClockFormatChanged,
-                            onSaveClockFormat = onSaveClockFormat
-                        )
-                    }
-                },
-                key = "status_bar_custom_clock"
-            )
-        )
-        add(
-            SettingItem.Switch(
-                title = stringResource(R.string.system_ui_status_bar_text_size_title),
-                checked = state.textSizeEnabled,
-                onCheckedChange = onTextSizeEnabledChanged,
-                key = "status_bar_clock_text_size"
-            )
-        )
-        if (state.textSizeEnabled) {
-            add(
-                SettingItem.Custom(
-                    key = "dyn_status_bar_clock_text_size_slider",
-                    content = {
-                        ClockFormatSlider(
-                            value = state.textSize,
-                            valueText = stringResource(R.string.system_ui_common_sp_unit, state.textSize),
-                            valueRange = 10f..30f,
-                            steps = 39,
-                            onValueChanged = onTextSizeChanged
-                        )
-                    }
-                )
-            )
-        }
-        add(
-            SettingItem.Switch(
-                title = stringResource(R.string.system_ui_status_bar_letter_spacing_title),
-                checked = state.letterSpacingEnabled,
-                onCheckedChange = onLetterSpacingEnabledChanged,
-                key = "status_bar_clock_letter_spacing"
-            )
-        )
-        if (state.letterSpacingEnabled) {
-            add(
-                SettingItem.Custom(
-                    key = "dyn_status_bar_clock_letter_spacing_slider",
-                    content = {
-                        ClockFormatSlider(
-                            value = state.letterSpacing,
-                            valueText = "%.1f".format(state.letterSpacing),
-                            valueRange = 0f..2f,
-                            steps = 19,
-                            onValueChanged = onLetterSpacingChanged
-                        )
-                    }
-                )
-            )
-        }
-        add(
-            SettingItem.Custom(
-                key = "status_bar_clock_text_color",
-                content = {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.system_ui_status_bar_text_color_title),
-                        summary = "#%08X".format(state.textColor),
-                        checked = state.textColorEnabled,
-                        onCheckedChange = onTextColorEnabledChanged
-                    )
-                    if (state.textColorEnabled) {
-                        ZToolArgbColorTextFieldRow(
-                            label = stringResource(R.string.system_ui_common_select_font_color_title),
-                            value = state.textColorText,
-                            onValueChange = onClockTextColorChanged,
-                            defaultText = "FFFFFFFF",
-                            summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
-                            errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
-                            onEditingFinished = onClockTextColorEditingFinished
-                        )
-                    }
-                }
-            )
-        )
-        add(
-            SettingItem.Custom(
-                key = "status_bar_clock_text_bold",
-                content = {
-                    ZToolSwitchRow(
-                        title = stringResource(R.string.system_ui_status_bar_text_bold_title),
-                        summary = null,
-                        checked = state.textBold,
-                        onCheckedChange = onTextBoldChanged
-                    )
-                }
-            )
-        )
-    }
-
     return listOf(
         SettingSection(
             title = stringResource(R.string.system_ui_status_bar_clock_settings_title),
-            items = clockItems
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_status_bar_display_seconds_title),
+                        checked = state.displaySeconds,
+                        onCheckedChange = onDisplaySecondsChanged,
+                        key = "status_bar_display_seconds"
+                    )
+                )
+                add(
+                    SettingItem.Custom(
+                        content = {
+                            ZToolSwitchRow(
+                                title = stringResource(R.string.system_ui_status_bar_custom_clock_title),
+                                checked = state.customClock,
+                                onCheckedChange = onCustomClockChanged
+                            )
+                            if (state.customClock) {
+                                IconButton(
+                                    onClick = onShowFormatHelp,
+                                    modifier = Modifier.padding(start = 12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Info,
+                                        contentDescription = null,
+                                        tint = LocalZToolColorScheme.current.onSurfaceVariant
+                                    )
+                                }
+                                CustomClockConfig(
+                                    clockFormat = state.clockFormat,
+                                    clockPreview = state.clockPreview,
+                                    onClockFormatChanged = onClockFormatChanged,
+                                    onSaveClockFormat = onSaveClockFormat
+                                )
+                            }
+                        },
+                        key = "status_bar_custom_clock"
+                    )
+                )
+                if (state.customClock) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_status_bar_text_size_title),
+                            checked = state.textSizeEnabled,
+                            onCheckedChange = onTextSizeEnabledChanged,
+                            key = "status_bar_clock_text_size"
+                        )
+                    )
+                }
+                if (state.textSizeEnabled) {
+                    add(
+                        SettingItem.Custom(
+                            key = "dyn_status_bar_clock_text_size_slider",
+                            content = {
+                                ClockFormatSlider(
+                                    value = state.textSize,
+                                    valueText = stringResource(R.string.system_ui_common_sp_unit, state.textSize),
+                                    valueRange = 10f..30f,
+                                    steps = 39,
+                                    onValueChanged = onTextSizeChanged
+                                )
+                            }
+                        )
+                    )
+                }
+                if (state.customClock) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_status_bar_letter_spacing_title),
+                            checked = state.letterSpacingEnabled,
+                            onCheckedChange = onLetterSpacingEnabledChanged,
+                            key = "status_bar_clock_letter_spacing"
+                        )
+                    )
+                }
+                if (state.letterSpacingEnabled) {
+                    add(
+                        SettingItem.Custom(
+                            key = "dyn_status_bar_clock_letter_spacing_slider",
+                            content = {
+                                ClockFormatSlider(
+                                    value = state.letterSpacing,
+                                    valueText = "%.1f".format(state.letterSpacing),
+                                    valueRange = 0f..2f,
+                                    steps = 19,
+                                    onValueChanged = onLetterSpacingChanged
+                                )
+                            }
+                        )
+                    )
+                }
+                if (state.customClock) {
+                    add(
+                        SettingItem.Custom(
+                            key = "status_bar_clock_text_color",
+                            content = {
+                                ZToolSwitchRow(
+                                    title = stringResource(R.string.system_ui_status_bar_text_color_title),
+                                    summary = "#%08X".format(state.textColor),
+                                    checked = state.textColorEnabled,
+                                    onCheckedChange = onTextColorEnabledChanged
+                                )
+                                if (state.textColorEnabled) {
+                                    ZToolArgbColorTextFieldRow(
+                                        label = stringResource(R.string.system_ui_common_select_font_color_title),
+                                        value = state.textColorText,
+                                        onValueChange = onClockTextColorChanged,
+                                        defaultText = "FFFFFFFF",
+                                        summary = stringResource(R.string.system_ui_common_custom_qs_active_color_summary),
+                                        errorText = stringResource(R.string.system_ui_common_argb_color_input_error),
+                                        onEditingFinished = onClockTextColorEditingFinished
+                                    )
+                                }
+                            }
+                        )
+                    )
+                    add(
+                        SettingItem.Custom(
+                            key = "status_bar_clock_text_bold",
+                            content = {
+                                ZToolSwitchRow(
+                                    title = stringResource(R.string.system_ui_status_bar_text_bold_title),
+                                    summary = null,
+                                    checked = state.textBold,
+                                    onCheckedChange = onTextBoldChanged
+                                )
+                            }
+                        )
+                    )
+                }
+            }
         ),
         SettingSection(
             title = stringResource(R.string.system_ui_status_bar_notification_settings_title),
