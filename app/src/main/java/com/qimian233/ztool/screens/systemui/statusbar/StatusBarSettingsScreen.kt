@@ -424,6 +424,19 @@ private fun statusBarSettingsSections(
                 if (state.customClock) {
                     add(
                         SettingItem.Custom(
+                            key = "status_bar_clock_text_bold",
+                            content = {
+                                ZToolSwitchRow(
+                                    title = stringResource(R.string.system_ui_status_bar_text_bold_title),
+                                    summary = null,
+                                    checked = state.textBold,
+                                    onCheckedChange = onTextBoldChanged
+                                )
+                            }
+                        )
+                    )
+                    add(
+                        SettingItem.Custom(
                             key = "status_bar_clock_text_color",
                             content = {
                                 ZToolSwitchRow(
@@ -443,19 +456,6 @@ private fun statusBarSettingsSections(
                                         onEditingFinished = onClockTextColorEditingFinished
                                     )
                                 }
-                            }
-                        )
-                    )
-                    add(
-                        SettingItem.Custom(
-                            key = "status_bar_clock_text_bold",
-                            content = {
-                                ZToolSwitchRow(
-                                    title = stringResource(R.string.system_ui_status_bar_text_bold_title),
-                                    summary = null,
-                                    checked = state.textBold,
-                                    onCheckedChange = onTextBoldChanged
-                                )
                             }
                         )
                     )
