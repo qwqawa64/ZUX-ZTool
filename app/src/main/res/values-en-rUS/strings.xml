@@ -609,7 +609,7 @@
     <string name="launcher_wide_grid_title">Widen desktop grid</string>
     <string name="launcher_wide_grid_summary">Extend the icon grid towards the left and right screen edges to use the full desktop width.</string>
     <string name="launcher_wide_grid_square_title">Square grid cells</string>
-    <string name="launcher_wide_grid_square_summary">Compute the side margin automatically so grid cells are square. Overrides the side margin slider below</string>
+    <string name="launcher_wide_grid_square_summary">Compute the side margin automatically so grid cells are square. Overrides the side margin slider below. Note: when cells would be clearly wider than tall (aspect above ~1.2, e.g. 10 columns x 6 rows) the system cell ratio is kept so the grid still fills the desktop width</string>
     <string name="launcher_wide_grid_side_inset_title">Side margin</string>
     <string name="launcher_wide_grid_side_inset_summary">Gap kept between the grid and the left/right screen edges; 0 = flush to the edges</string>
     <string name="launcher_wide_grid_side_inset_value">%1$d dp</string>

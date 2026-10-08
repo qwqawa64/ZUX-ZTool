@@ -690,7 +690,7 @@
     <string name="launcher_wide_grid_title">扩展桌面网格宽度</string>
     <string name="launcher_wide_grid_summary">让图标网格向屏幕左右边缘扩展，充分利用桌面横向空间</string>
     <string name="launcher_wide_grid_square_title">正方形网格</string>
-    <string name="launcher_wide_grid_square_summary">自动计算左右留白，使网格单元为正方形。开启时忽略下方左右留白设置</string>
+    <string name="launcher_wide_grid_square_summary">自动计算左右留白，使网格单元为正方形。开启时忽略下方左右留白设置。注意：格子明显偏宽时（宽高比大于约 1.2，例如 10 列 6 行）会自动回退为系统原有的格子比例，以保证铺满桌面宽度</string>
     <string name="launcher_wide_grid_side_inset_title">左右留白</string>
     <string name="launcher_wide_grid_side_inset_summary">网格与屏幕左右边缘保留的间距，0 为完全贴边</string>
     <string name="launcher_wide_grid_side_inset_value">%1$d dp</string>
