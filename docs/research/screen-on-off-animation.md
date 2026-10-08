@@ -62,10 +62,14 @@ if (target == STATE_ON) {
 
 Branch (c) means **the stock ROM never animates the screen-on fade**: on a normal
 off -> on transition the animator is not running yet, so the branch is taken and the fade
-is dismissed. Only the initial-request branch (b) and the "already started" case reach (d).
-This is why the module exists at all.
+is dismissed. Branch (a) reaches the same outcome on this device because
+`MotoDesktopManager.isReadyForDisplay` is always `false`. Only the initial-request branch (b)
+and the "already started" case reach (d). This is why the module exists at all.
 
-## 3. Why the old hook only showed the tail of the animation
+Note that branch (a) dismisses **regardless of whether the animator is running**, so
+starting the animator before the state change does not save the fade here.
+
+## 3. Why the panel stayed dark
 
 `setScreenState(STATE_ON, reason)` is not a no-op: it applies
 `mPowerState.setScreenState(STATE_ON, ...)`, then
@@ -80,12 +84,12 @@ return mPendingScreenOnUnblocker == null && mPendingScreenOnUnblockerByDisplayOf
 ```
 
 While the panel is being unblanked the fade level is `0`, so the call **blocks** and returns
-`false`. `animateScreenStateChange` then skips the whole `target == STATE_ON` body. On the
+`false`; `animateScreenStateChange` then skips the whole `target == STATE_ON` body. On the
 next update (message `what = 2` from `ScreenOnUnblocker.onScreenOn()`:
-`unblockScreenOn(); updatePowerState();`) `setScreenState` returns `true` and branch (c)
-dismisses the fade.
+`unblockScreenOn(); updatePowerState();`) `setScreenState` returns `true` and the fade is
+dismissed.
 
-The old hook returned `null` instead of calling `chain.proceed()` on the first screen-on
+The original hook returned `null` instead of calling `chain.proceed()` on the first screen-on
 call, so `setScreenState(STATE_ON, ...)` never ran at all: the panel stayed off (the
 backlight is forced off while `mScreenState == STATE_OFF`) while the animator faded the
 ColorFade surface. When the animator ended, `onAnimationEnd -> sendUpdatePowerState()`
@@ -95,45 +99,57 @@ visible".
 
 ## 4. What the module does instead
 
-Start the ON animator **before** calling `chain.proceed()`. Branch (c) then sees
-`isStarted() == true` and is skipped, so the host keeps the prepared fade; the original
-screen-on code unblanks the panel (backlight still off at level 0) and returns at (d)'s
-`if (onAnimator.isStarted()) return;`.
+Only one intervention remains, plus the two hooks that make the fade exist at all:
 
-Guards, all read before proceeding:
-
-| Guard | Reason |
-| --- | --- |
-| `mReportedScreenStateToPolicy` is `0`/`-1` | This call is the blocking one; starting the fade here burns the WindowManager draw wait out of the animation. |
-| `mPendingScreenOnUnblocker != null` | The panel is still blocked; wait for the unblock message. |
-| screen state is `DOZE`/`ON_SUSPEND`/`DOZE_SUSPEND` | Doze exit runs the "blanks after doze" pre-step; keep the stock ordering. |
-
-The start itself is only attempted when the fade is pending (`mColorFadePrepared`, level `< 1`,
-animator not started). Calling `prepareColorFade` again inside the original is harmless:
-`ColorFade.createSurfaceControl` returns early when `mSurfaceControl != null` (it only
-re-applies `setSecure`).
-
-### Fallback: rebuilding a fade that the host dropped
-
-Branch (a) dismisses the fade too (`!readyForDisplay || !mColorFadeEnabled || !isBrightOrDim`),
-and it does so **even while the animator is running**, destroying the surface the animator draws
-into. The hook therefore re-checks `mColorFadePrepared` after `chain.proceed()` and, when a fade
-that was live before the call is gone, rebuilds it:
+1. `DisplayPowerController.<init>` — force `mColorFadeEnabled` and `mColorFadeFadesConfig`
+   to `true` after the constructor returns, so `initialize()` creates the animators and the
+   fade uses the mode-`2` color layer.
+2. `DisplayPowerController.initialize` — overwrite both animator durations with the
+   configured value (`mColorFadeOnDurations`/`mColorFadeOffDurations` are static and only
+   read when the animators are created).
+3. `DisplayPowerController.animateScreenStateChange` — let the host run, then rebuild the
+   fade it dropped:
 
 ```text
-prepareColorFade(mContext, mode) -> setColorFadeLevel(level) -> startColorFadeAnimator(...)
+level = getColorFadeLevel()             # before proceed()
+preparedBefore = mColorFadePrepared
+proceed()
+if (preparedBefore && level < 1 && !mColorFadePrepared && getScreenState() == STATE_ON) {
+    prepareColorFade(mContext, 2)
+    setColorFadeLevel(level)
+    onAnimator.setDuration(preference)
+    onAnimator.setFloatValues(level, 1.0f)
+    onAnimator.start()
+}
 ```
 
-This is safe inside the same handler message: `DisplayPowerState` posts its screen update and
-ColorFade draw to a `Handler`/`Choreographer` on the DisplayPowerController thread, so both the
-panel unblank and the first ColorFade frame still observe the rebuilt level.
+Rebuilding is safe inside the same handler message: `DisplayPowerState` posts its screen
+update and ColorFade draw to a `Handler`/`Choreographer` on the DisplayPowerController
+thread, so both the panel unblank and the first ColorFade frame already observe the rebuilt
+level. `ColorFade.draw(level)` in mode `2` is `showSurface(1.0f - level)` — a solid color
+layer with alpha `1 - level`, i.e. level `0` is opaque black and level `1` is transparent.
 
-`ColorFade.draw(level)` in mode `2` is `showSurface(1.0f - level)`: a solid color layer whose
-alpha is `1 - level`, so level `0` is opaque black and level `1` is transparent.
+### Dropped along the way
 
-## 5. Open questions
+- **`DisplayPowerController$Injector.isColorFadeEnabled` hook** — its only caller is the
+  DisplayPowerController constructor (line 1819 of the smali, stored into `mColorFadeEnabled`
+  at 1837), and hook 1 above already writes that field. Verified working: the module logged
+  `fadeEnabled=true` while reading the field from `animateScreenStateChange`.
+- **Starting the ON animator before `chain.proceed()`** — useless on this ROM, see section 2.
+- **The `dismissColorFade` diagnostic hook** — the dismiss is always preceded by
+  `setColorFadeLevel(1.0f)`, so a "live fade" test on the level never fires on this ROM.
 
-- Does the ROM drop the screen-on fade only through branch (c), or also through branch (a)?
-- Which caller dismisses a live fade on this device. The `color_fade_dismiss` hook logs that
-  caller frame, and the screen-on log line dumps `reported`, `prepared`, `level`, animator
-  state, `brightOrDim`, `r4Occluded` and `readyForDisplay` for every screen-on call.
+## 5. Confirmed behaviour (ZUX, `readyForDisplay=false`)
+
+Measured log of one screen-on with a 1000 ms preference. Three `animateScreenStateChange(2, …)`
+calls happen before a fade can start:
+
+| When | `reported` | `unblocker` | `displayState` | `level` | What happens |
+| --- | --- | --- | --- | --- | --- |
+| +0 ms | `0` | `false` | `1` | `0.0` | `setScreenState(STATE_ON, …)` applies the state and calls `blockScreenOn()`; it returns `false`, so the host skips its whole ON body and no fade is dropped. |
+| +250 ms | `1` | `true` | `2` | `0.0` | still blocked; `setScreenState` returns `false` again for the same reason. |
+| +251 ms | `1` | `false` | `2` | `0.0` | unblocked: the host reaches its ON body, branch (a) fires (`readyForDisplay=false`) and dismisses the prepared fade; the module rebuilds it here. |
+| +1077 ms | `1` | `false` | `2` | `1.0` | animation finished (1000 ms preference); the host dismisses the finished fade itself. |
+
+The two blocked calls never reach a dismiss, which is why no start-timing guards are needed:
+the rebuild only triggers on the call that actually dropped a live fade.
