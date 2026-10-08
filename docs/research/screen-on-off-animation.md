@@ -107,9 +107,33 @@ Guards, all read before proceeding:
 | `mReportedScreenStateToPolicy` is `0`/`-1` | This call is the blocking one; starting the fade here burns the WindowManager draw wait out of the animation. |
 | `mPendingScreenOnUnblocker != null` | The panel is still blocked; wait for the unblock message. |
 | screen state is `DOZE`/`ON_SUSPEND`/`DOZE_SUSPEND` | Doze exit runs the "blanks after doze" pre-step; keep the stock ordering. |
-| `mColorFadePrepared` false | Nothing to fade from; stock behavior (no animation) is kept. |
-| `getColorFadeLevel() >= 1.0f` | Fade already finished/dismissed. |
-| `onAnimator.isStarted()` | A fade is already in flight; `chain.proceed()` keeps it. |
 
-Calling `prepareColorFade` again inside the original is harmless: `ColorFade.createSurfaceControl`
-returns early when `mSurfaceControl != null` (it only re-applies `setSecure`).
+The start itself is only attempted when the fade is pending (`mColorFadePrepared`, level `< 1`,
+animator not started). Calling `prepareColorFade` again inside the original is harmless:
+`ColorFade.createSurfaceControl` returns early when `mSurfaceControl != null` (it only
+re-applies `setSecure`).
+
+### Fallback: rebuilding a fade that the host dropped
+
+Branch (a) dismisses the fade too (`!readyForDisplay || !mColorFadeEnabled || !isBrightOrDim`),
+and it does so **even while the animator is running**, destroying the surface the animator draws
+into. The hook therefore re-checks `mColorFadePrepared` after `chain.proceed()` and, when a fade
+that was live before the call is gone, rebuilds it:
+
+```text
+prepareColorFade(mContext, mode) -> setColorFadeLevel(level) -> startColorFadeAnimator(...)
+```
+
+This is safe inside the same handler message: `DisplayPowerState` posts its screen update and
+ColorFade draw to a `Handler`/`Choreographer` on the DisplayPowerController thread, so both the
+panel unblank and the first ColorFade frame still observe the rebuilt level.
+
+`ColorFade.draw(level)` in mode `2` is `showSurface(1.0f - level)`: a solid color layer whose
+alpha is `1 - level`, so level `0` is opaque black and level `1` is transparent.
+
+## 5. Open questions
+
+- Does the ROM drop the screen-on fade only through branch (c), or also through branch (a)?
+- Which caller dismisses a live fade on this device. The `color_fade_dismiss` hook logs that
+  caller frame, and the screen-on log line dumps `reported`, `prepared`, `level`, animator
+  state, `brightOrDim`, `r4Occluded` and `readyForDisplay` for every screen-on call.
