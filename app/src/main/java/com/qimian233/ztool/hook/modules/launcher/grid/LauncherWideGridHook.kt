@@ -13,6 +13,7 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -194,20 +195,55 @@ class LauncherWideGridHook : AppHookModule() {
             }
         }
         val square = squareFields
-        if (containerClass != null && setCellDimensions != null && square != null) {
+        val containerHook = square != null && containerClass != null && setCellDimensions != null
+        logger.info(
+            "WideGrid: install squareFields=${square != null} containerClass=${containerClass != null} " +
+                "setCellDimensions=${setCellDimensions != null} containerHook=$containerHook"
+        )
+        if (containerHook) {
             val inCellRewrite = ThreadLocal.withInitial { false }
-            hookWithId(setCellDimensions, "workspace_grid_cell_size") { chain ->
+            val reported = ConcurrentHashMap<String, Boolean>()
+            fun reportCellOnce(key: String, message: String) {
+                if (reported.putIfAbsent(key, true) == null) logger.info("WideGrid: $message")
+            }
+            try {
+                hookWithId(setCellDimensions!!, "workspace_grid_cell_size") { chain ->
                 chain.proceed()
                 if (inCellRewrite.get() == true) return@hookWithId null
                 try {
                     val container = chain.thisObject as? ViewGroup
-                    val page = container?.parent as? View
                     val args = chain.args
+                    reportCellOnce(
+                        "fired",
+                        "cell hook fired container=${container?.javaClass?.simpleName} " +
+                            "parent=${container?.parent?.javaClass?.simpleName} args=${args.size}"
+                    )
+                    val page = container?.parent as? View
                     if (container == null || page == null || !square.pageClass.isInstance(page)) {
+                        reportCellOnce(
+                            "parent",
+                            "cell hook skipped: container parent is not a CellLayout " +
+                                "(${container?.parent?.javaClass?.simpleName})"
+                        )
                         return@hookWithId null
                     }
-                    if (!workspaceClass.isInstance(page.parent)) return@hookWithId null
-                    if (args.size < 5) return@hookWithId null
+                    var ancestor: View? = page
+                    var levels = 0
+                    while (ancestor != null && !workspaceClass.isInstance(ancestor) && levels < 4) {
+                        ancestor = ancestor.parent as? View
+                        levels++
+                    }
+                    if (ancestor == null || !workspaceClass.isInstance(ancestor)) {
+                        reportCellOnce(
+                            "ancestor",
+                            "cell hook skipped: no Workspace ancestor for ${page.javaClass.simpleName}"
+                        )
+                        return@hookWithId null
+                    }
+                    if (args.size < 5) {
+                        reportCellOnce("args", "cell hook skipped: args size ${args.size}")
+                        return@hookWithId null
+                    }
                     val cellWidth = args[0] as? Int ?: return@hookWithId null
                     val cellHeight = args[1] as? Int ?: return@hookWithId null
                     val cols = args[2] as? Int ?: return@hookWithId null
@@ -216,25 +252,33 @@ class LauncherWideGridHook : AppHookModule() {
                     val pageWidth = page.measuredWidth
                     val pageHeight = page.measuredHeight
                     if (pageWidth <= 0 || pageHeight <= 0 || cols <= 0 || rows <= 0) {
+                        reportCellOnce(
+                            "unmeasured",
+                            "cell hook skipped: page=${pageWidth}x$pageHeight cols=$cols rows=$rows"
+                        )
                         return@hookWithId null
                     }
                     val byBox = (pageWidth - page.paddingLeft - page.paddingRight -
                         border.x * (cols - 1)) / cols
                     val byHeight = (pageHeight - page.paddingTop - page.paddingBottom -
                         border.y * (rows - 1)) / rows
-                    if (byBox <= 0 || byHeight <= 0) return@hookWithId null
+                    if (byBox <= 0 || byHeight <= 0) {
+                        reportCellOnce("cells", "cell hook skipped: derived cells ${byBox}x$byHeight")
+                        return@hookWithId null
+                    }
                     val side = minOf(byBox, byHeight)
+                    val squareMode = remotePreferences.getBoolean(
+                        PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.name,
+                        PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.default
+                    )
+                    val apply = squareMode && (cellWidth != side || cellHeight != side)
                     logger.info(
                         "WideGrid: cell container ${cellWidth}x$cellHeight -> ${side}x$side " +
-                            "page=${pageWidth}x$pageHeight pad=" +
+                            "square=$squareMode apply=$apply page=${pageWidth}x$pageHeight pad=" +
                             "${page.paddingLeft},${page.paddingTop},${page.paddingRight},${page.paddingBottom} " +
                             "cols=$cols rows=$rows border=${border.x},${border.y} ${firstChild(container)}"
                     )
-                    if (remotePreferences.getBoolean(
-                            PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.name,
-                            PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.default
-                        ) && (cellWidth != side || cellHeight != side)
-                    ) {
+                    if (apply) {
                         inCellRewrite.set(true)
                         try {
                             setCellDimensions.invoke(container, side, side, cols, rows, border)
@@ -246,6 +290,9 @@ class LauncherWideGridHook : AppHookModule() {
                     logger.error("WideGrid: cell container rewrite failed", th)
                 }
                 null
+                }
+            } catch (th: Throwable) {
+                logger.error("WideGrid: cell container hook install failed", th)
             }
         }
         logger.info("LauncherWideGridHook installed (hooking Workspace#setInsets)")
