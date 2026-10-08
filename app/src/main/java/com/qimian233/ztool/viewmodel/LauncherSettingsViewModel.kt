@@ -3,6 +3,10 @@ package com.qimian233.ztool.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.data.launcher.ExternalGridInputs
+import com.qimian233.ztool.data.launcher.GridCounts
+import com.qimian233.ztool.data.launcher.LauncherGridResolver
+import com.qimian233.ztool.data.launcher.LauncherPreviewRepository
 import com.qimian233.ztool.data.launcher.LauncherRestartResult
 import com.qimian233.ztool.data.launcher.LauncherSettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -13,10 +17,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class LauncherSettingsViewModel(
-    private val repository: LauncherSettingsRepository
+    private val repository: LauncherSettingsRepository,
+    private val previewRepository: LauncherPreviewRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LauncherSettingsUiState())
     val uiState: StateFlow<LauncherSettingsUiState> = _uiState.asStateFlow()
+
+    private var externalGridInputs = ExternalGridInputs(
+        systemLayoutName = null,
+        providerLayouts = emptyList()
+    )
 
     fun loadSettings() {
         try {
@@ -24,6 +34,36 @@ class LauncherSettingsViewModel(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load launcher settings", e)
         }
+        refreshExternalGridInputs()
+    }
+
+    /** Reads the launcher-side layout facts, then re-resolves the preview grid. */
+    private fun refreshExternalGridInputs() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val inputs = try {
+                previewRepository.readExternalInputs()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to read launcher grid inputs", e)
+                ExternalGridInputs(systemLayoutName = null, providerLayouts = emptyList())
+            }
+            withContext(Dispatchers.Main) {
+                externalGridInputs = inputs
+                applyPreviewGrid()
+            }
+        }
+    }
+
+    /** Cheap and main-thread safe: the resolver is pure and the external inputs are cached. */
+    private fun applyPreviewGrid() {
+        val state = _uiState.value
+        val resolved = LauncherGridResolver.resolve(
+            customGridEnabled = state.customGridSize,
+            customColumns = state.customGridColumn,
+            customRows = state.customGridRow,
+            external = externalGridInputs
+        )
+        Log.d(TAG, "preview grid ${resolved.counts} from ${resolved.source}")
+        _uiState.value = state.copy(previewGrid = resolved.counts)
     }
 
     fun setForceStopMode(mode: ForceStopMode) {
@@ -66,6 +106,7 @@ class LauncherSettingsViewModel(
     fun setCustomGridSize(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(customGridSize = enabled)
         repository.saveCustomGridSize(enabled)
+        applyPreviewGrid()
     }
 
     fun setCustomGridRow(value: Int) {
@@ -73,6 +114,7 @@ class LauncherSettingsViewModel(
         val row = value.coerceIn(LauncherSettingsRepository.GRID_MIN, LauncherSettingsRepository.GRID_MAX)
         _uiState.value = current.copy(customGridRow = row)
         repository.saveGridValues(row, current.customGridColumn)
+        applyPreviewGrid()
     }
 
     fun setCustomGridColumn(value: Int) {
@@ -80,6 +122,7 @@ class LauncherSettingsViewModel(
         val column = value.coerceIn(LauncherSettingsRepository.GRID_MIN, LauncherSettingsRepository.GRID_MAX)
         _uiState.value = current.copy(customGridColumn = column)
         repository.saveGridValues(current.customGridRow, column)
+        applyPreviewGrid()
     }
 
     fun setCleanSearch(value: Boolean) {
@@ -265,10 +308,40 @@ data class LauncherSettingsUiState(
     val wideGridSideInset: Int = 0,
     val iconScaleOverride: Boolean = false,
     val iconScaleValue: Float = 1.0f,
+    /** Fallback until the launcher-side layout facts are read; see [LauncherGridResolver]. */
+    val previewGrid: GridCounts = LauncherGridResolver.FALLBACK,
 ) {
     val forceStopWhitelistCount: Int
         get() = forceStopWhitelist.size
 
     val freeformKeepAlivePackagesCount: Int
         get() = freeformKeepAlivePackages.size
+
+    /** Rendering model of the desktop preview, derived from the fields above. */
+    val previewConfig: LauncherPreviewConfig
+        get() = LauncherPreviewConfig(
+            columns = previewGrid.columns,
+            rows = previewGrid.rows,
+            wideGrid = wideGrid,
+            wideGridSideInset = wideGridSideInset,
+            squareCells = wideGrid && wideGridSquare,
+            // The icon-scale hook only applies while the override switch is on.
+            iconScale = if (iconScaleOverride) iconScaleValue else 1f,
+            noLabel = noLabelMode,
+            bluePointVisible = !hideBluePoint,
+            dockVisible = !disableDockBar
+        )
 }
+
+/** Everything the desktop preview draws; geometry only, no launcher-side pixel values. */
+data class LauncherPreviewConfig(
+    val columns: Int,
+    val rows: Int,
+    val wideGrid: Boolean,
+    val wideGridSideInset: Int,
+    val squareCells: Boolean,
+    val iconScale: Float,
+    val noLabel: Boolean,
+    val bluePointVisible: Boolean,
+    val dockVisible: Boolean,
+)

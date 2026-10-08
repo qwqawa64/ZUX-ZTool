@@ -36,6 +36,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.launcher.LauncherPreviewRepository
 import com.qimian233.ztool.data.launcher.LauncherRestartResult
 import com.qimian233.ztool.data.launcher.LauncherSettingsRepository
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
@@ -70,7 +71,8 @@ fun LauncherSettingsRoute(
         ViewModelProvider(
             owner,
             LauncherSettingsViewModelFactory(
-                LauncherSettingsRepository(context.applicationContext)
+                LauncherSettingsRepository(context.applicationContext),
+                LauncherPreviewRepository(context.applicationContext)
             )
         )[LauncherSettingsViewModel::class.java]
     }
@@ -197,12 +199,13 @@ fun LauncherSettingsRoute(
 }
 
 private class LauncherSettingsViewModelFactory(
-    private val repository: LauncherSettingsRepository
+    private val repository: LauncherSettingsRepository,
+    private val previewRepository: LauncherPreviewRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LauncherSettingsViewModel::class.java)) {
-            return LauncherSettingsViewModel(repository) as T
+            return LauncherSettingsViewModel(repository, previewRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
@@ -280,6 +283,10 @@ private fun LauncherSettingsScreen(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
+                LauncherPreviewCard(
+                    config = state.previewConfig,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
                 ZToolSettingsList(
                     sections = launcherSettingsSections(
                         state = state,
