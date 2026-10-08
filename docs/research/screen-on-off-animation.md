@@ -139,6 +139,20 @@ layer with alpha `1 - level`, i.e. level `0` is opaque black and level `1` is tr
 - **The `dismissColorFade` diagnostic hook** — the dismiss is always preceded by
   `setColorFadeLevel(1.0f)`, so a "live fade" test on the level never fires on this ROM.
 
+### Rejected: forcing `MotoDesktopManager.isReadyForDisplay` to `true`
+
+That flag means "this display is the target of a Ready For (Lenovo/Motorola cross-screen
+projection, i.e. desktop mode) session", which is why it is `false` on a tablet's own panel.
+Forcing it would falsely advertise the local display as a projection target to every caller
+(the static method is referenced from 39 classes, mostly WindowManager/input/audio), so the
+"fast path" it would unlock in `ColorFade.prepare(Context, int)` is not worth the risk.
+
+The cost of leaving it alone is one wasted `ScreenCapture` per screen-on: for mode `2`
+`ColorFade.prepare` takes the screenshot branch, throws the buffer away (`if (mMode == 2)
+return true;`) and only needs `createSurfaceControl`. It measures about 75 ms and runs before
+the queued unblank is applied, so it delays the start of the fade but never shows content.
+
+
 ## 5. Confirmed behaviour (ZUX, `readyForDisplay=false`)
 
 Measured log of one screen-on with a 1000 ms preference. Three `animateScreenStateChange(2, …)`
