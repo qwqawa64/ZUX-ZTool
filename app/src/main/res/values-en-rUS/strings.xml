@@ -440,9 +440,7 @@
     <string name="system_ui_lock_screen_aod_lenovo_activity_title">Open AOD pattern settings</string>
     <string name="system_ui_lock_screen_aod_lenovo_activity_summary">Only applies to Lenovo always-on display.</string>
     <string name="system_ui_animation_no_charging_animation_enable_title">Disable charging animation</string>
-    <string name="system_ui_animation_no_charging_animation_enable_summary">Disable the charging animation display.</string>
     <string name="system_ui_animation_charge_animation_fix">Complete charging animation list</string>
-    <string name="system_ui_animation_charge_animation_fix_summary">Fix the charging animation list to make more charging animations available.</string>
     <string name="system_ui_animation_custom_charge_animation_title">Custom charging animation</string>
     <string name="system_ui_animation_custom_charge_animation_portrait_action_title">Select portrait video</string>
     <string name="system_ui_animation_custom_charge_animation_land_action_title">Select landscape video</string>
@@ -488,9 +486,7 @@
     <string name="system_ui_lock_screen_yi_yan_switch_title">Random lock screen signature</string>
     <string name="system_ui_lock_screen_yi_yan_summary">Show random text fetched from the network on the lock screen.</string>
     <string name="system_ui_animation_charge_anim_duration_title">Custom charging animation duration</string>
-    <string name="system_ui_animation_charge_anim_duration_summary">Change how long the lock screen charging animation plays.</string>
     <string name="system_ui_animation_charge_anim_duration_slider_title">Animation duration</string>
-    <string name="system_ui_animation_charge_anim_duration_slider_summary">Controls the timeout that ends the charging animation</string>
     <string name="system_ui_animation_charge_anim_duration_value">%.1f s</string>
     <string name="system_ui_lock_screen_charge_watts_title">Charging power</string>
     <string name="system_ui_lock_screen_charge_watts_enable_title">Display charging power</string>

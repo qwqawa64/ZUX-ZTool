@@ -695,12 +695,10 @@ object SearchIndex {
         systemUiAnimationWallpaper.item(
             id = "animation_no_charging_animation",
             titleRes = R.string.system_ui_animation_no_charging_animation_enable_title,
-            summaryRes = R.string.system_ui_animation_no_charging_animation_enable_summary
         ),
         systemUiAnimationWallpaper.item(
             id = "animation_charge_animation_fix",
             titleRes = R.string.system_ui_animation_charge_animation_fix,
-            summaryRes = R.string.system_ui_animation_charge_animation_fix_summary
         ),
         systemUiAnimationWallpaper.item(
             id = "animation_custom_charge_animation",
@@ -721,12 +719,10 @@ object SearchIndex {
         systemUiAnimationWallpaper.item(
             id = "animation_charge_anim_duration",
             titleRes = R.string.system_ui_animation_charge_anim_duration_title,
-            summaryRes = R.string.system_ui_animation_charge_anim_duration_summary
         ),
         systemUiAnimationWallpaper.item(
             id = "animation_charge_anim_duration_slider",
             titleRes = R.string.system_ui_animation_charge_anim_duration_slider_title,
-            summaryRes = R.string.system_ui_animation_charge_anim_duration_slider_summary,
             parentTitleRes = R.string.system_ui_animation_charge_anim_duration_title,
             parentKey = "animation_charge_anim_duration"
         ),

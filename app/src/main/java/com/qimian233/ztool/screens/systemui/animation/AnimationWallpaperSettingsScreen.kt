@@ -298,7 +298,6 @@ private fun animationWallpaperSettingsSections(
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_animation_no_charging_animation_enable_title),
-                summary = stringResource(R.string.system_ui_animation_no_charging_animation_enable_summary),
                 checked = state.noChargeAnimation,
                 onCheckedChange = onNoChargeAnimationChanged,
                 key = "animation_no_charging_animation"
@@ -307,7 +306,6 @@ private fun animationWallpaperSettingsSections(
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_animation_charge_animation_fix),
-                summary = stringResource(R.string.system_ui_animation_charge_animation_fix_summary),
                 checked = state.chargeAnimationFix,
                 onCheckedChange = onChargeAnimationFixChanged,
                 key = "animation_charge_animation_fix"
@@ -354,7 +352,6 @@ private fun animationWallpaperSettingsSections(
         add(
             SettingItem.Switch(
                 title = stringResource(R.string.system_ui_animation_charge_anim_duration_title),
-                summary = stringResource(R.string.system_ui_animation_charge_anim_duration_summary),
                 checked = state.chargeAnimDurationEnabled,
                 onCheckedChange = onChargeAnimDurationEnabledChanged,
                 key = "animation_charge_anim_duration"
@@ -364,7 +361,6 @@ private fun animationWallpaperSettingsSections(
             add(
                 SettingItem.Slider(
                     title = stringResource(R.string.system_ui_animation_charge_anim_duration_slider_title),
-                    summary = stringResource(R.string.system_ui_animation_charge_anim_duration_slider_summary),
                     value = state.chargeAnimDurationMs.toFloat(),
                     valueText = stringResource(
                         R.string.system_ui_animation_charge_anim_duration_value,

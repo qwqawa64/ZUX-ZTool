@@ -489,9 +489,7 @@
     <string name="system_ui_lock_screen_aod_lenovo_activity_title">打开息屏显示图案设置页</string>
     <string name="system_ui_lock_screen_aod_lenovo_activity_summary">仅适用于联想息屏显示</string>
     <string name="system_ui_animation_no_charging_animation_enable_title">关闭充电动画</string>
-    <string name="system_ui_animation_no_charging_animation_enable_summary">停用充电动画显示功能</string>
     <string name="system_ui_animation_charge_animation_fix">补全充电动画列表</string>
-    <string name="system_ui_animation_charge_animation_fix_summary">修复充电动画列表，这可以使用更多充电动画</string>
     <string name="system_ui_animation_custom_charge_animation_title">自定义充电动画</string>
     <string name="system_ui_animation_custom_charge_animation_portrait_action_title">选择竖屏视频</string>
     <string name="system_ui_animation_custom_charge_animation_land_action_title">选择横屏视频</string>
@@ -559,9 +557,7 @@
     <string name="system_ui_lock_screen_yi_yan_switch_title">随机锁屏签名</string>
     <string name="system_ui_lock_screen_yi_yan_summary">在锁屏页面显示从网络获取的随机文本</string>
     <string name="system_ui_animation_charge_anim_duration_title">自定义充电动画时长</string>
-    <string name="system_ui_animation_charge_anim_duration_summary">修改锁屏充电动画的播放时长</string>
     <string name="system_ui_animation_charge_anim_duration_slider_title">动画时长</string>
-    <string name="system_ui_animation_charge_anim_duration_slider_summary">控制充电动画超时结束的时间</string>
     <string name="system_ui_animation_charge_anim_duration_value">%.1f 秒</string>
     <string name="system_ui_lock_screen_charge_watts_title">充电功率</string>
     <string name="system_ui_lock_screen_charge_watts_enable_title">显示充电功率</string>
