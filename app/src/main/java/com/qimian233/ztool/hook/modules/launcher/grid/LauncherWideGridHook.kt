@@ -86,6 +86,18 @@ class LauncherWideGridHook : AppHookModule() {
 
         val resolver = ProfileResolver(getDeviceProfile, activityContextClass, marginField, cellPaddingField)
 
+        // Read once: the page measure hook runs on every layout pass, and changing these
+        // requires a launcher restart anyway.
+        val preferences = remotePreferences
+        val squareMode = preferences.getBoolean(
+            PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.name,
+            PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.default
+        )
+        val insetDp = preferences.getInt(
+            PreferenceKeys.LAUNCHER_WIDE_GRID_SIDE_INSET.name,
+            PreferenceKeys.LAUNCHER_WIDE_GRID_SIDE_INSET.default
+        )
+
         // Our own setInsets re-invocation must not re-enter the rewrite.
         val inRewrite = ThreadLocal.withInitial { false }
 
@@ -99,11 +111,6 @@ class LauncherWideGridHook : AppHookModule() {
             }
         }
 
-        fun squareModeOn(): Boolean = remotePreferences.getBoolean(
-            PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.name,
-            PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.default
-        )
-
         hookWithId(setInsets, "workspace_grid_margins_rewrite") { chain ->
             chain.proceed()
             if (inRewrite.get() == true) return@hookWithId null
@@ -115,16 +122,12 @@ class LauncherWideGridHook : AppHookModule() {
                 }
                 // Square mode is solved in the page's measure pass, where the page box is
                 // known; writing padding here too would fight that solve.
-                if (squareFields != null && squareModeOn()) return@hookWithId null
+                if (squareFields != null && squareMode) return@hookWithId null
                 val dp = resolver.resolve(workspace.context)
                 if (dp == null) {
                     logger.info("WideGrid: DeviceProfile not reachable from context")
                     return@hookWithId null
                 }
-                val insetDp = remotePreferences.getInt(
-                    PreferenceKeys.LAUNCHER_WIDE_GRID_SIDE_INSET.name,
-                    PreferenceKeys.LAUNCHER_WIDE_GRID_SIDE_INSET.default
-                )
                 val sideInsetPx = (insetDp * workspace.resources.displayMetrics.density).roundToInt()
                 applySideInset(dp, sideInsetPx, resolver)
                 // Re-run with the rewritten profile so setPadding/requestLayout picks up the
@@ -149,8 +152,9 @@ class LauncherWideGridHook : AppHookModule() {
             }
         }
         logger.info(
-            "WideGrid: install squareFields=${square != null} " +
-                "setCellDimensions=${square?.setCellDimensions != null} pageMeasure=${pageMeasure != null}"
+            "WideGrid: install squareFields=${square != null} squareMode=$squareMode " +
+                "insetDp=$insetDp setCellDimensions=${square?.setCellDimensions != null} " +
+                "pageMeasure=${pageMeasure != null}"
         )
         if (square != null && pageMeasure != null) {
             val counts = ConcurrentHashMap<String, Int>()
@@ -165,7 +169,7 @@ class LauncherWideGridHook : AppHookModule() {
                     try {
                         val page = chain.thisObject as? ViewGroup ?: return@hookWithId null
                         if (!isWorkspacePage(page, workspaceClass)) return@hookWithId null
-                        if (!squareModeOn()) return@hookWithId null
+                        if (!squareMode) return@hookWithId null
                         val args = chain.args
                         if (args.size < 2) {
                             reportLimited("args", 3, "page measure skipped: args=${args.size}")
