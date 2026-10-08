@@ -84,6 +84,9 @@ class LauncherWideGridHook : AppHookModule() {
         // Square-mode members: optional; missing any of them degrades to slider mode.
         val squareFields = resolveSquareFields(classLoader, dpClass)
 
+        // Shared geometry object; the big-folder hook reads the same measured cell.
+        LauncherGridMetrics.install(classLoader, logger)
+
         val resolver = ProfileResolver(getDeviceProfile, activityContextClass, marginField, cellPaddingField)
 
         // Read once: the page measure hook runs on every layout pass, and changing these
@@ -210,6 +213,32 @@ class LauncherWideGridHook : AppHookModule() {
                                 (if (container != null) containerChildren(container) else "children=none")
                         )
                         var relayout = false
+                        // The profile padding survives page relayouts but not a profile
+                        // rebuild, so it is synced on every pass, outside the solve guard.
+                        val profilePadding = resolver.cellPadding.get(dp) as? Rect
+                        if (profilePadding != null &&
+                            (profilePadding.left != padding || profilePadding.right != padding)
+                        ) {
+                            profilePadding.left = padding
+                            profilePadding.right = padding
+                        }
+                        // The host freezes the workspace content centring in cellYPaddingPx
+                        // while building the profile; a square cell of a different height must
+                        // recompute it or the icon keeps the old offset (plan item B3).
+                        val contentHeight = LauncherGridMetrics.contentHeightPx(dp)
+                        if (contentHeight != null) {
+                            val desired = maxOf(0, (side - contentHeight) / 2)
+                            val current = LauncherGridMetrics.cellYPaddingPx(dp)
+                            if (current != null && current != desired &&
+                                LauncherGridMetrics.writeCellYPaddingPx(dp, desired)
+                            ) {
+                                relayout = true
+                                reportLimited(
+                                    "ypad", 4,
+                                    "cellYPaddingPx $current -> $desired (side=$side content=$contentHeight)"
+                                )
+                            }
+                        }
                         val padStale = page.paddingLeft != padding || page.paddingRight != padding
                         val newTarget = padding != lastSquarePad || side != lastSquareSide
                         if (padStale || newTarget) {
@@ -217,13 +246,6 @@ class LauncherWideGridHook : AppHookModule() {
                             lastSquareSide = side
                             if (padStale) {
                                 page.setPadding(padding, page.paddingTop, padding, page.paddingBottom)
-                            }
-                            if (dp != null) {
-                                val rect = resolver.cellPadding.get(dp) as? Rect
-                                if (rect != null && (rect.left != padding || rect.right != padding)) {
-                                    rect.left = padding
-                                    rect.right = padding
-                                }
                             }
                             if (container != null) {
                                 square.setCellDimensions.invoke(
@@ -235,6 +257,7 @@ class LauncherWideGridHook : AppHookModule() {
                         if (relayout) {
                             page.requestLayout()
                             container?.requestLayout()
+                            LauncherGridMetrics.publish(LauncherGridMetrics.fromPage(page, dp))
                         }
                     } catch (th: Throwable) {
                         logger.error("WideGrid: page measure rewrite failed", th)

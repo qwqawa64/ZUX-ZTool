@@ -5,6 +5,22 @@ AGENT-oriented implementation plan. Background:
 `docs/research/zui_vs_oplus_launcher_grid_and_big_folder.md`,
 `docs/research/zui_launcher_wide_grid_geometry.md`.
 
+## Status
+
+Implemented: **A, B3, B4, C1, C3, C4** (build `assembleDebug` green). Remaining: B1, B2,
+B5, B6, B7, C2, C5-C9.
+
+Implementation notes:
+- A lives in `hook/modules/launcher/grid/LauncherGridMetrics.kt`
+  (`install` / `pageOf` / `fromPage` / `publish` / `contentHeightPx` / `cellYPaddingPx` /
+  `writeCellYPaddingPx`), with memoized `Utilities.calculateTextHeight`.
+- C4 uses `gap = (bgAxis - n*childSize) / (n + 1)` instead of the planned `/(n - 1)`: the
+  centered host layout puts the leftover into the two outer margins, and `n + 1` makes
+  those margins equal to the inner gaps, so the child grid never touches the background
+  edge.
+- C3/C4 also read the horizontal background extent through `cellPitchX`
+  (`cellW + borderX`), matching the background width the hook writes.
+
 ## Goal
 
 Both launcher hooks must derive geometry from the same **live measured cell** (the one
@@ -90,10 +106,10 @@ profile-frozen content centring stale.
 - C3. Drop `ART_INSET_RATIO`: the art inset is `dp.widgetPadding.left/top`
   (the host uses the same value in `PreviewBackground.setup`/`computeBigFolderAvaliableWh`);
   keep 0.11 only as a fallback when `widgetPadding` is 0.
-- C4. Drop `GRID_OCCUPANCY`: gaps = `max(0, (bgAxis - 2*artInset - n*childSize)/(n-1))`
-  with `childSize = folderIconSizePx * CHILD_ICON_SCALE`. The child grid then fills exactly
-  the box whose insets the background uses, which is the OPlus relation without a magic
-  occupancy factor.
+- C4. Drop `GRID_OCCUPANCY`: gaps = `max(0, (bgAxis - n*childSize)/(n+1))`
+  with `childSize = folderIconSizePx * CHILD_ICON_SCALE`; the two outer margins then equal
+  the inner gaps. The child grid fills exactly the box whose insets the background uses,
+  which is the OPlus relation without a magic occupancy factor.
 - C5. Optional "OPlus parity" child size (off by default, exposed as a setting only if the
   user asks): `childSize = (box - contentPaddingFactor*padding)/N`,
   `contentPaddingFactor = N*2*f + 2` (`f = 0.6667`), `N = 3` for span > 1.

@@ -17,27 +17,9 @@ import kotlin.math.roundToInt
 /**
  * Big folder icon and background geometric alignment (com.zui.launcher).
  *
- * Fixes three stock misbehaviors: the folder background is drawn wider than the
- * icon grid, child icons hug the edges when custom row/column counts are used,
- * and the folder label deviates from neighboring labels.
- *
- * Hook strategy:
- * 1. Tail of PreviewBackground.setup (big folder branch): rewrite the background
- *    geometry so its edges align with the top/bottom icon rows ([readGridMetrics]
- *    supplies the measured grid quantities; [ART_INSET_RATIO] models the transparent
- *    margin around the icon artwork).
- * 2. computeBigFolderAvaliableWh width sync; isUpdatePreviewSize is read-only telemetry.
- * 3. getBigFolderIconChildCount: rewrite the child grid, learned from calls with
- *    array arguments; spanX==1 narrow capsules are not rewritten.
- * 4. getBigFolderIconHGap/VGap: recompute gaps from the background width and
- *    [CHILD_ICON_SCALE].
- * 5. Tail of ClippedFolderIconLayoutRule.c: route through the rule's own generic grid.
- * 6. FolderIcon.z fully replaced: derive the label topMargin from the same metrics.
- *
- * All reflection handles are resolved at install time (when a group such as
- * [resolveCoreRefs] fails, only the corresponding hooks are skipped); runtime only
- * performs field/method calls; telemetry logs go through debug and are emitted only
- * when detailed logging is enabled.
+ * Fixes the background/grid mismatch, the edge-hugging child grid and the label offset.
+ * See docs/research/zui_vs_oplus_launcher_grid_and_big_folder.md (section 4) and
+ * PLAN_launcher_grid_convergence.md for the host behaviour and the hook strategy.
  */
 @SuppressLint("PrivateApi")
 class BigFolderAlignHook : AppHookModule() {
@@ -69,7 +51,6 @@ class BigFolderAlignHook : AppHookModule() {
     private lateinit var activityContextGetDeviceProfile: Method
     private lateinit var dpInv: Field
     private lateinit var invNumColumns: Field
-    private lateinit var invNumRows: Field
     private lateinit var dpPadding: Field
     private lateinit var dpBorderSpace: Field
     private lateinit var dpWidgetPadding: Field
@@ -77,9 +58,7 @@ class BigFolderAlignHook : AppHookModule() {
     private lateinit var dpFolderIconSize: Field
     private lateinit var dpIconDrawablePadding: Field
     private lateinit var dpFolderIconOffsetY: Field
-    private lateinit var dpCellHeight: Field
     private lateinit var dpGetCellLayoutWidth: Method
-    private lateinit var dpGetCellLayoutHeight: Method
     private lateinit var dpUpdateIconSize: Method
 
     // BigFolderConfig
@@ -112,6 +91,10 @@ class BigFolderAlignHook : AppHookModule() {
         val classLoader = param.defaultClassLoader
         logger.debug("BigFolderAlign installing")
         if (!resolveCoreRefs(classLoader)) return
+        if (!LauncherGridMetrics.install(classLoader, logger)) {
+            logger.error("BigFolderAlign: shared grid metrics unavailable, disabled")
+            return
+        }
         ruleReady = resolveRuleRefs(classLoader)
         bfcReady = resolveBfcRefs(classLoader)
         folderIconReady = resolveFolderIconRefs(classLoader)
@@ -154,7 +137,6 @@ class BigFolderAlignHook : AppHookModule() {
             val dp = classLoader.loadClass("com.android.launcher3.DeviceProfile")
             dpInv = findField(dp, "inv")
             invNumColumns = findField(dpInv.type, "numColumns")
-            invNumRows = findField(dpInv.type, "numRows")
             dpPadding = findField(dp, "cellLayoutPaddingPx")
             dpBorderSpace = findField(dp, "cellLayoutBorderSpacePx")
             dpWidgetPadding = findField(dp, "widgetPadding")
@@ -162,9 +144,7 @@ class BigFolderAlignHook : AppHookModule() {
             dpFolderIconSize = findField(dp, "folderIconSizePx")
             dpIconDrawablePadding = findField(dp, "iconDrawablePaddingPx")
             dpFolderIconOffsetY = findField(dp, "folderIconOffsetYPx")
-            dpCellHeight = findField(dp, "cellHeightPx")
             dpGetCellLayoutWidth = findMethod(dp, "getCellLayoutWidth")
-            dpGetCellLayoutHeight = findMethod(dp, "getCellLayoutHeight")
             dpUpdateIconSize = findMethod(dp, "updateIconSize", Float::class.javaPrimitiveType, Context::class.java)
             coreReady = true
             true
@@ -271,25 +251,23 @@ class BigFolderAlignHook : AppHookModule() {
         if (spanX <= 1 && spanY <= 1) return
 
         val dp = activityContextGetDeviceProfile.invoke(activityContext) ?: return
-        val metrics = readGridMetrics(dp) ?: return
-        // Used by static method hooks without a context parameter (gap recomputation)
-        cachedCellWidth = metrics.cellWidth
-        cachedCellPitch = metrics.cellHeight + metrics.gapY
-        cachedRowInset = metrics.rowInset
-        cachedIconSizePx = metrics.iconSizePx
-        cachedFolderIconSizePx = metrics.folderIconSizePx
+        // The live page carries the measured cell; the profile values are the fallback.
+        val page = LauncherGridMetrics.pageOf(folderIconView as? View)
+        val metrics = LauncherGridMetrics.fromPage(page, dp) ?: return
+        // Static host methods (gap queries) have no page reference; they read this snapshot.
+        LauncherGridMetrics.publish(metrics)
 
-        val inset = if (alignToSmallFolder) metrics.insetFolder else metrics.insetIcon
-        val newWidth = spanX * metrics.cellWidth + (spanX - 1) * metrics.gapX - 2 * inset
+        val inset = if (alignToSmallFolder) metrics.insetToSmallFolder else metrics.insetToIcon
+        val newWidth = spanX * metrics.cellWidth + (spanX - 1) * metrics.borderX - 2 * inset
         val oldWidth = pbWidth.getInt(pb)
         val oldOffsetX = pbOffsetX.getInt(pb)
         pbWidth.setInt(pb, newWidth)
         pbOffsetX.setInt(pb, inset)
 
-        // Background top/bottom edges align with the graphic edges of the top/bottom icon rows (artInset = transparent margin inside the art box)
-        val artInset = (metrics.iconSizePx * ART_INSET_RATIO).roundToInt()
+        // Background top/bottom edges align with the graphic edges of the top/bottom icon rows.
+        val artInset = artInsetPx(metrics)
         val newOffsetY = metrics.rowInset + artInset
-        val newPreviewSizeY = (spanY - 1) * (metrics.cellHeight + metrics.gapY) +
+        val newPreviewSizeY = (spanY - 1) * metrics.cellPitchY +
             metrics.rowInset + metrics.iconSizePx - artInset - newOffsetY
         val oldOffsetY = pbOffsetY.getInt(pb)
         val oldPreviewSizeY = pbPreviewSizeY.getInt(pb)
@@ -316,9 +294,10 @@ class BigFolderAlignHook : AppHookModule() {
                 " width $oldWidth->$newWidth offsetX $oldOffsetX->$inset" +
                 " offsetY $oldOffsetY->$newOffsetY previewY $oldPreviewSizeY->${pbPreviewSizeY.getInt(pb)}" +
                 " artInset=$artInset" +
-                " cellW=${metrics.cellWidth} nominalW=${metrics.nominalCellWidth} gap=${metrics.gapX}" +
-                " cellH=${metrics.cellHeight} gapY=${metrics.gapY} rowInset=${metrics.rowInset}" +
-                " cellHeightPx=${metrics.cellHeightPx}" +
+                " cellW=${metrics.cellWidth} nominalW=${metrics.nominalCellWidth}" +
+                " border=${metrics.borderX},${metrics.borderY} measured=${metrics.measured}" +
+                " cellH=${metrics.cellHeight} rowInset=${metrics.rowInset}" +
+                " profileContent=${metrics.profileContentHeightPx}" +
                 " folderIcon=${metrics.folderIconSizePx} icon=${metrics.iconSizePx}" +
                 " widgetPadL=${metrics.widgetPaddingLeft} widgetPadT=${metrics.widgetPaddingTop}" +
                 " bgBottom=${pbOffsetY.getInt(pb) + pbPreviewSizeY.getInt(pb)}" +
@@ -326,64 +305,15 @@ class BigFolderAlignHook : AppHookModule() {
         )
     }
 
-    private class GridMetrics(
-        val gapX: Int,
-        val gapY: Int,
-        val nominalCellWidth: Int,
-        val cellWidth: Int,
-        val cellHeight: Int,
-        val cellHeightPx: Int,
-        val rowInset: Int,
-        val insetFolder: Int,
-        val insetIcon: Int,
-        val iconSizePx: Int,
-        val folderIconSizePx: Int,
-        val widgetPaddingLeft: Int,
-        val widgetPaddingTop: Int
-    )
-
-    private fun readGridMetrics(dp: Any): GridMetrics? {
-        return try {
-            val inv = dpInv.get(dp)
-            val columns = invNumColumns.getInt(inv)
-            val rows = invNumRows.getInt(inv)
-            val padding = dpPadding.get(dp) as Rect
-            val borderSpace = dpBorderSpace.get(dp) as Point
-            val widgetPadding = dpWidgetPadding.get(dp) as Rect
-            val iconSizePx = dpIconSize.getInt(dp)
-            val folderIconSizePx = dpFolderIconSize.getInt(dp)
-            // cellHeightPx = row content height (icon + gap + text), measured 260 while row pitch is 348
-            val cellHeightPx = dpCellHeight.getInt(dp)
-
-            val gridWidth = (dpGetCellLayoutWidth.invoke(dp) as Int) - 2 * padding.left
-            val nominalCellWidth = gridWidth / columns
-            val gapX = borderSpace.x
-            val cellWidth = (gridWidth - (columns - 1) * gapX) / columns
-            val gridHeight = (dpGetCellLayoutHeight.invoke(dp) as Int) - padding.top - padding.bottom
-            val gapY = borderSpace.y
-            val cellHeight = (gridHeight - (rows - 1) * gapY) / rows
-            // Real vertical inset of the icon within its row, same origin as the host formula max(0,(C-cellHeightPx)/2)
-            val rowInset = maxOf(0, (cellHeight - cellHeightPx) / 2)
-            GridMetrics(
-                gapX = gapX,
-                gapY = gapY,
-                nominalCellWidth = nominalCellWidth,
-                cellWidth = cellWidth,
-                cellHeight = cellHeight,
-                cellHeightPx = cellHeightPx,
-                rowInset = rowInset,
-                insetFolder = (cellWidth - folderIconSizePx) / 2,
-                insetIcon = (cellWidth - iconSizePx) / 2,
-                iconSizePx = iconSizePx,
-                folderIconSizePx = folderIconSizePx,
-                widgetPaddingLeft = widgetPadding.left,
-                widgetPaddingTop = widgetPadding.top
-            )
-        } catch (t: Throwable) {
-            logger.error("readGridMetrics failed", t)
-            null
-        }
-    }
+    /**
+     * Transparent margin around the icon artwork inside the icon box.
+     *
+     * DeviceProfile.widgetPadding is the host's own inset for the big-folder background;
+     * [ART_INSET_RATIO] only covers platforms that report no widget padding.
+     */
+    private fun artInsetPx(metrics: LauncherGridMetrics.Metrics): Int =
+        if (metrics.widgetPaddingTop > 0) metrics.widgetPaddingTop
+        else (metrics.iconSizePx * ART_INSET_RATIO).roundToInt()
 
     /** Style sheet convergence rewrite: one rewrite makes layout/preview count/click hit-testing/drop capacity all take effect. */
     private fun hookChildCountRewrite() {
@@ -463,10 +393,9 @@ class BigFolderAlignHook : AppHookModule() {
     }
 
     /**
-     * Stock gaps are tuned for the stock grid and become oversized after row/column
-     * changes. For all big folder spans (spanX>1 || spanY>1) recomputed as
-     * background size x GRID_OCCUPANCY; only shrinks gaps (floor 0); the centered
-     * layout turns the freed space into outer margins. Grid = rewritten grid ?: stock grid.
+     * Stock gaps are tuned for the stock grid; for every big-folder span they are solved
+     * from the background box instead, so the child grid fills the same box whose insets
+     * the background uses. The centered layout turns the leftover into outer margins.
      */
     private fun hookFolderGaps() {
         for ((method, isH) in listOf(bfcGetHGap to true, bfcGetVGap to false)) {
@@ -480,21 +409,24 @@ class BigFolderAlignHook : AppHookModule() {
                     val spanKey = "${spanX}x$spanY"
                     val grid = rewrittenGrids[spanKey] ?: stockGrids[spanKey]
                         ?: return@hookWithId result
-                    if (cachedCellWidth == 0) return@hookWithId result
+                    val metrics = LauncherGridMetrics.cached ?: return@hookWithId result
+                    if (metrics.cellWidth <= 0) return@hookWithId result
                     val n = if (isH) grid[0] else grid[1]
                     if (n <= 1) return@hookWithId 0f
-                    val artInset = (cachedIconSizePx * ART_INSET_RATIO).roundToInt()
-                    val bgAxis: Int = if (isH) {
-                        (spanX - 1) * cachedCellWidth + cachedFolderIconSizePx
+                    val bgAxis = if (isH) {
+                        (spanX - 1) * metrics.cellPitchX + metrics.folderIconSizePx
                     } else {
-                        (spanY - 1) * cachedCellPitch + cachedIconSizePx - 2 * artInset
+                        (spanY - 1) * metrics.cellPitchY + metrics.iconSizePx - 2 * artInsetPx(metrics)
                     }
-                    val childSize = cachedFolderIconSizePx * bfcChildIconScale.getFloat(null)
-                    val newGap = maxOf(0f, (bgAxis * GRID_OCCUPANCY - n * childSize) / (n - 1))
+                    val childSize = metrics.folderIconSizePx * bfcChildIconScale.getFloat(null)
+                    // (n + 1) splits the free space over the n-1 inner gaps and the two outer
+                    // margins equally, so the grid never touches the background edge.
+                    val newGap = maxOf(0f, (bgAxis - n * childSize) / (n + 1))
                     val logKey = "${if (isH) "h" else "v"}Gap$spanKey"
                     if (loggedSpans.add(logKey) && newGap != (result as Float)) {
                         logger.debug(
-                            "${(if (isH) "hGap" else "vGap")}($spanX,$spanY) $result -> $newGap (n=$n bg=$bgAxis)"
+                            "${if (isH) "hGap" else "vGap"}($spanX,$spanY) $result -> $newGap " +
+                                "(n=$n bg=$bgAxis child=$childSize)"
                         )
                     }
                     return@hookWithId newGap
@@ -527,9 +459,10 @@ class BigFolderAlignHook : AppHookModule() {
                     // Small folder branch: replicate the stock z() formula
                     topMargin = iconSizePx + drawablePadding
                 } else {
-                    val metrics = readGridMetrics(dp)
-                        ?: return@hookWithId chain.proceed()
-                    topMargin = (spanY - 1) * (metrics.cellHeight + metrics.gapY) +
+                    val metrics = LauncherGridMetrics.fromPage(
+                        LauncherGridMetrics.pageOf(icon as? View), dp
+                    ) ?: return@hookWithId chain.proceed()
+                    topMargin = (spanY - 1) * metrics.cellPitchY +
                         metrics.rowInset + iconSizePx + drawablePadding
                 }
                 val label = labelField.get(icon) as View
@@ -556,12 +489,16 @@ class BigFolderAlignHook : AppHookModule() {
                 val wh = args[3] as IntArray
                 val holder = args[0] ?: return@hookWithId null
                 val dp = activityContextGetDeviceProfile.invoke(holder) ?: return@hookWithId null
-                val metrics = readGridMetrics(dp) ?: return@hookWithId null
+                // This call is reached from resize flows; the last setup already published
+                // the measured page geometry for the same folder.
+                val metrics = LauncherGridMetrics.cached
+                    ?: LauncherGridMetrics.fromPage(null, dp)
+                    ?: return@hookWithId null
                 val spanX = args[1] as Int
                 if (spanX > 1) {
-                    val inset = if (alignToSmallFolder) metrics.insetFolder else metrics.insetIcon
+                    val inset = if (alignToSmallFolder) metrics.insetToSmallFolder else metrics.insetToIcon
                     val old = wh[0]
-                    wh[0] = spanX * metrics.cellWidth + (spanX - 1) * metrics.gapX - 2 * inset
+                    wh[0] = spanX * metrics.cellWidth + (spanX - 1) * metrics.borderX - 2 * inset
                     logger.debug("availableWh spanX=$spanX width $old -> ${wh[0]} (h=${wh[1]})")
                 }
             } catch (t: Throwable) {
@@ -597,6 +534,9 @@ class BigFolderAlignHook : AppHookModule() {
                 val padding = dpPadding.get(dp) as Rect
                 val borderSpace = dpBorderSpace.get(dp) as Point
                 val widgetPadding = dpWidgetPadding.get(dp) as Rect
+                // Snapshot the same numbers the geometry hooks consume, so a grid change is
+                // verifiable from the log alone.
+                val metrics = LauncherGridMetrics.fromPage(null, dp)
                 logger.debug(
                     "DeviceProfile cols=${invNumColumns.getInt(inv)}" +
                         " cellLayoutW=${dpGetCellLayoutWidth.invoke(dp)}" +
@@ -605,7 +545,11 @@ class BigFolderAlignHook : AppHookModule() {
                         " iconSize=${dpIconSize.getInt(dp)}" +
                         " folderIcon=${dpFolderIconSize.getInt(dp)}" +
                         " folderOffsetY=${dpFolderIconOffsetY.getInt(dp)}" +
-                        " widgetPad=${widgetPadding.left},${widgetPadding.top}"
+                        " widgetPad=${widgetPadding.left},${widgetPadding.top}" +
+                        " cellW=${metrics?.cellWidth} cellH=${metrics?.cellHeight}" +
+                        " nominalW=${metrics?.nominalCellWidth}" +
+                        " content=${metrics?.contentHeightPx}" +
+                        " profileContent=${metrics?.profileContentHeightPx}"
                 )
             } catch (t: Throwable) {
                 logger.debug("DeviceProfile telemetry failed: $t")
@@ -622,14 +566,7 @@ class BigFolderAlignHook : AppHookModule() {
         private const val CHILD_COLS = 3
         private const val CHILD_ROWS = 3
 
-        /**
-         * Target ratio of the child grid over the background size; gaps recomputed as
-         * (bg*ratio - n*childSize)/(n-1); a smaller ratio means smaller gaps and larger
-         * outer margins (assigned automatically by the centered layout).
-         */
-        private const val GRID_OCCUPANCY = 0.4f
-
-        /** Transparent margin ratio around the artwork inside the icon box (measured ~21px in a 190px box, artwork ≈ 0.78x of the box). */
+        /** Transparent margin ratio around the artwork inside the icon box; fallback only (measured ~21px in a 190px box). */
         private const val ART_INSET_RATIO = 0.11f
 
         /** One-shot log dedup (childCount/gap calls are very frequent; each key is logged once). */
@@ -641,12 +578,5 @@ class BigFolderAlignHook : AppHookModule() {
 
         /** Spans with rewritten child grids (span -> [cols, rows]); gap recomputation prefers them. */
         private val rewrittenGrids = java.util.concurrent.ConcurrentHashMap<String, IntArray>()
-
-        /** Grid metric cache for gap recomputation (refreshed by every applyAlignedGeometry setup, read by static hooks). */
-        @Volatile var cachedCellWidth = 0
-        @Volatile var cachedCellPitch = 0
-        @Volatile var cachedRowInset = 0
-        @Volatile var cachedIconSizePx = 0
-        @Volatile var cachedFolderIconSizePx = 0
     }
 }

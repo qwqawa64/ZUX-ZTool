@@ -85,26 +85,29 @@ folder) gets `2*cellW + borderX` by `2*cellH + borderY`. ZUI re-applies
   inset propagates into the big folder background width — the coupling the OPlus side
   expresses through `CellLayoutParam` is spread over several ZUI call sites.
 
-`BigFolderAlignHook` normalises a 2x2 big folder: child grid -> 3x3, gaps recomputed as
-`(bgAxis * GRID_OCCUPANCY - n*childSize) / (n-1)` (`GRID_OCCUPANCY = 0.4`), background
-width -> `spanX*cellW + (spanX-1)*borderX - 2*inset` with
+`BigFolderAlignHook` normalises a 2x2 big folder: child grid -> 3x3, gaps solved from
+the same background box the background uses (`gap = (bgAxis - n*childSize)/(n+1)`, so the
+two outer margins equal the inner gaps), background width ->
+`spanX*cellW + (spanX-1)*borderX - 2*inset` with
 `inset = (cellW - folderIconSizePx)/2` (small-folder circle), background
-`offsetY/previewSizeY` from `cellH+borderY` pitch plus `ART_INSET_RATIO = 0.11` of the icon
-size, the label `topMargin` from the same pitch, and the phone path `c()` rerouted to the
-generic `getOffsetX/getOffsetY`.
+`offsetY/previewSizeY` from `cellPitchY` plus the host's own `widgetPadding` art inset,
+the label `topMargin` from the same pitch, and the phone path `c()` rerouted to the
+generic `getOffsetX/getOffsetY`. All of them read `LauncherGridMetrics` (the page's
+measured cell), so square mode and the big folder can no longer disagree.
 
 * ZUI's stock design takes the child size and the gaps from the per-grid style table and
-  lets them be constants; the hook instead keeps `CHILD_ICON_SCALE` and grows the gaps from
-  the background, which reproduces OPlus's "solve the grid from the box" idea while leaving
-  the child icon size stock.
+  lets them be constants; the hook instead keeps `CHILD_ICON_SCALE` and solves the gaps
+  from the background, which reproduces OPlus's "solve the grid from the box" idea while
+  leaving the child icon size stock.
 * Stock `CHILD_ICON_SCALE` is a per-workspace-grid constant (and is divided by
   `inv.customIconScale`, i.e. the icon-size feature), whereas OPlus solves the child size
   from the two cells. With ZTool's custom grids the stock table has no entry — `BigFolderConfig.init()`
   falls back to the 6x4 table in its `else` branch, which is exactly the "big folder looks
   different on every grid" symptom the hook is fixing.
-* `ART_INSET_RATIO` is a measurement standing in for `DeviceProfile.widgetPadding`
-  (`getDefaultPaddingForWidget`), i.e. the transparent margin the host itself uses for the
-  background width; reading `widgetPadding` directly would remove the magic constant.
+* The art inset is now `DeviceProfile.widgetPadding` (the value the host itself uses in
+  `PreviewBackground.setup` and `computeBigFolderAvaliableWh`); the previous measured
+  constant (`ART_INSET_RATIO = 0.11`) survives only as a fallback for platforms that
+  report no widget padding.
 
 ## 5. Consistency across grid layouts
 
