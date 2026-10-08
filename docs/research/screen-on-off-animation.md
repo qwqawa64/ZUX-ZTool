@@ -99,15 +99,12 @@ visible".
 
 ## 4. What the module does instead
 
-Only one intervention remains, plus the two hooks that make the fade exist at all:
+Two hooks remain:
 
-1. `DisplayPowerController.<init>` — force `mColorFadeEnabled` and `mColorFadeFadesConfig`
-   to `true` after the constructor returns, so `initialize()` creates the animators and the
-   fade uses the mode-`2` color layer.
-2. `DisplayPowerController.initialize` — overwrite both animator durations with the
+1. `DisplayPowerController.initialize` — overwrite both animator durations with the
    configured value (`mColorFadeOnDurations`/`mColorFadeOffDurations` are static and only
    read when the animators are created).
-3. `DisplayPowerController.animateScreenStateChange` — let the host run, then rebuild the
+2. `DisplayPowerController.animateScreenStateChange` — let the host run, then rebuild the
    fade it dropped:
 
 ```text
@@ -131,13 +128,22 @@ layer with alpha `1 - level`, i.e. level `0` is opaque black and level `1` is tr
 
 ### Dropped along the way
 
-- **`DisplayPowerController$Injector.isColorFadeEnabled` hook** — its only caller is the
-  DisplayPowerController constructor (line 1819 of the smali, stored into `mColorFadeEnabled`
-  at 1837), and hook 1 above already writes that field. Verified working: the module logged
-  `fadeEnabled=true` while reading the field from `animateScreenStateChange`.
+- **The whole constructor hook** — it only wrote `mColorFadeEnabled` and `mColorFadeFadesConfig`
+  after `chain.proceed()` to work around a host that ships the fade disabled. Both fields are
+  already `true` on this device (see section 6), verified by reading them before writing:
+  `mColorFadeEnabled: already enabled by the host` / `mColorFadeFadesConfig: already enabled by
+  the host`, and no `Forced …` line ever appeared. Removing it also removed the 12-argument
+  constructor signature and the only reflective write to a `final` field.
+- **`DisplayPowerController$Injector.isColorFadeEnabled` hook** — its only caller is that same
+  constructor, and the body is just `!ActivityManager.isLowRamDeviceStatic()`.
 - **Starting the ON animator before `chain.proceed()`** — useless on this ROM, see section 2.
 - **The `dismissColorFade` diagnostic hook** — the dismiss is always preceded by
   `setColorFadeLevel(1.0f)`, so a "live fade" test on the level never fires on this ROM.
+
+If a device ever ships the fade disabled (low RAM, or ODM boolean `0x111014c` false), the
+animators are never created and neither remaining hook has anything to work on. The cheap way
+back is a three-line hook on `Injector.isColorFadeEnabled` returning `true`, which is
+preferable to writing the `final` field from the constructor hook.
 
 ### Rejected: forcing `MotoDesktopManager.isReadyForDisplay` to `true`
 
@@ -190,15 +196,15 @@ Every prerequisite and what provides it:
 
 | Prerequisite | Provided by |
 | --- | --- |
-| `mColorFadeEnabled == true` (else the level is snapped to `0` and the panel blanks immediately) | constructor hook, field forcing |
-| `mColorFadeOffAnimator != null` (created in `initialize()` only when `mColorFadeEnabled`) | same field forcing |
-| off duration | `initialize` hook (`mColorFadeOffDurations` is static, read at creation) |
+| `mColorFadeEnabled == true` (else the level is snapped to `0` and the panel blanks immediately) | the host itself on this device; the module used to force it and no longer does |
+| `mColorFadeOffAnimator != null` (created in `initialize()` only when `mColorFadeEnabled`) | same |
+| off duration | the remaining `initialize` hook (`mColorFadeOffDurations` is static, read at creation) |
 | `shouldPerformScreenOffTransition()` | `DisplayStateController.mPerformScreenOffTransition`, set to `!mShouldSkipScreenOffTransition` whenever the request policy is `OFF`; the module does not touch it |
 | `prepareColorFade(...)` success | mode `2` needs only `createSurfaceControl`; mode `1` (when `mColorFadeFadesConfig` is false) runs the full EGL/screenshot pipeline |
 
-**There is no off-specific hook to trim**: the off animation rides entirely on the same
-constructor and `initialize` hooks that the on animation needs. The host resources behind
-those two fields, from the DisplayPowerController constructor:
+**There is no off-specific hook, and none was removable**: the off animation rides entirely on
+hooks the on animation needs, and the one field-forcing hook the module had turned out to be a
+no-op. The host resources behind those fields, from the DisplayPowerController constructor:
 
 ```text
 mColorFadeOnDurations  = LgsiResUtils.getInternalInteger("config_colorFadeOnDurations", 250);
@@ -209,7 +215,8 @@ mColorFadeFadesConfig  = res.getBoolean(0x1110034);
 Injector.isColorFadeEnabled() -> !ActivityManager.isLowRamDeviceStatic()
 ```
 
-So the stock switch-off is "low RAM device, or the ODM boolean is false". Both fields are
-therefore already true on an ordinary device, which is why the module now writes them only
-when they are false (and logs the stock value at `debug`). The module's own duration default
-(`SCREEN_ON_OFF_ANIMATION_MS` = 400) also overrides the ROM's 250 ms on-duration by default.
+The stock switch-off is "low RAM device, or the ODM boolean is false", so both fields are
+already `true` on an ordinary device — confirmed at runtime (`already enabled by the host`,
+never `Forced …`), which is what allowed the constructor hook to go. The module's own duration
+default (`SCREEN_ON_OFF_ANIMATION_MS` = 400) also overrides the ROM's 250 ms on-duration by
+default, which is why the preference exists at all.
