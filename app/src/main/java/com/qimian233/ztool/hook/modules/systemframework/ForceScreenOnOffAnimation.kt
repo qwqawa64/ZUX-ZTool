@@ -57,9 +57,8 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
             hookWithId(constructor, "display_power_controller_init") { chain ->
                 val result = chain.proceed()
                 val thisObject = chain.thisObject
-                findField(thisObject.javaClass, "mColorFadeEnabled").setBoolean(thisObject, true)
-                findField(thisObject.javaClass, "mColorFadeFadesConfig").setBoolean(thisObject, true)
-                logger.debug("Forced DisplayPowerController color fade animation enabled.")
+                enableIfDisabled(thisObject, "mColorFadeEnabled")
+                enableIfDisabled(thisObject, "mColorFadeFadesConfig")
                 result
             }
         } catch (e: Exception) {
@@ -94,17 +93,25 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
                     .invoke(offAnimator, SCREEN_OFF_ANIMATION_DURATION_MS)
             }
             logger.debug("Configured color fade animator durations: on="
-                + getAnimatorDuration(onAnimator)
-                + ", off=" + getAnimatorDuration(offAnimator))
+                + SCREEN_ON_ANIMATION_DURATION_MS
+                + ", off=" + SCREEN_OFF_ANIMATION_DURATION_MS)
         } catch (t: Throwable) {
             logger.error("Failed to configure color fade animator durations: ", t)
         }
     }
 
-    private fun getAnimatorDuration(animator: Any?): Long {
-        return try {
-            findMethod(animator?.javaClass, "getDuration").invoke(animator) as? Long ?: -1L
-        } catch (_: Throwable) { -1L }
+    private fun enableIfDisabled(controller: Any, name: String) {
+        try {
+            val field = findField(controller.javaClass, name)
+            if (field.getBoolean(controller)) {
+                logger.debug(name + ": already enabled by the host")
+                return
+            }
+            field.setBoolean(controller, true)
+            logger.info("Forced " + name + " to true: the host disables it on this device")
+        } catch (t: Throwable) {
+            logger.error("Failed to force " + name + ": ", t)
+        }
     }
 
     private fun hookDisplayPowerControllerScreenOnAnimation(classLoader: ClassLoader) {

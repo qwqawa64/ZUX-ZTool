@@ -167,3 +167,49 @@ calls happen before a fade can start:
 
 The two blocked calls never reach a dismiss, which is why no start-timing guards are needed:
 the rebuild only triggers on the call that actually dropped a live fade.
+
+## 6. Screen-off chain audit
+
+The off branch of the same method (target `STATE_OFF`) is:
+
+```text
+mPendingScreenOff = true;
+if (!mColorFadeEnabled) setColorFadeLevel(0.0f);
+if (getColorFadeLevel() == 0.0f) { setScreenState(OFF, why); mPendingScreenOff = false;
+                                   dismissColorFadeResources(); return; }
+if (shouldPerformScreenOffTransition() && !shouldShowOpenFlipMessageDialog()) {
+    if (prepareColorFade(mContext, mColorFadeFadesConfig ? 2 : 1) && getScreenState() != OFF) {
+        mColorFadeOffAnimator.start();
+        return;
+    }
+}
+mColorFadeOffAnimator.end();
+```
+
+Every prerequisite and what provides it:
+
+| Prerequisite | Provided by |
+| --- | --- |
+| `mColorFadeEnabled == true` (else the level is snapped to `0` and the panel blanks immediately) | constructor hook, field forcing |
+| `mColorFadeOffAnimator != null` (created in `initialize()` only when `mColorFadeEnabled`) | same field forcing |
+| off duration | `initialize` hook (`mColorFadeOffDurations` is static, read at creation) |
+| `shouldPerformScreenOffTransition()` | `DisplayStateController.mPerformScreenOffTransition`, set to `!mShouldSkipScreenOffTransition` whenever the request policy is `OFF`; the module does not touch it |
+| `prepareColorFade(...)` success | mode `2` needs only `createSurfaceControl`; mode `1` (when `mColorFadeFadesConfig` is false) runs the full EGL/screenshot pipeline |
+
+**There is no off-specific hook to trim**: the off animation rides entirely on the same
+constructor and `initialize` hooks that the on animation needs. The host resources behind
+those two fields, from the DisplayPowerController constructor:
+
+```text
+mColorFadeOnDurations  = LgsiResUtils.getInternalInteger("config_colorFadeOnDurations", 250);
+mColorFadeOffDurations = LgsiResUtils.getInternalInteger("config_colorFadeOffDurations", 400);
+mColorFadeEnabled      = Injector.isColorFadeEnabled() && res.getBoolean(0x111014c);
+mColorFadeFadesConfig  = res.getBoolean(0x1110034);
+
+Injector.isColorFadeEnabled() -> !ActivityManager.isLowRamDeviceStatic()
+```
+
+So the stock switch-off is "low RAM device, or the ODM boolean is false". Both fields are
+therefore already true on an ordinary device, which is why the module now writes them only
+when they are false (and logs the stock value at `debug`). The module's own duration default
+(`SCREEN_ON_OFF_ANIMATION_MS` = 400) also overrides the ROM's 250 ms on-duration by default.
