@@ -862,7 +862,6 @@
     <string name="page_home_dev_build_title">Development build</string>
     <string name="page_home_dev_build_warn">This is a development build. It may contain unverified changes and is not guaranteed to be stable. Switch back to an official release for daily use.</string>
     <!--Home tip card-->
-    <string name="page_home_tip_title">Tip</string>
     <string name="page_home_tip_extreme_refresh_rate">Enable extreme high refresh rate for the best animations</string>
     <string name="page_home_tip_misans_font">Flash MiSans for the best MIUIx theme experience</string>
     <string name="page_home_tip_feature_count_power">More features enabled means more battery drain</string>

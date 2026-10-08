@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -19,9 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.qimian233.ztool.R
 import com.qimian233.ztool.data.home.HomeTip
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
@@ -67,18 +64,11 @@ internal fun TipCard(tip: HomeTip) {
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = stringResource(R.string.page_home_tip_title),
+                    text = stringResource(tip.messageRes),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
                     color = contentColor
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(tip.messageRes),
-                style = MaterialTheme.typography.bodyMedium,
-                color = contentColor
-            )
         }
     }
 }

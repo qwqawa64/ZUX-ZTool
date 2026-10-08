@@ -944,7 +944,6 @@
     <string name="page_home_dev_build_title">开发版本</string>
     <string name="page_home_dev_build_warn">当前安装的是开发版本，可能包含未经验证的改动，无法保证稳定性！如需稳定体验请切换回正式版。</string>
     <!--首页小提示卡片-->
-    <string name="page_home_tip_title">小提示</string>
     <string name="page_home_tip_extreme_refresh_rate">开启极致高刷新率模式获取最佳动画体验</string>
     <string name="page_home_tip_misans_font">刷入 MiSans 字体获取最佳 MIUIx 主题使用体验</string>
     <string name="page_home_tip_feature_count_power">开启的功能数和耗电量呈正相关</string>
