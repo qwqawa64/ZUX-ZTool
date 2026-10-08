@@ -68,44 +68,52 @@ a constant non-zero step, so the padding drifted instead of converging.
 
 ## 5. Working solve
 
-`cellWidth` falls by `2px` per `1px` of side padding, `cellHeight` does not depend on the
-side padding, so one pass is exact and idempotent:
+The cell size that reaches the icon views is the one the page hands to its container, so
+the solve runs *inside* `CellLayout#onMeasure`, where the page box is the MeasureSpec the
+launcher passed in:
 
 ```
-side' = side + cols * (liveCellWidth - liveCellHeight) / 2
+byHeight = (boxHeight - paddingTop - paddingBottom - borderY * (rows - 1)) / rows
+byWidth  = (boxWidth - borderX * (cols - 1)) / cols          // with zero side padding
+side     = min(byHeight, byWidth)                            // square cell, fits both axes
+padding  = (boxWidth - (cols * side + borderX * (cols - 1))) / 2
 ```
 
-`liveCellWidth/liveCellHeight` are derived exactly like `CellLayout#onMeasure` from the
-page's measured size, the page's current padding, `cellLayoutBorderSpacePx` and the page's
-cell counts. Window insets are dispatched before the first measure, so the first pass may
-have no measured page: it falls back to `availableWidthPx/availableHeightPx` and a
-`postOnAnimation` re-check re-solves from live geometry once the layout has run.
+`side` goes to `ShortcutAndWidgetContainer#setCellDimensions`, `padding` to the page (and
+to `DeviceProfile.cellLayoutPaddingPx`). `PagedView#getChildWidth` cancels the page padding
+for a single panel, so the box does not move when the padding changes — the pass converges
+after one relayout and is then a no-op.
+
+Two traps make this the only workable place:
+
+* `CellLayout#onMeasure` calls `setCellDimensions` **before** `setMeasuredDimension`, so
+  `page.getMeasuredWidth()` is still 0 (or stale) at that moment; the MeasureSpec is the
+  only trustworthy page box.
+* The container is seeded in `CellLayout`'s constructor with
+  `setCellDimensions(f2156a=-1, f2157b=-1, …)` while the container still has no parent, so
+  a container-level hook sees a detached view and never the real geometry.
 
 ## 6. The icon box is the container's cell size
 
 `ShortcutAndWidgetContainer#measureChild` measures every workspace item with
 `lp.width x lp.height`, and `CellLayoutLayoutParams#setup` derives those from the
-container's own cell size (`mCellWidth/mCellHeight`, set through
-`ShortcutAndWidgetContainer#setCellDimensions`). So the box a layout inspector reports for
-`DoubleShadowBubbleTextView` is the container's cell size, which is *not* necessarily the
-pitch the page box implies. The hook therefore also rewrites that call
-(`WideGrid: cell container WxH -> SxS …`) and forces `S = min(page-derived width, height)`.
+container's cell size (`mCellWidth/mCellHeight`). Measured on device with a 10x6 grid:
+`DoubleShadowBubbleTextView 294x232 lp=294x232 locked=true margin=0,0,0,0`, i.e. the box a
+layout inspector reports is exactly the container cell size, not the pitch the page box
+implies (`(3112 - 2*86)/10 = 294`, `(1482 - 90)/6 = 232`).
 
 ## 7. Runtime field notes
 
-`WideGrid: square solve|recheck …` logs the whole decision:
+`WideGrid: page measure …` logs the decision:
 
 ```
-live=317x188 calc=317x188 page=2590x1618 pad=216,140,216,180 cols=8 rows=6 \
-border=12,8 profile=216/216 side=216->732
+page measure box=3112x1482 pad=86->396 side=232 cols=10 rows=6 border=0,0 \
+children=[DoubleShadowBubbleTextView 294x232 lp=294x232 locked=true margin=0,0,0,0 pad=23,0,23,0]
 ```
 
-* `live` — `CellLayout#getCellWidth/getCellHeight`, the size the page last laid out with.
-* `calc` — the same size derived from `page` minus `pad` and `border`.
-* `pad` vs `profile` — the page's actual padding versus `DeviceProfile.cellLayoutPaddingPx`.
-  If they disagree, `Workspace#H1()` did not carry the Rect and the hook sets the page
-  padding directly (logged as "pages did not carry cellLayoutPaddingPx").
-* A `live` that stays constant while `calc` follows the padding means the cell size is
-  pinned somewhere other than this path; the re-check then logs
-  "square mode gave up, cell size does not follow padding" and stops instead of drifting.
+* `box` — the page's MeasureSpec, i.e. the box the launcher measured the page with.
+* `pad A->B` — the page padding before and after the solve.
+* `side` — the square cell size handed to the container.
+* `children=` — the first two grid items as they were actually measured (box, layout
+  params, `isLockedToGrid`, margins, padding).
 
