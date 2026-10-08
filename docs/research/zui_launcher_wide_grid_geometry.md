@@ -80,3 +80,22 @@ page's measured size, the page's current padding, `cellLayoutBorderSpacePx` and 
 cell counts. Window insets are dispatched before the first measure, so the first pass may
 have no measured page: it falls back to `availableWidthPx/availableHeightPx` and a
 `postOnAnimation` re-check re-solves from live geometry once the layout has run.
+
+## 6. Runtime field notes
+
+`WideGrid: square solve|recheck …` logs the whole decision:
+
+```
+live=317x188 calc=317x188 page=2590x1618 pad=216,140,216,180 cols=8 rows=6 \
+border=12,8 profile=216/216 side=216->732
+```
+
+* `live` — `CellLayout#getCellWidth/getCellHeight`, the size the page last laid out with.
+* `calc` — the same size derived from `page` minus `pad` and `border`.
+* `pad` vs `profile` — the page's actual padding versus `DeviceProfile.cellLayoutPaddingPx`.
+  If they disagree, `Workspace#H1()` did not carry the Rect and the hook sets the page
+  padding directly (logged as "pages did not carry cellLayoutPaddingPx").
+* A `live` that stays constant while `calc` follows the padding means the cell size is
+  pinned somewhere other than this path; the re-check then logs
+  "square mode gave up, cell size does not follow padding" and stops instead of drifting.
+

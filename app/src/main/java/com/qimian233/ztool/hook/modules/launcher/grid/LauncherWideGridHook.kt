@@ -115,9 +115,12 @@ class LauncherWideGridHook : AppHookModule() {
                         PreferenceKeys.LAUNCHER_WIDE_GRID_SQUARE.default
                     )
                 ) {
-                    val side = solveSquareSide(workspace, dp, square, resolver, liveOnly = false)
-                    if (side != null && applyCellLayoutSide(dp, side, resolver)) {
-                        reapplyInsets(workspace, insets)
+                    val solve = solveSquareSide(workspace, dp, square, resolver, preferLive = false)
+                    if (solve != null) {
+                        logger.info("WideGrid: square solve ${solve.report}")
+                        if (applyCellLayoutSide(workspace, dp, solve.side, square, resolver)) {
+                            reapplyInsets(workspace, insets)
+                        }
                     }
                     // Window insets are dispatched before the first measure, so the pages
                     // may still be unmeasured here: re-check against the live geometry
@@ -133,7 +136,7 @@ class LauncherWideGridHook : AppHookModule() {
                                 return
                             }
                             val live = try {
-                                solveSquareSide(workspace, dp, square, resolver, liveOnly = true)
+                                solveSquareSide(workspace, dp, square, resolver, preferLive = true)
                             } catch (th: Throwable) {
                                 logger.error("WideGrid: post-layout square check failed", th)
                                 null
@@ -142,7 +145,10 @@ class LauncherWideGridHook : AppHookModule() {
                                 if (attemptsLeft-- > 0) workspace.postOnAnimation(this)
                                 return
                             }
-                            if (applyCellLayoutSide(dp, live, resolver)) reapplyInsets(workspace, insets)
+                            logger.info("WideGrid: square recheck ${live.report}")
+                            if (applyCellLayoutSide(workspace, dp, live.side, square, resolver)) {
+                                reapplyInsets(workspace, insets)
+                            }
                         }
                     }
                     workspace.postOnAnimation(recheck)
@@ -191,9 +197,12 @@ class LauncherWideGridHook : AppHookModule() {
         val numRows = tryField(invClass, "numRows") ?: return null
         val getCountX = tryMethod(pageClass, "getCountX") ?: return null
         val getCountY = tryMethod(pageClass, "getCountY") ?: return null
+        // Optional: the cell size the page last laid out with, used to verify the math.
+        val getCellWidth = optionalMethod(pageClass, "getCellWidth")
+        val getCellHeight = optionalMethod(pageClass, "getCellHeight")
         return SquareFields(
             pageClass, borderSpace, availableWidth, availableHeight,
-            invField, numColumns, numRows, getCountX, getCountY
+            invField, numColumns, numRows, getCountX, getCountY, getCellWidth, getCellHeight
         )
     }
 
@@ -211,24 +220,41 @@ class LauncherWideGridHook : AppHookModule() {
         null
     }
 
+    private fun optionalMethod(owner: Class<*>, name: String): Method? = try {
+        findMethod(owner, name)
+    } catch (th: Throwable) {
+        logger.info("WideGrid: optional method '$name' missing")
+        null
+    }
+
+    private fun callInt(method: Method?, target: Any): Int {
+        if (method == null) return -1
+        return try {
+            method.invoke(target) as? Int ?: -1
+        } catch (th: Throwable) {
+            -1
+        }
+    }
+
     /**
-     * Solves the side padding that makes cell width equal cell height. Cell width falls by
-     * 2px per 1px of side padding, so the target is `side + columns * (cellWidth -
-     * cellHeight) / 2`, reading live page geometry and falling back to the window size.
+     * Solves the side padding that makes cell width equal cell height, using the cell
+     * width the page last laid out with when [preferLive] is set and the geometry derived
+     * from the page box otherwise. Cell width falls by 2px per 1px of side padding.
      *
-     * @param liveOnly skip the fallback and wait for a measured page.
-     * @return target side padding, or null when no usable geometry exists yet.
+     * @param preferLive require a laid-out page and refuse to act when its cell size does
+     *   not match the geometry derived from the page box.
+     * @return target side padding plus a diagnostic snapshot, or null when unusable.
      */
     private fun solveSquareSide(
         workspace: View,
         dp: Any,
         fields: SquareFields,
         resolver: ProfileResolver,
-        liveOnly: Boolean
-    ): Int? {
+        preferLive: Boolean
+    ): SquareSolve? {
         val cellPadding = resolver.cellPadding.get(dp) as? Rect ?: return null
         val measuredPage = findPage(workspace, fields.pageClass, requireMeasured = true)
-        if (measuredPage == null && liveOnly) return null
+        if (preferLive && measuredPage == null) return null
         val page = measuredPage ?: findPage(workspace, fields.pageClass, requireMeasured = false)
         val width = measuredPage?.measuredWidth ?: fields.availableWidth.getInt(dp)
         val height = measuredPage?.measuredHeight ?: fields.availableHeight.getInt(dp)
@@ -240,15 +266,29 @@ class LauncherWideGridHook : AppHookModule() {
         val rows = liveOrProfileCount(page, fields.getCountY, dp, fields.inv, fields.numRows)
         val border = fields.borderSpace.get(dp) as? Point ?: return null
         if (width <= 0 || height <= 0 || cols <= 0 || rows <= 0) {
-            logger.debug("WideGrid: square mode skipped, geometry ${width}x$height cols=$cols rows=$rows")
+            logger.info("WideGrid: square skipped, geometry ${width}x$height cols=$cols rows=$rows")
             return null
         }
         val borderX = border.x * (cols - 1)
         val borderY = border.y * (rows - 1)
-        val cellWidth = (width - padLeft - padRight - borderX) / cols
-        val cellHeight = (height - padTop - padBottom - borderY) / rows
+        val calcWidth = (width - padLeft - padRight - borderX) / cols
+        val calcHeight = (height - padTop - padBottom - borderY) / rows
+        val liveWidth = if (measuredPage != null) callInt(fields.getCellWidth, measuredPage) else -1
+        val liveHeight = if (measuredPage != null) callInt(fields.getCellHeight, measuredPage) else -1
+        // The page lays its cells out from the padding: a live size that disagrees with the
+        // page box means the cell size is pinned elsewhere and padding cannot move it.
+        if (preferLive && (liveWidth <= 0 || liveHeight <= 0 || abs(liveWidth - calcWidth) > 1)) {
+            logger.error(
+                "WideGrid: square mode gave up, cell size does not follow padding " +
+                    "live=${liveWidth}x$liveHeight calc=${calcWidth}x$calcHeight " +
+                    "page=${width}x$height pad=$padLeft,$padTop,$padRight,$padBottom"
+            )
+            return null
+        }
+        val cellWidth = if (preferLive) liveWidth else calcWidth
+        val cellHeight = if (preferLive) liveHeight else calcHeight
         if (cellWidth <= 0 || cellHeight <= 0) {
-            logger.debug("WideGrid: square mode skipped, cells w=$cellWidth h=$cellHeight")
+            logger.info("WideGrid: square skipped, cells w=$cellWidth h=$cellHeight")
             return null
         }
         val side = (padLeft + padRight) / 2
@@ -259,20 +299,11 @@ class LauncherWideGridHook : AppHookModule() {
         } else {
             (side + cols * (cellWidth - cellHeight) / 2).coerceIn(0, maxSide)
         }
-        val unchanged = cellPadding.left == target && cellPadding.right == target
-        if (unchanged) {
-            logger.debug(
-                "WideGrid: square mode stable cellW=$cellWidth cellH=$cellHeight " +
-                    "cols=$cols rows=$rows side=$target"
-            )
-        } else {
-            logger.info(
-                "WideGrid: square mode cellW=$cellWidth cellH=$cellHeight cols=$cols rows=$rows " +
-                    "page=${width}x$height side=$side->$target" +
-                    (if (measuredPage != null) " (live)" else " (model)")
-            )
-        }
-        return target
+        val report = "live=${liveWidth}x$liveHeight calc=${calcWidth}x$calcHeight " +
+            "page=${width}x$height pad=$padLeft,$padTop,$padRight,$padBottom cols=$cols rows=$rows " +
+            "border=${border.x},${border.y} profile=${cellPadding.left}/${cellPadding.right} " +
+            "side=$side->$target"
+        return SquareSolve(target, report)
     }
 
     private fun findPage(workspace: View, pageClass: Class<*>, requireMeasured: Boolean): View? {
@@ -308,13 +339,46 @@ class LauncherWideGridHook : AppHookModule() {
         }
     }
 
-    /** Writes the square-mode side padding; returns whether anything changed. */
-    private fun applyCellLayoutSide(dp: Any, side: Int, resolver: ProfileResolver): Boolean {
-        val cellPadding = resolver.cellPadding.get(dp) as Rect
-        if (cellPadding.left == side && cellPadding.right == side) return false
-        cellPadding.left = side
-        cellPadding.right = side
-        return true
+    /**
+     * Writes the square-mode side padding to the profile and, when the pages do not carry
+     * that Rect, straight onto the pages. Returns whether anything changed.
+     */
+    private fun applyCellLayoutSide(
+        workspace: View,
+        dp: Any,
+        side: Int,
+        fields: SquareFields,
+        resolver: ProfileResolver
+    ): Boolean {
+        val cellPadding = resolver.cellPadding.get(dp) as? Rect ?: return false
+        val group = workspace as? ViewGroup ?: return cellPadding.left != side || cellPadding.right != side
+        var reachedPages = true
+        for (i in 0 until group.childCount) {
+            val page = group.getChildAt(i) ?: continue
+            if (!fields.pageClass.isInstance(page)) continue
+            if (page.paddingLeft != cellPadding.left || page.paddingRight != cellPadding.right) {
+                reachedPages = false
+                break
+            }
+        }
+        var pagesChanged = false
+        if (!reachedPages) {
+            logger.info("WideGrid: pages did not carry cellLayoutPaddingPx, setting page padding")
+            for (i in 0 until group.childCount) {
+                val page = group.getChildAt(i) ?: continue
+                if (!fields.pageClass.isInstance(page)) continue
+                if (page.paddingLeft != side || page.paddingRight != side) {
+                    page.setPadding(side, page.paddingTop, side, page.paddingBottom)
+                    pagesChanged = true
+                }
+            }
+        }
+        val rectChanged = cellPadding.left != side || cellPadding.right != side
+        if (rectChanged) {
+            cellPadding.left = side
+            cellPadding.right = side
+        }
+        return rectChanged || pagesChanged
     }
 
     private fun applySideInset(dp: Any, sideInsetPx: Int, resolver: ProfileResolver) {
@@ -331,6 +395,9 @@ class LauncherWideGridHook : AppHookModule() {
         )
     }
 
+    /** Solved side padding plus a one-line snapshot of the geometry it was read from. */
+    private class SquareSolve(val side: Int, val report: String)
+
     /** Reflection members resolved at install time for square mode. */
     private class SquareFields(
         val pageClass: Class<*>,
@@ -341,7 +408,9 @@ class LauncherWideGridHook : AppHookModule() {
         val numColumns: Field,
         val numRows: Field,
         val getCountX: Method,
-        val getCountY: Method
+        val getCountY: Method,
+        val getCellWidth: Method?,
+        val getCellHeight: Method?
     )
 
     /** Reflection entry points resolved once at install time. */
