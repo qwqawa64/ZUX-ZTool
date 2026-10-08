@@ -202,12 +202,7 @@ internal fun NonZuxOsCard(onDismiss: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     color = LocalZToolColorScheme.current.onErrorContainer
                 )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
+                Spacer(modifier = Modifier.weight(1f))
                 ZToolTextButton(
                     onClick = onDismiss,
                     text = stringResource(R.string.page_home_non_zuxos_dismiss),
