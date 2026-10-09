@@ -150,8 +150,8 @@ Its child grid follows the alignment switch. Hook off: the host style table, whi
 `BigFolderAlignHook` rewrites every multi-cell span to (`CHILD_COLS`/`CHILD_ROWS`), which is
 what the live folder shows.
 
-`ChildIconScale` is the host's `CHILD_ICON_SCALE` (0.8235, divided by `customIconScale` at
-init). `FolderIconToIcon` and `ArtInsetToIcon` stay provisional: `folderIconSizePx` comes from
-`folder_icon_size_scale` (a float resource the app cannot read) and `widgetPadding` from the
-framework's default widget padding. One `BigFolderAlign span=2x2 … folderIcon=… icon=…
-widgetPadL=…` log line pins both.
+The remaining host ratios come from the hook's own DeviceProfile log line
+(`iconSize=190 folderIcon=158 folderOffsetY=16 widgetPad=40,40`): `ChildIconScale` is the
+host's `CHILD_ICON_SCALE` (0.8235, divided by `customIconScale` at init), `folderIconSizePx`
+is 0.832 of the icon size, and `widgetPadding` is 0.21 of it, which insets the background and
+carries its art inset. `folderOffsetY = (icon - folderIcon) / 2` confirms the pair.

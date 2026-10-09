@@ -79,12 +79,12 @@ private const val HookedChildColumns = 3
 private const val HookedChildRows = 3
 
 /**
- * Host big-folder values. `ChildIconScale` is `BigFolderConfig.CHILD_ICON_SCALE`; the other
- * two are provisional until a device log pins them, see docs/research/big_folder_tuning.md.
+ * Host big-folder ratios: `ChildIconScale` is `BigFolderConfig.CHILD_ICON_SCALE`, the other
+ * two are read off the hook's DeviceProfile log (folderIcon 158 / icon 190, widgetPad 40).
  */
 private const val ChildIconScale = 0.8235f
-private const val FolderIconToIcon = 0.9f
-private const val ArtInsetToIcon = 0.11f
+private const val FolderIconToIcon = 0.832f
+private const val WidgetPaddingToIcon = 0.21f
 
 /** Background corner radius against its height; the host uses a fixed dimension. */
 private const val FolderBackgroundRadiusFraction = 0.14f
@@ -304,9 +304,10 @@ private fun BigFolderItem(
     val icon = grid.iconSize
     val folderIcon = icon * FolderIconToIcon
     val child = folderIcon * ChildIconScale
-    // widgetPadding is unreadable; the hook falls back to the small-folder circle inset.
-    val insetX = maxOf(0.dp, (cell - folderIcon) / 2)
-    val artInset = icon * ArtInsetToIcon
+    // DeviceProfile.widgetPadding insets the background and carries its art inset.
+    val widgetPadding = icon * WidgetPaddingToIcon
+    val insetX = widgetPadding
+    val artInset = widgetPadding
     val rowInset = maxOf(0.dp, pitchY * (1f - CellContentHeightFraction) / 2)
     // Untuned box and background, then the tuned background box and position.
     val baseWidth = cell * BigFolderSpan - insetX * 2

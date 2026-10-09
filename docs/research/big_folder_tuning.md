@@ -90,6 +90,7 @@ background         = width = cellW * spanX - 2 * widgetPadding.left
 background radius  = R.dimen.big_folder_icon_radius (a fixed dimension, not a ratio)
 ```
 
-The hook then overrides the background width/offset and the preview mirrors that. Two values
-cannot be read from the app and are provisional in `LauncherPreviewCard.kt`:
-`folder_icon_size_scale` (so `FolderIconToIcon`) and `widgetPadding` (`ArtInsetToIcon`).
+The hook then overrides the background width/offset and the preview mirrors that. Measured on
+device (`iconSize=190 folderIcon=158 folderOffsetY=16 widgetPad=40,40`): `folderIconSizePx` is
+0.832 of the icon size, `widgetPadding` is 0.21 of it, and `ChildIconScale` is 0.8235. The
+preview carries those three ratios in `LauncherPreviewCard.kt`.
