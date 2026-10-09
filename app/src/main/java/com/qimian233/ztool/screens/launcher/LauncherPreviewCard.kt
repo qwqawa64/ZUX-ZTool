@@ -71,10 +71,12 @@ private const val DockGapToIconFraction = 0.5f
 /** Slot carrying the separator between the fixed dock icons and the app icons. */
 private const val DockSeparatorIndex = 5
 
-/** Big-folder span, and the 2x2 child grid the host style table declares (4 columns x 3 rows). */
+/** Big-folder span, the host 2x2 child grid, and the grid the hook rewrites it to. */
 private const val BigFolderSpan = 2
-private const val BigFolderChildColumns = 4
-private const val BigFolderChildRows = 3
+private const val HostChildColumns = 4
+private const val HostChildRows = 3
+private const val HookedChildColumns = 3
+private const val HookedChildRows = 3
 
 /**
  * Host big-folder values. `ChildIconScale` is `BigFolderConfig.CHILD_ICON_SCALE`; the other
@@ -292,6 +294,9 @@ private fun BigFolderItem(
     colors: ColorScheme
 ) {
     val tune = config.bigFolderTune
+    // The alignment hook rewrites every multi-cell child grid to 3x3; the host table says 4x3.
+    val childColumns = if (config.bigFolderHooked) HookedChildColumns else HostChildColumns
+    val childRows = if (config.bigFolderHooked) HookedChildRows else HostChildRows
     // Launcher px share the device density, so they scale into the mock frame.
     val pxToMock = (frameWidth.value / screenWidth / density).dp
     val cell = grid.cellWidth
@@ -312,16 +317,16 @@ private fun BigFolderItem(
     val backgroundY = rowInset + artInset + pxToMock * tune.bgY
     val gapH = maxOf(
         0.dp,
-        (baseWidth - child * BigFolderChildColumns) / (BigFolderChildColumns + 1) +
+        (baseWidth - child * childColumns) / (childColumns + 1) +
             pxToMock * tune.gapH
     )
     val gapV = maxOf(
         0.dp,
-        (baseHeight - child * BigFolderChildRows) / (BigFolderChildRows + 1) +
+        (baseHeight - child * childRows) / (childRows + 1) +
             pxToMock * tune.gapV
     )
-    val childGridWidth = child * BigFolderChildColumns + gapH * (BigFolderChildColumns - 1)
-    val childGridHeight = child * BigFolderChildRows + gapV * (BigFolderChildRows - 1)
+    val childGridWidth = child * childColumns + gapH * (childColumns - 1)
+    val childGridHeight = child * childRows + gapV * (childRows - 1)
     val childLeft = backgroundX + backgroundWidth / 2 + pxToMock * tune.shiftX -
         childGridWidth / 2
     val childTop = backgroundY + backgroundHeight / 2 + pxToMock * tune.shiftY -
@@ -336,8 +341,8 @@ private fun BigFolderItem(
                 .clip(RoundedCornerShape(backgroundHeight * FolderBackgroundRadiusFraction))
                 .background(colors.onSurfaceVariant.copy(alpha = 0.22f))
         )
-        repeat(BigFolderChildRows) { row ->
-            repeat(BigFolderChildColumns) { column ->
+        repeat(childRows) { row ->
+            repeat(childColumns) { column ->
                 Box(
                     modifier = Modifier
                         .offset(

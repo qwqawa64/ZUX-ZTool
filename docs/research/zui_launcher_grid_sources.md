@@ -144,10 +144,11 @@ The big folder is drawn inside the desktop grid at the top-left 2x2 cells, with
 `bg_x`/`bg_y` knobs, the child grid whose gaps come from `gap_h`/`gap_v`, and the
 `shift_x`/`shift_y` centring.
 
-Its child grid follows the host style table, which declares **4 columns x 3 rows** for a 2x2
-span on the 8x6 grid (`BigFolderConfig.getBigFolderIconChildCount`). Note that
-`BigFolderAlignHook` currently rewrites that grid to 3x3 (`CHILD_COLS`/`CHILD_ROWS`), so the
-live folder shows 9 children; the preview follows the host table.
+Its child grid follows the alignment switch. Hook off: the host style table, which declares
+**4 columns x 3 rows** for a 2x2 span on the 8x6 grid
+(`BigFolderConfig.getBigFolderIconChildCount`). Hook on: the **3x3** grid
+`BigFolderAlignHook` rewrites every multi-cell span to (`CHILD_COLS`/`CHILD_ROWS`), which is
+what the live folder shows.
 
 `ChildIconScale` is the host's `CHILD_ICON_SCALE` (0.8235, divided by `customIconScale` at
 init). `FolderIconToIcon` and `ArtInsetToIcon` stay provisional: `folderIconSizePx` comes from

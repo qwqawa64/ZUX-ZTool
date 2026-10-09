@@ -375,6 +375,7 @@ data class LauncherSettingsUiState(
             dockVisible = !disableDockBar,
             // Dock expansion forces 20 hotseat columns; 8 slots is the on-device dock.
             dockIconCount = if (moreBigDock) 8 else 5,
+            bigFolderHooked = bigFolderAlign,
             // The tuning only reaches the launcher while the alignment hook is on.
             bigFolderTune = if (bigFolderAlign) {
                 BigFolderTune(
@@ -404,6 +405,8 @@ data class LauncherPreviewConfig(
     val dockVisible: Boolean,
     val dockIconCount: Int,
     val bigFolderTune: BigFolderTune,
+    /** True while the big-folder alignment hook is on, which rewrites the child grid. */
+    val bigFolderHooked: Boolean,
 )
 
 /** The six big-folder hand tuning offsets, in launcher-local px. */
