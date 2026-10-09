@@ -1216,6 +1216,48 @@ object SearchIndex {
             summaryRes = R.string.launcher_big_folder_align_summary
         ),
         launcher.item(
+            id = "launcher_big_folder_tune_gap_h",
+            titleRes = R.string.launcher_big_folder_tune_gap_h_title,
+            summaryRes = R.string.launcher_big_folder_tune_summary,
+            parentTitleRes = R.string.launcher_big_folder_align_title,
+            parentKey = "launcher_big_folder_align"
+        ),
+        launcher.item(
+            id = "launcher_big_folder_tune_gap_v",
+            titleRes = R.string.launcher_big_folder_tune_gap_v_title,
+            summaryRes = R.string.launcher_big_folder_tune_summary,
+            parentTitleRes = R.string.launcher_big_folder_align_title,
+            parentKey = "launcher_big_folder_align"
+        ),
+        launcher.item(
+            id = "launcher_big_folder_tune_bg_x",
+            titleRes = R.string.launcher_big_folder_tune_bg_x_title,
+            summaryRes = R.string.launcher_big_folder_tune_summary,
+            parentTitleRes = R.string.launcher_big_folder_align_title,
+            parentKey = "launcher_big_folder_align"
+        ),
+        launcher.item(
+            id = "launcher_big_folder_tune_bg_y",
+            titleRes = R.string.launcher_big_folder_tune_bg_y_title,
+            summaryRes = R.string.launcher_big_folder_tune_summary,
+            parentTitleRes = R.string.launcher_big_folder_align_title,
+            parentKey = "launcher_big_folder_align"
+        ),
+        launcher.item(
+            id = "launcher_big_folder_tune_shift_x",
+            titleRes = R.string.launcher_big_folder_tune_shift_x_title,
+            summaryRes = R.string.launcher_big_folder_tune_summary,
+            parentTitleRes = R.string.launcher_big_folder_align_title,
+            parentKey = "launcher_big_folder_align"
+        ),
+        launcher.item(
+            id = "launcher_big_folder_tune_shift_y",
+            titleRes = R.string.launcher_big_folder_tune_shift_y_title,
+            summaryRes = R.string.launcher_big_folder_tune_summary,
+            parentTitleRes = R.string.launcher_big_folder_align_title,
+            parentKey = "launcher_big_folder_align"
+        ),
+        launcher.item(
             id = "launcher_big_folder_blur_guard",
             titleRes = R.string.launcher_big_folder_blur_guard_title,
             summaryRes = R.string.launcher_big_folder_blur_guard_summary

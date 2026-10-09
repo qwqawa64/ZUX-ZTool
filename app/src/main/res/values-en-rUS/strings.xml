@@ -600,6 +600,14 @@
     <string name="launcher_custom_grid_summary">Adjust the spacious icon layout. May cause some widgets to display incorrectly.</string>
     <string name="launcher_big_folder_align_title">Big folder alignment</string>
     <string name="launcher_big_folder_align_summary">Make big folders look better.</string>
+    <string name="launcher_big_folder_tune_summary">Manual offset in launcher pixels, the unit the cellW / width log fields use; 0 is the solved value</string>
+    <string name="launcher_big_folder_tune_value">%1$d px</string>
+    <string name="launcher_big_folder_tune_gap_h_title">Child horizontal spacing</string>
+    <string name="launcher_big_folder_tune_gap_v_title">Child vertical spacing</string>
+    <string name="launcher_big_folder_tune_bg_x_title">Background width</string>
+    <string name="launcher_big_folder_tune_bg_y_title">Background height</string>
+    <string name="launcher_big_folder_tune_shift_x_title">Child horizontal shift</string>
+    <string name="launcher_big_folder_tune_shift_y_title">Child vertical shift</string>
     <string name="launcher_big_folder_blur_guard_title">Big folder blur crash guard</string>
     <string name="launcher_big_folder_blur_guard_summary">Works around a launcher defect: long-pressing a big folder crashes when dynamic blur is on</string>
     <string name="launcher_app_icon_unmask_title">Remove desktop icon mask</string>

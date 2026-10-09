@@ -169,6 +169,14 @@ object PreferenceKeys {
     // Crash guard for the host's big-folder blur update; on by default because the host
     // dereferences a null drag object there (see docs/research/zui_vs_oplus_launcher_grid_and_big_folder.md).
     val LAUNCHER_BIG_FOLDER_BLUR_GUARD = BoolKey("launcher_big_folder_blur_guard", true)
+    // Big-folder geometry hand tuning, in launcher-local px; 0 = the solved geometry.
+    // See docs/research/big_folder_tuning.md for the quantity each key drives.
+    val LAUNCHER_BIG_FOLDER_TUNE_GAP_H = IntKey("launcher_big_folder_tune_gap_h", -36)
+    val LAUNCHER_BIG_FOLDER_TUNE_GAP_V = IntKey("launcher_big_folder_tune_gap_v", 4)
+    val LAUNCHER_BIG_FOLDER_TUNE_BG_X = IntKey("launcher_big_folder_tune_bg_x", 64)
+    val LAUNCHER_BIG_FOLDER_TUNE_BG_Y = IntKey("launcher_big_folder_tune_bg_y", -8)
+    val LAUNCHER_BIG_FOLDER_TUNE_SHIFT_X = IntKey("launcher_big_folder_tune_shift_x", 0)
+    val LAUNCHER_BIG_FOLDER_TUNE_SHIFT_Y = IntKey("launcher_big_folder_tune_shift_y", 16)
     val LAUNCHER_APP_ICON_UNMASK = BoolKey("launcher_app_icon_unmask", false)
     val LAUNCHER_APP_ICON_UNMASK_DYNAMIC = BoolKey("launcher_app_icon_unmask_dynamic", false)
     val LAUNCHER_WIDE_GRID = BoolKey("launcher_wide_grid", false)
@@ -403,7 +411,10 @@ object PreferenceKeys {
         SCREEN_ON_OFF_ANIMATION_MS,
         QS_PANEL_WIDTH_PERCENT, QS_TILE_COLUMNS,
         CHARGE_ANIMATION_DURATION_MS, LOCK_SCREEN_CLOCK_COLOR_VALUE,
-        LAUNCHER_WIDE_GRID_SIDE_INSET
+        LAUNCHER_WIDE_GRID_SIDE_INSET,
+        LAUNCHER_BIG_FOLDER_TUNE_GAP_H, LAUNCHER_BIG_FOLDER_TUNE_GAP_V,
+        LAUNCHER_BIG_FOLDER_TUNE_BG_X, LAUNCHER_BIG_FOLDER_TUNE_BG_Y,
+        LAUNCHER_BIG_FOLDER_TUNE_SHIFT_X, LAUNCHER_BIG_FOLDER_TUNE_SHIFT_Y
     )
 
     val floatKeys: List<FloatKey> = listOf(

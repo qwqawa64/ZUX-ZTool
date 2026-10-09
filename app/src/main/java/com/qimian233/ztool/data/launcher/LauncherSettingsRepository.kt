@@ -53,6 +53,24 @@ class LauncherSettingsRepository(
             bigFolderAlign = prefsUtils.loadBooleanSetting(KEY_BIG_FOLDER_ALIGN, false),
             bigFolderBlurGuard =
                 prefsUtils.loadBooleanSetting(KEY_LAUNCHER_BIG_FOLDER_BLUR_GUARD, true),
+            bigFolderTuneGapH = loadTune(
+                KEY_BIG_FOLDER_TUNE_GAP_H, PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_GAP_H.default
+            ),
+            bigFolderTuneGapV = loadTune(
+                KEY_BIG_FOLDER_TUNE_GAP_V, PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_GAP_V.default
+            ),
+            bigFolderTuneBgX = loadTune(
+                KEY_BIG_FOLDER_TUNE_BG_X, PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_BG_X.default
+            ),
+            bigFolderTuneBgY = loadTune(
+                KEY_BIG_FOLDER_TUNE_BG_Y, PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_BG_Y.default
+            ),
+            bigFolderTuneShiftX = loadTune(
+                KEY_BIG_FOLDER_TUNE_SHIFT_X, PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_SHIFT_X.default
+            ),
+            bigFolderTuneShiftY = loadTune(
+                KEY_BIG_FOLDER_TUNE_SHIFT_Y, PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_SHIFT_Y.default
+            ),
             appIconUnmask = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK, false),
             appIconUnmaskDynamic = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC, false),
             wideGrid = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_WIDE_GRID, false),
@@ -203,6 +221,22 @@ class LauncherSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_BIG_FOLDER_BLUR_GUARD, enabled)
     }
 
+    /** Stores one big-folder hand tuning value, snapped to the slider step and clamped. */
+    fun saveBigFolderTune(key: String, value: Int): Int {
+        val snapped = snapTune(value)
+        prefsUtils.saveIntegerSetting(key, snapped)
+        return snapped
+    }
+
+    /** Reads a tuning value with the key's own default, so UI and hook agree. */
+    private fun loadTune(key: String, default: Int): Int =
+        snapTune(prefsUtils.loadIntegerSetting(key, default))
+
+    /** Rounds to the slider step so float slider deltas never land off-grid. */
+    private fun snapTune(value: Int): Int =
+        (Math.round(value / TUNE_STEP.toFloat()) * TUNE_STEP)
+            .coerceIn(BIG_FOLDER_TUNE_MIN, BIG_FOLDER_TUNE_MAX)
+
     fun saveIconScaleOverride(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_LAUNCHER_ICON_SCALE_OVERRIDE, enabled)
     }
@@ -285,6 +319,11 @@ class LauncherSettingsRepository(
         const val WIDE_GRID_INSET_MAX = 160
         private const val WIDE_GRID_INSET_DEFAULT = 0
 
+        // Big-folder hand tuning sliders, in launcher-local px (see docs/research/big_folder_tuning.md).
+        const val BIG_FOLDER_TUNE_MIN = -200
+        const val BIG_FOLDER_TUNE_MAX = 200
+        const val TUNE_STEP = 4
+
         /** Free width per side that ColorOS leaves in the measured 10x6 tablet reference. */
         private const val PARITY_MARGIN_FRACTION = 0.09f
         private const val DEFAULT_ROW = 4
@@ -317,6 +356,12 @@ class LauncherSettingsRepository(
         private val KEY_BIG_FOLDER_ALIGN = PreferenceKeys.LAUNCHER_BIG_FOLDER_ALIGN.name
         private val KEY_LAUNCHER_BIG_FOLDER_BLUR_GUARD =
             PreferenceKeys.LAUNCHER_BIG_FOLDER_BLUR_GUARD.name
+        private val KEY_BIG_FOLDER_TUNE_GAP_H = PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_GAP_H.name
+        private val KEY_BIG_FOLDER_TUNE_GAP_V = PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_GAP_V.name
+        private val KEY_BIG_FOLDER_TUNE_BG_X = PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_BG_X.name
+        private val KEY_BIG_FOLDER_TUNE_BG_Y = PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_BG_Y.name
+        private val KEY_BIG_FOLDER_TUNE_SHIFT_X = PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_SHIFT_X.name
+        private val KEY_BIG_FOLDER_TUNE_SHIFT_Y = PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_SHIFT_Y.name
         private val KEY_LAUNCHER_APP_ICON_UNMASK = PreferenceKeys.LAUNCHER_APP_ICON_UNMASK.name
         private val KEY_LAUNCHER_APP_ICON_UNMASK_DYNAMIC =
             PreferenceKeys.LAUNCHER_APP_ICON_UNMASK_DYNAMIC.name

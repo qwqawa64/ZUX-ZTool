@@ -681,6 +681,14 @@
     <string name="launcher_custom_grid_summary">你看图标之间不是很宽敞吗（可能导致部分小组件显示异常）</string>
     <string name="launcher_big_folder_align_title">大文件夹对齐</string>
     <string name="launcher_big_folder_align_summary">让大文件夹样式更接近主流系统</string>
+    <string name="launcher_big_folder_tune_summary">手动微调，单位与日志中的 cellW / width 一致（px）；0 为解算默认值</string>
+    <string name="launcher_big_folder_tune_value">%1$d px</string>
+    <string name="launcher_big_folder_tune_gap_h_title">内部图标水平间距</string>
+    <string name="launcher_big_folder_tune_gap_v_title">内部图标垂直间距</string>
+    <string name="launcher_big_folder_tune_bg_x_title">背景水平尺寸</string>
+    <string name="launcher_big_folder_tune_bg_y_title">背景垂直尺寸</string>
+    <string name="launcher_big_folder_tune_shift_x_title">内部图标水平平移</string>
+    <string name="launcher_big_folder_tune_shift_y_title">内部图标垂直平移</string>
     <string name="launcher_big_folder_blur_guard_title">大文件夹模糊崩溃保护</string>
     <string name="launcher_big_folder_blur_guard_summary">修复系统桌面的缺陷：开启动态模糊后长按大文件夹会闪退</string>
     <string name="launcher_app_icon_unmask_title">去除桌面图标蒙版</string>

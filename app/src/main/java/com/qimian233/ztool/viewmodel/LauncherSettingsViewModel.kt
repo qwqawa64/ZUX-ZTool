@@ -3,6 +3,7 @@ package com.qimian233.ztool.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.launcher.ExternalGridInputs
 import com.qimian233.ztool.data.launcher.GridCounts
 import com.qimian233.ztool.data.launcher.LauncherGridResolver
@@ -220,6 +221,19 @@ class LauncherSettingsViewModel(
         repository.saveBigFolderBlurGuard(enabled)
     }
 
+    /** Stores one big-folder hand tuning value after the repository snapped it. */
+    fun setBigFolderTune(key: BigFolderTuneKey, value: Int) {
+        val snapped = repository.saveBigFolderTune(key.preferenceName, value)
+        _uiState.value = when (key) {
+            BigFolderTuneKey.GAP_H -> _uiState.value.copy(bigFolderTuneGapH = snapped)
+            BigFolderTuneKey.GAP_V -> _uiState.value.copy(bigFolderTuneGapV = snapped)
+            BigFolderTuneKey.BG_X -> _uiState.value.copy(bigFolderTuneBgX = snapped)
+            BigFolderTuneKey.BG_Y -> _uiState.value.copy(bigFolderTuneBgY = snapped)
+            BigFolderTuneKey.SHIFT_X -> _uiState.value.copy(bigFolderTuneShiftX = snapped)
+            BigFolderTuneKey.SHIFT_Y -> _uiState.value.copy(bigFolderTuneShiftY = snapped)
+        }
+    }
+
     fun setIconScaleOverride(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(iconScaleOverride = enabled)
         repository.saveIconScaleOverride(enabled)
@@ -286,6 +300,16 @@ enum class ForceStopMode {
     Whitelist
 }
 
+/** Big-folder hand tuning sliders; each value maps to its own preference key. */
+enum class BigFolderTuneKey(val preferenceName: String) {
+    GAP_H(PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_GAP_H.name),
+    GAP_V(PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_GAP_V.name),
+    BG_X(PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_BG_X.name),
+    BG_Y(PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_BG_Y.name),
+    SHIFT_X(PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_SHIFT_X.name),
+    SHIFT_Y(PreferenceKeys.LAUNCHER_BIG_FOLDER_TUNE_SHIFT_Y.name)
+}
+
 data class LauncherSettingsUiState(
     val forceStopMode: ForceStopMode = ForceStopMode.Default,
     val forceStopWhitelist: List<String> = emptyList(),
@@ -313,6 +337,13 @@ data class LauncherSettingsUiState(
     val bigFolderAlign: Boolean = false,
     /** Host big-folder blur crash guard; on by default (key launcher_big_folder_blur_guard). */
     val bigFolderBlurGuard: Boolean = true,
+    /** Big-folder geometry hand tuning in launcher-local px; see docs/research/big_folder_tuning.md. */
+    val bigFolderTuneGapH: Int = 0,
+    val bigFolderTuneGapV: Int = 0,
+    val bigFolderTuneBgX: Int = 0,
+    val bigFolderTuneBgY: Int = 0,
+    val bigFolderTuneShiftX: Int = 0,
+    val bigFolderTuneShiftY: Int = 0,
     val appIconUnmask: Boolean = false,
     val appIconUnmaskDynamic: Boolean = false,
     val wideGrid: Boolean = false,
