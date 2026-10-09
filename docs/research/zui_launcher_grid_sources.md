@@ -120,3 +120,30 @@ provider (both no-root). `data/launcher/LauncherGridResolver.kt` resolves the gr
 order: ZTool custom grid -> provider numbers, but only while the catalog is
 non-degenerate -> layout name as `<columns>x<rows>` -> fixed fallback. The name parse is
 covered by `LauncherPreviewGridResolverTest`.
+
+## 7. How the preview mirrors the hooks
+
+`screens/launcher/LauncherPreviewCard.kt` reproduces the solver in
+`LauncherWideGridHook` / `LauncherGridMetrics`, in the same order the launcher uses:
+
+```
+page box          = the whole frame; the top band (9.9 %) and bottom band (20.4 %) are the
+                    vertical paddings, which is what cellLayoutPaddingPx.top/bottom carry
+host cells        = (box - side padding) / columns  x  (box - bands) / rows   (borders are 0)
+square mode       = only when the host cell is wider than 1.2 : the side is the banded
+                    height, and the padding is whatever centres that side
+```
+
+`squareCells` in the UI state is the `wideGrid && wideGridSquare` pair, matching the hook's
+own gate. Icon diameter is 0.65 of the cell's short side (measured 120/188 and 122/184),
+labels take 0.14 of the row pitch plus a 0.10 gap, and the update dot sits ahead of the app
+name.
+
+The big-folder page draws one 2x2 folder with `BigFolderAlignHook`'s solved geometry:
+untuned `baseW/baseH`, the background box from the `bg_x`/`bg_y` knobs, the 3x3 child grid
+whose gaps come from `gap_h`/`gap_v`, and the `shift_x`/`shift_y` centring. Three host values
+are not readable from the app and are provisional constants in that file:
+`widgetPadding` (`ArtInsetToIcon`, the same 0.11 fallback the hook uses),
+`folderIconSizePx` (`FolderIconToIcon`) and `BigFolderConfig.CHILD_ICON_SCALE`
+(`ChildIconScale`). One `BigFolderAlign span=2x2 … folderIcon=… icon=… widgetPadL=…` log line
+plus one `hGap(2,2) … child=…` line pins all three exactly.

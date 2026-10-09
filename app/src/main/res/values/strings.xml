@@ -677,6 +677,8 @@
     <string name="launcher_larger_dock_title">Dock栏扩容</string>
     <string name="launcher_layout_title">桌面布局</string>
     <string name="launcher_preview_title">桌面预览</string>
+    <string name="launcher_preview_desktop_title">桌面</string>
+    <string name="launcher_preview_big_folder_title">大文件夹</string>
     <string name="launcher_custom_grid_title">自定义桌面网格行列数</string>
     <string name="launcher_custom_grid_summary">你看图标之间不是很宽敞吗（可能导致部分小组件显示异常）</string>
     <string name="launcher_big_folder_align_title">大文件夹对齐</string>
