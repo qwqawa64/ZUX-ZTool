@@ -273,6 +273,7 @@ private fun WorkspaceGrid(
                 frameWidth = frameWidth,
                 screenWidth = screenWidth,
                 density = density,
+                showLabel = showLabel,
                 colors = colors
             )
         }
@@ -291,6 +292,7 @@ private fun BigFolderItem(
     frameWidth: Dp,
     screenWidth: Float,
     density: Float,
+    showLabel: Boolean,
     colors: ColorScheme
 ) {
     val tune = config.bigFolderTune
@@ -356,14 +358,16 @@ private fun BigFolderItem(
                 )
             }
         }
-        Box(
-            modifier = Modifier
-                .offset(x = (cell * BigFolderSpan - icon * 0.9f) / 2, y = labelTop)
-                .width(icon * 0.9f)
-                .height((pitchY * LabelHeightFraction).coerceIn(1.5.dp, 5.dp))
-                .clip(RoundedCornerShape(2.dp))
-                .background(colors.onSurfaceVariant.copy(alpha = 0.45f))
-        )
+        if (showLabel) {
+            Box(
+                modifier = Modifier
+                    .offset(x = (cell * BigFolderSpan - icon * 0.9f) / 2, y = labelTop)
+                    .width(icon * 0.9f)
+                    .height((pitchY * LabelHeightFraction).coerceIn(1.5.dp, 5.dp))
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(colors.onSurfaceVariant.copy(alpha = 0.45f))
+            )
+        }
     }
 }
 
