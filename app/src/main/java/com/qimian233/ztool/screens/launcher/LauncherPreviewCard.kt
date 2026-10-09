@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -21,10 +20,6 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +31,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.R
 import com.qimian233.ztool.ui.components.ZToolCard
-import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.LauncherPreviewConfig
 
@@ -77,15 +71,21 @@ private const val DockGapToIconFraction = 0.5f
 /** Slot carrying the separator between the fixed dock icons and the app icons. */
 private const val DockSeparatorIndex = 5
 
-/** Big-folder span and its child grid, per BigFolderAlignHook: 3 subdivisions per axis. */
+/** Big-folder span, and the 2x2 child grid the host style table declares (4 columns x 3 rows). */
 private const val BigFolderSpan = 2
-private const val BigFolderChildTracks = 3
-private const val BigFolderZoomFill = 0.92f
+private const val BigFolderChildColumns = 4
+private const val BigFolderChildRows = 3
 
-/** Host big-folder values the app cannot read; see docs/research/big_folder_tuning.md. */
-private const val ArtInsetToIcon = 0.11f
+/**
+ * Host big-folder values. `ChildIconScale` is `BigFolderConfig.CHILD_ICON_SCALE`; the other
+ * two are provisional until a device log pins them, see docs/research/big_folder_tuning.md.
+ */
+private const val ChildIconScale = 0.8235f
 private const val FolderIconToIcon = 0.9f
-private const val ChildIconScale = 0.45f
+private const val ArtInsetToIcon = 0.11f
+
+/** Background corner radius against its height; the host uses a fixed dimension. */
+private const val FolderBackgroundRadiusFraction = 0.14f
 
 /** Icon + label block against the row pitch, i.e. what the host centres inside a cell. */
 private const val CellContentHeightFraction = 0.88f
@@ -95,9 +95,6 @@ private val UpdateDotBlue = Color(0xFF3B82F6)
 
 private const val PageDotCount = 3
 
-/** Pages of the preview card. */
-private enum class LauncherPreviewPage { Desktop, BigFolder }
-
 /**
  * Top card of the launcher settings page: a graphical preview of the current desktop
  * style driven by [config].
@@ -105,40 +102,19 @@ private enum class LauncherPreviewPage { Desktop, BigFolder }
 @Composable
 fun LauncherPreviewCard(config: LauncherPreviewConfig, modifier: Modifier = Modifier) {
     val colors = LocalZToolColorScheme.current
-    var page by rememberSaveable { mutableStateOf(LauncherPreviewPage.Desktop) }
     ZToolCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 20.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(R.string.launcher_preview_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = colors.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-                ZToolTextButton(
-                    text = stringResource(R.string.launcher_preview_desktop_title),
-                    onClick = { page = LauncherPreviewPage.Desktop },
-                    isPrimary = page == LauncherPreviewPage.Desktop
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                ZToolTextButton(
-                    text = stringResource(R.string.launcher_preview_big_folder_title),
-                    onClick = { page = LauncherPreviewPage.BigFolder },
-                    isPrimary = page == LauncherPreviewPage.BigFolder
-                )
-            }
+            Text(
+                text = stringResource(R.string.launcher_preview_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = colors.onSurface
+            )
             Spacer(modifier = Modifier.height(16.dp))
-            when (page) {
-                LauncherPreviewPage.Desktop ->
-                    LauncherScreenPreview(config = config, modifier = Modifier.fillMaxWidth())
-
-                LauncherPreviewPage.BigFolder ->
-                    LauncherBigFolderPreview(config = config, modifier = Modifier.fillMaxWidth())
-            }
+            LauncherScreenPreview(config = config, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -188,8 +164,8 @@ private fun mockGrid(
 }
 
 /**
- * Draws the desktop mock: grid cells, labels, update dots and the dock. Geometry is
- * proportional only, so no launcher-side pixel value is required.
+ * Draws the desktop mock: grid cells, one 2x2 big folder, labels, update dots and the dock.
+ * Geometry is proportional only, so no launcher-side pixel value is required.
  */
 @Composable
 fun LauncherScreenPreview(config: LauncherPreviewConfig, modifier: Modifier = Modifier) {
@@ -197,6 +173,7 @@ fun LauncherScreenPreview(config: LauncherPreviewConfig, modifier: Modifier = Mo
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.toFloat().coerceAtLeast(1f)
     val screenHeight = configuration.screenHeightDp.toFloat().coerceAtLeast(1f)
+    val density = LocalDensity.current.density
     val frameAspect = screenWidth / screenHeight
 
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -216,7 +193,14 @@ fun LauncherScreenPreview(config: LauncherPreviewConfig, modifier: Modifier = Mo
                 .border(1.dp, colors.outlineVariant, shape)
         ) {
             PageDots(modifier = Modifier.fillMaxWidth().height(frameHeight * TopBandFraction))
-            WorkspaceGrid(config = config, grid = grid, colors = colors)
+            WorkspaceGrid(
+                config = config,
+                grid = grid,
+                frameWidth = frameWidth,
+                screenWidth = screenWidth,
+                density = density,
+                colors = colors
+            )
             if (config.dockVisible) {
                 Spacer(
                     modifier = Modifier.height(
@@ -246,6 +230,9 @@ fun LauncherScreenPreview(config: LauncherPreviewConfig, modifier: Modifier = Mo
 private fun WorkspaceGrid(
     config: LauncherPreviewConfig,
     grid: MockGrid,
+    frameWidth: Dp,
+    screenWidth: Float,
+    density: Float,
     colors: ColorScheme
 ) {
     val showLabel = !config.noLabel
@@ -253,27 +240,124 @@ private fun WorkspaceGrid(
         modifier = Modifier.fillMaxWidth().height(grid.cellHeight * config.rows),
         contentAlignment = Alignment.Center
     ) {
-        Column(modifier = Modifier.padding(horizontal = grid.sidePadding)) {
-            repeat(config.rows) { row ->
-                Row {
-                    repeat(config.columns) { column ->
-                        Box(
-                            modifier = Modifier.size(grid.cellWidth, grid.cellHeight),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            PreviewAppIcon(
-                                iconSize = grid.iconSize,
-                                cellHeight = grid.cellHeight,
-                                showLabel = showLabel,
-                                showDot = config.bluePointVisible &&
-                                    (row * config.columns + column) % 3 == 0,
-                                colors = colors
-                            )
+        Box(modifier = Modifier.padding(horizontal = grid.sidePadding)) {
+            Column {
+                repeat(config.rows) { row ->
+                    Row {
+                        repeat(config.columns) { column ->
+                            Box(
+                                modifier = Modifier.size(grid.cellWidth, grid.cellHeight),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                // The top-left 2x2 cells are covered by the big folder below.
+                                if (row >= BigFolderSpan || column >= BigFolderSpan) {
+                                    PreviewAppIcon(
+                                        iconSize = grid.iconSize,
+                                        cellHeight = grid.cellHeight,
+                                        showLabel = showLabel,
+                                        showDot = config.bluePointVisible &&
+                                            (row * config.columns + column) % 3 == 0,
+                                        colors = colors
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
+            BigFolderItem(
+                config = config,
+                grid = grid,
+                frameWidth = frameWidth,
+                screenWidth = screenWidth,
+                density = density,
+                colors = colors
+            )
         }
+    }
+}
+
+/**
+ * Draws one 2x2 big folder in the grid, following the geometry `BigFolderAlignHook` writes:
+ * the background and the child grid are solved from the untuned span box, then moved by the
+ * six hand tuning offsets.
+ */
+@Composable
+private fun BigFolderItem(
+    config: LauncherPreviewConfig,
+    grid: MockGrid,
+    frameWidth: Dp,
+    screenWidth: Float,
+    density: Float,
+    colors: ColorScheme
+) {
+    val tune = config.bigFolderTune
+    // Launcher px share the device density, so they scale into the mock frame.
+    val pxToMock = (frameWidth.value / screenWidth / density).dp
+    val cell = grid.cellWidth
+    val pitchY = grid.cellHeight
+    val icon = grid.iconSize
+    val folderIcon = icon * FolderIconToIcon
+    val child = folderIcon * ChildIconScale
+    // widgetPadding is unreadable; the hook falls back to the small-folder circle inset.
+    val insetX = maxOf(0.dp, (cell - folderIcon) / 2)
+    val artInset = icon * ArtInsetToIcon
+    val rowInset = maxOf(0.dp, pitchY * (1f - CellContentHeightFraction) / 2)
+    // Untuned box and background, then the tuned background box and position.
+    val baseWidth = cell * BigFolderSpan - insetX * 2
+    val baseHeight = pitchY * (BigFolderSpan - 1) + icon - artInset * 2
+    val backgroundWidth = baseWidth - (pxToMock * tune.bgX) * 2
+    val backgroundHeight = baseHeight - (pxToMock * tune.bgY) * 2
+    val backgroundX = insetX + pxToMock * tune.bgX
+    val backgroundY = rowInset + artInset + pxToMock * tune.bgY
+    val gapH = maxOf(
+        0.dp,
+        (baseWidth - child * BigFolderChildColumns) / (BigFolderChildColumns + 1) +
+            pxToMock * tune.gapH
+    )
+    val gapV = maxOf(
+        0.dp,
+        (baseHeight - child * BigFolderChildRows) / (BigFolderChildRows + 1) +
+            pxToMock * tune.gapV
+    )
+    val childGridWidth = child * BigFolderChildColumns + gapH * (BigFolderChildColumns - 1)
+    val childGridHeight = child * BigFolderChildRows + gapV * (BigFolderChildRows - 1)
+    val childLeft = backgroundX + backgroundWidth / 2 + pxToMock * tune.shiftX -
+        childGridWidth / 2
+    val childTop = backgroundY + backgroundHeight / 2 + pxToMock * tune.shiftY -
+        childGridHeight / 2
+    val labelTop = pitchY * (BigFolderSpan - 1) + rowInset + icon
+
+    Box(modifier = Modifier.size(cell * BigFolderSpan, pitchY * BigFolderSpan)) {
+        Box(
+            modifier = Modifier
+                .offset(x = backgroundX, y = backgroundY)
+                .size(backgroundWidth, backgroundHeight)
+                .clip(RoundedCornerShape(backgroundHeight * FolderBackgroundRadiusFraction))
+                .background(colors.onSurfaceVariant.copy(alpha = 0.22f))
+        )
+        repeat(BigFolderChildRows) { row ->
+            repeat(BigFolderChildColumns) { column ->
+                Box(
+                    modifier = Modifier
+                        .offset(
+                            x = childLeft + (child + gapH) * column,
+                            y = childTop + (child + gapV) * row
+                        )
+                        .size(child)
+                        .clip(RoundedCornerShape(child * 0.26f))
+                        .background(colors.primary.copy(alpha = 0.85f))
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .offset(x = (cell * BigFolderSpan - icon * 0.9f) / 2, y = labelTop)
+                .width(icon * 0.9f)
+                .height((pitchY * LabelHeightFraction).coerceIn(1.5.dp, 5.dp))
+                .clip(RoundedCornerShape(2.dp))
+                .background(colors.onSurfaceVariant.copy(alpha = 0.45f))
+        )
     }
 }
 
@@ -359,122 +443,6 @@ private fun DockRow(
                     .clip(RoundedCornerShape(fittingIconSize * 0.26f))
                     .background(colors.onSurfaceVariant.copy(alpha = 0.55f))
             )
-        }
-    }
-}
-
-/**
- * Draws one 2x2 big folder zoomed to the frame: its cell box, its background and the child
- * grid, following the solved geometry of `BigFolderAlignHook`.
- */
-@Composable
-fun LauncherBigFolderPreview(config: LauncherPreviewConfig, modifier: Modifier = Modifier) {
-    val colors = LocalZToolColorScheme.current
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.toFloat().coerceAtLeast(1f)
-    val screenHeight = configuration.screenHeightDp.toFloat().coerceAtLeast(1f)
-    val density = LocalDensity.current.density
-    val frameAspect = screenWidth / screenHeight
-
-    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
-        val frameHeight = minOf(MaxPreviewHeight, maxWidth / frameAspect)
-        val frameWidth = frameHeight * frameAspect
-        val shape = RoundedCornerShape(PreviewCornerRadius)
-        val desktop = mockGrid(config, frameWidth, frameHeight, screenWidth)
-        val spanWidth = desktop.cellWidth * BigFolderSpan
-        val spanHeight = desktop.cellHeight * BigFolderSpan
-        val zoom = minOf(
-            frameWidth * BigFolderZoomFill / spanWidth,
-            frameHeight * BigFolderZoomFill / spanHeight
-        )
-        // Launcher px share the device density, so they scale into the frame and the zoom.
-        val mockScale = frameWidth.value / screenWidth
-        val pxToMock = (zoom * mockScale / density).dp
-        val tune = config.bigFolderTune
-
-        val cell = desktop.cellWidth * zoom
-        val pitchY = desktop.cellHeight * zoom
-        val icon = desktop.iconSize * zoom
-        val artInset = icon * ArtInsetToIcon
-        val rowInset = maxOf(0.dp, pitchY * (1f - CellContentHeightFraction) / 2)
-        val child = icon * (FolderIconToIcon * ChildIconScale)
-        // Untuned boxes: every tuned quantity is solved from these, exactly as the hook does.
-        val baseWidth = cell * BigFolderSpan - artInset * 2
-        val baseHeight = pitchY * (BigFolderSpan - 1) + icon - artInset * 2
-        val backgroundWidth = baseWidth - (pxToMock * tune.bgX) * 2
-        val backgroundHeight = baseHeight - (pxToMock * tune.bgY) * 2
-        val backgroundX = artInset + pxToMock * tune.bgX
-        val backgroundY = rowInset + artInset + pxToMock * tune.bgY
-        val gapH = maxOf(
-            0.dp,
-            (baseWidth - child * BigFolderChildTracks) / (BigFolderChildTracks + 1) +
-                pxToMock * tune.gapH
-        )
-        val gapV = maxOf(
-            0.dp,
-            (baseHeight - child * BigFolderChildTracks) / (BigFolderChildTracks + 1) +
-                pxToMock * tune.gapV
-        )
-        val childGridWidth = child * BigFolderChildTracks + gapH * (BigFolderChildTracks - 1)
-        val childGridHeight = child * BigFolderChildTracks + gapV * (BigFolderChildTracks - 1)
-        val childLeft = backgroundX + backgroundWidth / 2 + pxToMock * tune.shiftX -
-            childGridWidth / 2
-        val childTop = backgroundY + backgroundHeight / 2 + pxToMock * tune.shiftY -
-            childGridHeight / 2
-        val labelTop = pitchY * (BigFolderSpan - 1) + rowInset + icon
-
-        Box(
-            modifier = Modifier
-                .width(frameWidth)
-                .height(frameHeight)
-                .clip(shape)
-                .background(colors.surfaceContainerHigh)
-                .border(1.dp, colors.outlineVariant, shape)
-        ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(spanWidth * zoom, spanHeight * zoom)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .border(
-                            1.dp,
-                            colors.outlineVariant.copy(alpha = 0.5f),
-                            RoundedCornerShape(6.dp)
-                        )
-                )
-                Box(
-                    modifier = Modifier
-                        .offset(x = backgroundX, y = backgroundY)
-                        .size(backgroundWidth, backgroundHeight)
-                        .clip(RoundedCornerShape(backgroundHeight * 0.22f))
-                        .background(colors.onSurfaceVariant.copy(alpha = 0.22f))
-                )
-                repeat(BigFolderChildTracks) { row ->
-                    repeat(BigFolderChildTracks) { column ->
-                        Box(
-                            modifier = Modifier
-                                .offset(
-                                    x = childLeft + (child + gapH) * column,
-                                    y = childTop + (child + gapV) * row
-                                )
-                                .size(child)
-                                .clip(RoundedCornerShape(child * 0.26f))
-                                .background(colors.primary.copy(alpha = 0.85f))
-                        )
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .offset(x = (spanWidth * zoom - icon * 0.9f) / 2, y = labelTop)
-                        .width(icon * 0.9f)
-                        .height((pitchY * LabelHeightFraction).coerceIn(1.5.dp, 5.dp))
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(colors.onSurfaceVariant.copy(alpha = 0.45f))
-                )
-            }
         }
     }
 }

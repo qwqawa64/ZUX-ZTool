@@ -596,8 +596,6 @@
     <string name="launcher_larger_dock_title">Larger dock</string>
     <string name="launcher_layout_title">Launcher layout</string>
     <string name="launcher_preview_title">Desktop preview</string>
-    <string name="launcher_preview_desktop_title">Desktop</string>
-    <string name="launcher_preview_big_folder_title">Big folder</string>
     <string name="launcher_custom_grid_title">Custom launcher grid rows and columns</string>
     <string name="launcher_custom_grid_summary">Adjust the spacious icon layout. May cause some widgets to display incorrectly.</string>
     <string name="launcher_big_folder_align_title">Big folder alignment</string>

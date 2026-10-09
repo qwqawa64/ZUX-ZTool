@@ -72,3 +72,24 @@ centerY = bgH/2 + hostExtra + shift_y                     // passed to getOffset
   `widgetPadding`; `artInset` feeds the background top and its height.
 * The child icon **size** is the host's `CHILD_ICON_SCALE`; it is not exposed as a slider, change it only via
   `BigFolderConfig` if the icon size itself must move.
+
+## Host values behind those constants
+
+Read from `com.zui.launcher` with JADX, for the preview's benefit:
+
+```
+CHILD_ICON_SCALE   = big_folder_child_icon_scale / 10000      (0.8235 stock), then
+                     /= DeviceProfile.inv.customIconScale
+folderIconSizePx   = round(sqrt(folder_icon_size_scale * iconSizePx^2 * 0.6597222 / PI))
+folderIconOffsetYPx= (iconSizePx - folderIconSizePx) / 2
+child grid (2x2)   = BigFolderConfig style table: 4 columns x 3 rows
+                     (getBigFolderIconChildCount overwrites from the last matching style)
+background         = width = cellW * spanX - 2 * widgetPadding.left
+                     height = cellH * spanY - widgetPadding.top - widgetPadding.bottom
+                     offset = widgetPadding.left / widgetPadding.top
+background radius  = R.dimen.big_folder_icon_radius (a fixed dimension, not a ratio)
+```
+
+The hook then overrides the background width/offset and the preview mirrors that. Two values
+cannot be read from the app and are provisional in `LauncherPreviewCard.kt`:
+`folder_icon_size_scale` (so `FolderIconToIcon`) and `widgetPadding` (`ArtInsetToIcon`).

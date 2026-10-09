@@ -139,11 +139,18 @@ own gate. Icon diameter is 0.65 of the cell's short side (measured 120/188 and 1
 labels take 0.14 of the row pitch plus a 0.10 gap, and the update dot sits ahead of the app
 name.
 
-The big-folder page draws one 2x2 folder with `BigFolderAlignHook`'s solved geometry:
-untuned `baseW/baseH`, the background box from the `bg_x`/`bg_y` knobs, the 3x3 child grid
-whose gaps come from `gap_h`/`gap_v`, and the `shift_x`/`shift_y` centring. Three host values
-are not readable from the app and are provisional constants in that file:
-`widgetPadding` (`ArtInsetToIcon`, the same 0.11 fallback the hook uses),
-`folderIconSizePx` (`FolderIconToIcon`) and `BigFolderConfig.CHILD_ICON_SCALE`
-(`ChildIconScale`). One `BigFolderAlign span=2x2 … folderIcon=… icon=… widgetPadL=…` log line
-plus one `hGap(2,2) … child=…` line pins all three exactly.
+The big folder is drawn inside the desktop grid at the top-left 2x2 cells, with
+`BigFolderAlignHook`'s solved geometry: untuned `baseW/baseH`, the background box from the
+`bg_x`/`bg_y` knobs, the child grid whose gaps come from `gap_h`/`gap_v`, and the
+`shift_x`/`shift_y` centring.
+
+Its child grid follows the host style table, which declares **4 columns x 3 rows** for a 2x2
+span on the 8x6 grid (`BigFolderConfig.getBigFolderIconChildCount`). Note that
+`BigFolderAlignHook` currently rewrites that grid to 3x3 (`CHILD_COLS`/`CHILD_ROWS`), so the
+live folder shows 9 children; the preview follows the host table.
+
+`ChildIconScale` is the host's `CHILD_ICON_SCALE` (0.8235, divided by `customIconScale` at
+init). `FolderIconToIcon` and `ArtInsetToIcon` stay provisional: `folderIconSizePx` comes from
+`folder_icon_size_scale` (a float resource the app cannot read) and `widgetPadding` from the
+framework's default widget padding. One `BigFolderAlign span=2x2 … folderIcon=… icon=…
+widgetPadL=…` log line pins both.
