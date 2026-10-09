@@ -265,11 +265,12 @@ class BigFolderAlignHook : AppHookModule() {
         val oldWidth = pbWidth.getInt(pb)
         val oldOffsetX = pbOffsetX.getInt(pb)
         pbWidth.setInt(pb, newWidth)
-        pbOffsetX.setInt(pb, inset)
+        // Symmetric narrowing keeps the background centred on the same cell box.
+        pbOffsetX.setInt(pb, inset + TUNE_BG_INSET_X)
 
         // Background top/bottom edges align with the graphic edges of the top/bottom icon rows.
         val artInset = artInsetPx(metrics)
-        val newOffsetY = metrics.rowInset + artInset + TUNE_OFFSET_Y_EXTRA
+        val newOffsetY = metrics.rowInset + artInset + TUNE_BG_INSET_Y
         val newPreviewSizeY = backgroundHeight(metrics, spanY)
         val oldOffsetY = pbOffsetY.getInt(pb)
         val oldPreviewSizeY = pbPreviewSizeY.getInt(pb)
@@ -303,8 +304,9 @@ class BigFolderAlignHook : AppHookModule() {
                 " folderIcon=${metrics.folderIconSizePx} icon=${metrics.iconSizePx}" +
                 " widgetPadL=${metrics.widgetPaddingLeft} widgetPadT=${metrics.widgetPaddingTop}" +
                 " bgBottom=${pbOffsetY.getInt(pb) + pbPreviewSizeY.getInt(pb)}" +
-                (if (tuningActive()) " tune=insetX$TUNE_INSET_X_EXTRA,height$TUNE_HEIGHT_EXTRA," +
-                    "offsetY$TUNE_OFFSET_Y_EXTRA,gapH$TUNE_GAP_H_SCALE,gapV$TUNE_GAP_V_SCALE" else "") +
+                (if (tuningActive()) " tune=gapH$TUNE_GAP_H_DELTA,gapV$TUNE_GAP_V_DELTA," +
+                    "bgX$TUNE_BG_INSET_X,bgY$TUNE_BG_INSET_Y," +
+                    "shiftX$TUNE_CHILD_SHIFT_X,shiftY$TUNE_CHILD_SHIFT_Y" else "") +
                 " labelTop=$labelTopMargin iconPadT=$iconPaddingTop"
         )
     }
@@ -333,16 +335,23 @@ class BigFolderAlignHook : AppHookModule() {
                 else metrics.insetToSmallFolder
             BackgroundAlign.SMALL_FOLDER -> metrics.insetToSmallFolder
             BackgroundAlign.ICON_BOX -> metrics.insetToIcon
-        } + TUNE_INSET_X_EXTRA).coerceAtLeast(0)
+        }).coerceAtLeast(0)
 
-    /** Big-folder background width, the x extent the child grid is centred in. */
-    private fun backgroundWidth(metrics: LauncherGridMetrics.Metrics, spanX: Int): Int =
+    /** Background width before hand tuning, and the reference the child gap is solved from. */
+    private fun backgroundBaseWidth(metrics: LauncherGridMetrics.Metrics, spanX: Int): Int =
         spanX * metrics.cellWidth + (spanX - 1) * metrics.borderX - 2 * backgroundInsetX(metrics)
 
-    /** Big-folder background height, the y extent the child grid is centred in. */
+    /** Background width actually written: the hand tuning narrows it symmetrically. */
+    private fun backgroundWidth(metrics: LauncherGridMetrics.Metrics, spanX: Int): Int =
+        backgroundBaseWidth(metrics, spanX) - 2 * TUNE_BG_INSET_X
+
+    /** Background height before hand tuning, and the reference the child gap is solved from. */
+    private fun backgroundBaseHeight(metrics: LauncherGridMetrics.Metrics, spanY: Int): Int =
+        (spanY - 1) * metrics.cellPitchY + metrics.iconSizePx - 2 * artInsetPx(metrics)
+
+    /** Background height actually written: the hand tuning grows (negative) or shrinks it. */
     private fun backgroundHeight(metrics: LauncherGridMetrics.Metrics, spanY: Int): Int =
-        (spanY - 1) * metrics.cellPitchY + metrics.iconSizePx - 2 * artInsetPx(metrics) +
-            TUNE_HEIGHT_EXTRA
+        backgroundBaseHeight(metrics, spanY) - 2 * TUNE_BG_INSET_Y
 
     /** Style sheet convergence rewrite: one rewrite makes layout/preview count/click hit-testing/drop capacity all take effect. */
     private fun hookChildCountRewrite() {
@@ -398,12 +407,14 @@ class BigFolderAlignHook : AppHookModule() {
                 val iconSize = ruleIconSize.getFloat(rule)
                 val halfIcon =
                     iconSize * (ruleScaleForItem.invoke(rule, maxOf(args[1] as Int, 3), true) as Float) / 2f
+                // The host centers the child grid in the background; the hand tuning shifts the
+                // icons only, so background insets and icon position are independent knobs.
                 val centerX =
-                    if ((args[5] as Int) == -1) ruleBgWidth.getFloat(rule) / 2f
-                    else (args[5] as Int) / 2f
+                    (if ((args[5] as Int) == -1) ruleBgWidth.getFloat(rule) / 2f
+                    else (args[5] as Int) / 2f) + TUNE_CHILD_SHIFT_X
                 val centerY =
                     (if ((args[6] as Int) == -1) ruleBgHeight.getFloat(rule) / 2f
-                    else (args[6] as Int) / 2f) + (args[7] as Int)
+                    else (args[6] as Int) / 2f) + (args[7] as Int) + TUNE_CHILD_SHIFT_Y
                 val out = args[2] as FloatArray
                 out[0] = ruleGetOffsetX.invoke(rule, index, cols, rows, centerX, halfIcon, spanX, spanY) as Float
                 out[1] = ruleGetOffsetY.invoke(rule, index, cols, rows, centerY, halfIcon, spanX, spanY) as Float
@@ -418,8 +429,8 @@ class BigFolderAlignHook : AppHookModule() {
 
     /**
      * Stock gaps are tuned for the stock grid; for every big-folder span they are solved
-     * from the background box instead, so the child grid fills the same box whose insets
-     * the background uses. The centered layout turns the leftover into outer margins.
+     * from the untuned background box instead, so the background insets never move the
+     * spacing. The centered layout turns the leftover into outer margins.
      */
     private fun hookFolderGaps() {
         for ((method, isH) in listOf(bfcGetHGap to true, bfcGetVGap to false)) {
@@ -437,21 +448,21 @@ class BigFolderAlignHook : AppHookModule() {
                     if (metrics.cellWidth <= 0) return@hookWithId result
                     val n = if (isH) grid[0] else grid[1]
                     if (n <= 1) return@hookWithId 0f
-                    // Same box the background is sized with, so the grid and the background
-                    // cannot drift apart.
-                    val bgAxis = if (isH) backgroundWidth(metrics, spanX)
-                    else backgroundHeight(metrics, spanY)
+                    // Deliberately the untuned box: narrowing the background must not change
+                    // the spacing, which is what TUNE_GAP_*_DELTA is for.
+                    val bgAxis = if (isH) backgroundBaseWidth(metrics, spanX)
+                    else backgroundBaseHeight(metrics, spanY)
                     val childSize = metrics.folderIconSizePx * bfcChildIconScale.getFloat(null)
                     // (n + 1) splits the free space over the n-1 inner gaps and the two outer
-                    // margins equally, so the grid never touches the background edge; the hand
-                    // tuning scale then trims or widens the spacing per axis.
-                    val scale = if (isH) TUNE_GAP_H_SCALE else TUNE_GAP_V_SCALE
-                    val newGap = maxOf(0f, (bgAxis - n * childSize) / (n + 1) * scale)
+                    // margins equally, so the grid never touches the background edge; the px
+                    // delta then tightens or widens the spacing on both axes independently.
+                    val delta = if (isH) TUNE_GAP_H_DELTA else TUNE_GAP_V_DELTA
+                    val newGap = maxOf(0f, (bgAxis - n * childSize) / (n + 1) + delta)
                     val logKey = "${if (isH) "h" else "v"}Gap$spanKey"
                     if (loggedSpans.add(logKey) && newGap != (result as Float)) {
                         logger.debug(
                             "${if (isH) "hGap" else "vGap"}($spanX,$spanY) $result -> $newGap " +
-                                "(n=$n bg=$bgAxis child=$childSize)"
+                                "(n=$n bg=$bgAxis child=$childSize delta=$delta)"
                         )
                     }
                     return@hookWithId newGap
@@ -591,25 +602,32 @@ class BigFolderAlignHook : AppHookModule() {
         /** Transparent margin ratio around the artwork inside the icon box; fallback only (measured ~21px in a 190px box). */
         private const val ART_INSET_RATIO = 0.11f
 
-        // ── Hand tuning (launcher-local px, the space the BigFolderAlign log prints) ──
-        // See docs/research/big_folder_tuning.md for what each value feeds.
+        // ── Hand tuning: six independent knobs, all in launcher-local px ──
+        // See docs/research/big_folder_tuning.md: each value drives exactly one of the six
+        // quantities (child gap H/V, background inset H/V, child grid shift X/Y).
 
-        /** Narrowing of the background horizontally; the child horizontal gap follows it. */
-        private const val TUNE_INSET_X_EXTRA = 0
+        /** Child horizontal gap delta: negative tightens, positive widens. Background untouched. */
+        private const val TUNE_GAP_H_DELTA = -40
 
-        /** Extra height added below the background: shifts the child grid down by half of it. */
-        private const val TUNE_HEIGHT_EXTRA = 0
+        /** Child vertical gap delta: negative tightens, positive widens. Background untouched. */
+        private const val TUNE_GAP_V_DELTA = 8
 
-        /** Moves background and child grid down together, without changing sizes or gaps. */
-        private const val TUNE_OFFSET_Y_EXTRA = 0
+        /** Background horizontal inset: positive narrows both edges. Child grid untouched. */
+        private const val TUNE_BG_INSET_X = 64
 
-        /** Child gap scales on the solved gaps: 1 = solved value, <1 tighter, >1 wider. */
-        private const val TUNE_GAP_H_SCALE = 1f
-        private const val TUNE_GAP_V_SCALE = 1f
+        /** Background vertical inset: positive shortens both edges, negative grows them. */
+        private const val TUNE_BG_INSET_Y = -16
+
+        /** Child grid horizontal shift: moves the icons only, the background stays put. */
+        private const val TUNE_CHILD_SHIFT_X = 0
+
+        /** Child grid vertical shift: moves the icons only, the background stays put. */
+        private const val TUNE_CHILD_SHIFT_Y = 16
 
         /** True when any hand tuning value differs from its default (log marker). */
-        private fun tuningActive(): Boolean = TUNE_INSET_X_EXTRA != 0 || TUNE_HEIGHT_EXTRA != 0 ||
-            TUNE_OFFSET_Y_EXTRA != 0 || TUNE_GAP_H_SCALE != 1f || TUNE_GAP_V_SCALE != 1f
+        private fun tuningActive(): Boolean = TUNE_GAP_H_DELTA != 0 || TUNE_GAP_V_DELTA != 0 ||
+            TUNE_BG_INSET_X != 0 || TUNE_BG_INSET_Y != 0 ||
+            TUNE_CHILD_SHIFT_X != 0 || TUNE_CHILD_SHIFT_Y != 0
 
         /** One-shot log dedup (childCount/gap calls are very frequent; each key is logged once). */
         private val loggedSpans: MutableSet<String> =
