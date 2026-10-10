@@ -14,6 +14,7 @@ import java.lang.invoke.MethodHandles
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.util.Objects
+import kotlin.math.roundToInt
 
 @SuppressLint("PrivateApi")
 class NativeNotificationIcon : AppHookModule() {
@@ -73,12 +74,15 @@ class NativeNotificationIcon : AppHookModule() {
             logger.info("Hooking com.android.systemui.statusbar.NotificationShelf")
             val updateMethod: Method = classLoader
                 .loadClass("com.android.systemui.statusbar.NotificationShelf")
-                .getDeclaredMethod("updateResources\$5")
+                .getDeclaredMethod($$"updateResources$5")
             hookWithId(updateMethod, "update") { chain ->
+                val previous = isCtsMode.get()
                 isCtsMode.set(true)
-                val result = chain.proceed()
-                isCtsMode.remove()
-                result
+                try {
+                    chain.proceed()
+                } finally {
+                    if (previous == null) isCtsMode.remove() else isCtsMode.set(previous)
+                }
             }
             logger.info("Successfully hooked com.android.systemui.statusbar.NotificationShelf [2/6]")
         } catch (e: Exception) {
@@ -145,8 +149,8 @@ class NativeNotificationIcon : AppHookModule() {
                 newWrapperClass.getDeclaredMethod("onContentUpdated", newRowClass)
             hookWithId(onContentUpdatedMethod, "on_content_updated_1") { chain ->
                 val result = chain.proceed()
-                val iconview = newGetIcon.invoke(chain.thisObject) as? ImageView
-                if (iconview == null) return@hookWithId result
+                val iconview =
+                    newGetIcon.invoke(chain.thisObject) as? ImageView ?: return@hookWithId result
 
                 val keySizeUnfucked = 1145141919
                 if (Objects.equals(iconview.getTag(keySizeUnfucked), java.lang.Boolean.TRUE)) {
@@ -158,12 +162,12 @@ class NativeNotificationIcon : AppHookModule() {
                     // AOSP notification_icon_circle_size: 24dp
                     val dm = iconview.context.resources.displayMetrics
                     val diameter = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24f, dm)
-                    lp.width = Math.round(diameter)
-                    lp.height = Math.round(diameter)
+                    lp.width = diameter.roundToInt()
+                    lp.height = diameter.roundToInt()
                     if (lp is ViewGroup.MarginLayoutParams) {
-                        lp.marginStart = Math.round(
+                        lp.marginStart =
                             TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12f, dm)
-                        )
+                                .roundToInt()
                     }
                     iconview.requestLayout()
                 }
@@ -208,12 +212,12 @@ class NativeNotificationIcon : AppHookModule() {
                     // AOSP notification_icon_circle_size: 24dp
                     val dm = iconview.context.resources.displayMetrics
                     val diameter = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24f, dm)
-                    lp.width = Math.round(diameter)
-                    lp.height = Math.round(diameter)
+                    lp.width = diameter.roundToInt()
+                    lp.height = diameter.roundToInt()
                     if (lp is ViewGroup.MarginLayoutParams) {
-                        lp.marginStart = Math.round(
+                        lp.marginStart =
                             TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12f, dm)
-                        )
+                                .roundToInt()
                     }
                     iconview.requestLayout()
                 }
@@ -271,24 +275,29 @@ class NativeNotificationIcon : AppHookModule() {
     }
 
     private fun hookNotificationBuilder(classLoader: ClassLoader) {
+        val builderClass = try {
+            logger.info($$"Hooking android.app.Notification$Builder")
+            classLoader.loadClass($$"android.app.Notification$Builder")
+        } catch (e: Exception) {
+            logger.error($$"Unable to load android.app.Notification$Builder.", e)
+            return
+        }
+        // always use circle template for android.app.Notification$Builder#get*Resource()
+        val isCtsMethod = try {
+            builderClass.getDeclaredMethod("isCtsGtsTest")
+        } catch (_: NoSuchMethodException) {
+            null
+        }
+        if (isCtsMethod == null) {
+            // See docs/research/zui_cts_gts_flag.md — XSystemUtil.isCTSGTSTest is not a substitute.
+            logger.warn($$"android.app.Notification$Builder.isCtsGtsTest not found, skipping hook.")
+            return
+        }
         try {
-            logger.info("Hooking android.app.Notification\$Builder")
-            // always use circle template for android.app.Notification$Builder#get*Resource()
-            val isCtsMethod: Method = classLoader
-                .loadClass("android.app.Notification\$Builder")
-                .getDeclaredMethod("isCtsGtsTest")
             hookWithId(isCtsMethod, "is_cts") { true }
-            logger.info("Successfully hooked android.app.Notification\$Builder [6/6]")
-        } catch (_: Exception) {
-            try {
-                logger.warn("Unable to hook method isCtsGtsTest! Try alternate way.")
-                val methodToReplace: Method = classLoader.loadClass("com.android.systemui.util.XSystemUtil")
-                    .getDeclaredMethod("isCTSGTSTest")
-                hookWithId(methodToReplace, "method_to_replace") { true }
-                logger.info("Successfully hooked android.app.Notification\$Builder with alternate way.[6/6]")
-            } catch (e: Exception) {
-                logger.error("Unable to hook isCTSGTSTest!", e)
-            }
+            logger.info($$"Successfully hooked android.app.Notification$Builder [6/6]")
+        } catch (e: Exception) {
+            logger.error($$"Failed to hook android.app.Notification$Builder.isCtsGtsTest", e)
         }
     }
 
