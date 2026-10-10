@@ -25,6 +25,7 @@ import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
 import com.qimian233.ztool.hook.modules.launcher.LauncherAppIconUnmaskHook
 import com.qimian233.ztool.hook.modules.launcher.misc.RecentTaskMemoryViewHook
+import com.qimian233.ztool.hook.modules.launcher.ZuiDialogPanelTestHook as LauncherZuiDialogPanelTestHook
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDeviceAppListReporting
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDeviceAutoInstall
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDevicePush
@@ -64,6 +65,7 @@ import com.qimian233.ztool.hook.modules.setting.PermissionControllerHook
 import com.qimian233.ztool.hook.modules.setting.SettingsAppIconUnmaskHook
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory as SettingSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook
+import com.qimian233.ztool.hook.modules.setting.ZuiDialogPanelTestHook as SettingZuiDialogPanelTestHook
 import com.qimian233.ztool.hook.modules.sogouime.HalfWidthPunctHook
 import com.qimian233.ztool.hook.modules.systemframework.AiInputExpand
 import com.qimian233.ztool.hook.modules.systemframework.AllowGetPackages
@@ -241,6 +243,7 @@ object HookManager {
         registerHookModule(HideOtaUpdateHint())
         registerHookModule(LocaleListEditorHook())
         registerHookModule(SettingsAppIconUnmaskHook())
+        registerHookModule(SettingZuiDialogPanelTestHook())
 
         registerHookModule(PackageInstallerHookScan())
         registerHookModule(PackageInstallerPermissionHook())
@@ -268,6 +271,7 @@ object HookManager {
         registerHookModule(BatchUninstall())
         registerHookModule(LauncherWideGridHook())
         registerHookModule(IconScaleOverrideHook())
+        registerHookModule(LauncherZuiDialogPanelTestHook())
 
         registerHookModule(AutoMistakeTouchHook())
         registerHookModule(DisableGameAudio())
