@@ -746,6 +746,14 @@
     <string name="device_service_disable_app_list_reporting_summary">对本应用返回空的已安装应用列表，使其无法收集并上传全部应用（含系统应用）的包名与版本</string>
     <string name="device_service_disable_tab_pushout_sdac_title">禁用 SDAC 激活注册（设备服务支持）</string>
     <string name="device_service_disable_tab_pushout_sdac_summary">拦截配套应用“设备服务支持”（com.tblenovo.tabpushout，平板渠道）的保活闹钟与激活注册，阻断向 sdac.lenovo.com 上报设备标识、Wi-Fi 热点列表与区域信息；注册状态是设备服务推送延迟解除的条件之一，禁用后推送保活同样受限</string>
+
+    <string name="ui_components_app_name">用户界面组件</string>
+    <string name="ui_components_app_description">统一调整系统内 ZUI 对话框的外观</string>
+    <string name="ui_components_dialog_skin_title">对话框按钮容器</string>
+    <string name="ui_components_dialog_skin_summary">用填色容器承载对话框按钮，去掉按钮之间的分割线。生效的应用由 LSPosed 作用域决定，需要覆盖更多应用时请在 LSPosed 管理器中为本模块勾选</string>
+    <string name="ui_components_reload_button">热重载</string>
+    <string name="ui_components_reload_result_message">热重载完成：成功 %1$d 个，失败 %2$d 个</string>
+    <string name="ui_components_reload_unsupported_message">当前框架不支持热重载</string>
     <string name="sogou_ime_punct_section_title">标点符号</string>
     <string name="system_framework_half_width_punct_summary">中文模式下，列表中的符号强制以半角上屏。默认 #*-+=，与 PC 输入法惯例一致；纯中文标点（。，《》等）不受影响。</string>
     <string name="system_framework_half_width_punct_hint">需要半角输出的符号列表</string>

@@ -49,6 +49,7 @@ import com.qimian233.ztool.screens.systemui.misc.SystemUiMiscSettingsRoute
 import com.qimian233.ztool.screens.systemui.statusbar.StatusBarSettingsRoute
 import com.qimian233.ztool.screens.zuisetting.SettingsDetailRoute
 import com.qimian233.ztool.screens.zuisetting.magicwindowsearch.SearchPageRoute
+import com.qimian233.ztool.screens.zuiui.ZuiDialogSkinRoute
 import com.qimian233.ztool.search.SearchIndex
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.collect
@@ -744,6 +745,26 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
+            route = routeWithTarget(FeatureDestination.UiComponents.route),
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
+            ZuiDialogSkinRoute(
+                title = stringResource(R.string.ui_components_app_name),
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                targetId = backStackEntry.highlightTarget(),
+            )
+        }
+        composable(
             route = routeWithTarget(FeatureDestination.SogouIme.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
@@ -941,6 +962,7 @@ private fun navigationRouteIndex(rawRoute: String?): Int {
         FeatureDestination.ZuiPerformance.route -> 2
         FeatureDestination.SogouIme.route -> 2
         FeatureDestination.DeviceService.route -> 2
+        FeatureDestination.UiComponents.route -> 2
         MainRoute.Settings.name -> 3
         HiddenRoute.SETTINGS_THEME -> 4
         HiddenRoute.SETTINGS_ABOUT -> 4

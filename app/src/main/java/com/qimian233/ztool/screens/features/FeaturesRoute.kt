@@ -73,7 +73,8 @@ enum class FeatureDestination(
     TbEngine("feature/tb-engine"),
     ZuiPerformance("feature/zui-performance"),
     SogouIme("feature/sogou-ime"),
-    DeviceService("feature/device-service")
+    DeviceService("feature/device-service"),
+    UiComponents("feature/ui-components")
 }
 
 @Composable
@@ -306,6 +307,17 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 packageName = ScopeKeys.LENOVO_DEVICE_SERVICE.packageName,
                 destination = FeatureDestination.DeviceService,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.DeviceService)
+            ),
+            // Cross-app card: no owning package, and the LSPosed scope is the app selector,
+            // so an empty scopePackages keeps the in-scope gate vacuously true.
+            featureItem(
+                context = context,
+                nameRes = R.string.ui_components_app_name,
+                descriptionRes = R.string.ui_components_app_description,
+                packageName = "",
+                destination = FeatureDestination.UiComponents,
+                alwaysVisible = true,
+                scopePackages = emptyList()
             )
         )
     }

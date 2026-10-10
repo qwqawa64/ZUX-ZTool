@@ -215,6 +215,16 @@ object SearchIndex {
             isFeatureCard = true,
             featureDestination = FeatureDestination.DeviceService,
             groupTitleRes = R.string.search_group_feature_cards
+        ),
+        // No requiresPackage: the card is not tied to any single installed app.
+        SearchEntry(
+            id = "feature_card_ui_components",
+            route = FeatureDestination.UiComponents.route,
+            titleRes = R.string.ui_components_app_name,
+            summaryRes = R.string.ui_components_app_description,
+            isFeatureCard = true,
+            featureDestination = FeatureDestination.UiComponents,
+            groupTitleRes = R.string.search_group_feature_cards
         )
     )
 
@@ -328,6 +338,11 @@ object SearchIndex {
         route = FeatureDestination.DeviceService.route,
         groupTitleRes = R.string.device_service_app_name,
         requiresPackage = ScopeKeys.LENOVO_DEVICE_SERVICE.packageName
+    )
+
+    private val uiComponents = Screen(
+        route = FeatureDestination.UiComponents.route,
+        groupTitleRes = R.string.ui_components_app_name
     )
 
     private val appSettings = Screen(
@@ -1129,6 +1144,12 @@ object SearchIndex {
             id = "device_service_disable_tab_pushout_sdac",
             titleRes = R.string.device_service_disable_tab_pushout_sdac_title,
             summaryRes = R.string.device_service_disable_tab_pushout_sdac_summary
+        ),
+
+        uiComponents.item(
+            id = "ui_components_dialog_skin",
+            titleRes = R.string.ui_components_dialog_skin_title,
+            summaryRes = R.string.ui_components_dialog_skin_summary
         ),
 
         packageInstaller.item(
