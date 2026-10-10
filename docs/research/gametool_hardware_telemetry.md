@@ -194,6 +194,75 @@ Conclusions:
    `/sys/devices/system/cpu/` is allowed; the only failure mode is a hot-unplugged top-numbered
    CPU, whose directory disappears and triggers the fallback.
 
+## 7. TB375FC (`PERIDOT`, MediaTek) — open issue, hypotheses only
+
+User report: on TB375FC the floating island shows neither temperature nor GPU; temperature matters
+most (bypass charging monitoring). Nothing below is verified — it is a ranked hypothesis list plus
+the exact data needed to confirm.
+
+Two independent mechanisms can blank those two fields:
+
+**(A) The temperature value is invalid.** `getTemp()` maps the model to a thermal type and TB375FC
+matches none of the special cases (`DeviceUtils.PERIDOT = "TB375FC"` is only referenced for the
+game-list selection in `FeaturesBaseOnRomKt`, never for telemetry), so it falls through to type `6`
+— the same type that returns `0` on TB710FU. Additionally, TB375FC is **not** in
+`HWDataInterface`'s AIDL model list (`isInception || isKirbyPrc || isKirbyRow || isEldenPrc ||
+isEldenRow || isTenet || isTopaz`), so the app takes the **HIDL** `V1_0.IPerformance` branch there.
+If that HIDL service is absent on the MediaTek ROM, `mHIDL_PerfService` and `mAIDL_PerfService` are
+both null and every getter returns `-1` → temperature `0.0℃`, CPU `0.00`, GPU `0`.
+
+**(B) Nothing polls the value.** `mCpu` / `mGpu` / `mTemperature` LiveData are written *only* by
+`StateLiveData.updateXpuTemp()`. The only periodic caller is `CpuGpuTemperatureFpsReader`, whose
+`handleXpuTemperature()` and `handleFps()` both early-return when `Settings.isPad()` is true.
+TB375FC is a pad (`ro.config.lgsi.device.type=pad`), so the 2 s loop is disabled and CPU/GPU are
+only ever posted by the one-shot `updateXpuTemp(false)` calls in the overclock-mode switch — which
+do **not** refresh temperature. The island's temperature ring is the exception: it is fed by
+`IslandManager.temperatureFlow`, a separate 5 s loop that calls `HWDataInterface.getTemp()` directly
+and is *not* gated by `isPad()`.
+
+Note (A) and (B) predict different symptoms for CPU. If CPU *does* display on TB375FC, the periodic
+reader is running there and only the value sources are broken; if CPU is also blank, mechanism (B)
+is active. This discriminates the two and is the first thing to confirm.
+
+`Settings.isPad()` is referenced by 17 classes, so a blanket hook is unsafe; scope any fix to the
+reader (caller check) or drive `StateLiveData.updateXpuTemp(true)` from ZTool's own timer.
+
+### Candidate hook points
+
+| Goal | Hook point | Notes |
+| --- | --- | --- |
+| Temperature only (user priority) | `HWDataInterface.getTemp()` | Already hooked by `SocTemperatureFix`. Replacing the hardcoded `thermal_zone9` with a **runtime probe over `getThermalTemp(0..N)`** (accept the first plausible milli-°C value) would be device-agnostic and needs no zone knowledge |
+| Temperature, HAL unusable | sysfs thermal zone | Requires the TB375FC zone name; `thermal_zone9` is TB710FU-specific |
+| CPU/GPU refresh | `Settings.isPad()` scoped to `CpuGpuTemperatureFpsReader`, or self-driven `updateXpuTemp(true)` | Re-enables the app's own 2 s loop; affects FPS too |
+| GPU value | `HWDataInterface.getGpuCurFreq()` / `getGpuMaxFreq()` | Only needed if the HAL returns `-1`; the sysfs route is impossible (kgsl nodes are denied to app domains) |
+
+### Data requested to close this out
+
+1. TB375FC ROM dump — most valuable first:
+   * the ROM's Game Assistant APK (`com.zui.game.service`) to diff `HWDataInterface`,
+     `DeviceUtils`, `Settings` and `CpuGpuTemperatureFpsReader` against the TB710FU build;
+   * the Lenovo performance HAL binary (`/vendor/bin/hw/vendor.lenovo.hardware.performance*`) —
+     decompiling it yields the authoritative `getThemalTemp(type)` → thermal-zone mapping and which
+     types are implemented;
+   * `/vendor/etc/vintf/manifest.xml` to see whether the HAL is AIDL, HIDL, or both;
+   * MediaTek thermal configs (`/vendor/etc/thermal*.conf`, `/vendor/etc/.tp/`) for zone names;
+   * `build.prop` / vendor props for `ro.config.lgsi.device.type`, `ro.config.lgsi.project`,
+     `ro.product.model`.
+2. From the device (root is available since LSPosed is installed):
+
+```bash
+adb shell su -c 'service list | grep -i performance'
+adb shell su -c 'lshal | grep -i lenovo'                 # HIDL presence
+S=vendor.lenovo.hardware.performance.IPerformance/default
+for t in 0 1 2 3 4 5 6 7 8; do echo -n "type $t: "; adb shell su -c "service call $S 6 i32 $t"; done
+adb shell su -c "service call $S 3 i32 7"                # getCpuCurFreq(7)
+adb shell su -c "service call $S 4"                      # getGpuCurFreq
+adb shell su -c 'cat /sys/class/thermal/thermal_zone*/type'
+adb shell getprop | grep -iE 'lgsi|product.model'
+adb shell setprop log.tag.ZuiGameHelper DEBUG
+adb shell logcat -c; adb shell logcat -s ZuiGameHelper:V   # while the island is visible in a game
+```
+
 ## Reproduction
 
 ```bash
