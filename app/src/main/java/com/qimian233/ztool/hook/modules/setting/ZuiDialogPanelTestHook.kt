@@ -1,6 +1,8 @@
 package com.qimian233.ztool.hook.modules.setting
 
 import android.annotation.SuppressLint
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.view.ViewGroup
@@ -47,17 +49,33 @@ class ZuiDialogPanelTestHook : AppHookModule() {
         // any obfuscated app resource id.
         val panel = window.findViewById<View>(android.R.id.button1)?.parent as? ViewGroup ?: return
 
-        // Buttons are Buttons; the separators are a plain View (horizontal) or an inflated
-        // LinearLayout (vertical), so anything else is a divider.
+        // ZUI paints the dialog body, the panel and every button with the SAME opaque colour
+        // (all alias system_dialog_background_zui), so tinting the panel alone is invisible.
+        // Clearing the button backgrounds is what lets the tint show through.
+        var buttons = 0
         for (index in 0 until panel.childCount) {
             val child = panel.getChildAt(index)
-            if (child !is Button) child.visibility = View.GONE
+            if (child is Button) {
+                child.background = ColorDrawable(Color.TRANSPARENT)
+                buttons++
+            } else {
+                // The separators: a plain View (horizontal) or an inflated LinearLayout (vertical).
+                child.visibility = View.GONE
+            }
         }
-        panel.background = GradientDrawable().apply { setColor(TEST_PANEL_TINT) }
+        if (buttons == 0) return
+
+        // The stock bottom rounding lives on the button backgrounds, so the panel takes it over.
+        val radius = 20f * panel.resources.displayMetrics.density
+        panel.background = GradientDrawable().apply {
+            setColor(TEST_PANEL_TINT)
+            cornerRadii = floatArrayOf(0f, 0f, 0f, 0f, radius, radius, radius, radius)
+        }
+        logger.info("ZUI dialog panel restyled: buttons=" + buttons)
     }
 
     private companion object {
         /** Translucent blue: chosen only so the override is unmistakable on screen. */
-        const val TEST_PANEL_TINT = 0x332196F3
+        const val TEST_PANEL_TINT = 0x662196F3
     }
 }
