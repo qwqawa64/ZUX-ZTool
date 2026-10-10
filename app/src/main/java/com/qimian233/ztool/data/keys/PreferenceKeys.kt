@@ -22,6 +22,9 @@ object PreferenceKeys {
     // for test hook only
     val TEST_HOOK = BoolKey("test_hook", false)
 
+    // Cross-app ZUI dialog skin; which apps it reaches comes from the LSPosed scope
+    val ZUI_DIALOG_SKIN = BoolKey("zui_dialog_skin", false)
+
     val DISABLE_FLAG_SECURE = BoolKey("disable_flag_secure", false)
     val ALLOW_GET_PACKAGES = BoolKey("allow_get_packages", false)
     val ALLOW_UNTRUSTED_TOUCH = BoolKey("allow_untrusted_touch", false)
