@@ -27,6 +27,14 @@ body:
             我确认最新版依然存在此问题
           required: true
         - label: |
+            I've tried the latest [CI Build](https://github.com/qwqawa64/ZUX-ZTool/actions) and the problem still exists |
+            我已尝试过最新 [CI 版本](https://github.com/qwqawa64/ZUX-ZTool/actions)，问题依旧
+          required: true
+        - label: |
+            I restarted the scope (or performed a complete reboot) after the module updates and the problem still exists |
+            模块更新后，我重启过相关作用域但问题依旧存在
+          required: true
+        - label: |
             I checked all installed modules and confirmed that this module is the cause |
             我已排查已安装的所有模块的可能性，确认由本模块造成
           required: true
