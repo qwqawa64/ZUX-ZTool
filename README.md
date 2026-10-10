@@ -1,7 +1,7 @@
 # <p align="center">ZTool - 更适合 ZUXOS 体质的 LSPosed 自定义模块</p>
 
 <div align="center">
-  <img src="/app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" alt="ZTool Logo">
+  <img src="/new_launcher_icon.jpg" alt="ZTool Logo">
 
   <a href="https://github.com/qwqawa64/ZUX-ZTool"><img alt="Static Badge" src="https://img.shields.io/badge/GitHub-ZUX--ZTool-%23ADD8E6?style=for-the-badge"></a>
   <a href="https://github.com/LSPosed/LSPosed"><img alt="Static Badge" src="https://img.shields.io/badge/Framework-LSPosed-%23F48FB1?style=for-the-badge&color=%23F48FB1">
