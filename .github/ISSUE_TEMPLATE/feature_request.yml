@@ -13,12 +13,12 @@ body:
     attributes:
       label: 功能所属方面 / Which part does the suggestion relate to?
       options:
-        - 系统界面 SystemUI（状态栏 / 控制中心 / 锁屏 / 音量亮度面板）
-        - 系统框架 System Framework
-        - 桌面启动器 Launcher
-        - 系统更新 / OTA / UDS 引擎
-        - 游戏与性能优化
-        - 一视界 / 平行视窗 / 小窗
+        - 系统界面 SystemUI（状态栏 Status Bar / 控制中心 Control Center / 锁屏 Lock Screen / 音量亮度面板 Volume/Brightness Panel）
+        - 系统框架 (System Framework/System Server)
+        - 桌面启动器 (ZUXOS Launcher)
+        - 系统更新 / OTA / UDS 引擎 (UDS Engine)
+        - 游戏与性能优化 (Game and Performance Optimization)
+        - 一视界 / 平行视窗 / 小窗 (One Vision / Parallel Windows / Floating Window)
         - 应用界面与设置项 (App UI / Settings)
         - 新增功能模块 (New feature module)
         - 从其它模块或 ROM 移植功能 (Port a feature from other modules or ROMs)
