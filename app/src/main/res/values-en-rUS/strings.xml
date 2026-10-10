@@ -668,7 +668,8 @@
     <string name="ui_components_app_name">UI components</string>
     <string name="ui_components_app_description">Restyle ZUI dialogs across system apps</string>
     <string name="ui_components_dialog_skin_title">Dialog button container</string>
-    <string name="ui_components_dialog_skin_summary">Carries the dialog buttons on a tinted container and drops the separators between them. Which apps are affected follows the LSPosed scope; to cover more apps, enable them for this module in LSPosed Manager.</string>
+    <string name="ui_components_dialog_skin_summary">Carries the dialog buttons on a tinted container and drops the separators between them.</string>
+    <string name="ui_components_scope_hint">Which apps are affected follows the LSPosed scope. To cover more apps, enable them for this module in LSPosed Manager; this page only controls the appearance and does not pick apps.</string>
     <string name="ui_components_reload_button">Hot reload</string>
     <string name="ui_components_reload_result_message">Hot reload finished: %1$d succeeded, %2$d failed</string>
     <string name="ui_components_reload_unsupported_message">This framework does not support hot reload</string>

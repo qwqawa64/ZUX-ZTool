@@ -750,7 +750,8 @@
     <string name="ui_components_app_name">用户界面组件</string>
     <string name="ui_components_app_description">统一调整系统内 ZUI 对话框的外观</string>
     <string name="ui_components_dialog_skin_title">对话框按钮容器</string>
-    <string name="ui_components_dialog_skin_summary">用填色容器承载对话框按钮，去掉按钮之间的分割线。生效的应用由 LSPosed 作用域决定，需要覆盖更多应用时请在 LSPosed 管理器中为本模块勾选</string>
+    <string name="ui_components_dialog_skin_summary">用填色容器承载对话框按钮，去掉按钮之间的分割线</string>
+    <string name="ui_components_scope_hint">生效的应用由 LSPosed 作用域决定。需要覆盖更多应用时，请在 LSPosed 管理器中为本模块勾选；本页面只控制外观，不选择应用</string>
     <string name="ui_components_reload_button">热重载</string>
     <string name="ui_components_reload_result_message">热重载完成：成功 %1$d 个，失败 %2$d 个</string>
     <string name="ui_components_reload_unsupported_message">当前框架不支持热重载</string>

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +39,7 @@ import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.ZuiDialogSkinUiState
 import com.qimian233.ztool.viewmodel.ZuiDialogSkinViewModel
 
@@ -180,6 +182,14 @@ private fun zuiDialogSkinSections(
 ): List<SettingSection> {
     return listOf(
         SettingSection(
+            items = listOf(
+                SettingItem.Custom(
+                    key = "deco_ui_components_scope_hint",
+                    content = { UiComponentsScopeHint() }
+                )
+            )
+        ),
+        SettingSection(
             title = stringResource(R.string.ui_components_app_name),
             items = listOf(
                 SettingItem.Switch(
@@ -191,5 +201,15 @@ private fun zuiDialogSkinSections(
                 )
             )
         )
+    )
+}
+
+@Composable
+private fun UiComponentsScopeHint() {
+    Text(
+        text = stringResource(R.string.ui_components_scope_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = LocalZToolColorScheme.current.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
     )
 }
