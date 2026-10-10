@@ -76,6 +76,7 @@ import com.qimian233.ztool.hook.modules.systemframework.DisableGameAudio
 import com.qimian233.ztool.hook.modules.systemframework.DisableHbmThermalLimit
 import com.qimian233.ztool.hook.modules.systemframework.DisableVolumeWarnDialog
 import com.qimian233.ztool.hook.modules.systemframework.FineVolumeSteps
+import com.qimian233.ztool.hook.modules.systemframework.FrameworkScopeProbeHook
 import com.qimian233.ztool.hook.modules.systemframework.FreeformEdgeBubbleHook
 import com.qimian233.ztool.hook.modules.systemframework.FreeformKeepAliveSystemHook
 import com.qimian233.ztool.hook.modules.systemframework.ForceRelativeAppFreeform
@@ -180,6 +181,7 @@ object HookManager {
         registerHookModule(FineVolumeSteps())
         registerHookModule(VolumeKeyNonlinearRamp())
         registerHookModule(SystemSplitScreenMandatory())
+        registerHookModule(FrameworkScopeProbeHook())
 
         registerHookModule(PackageManagerDowngradeHook())
         registerHookModule(PackageManagerSignatureBypassHook())
