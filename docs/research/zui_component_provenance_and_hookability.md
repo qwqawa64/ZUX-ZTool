@@ -29,6 +29,10 @@ sibling `com.zui.internal.app.*` controller layer. It is Lenovo's fork of the AO
 | Resource package | `zui.platform.R` | Generated R class of the library; its IDs are `0x7f......` |
 | Support | `zui.appcompat.*`, `zui.preference.*`, `zui.util.*`, `zui.themes.*` | Preference widgets, reflection helpers, theme-service client |
 
+The full component and style inventory — every widget class, every `Theme.Zui*` /
+`Widget.Zui*` / `TextAppearance.Zui*` style and the 612 `*_zui` style tokens, grouped by
+component — is in [zui_component_style_catalog.md](zui_component_style_catalog.md).
+
 ### 1.1 Code is bundled — dex-level proof
 
 `dexlib.py` (`iter_dex_bytes` / `defined_classes`) was used to enumerate the classes each
