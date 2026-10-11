@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsListView
 import android.widget.BaseAdapter
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -30,6 +31,7 @@ internal class SidebarDrawerAdapter(
         fun onToggleEditMode()
         fun onMoveUp(app: Any)
         fun onMoveDown(app: Any)
+        fun onRemove(app: Any)
     }
 
     private var items: List<Any> = emptyList()
@@ -53,8 +55,10 @@ internal class SidebarDrawerAdapter(
     private val doneLabel = SidebarStrings.get(context, SidebarStrings.STRING_DONE, SidebarStrings.FALLBACK_DONE)
     private val glyphUp = SidebarStrings.get(context, SidebarStrings.STRING_GLYPH_UP, SidebarStrings.FALLBACK_GLYPH_UP)
     private val glyphDown = SidebarStrings.get(context, SidebarStrings.STRING_GLYPH_DOWN, SidebarStrings.FALLBACK_GLYPH_DOWN)
+    private val glyphDrop = SidebarStrings.get(context, SidebarStrings.STRING_GLYPH_DROP, SidebarStrings.FALLBACK_GLYPH_DROP)
     private val moveUpLabel = SidebarStrings.get(context, SidebarStrings.STRING_MOVE_UP, SidebarStrings.FALLBACK_MOVE_UP)
     private val moveDownLabel = SidebarStrings.get(context, SidebarStrings.STRING_MOVE_DOWN, SidebarStrings.FALLBACK_MOVE_DOWN)
+    private val dropLabel = SidebarStrings.get(context, SidebarStrings.STRING_DROP, SidebarStrings.FALLBACK_DROP)
 
     /**
      * [newEmptySlots] renders that many placeholder rows after the apps, so an edit list keeps
@@ -154,21 +158,40 @@ internal class SidebarDrawerAdapter(
             )
             setPadding(0, padTop, 0, padTop)
         }
-        row.addView(ImageView(context).apply {
+        val icon = ImageView(context).apply {
             setImageDrawable(SidebarReflect.iconOf(app))
             contentDescription = SidebarReflect.labelOf(app)
             alpha = if (alreadyVisible && !editMode) 0.3f else 1.0f
-            layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
-        })
+        }
         if (editable && editMode) {
-            // Removal lives on the all-apps panel's minus badge, so the row only reorders.
+            // Removal sits on the icon itself, so the row only carries reordering glyphs.
+            row.addView(iconWithRemoveBadge(icon, app))
             row.addView(glyph(glyphUp, moveUpLabel) { callbacks.onMoveUp(app) })
             row.addView(glyph(glyphDown, moveDownLabel) { callbacks.onMoveDown(app) })
+        } else {
+            row.addView(icon, LinearLayout.LayoutParams(iconSize, iconSize))
         }
         // No row-level click listener: the host's ListView item click drives both
         // launching (normal mode) and ignoring taps on empty row areas (edit mode).
         return row
     }
+
+    /** The icon with a remove disc pinned to its top-right corner. */
+    private fun iconWithRemoveBadge(icon: ImageView, app: Any): View =
+        FrameLayout(context).apply {
+            layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
+            addView(icon, FrameLayout.LayoutParams(iconSize, iconSize))
+            addView(
+                SidebarBadgeStyle.view(context, glyphDrop, dropLabel, SidebarBadgeStyle.DROP_COLOR)
+                    .apply {
+                        val size = SidebarBadgeStyle.size(context)
+                        layoutParams = FrameLayout.LayoutParams(
+                            size, size, Gravity.TOP or Gravity.END
+                        )
+                        setOnClickListener { callbacks.onRemove(app) }
+                    }
+            )
+        }
 
     private fun glyph(text: String, description: String, onClick: () -> Unit): TextView =
         TextView(context).apply {

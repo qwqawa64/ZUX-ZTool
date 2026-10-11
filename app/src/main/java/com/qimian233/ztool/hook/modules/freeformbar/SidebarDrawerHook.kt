@@ -383,14 +383,14 @@ class SidebarDrawerHook : AppHookModule() {
     }
 
     /**
-     * The drawer is only `top_list_window_width` wide (70dp in landscape), so the three
-     * per-row glyphs need extra room while editing.
+     * The drawer is only `top_list_window_width` wide (70dp in landscape), so the two per-row
+     * glyphs need extra room while editing.
      */
     private fun applyEditWidth(context: Context, edit: Boolean, glyphWidth: Int) {
         val layout = drawerLayoutField?.get(context) as? android.view.ViewGroup ?: return
         val params = layout.layoutParams ?: return
         if (originalDrawerWidth == 0) originalDrawerWidth = params.width
-        params.width = if (edit) originalDrawerWidth + (glyphWidth * 3) else originalDrawerWidth
+        params.width = if (edit) originalDrawerWidth + (glyphWidth * 2) else originalDrawerWidth
         layout.layoutParams = params
     }
 
@@ -470,6 +470,8 @@ class SidebarDrawerHook : AppHookModule() {
         override fun onMoveUp(app: Any) = move(context, app, -1)
 
         override fun onMoveDown(app: Any) = move(context, app, 1)
+
+        override fun onRemove(app: Any) = remove(context, app)
     }
 
     private fun move(context: Context, app: Any, delta: Int) {
@@ -482,6 +484,18 @@ class SidebarDrawerHook : AppHookModule() {
         val moved = members[index]
         members[index] = members[target]
         members[target] = moved
+        SidebarDrawerStore.writeMembers(context, members)
+        SidebarDrawerStore.setCustomized(context, true)
+        refreshDrawer(context)
+        refreshBadges(context)
+    }
+
+    /** Drops an app from the drawer, leaving its slot empty. */
+    private fun remove(context: Context, app: Any) {
+        val key = SidebarReflect.keyOf(app) ?: return
+        val members = (SidebarDrawerStore.readMembers(context)
+            ?: memberKeys(context).toMutableList()).toMutableList()
+        if (!members.remove(key)) return
         SidebarDrawerStore.writeMembers(context, members)
         SidebarDrawerStore.setCustomized(context, true)
         refreshDrawer(context)

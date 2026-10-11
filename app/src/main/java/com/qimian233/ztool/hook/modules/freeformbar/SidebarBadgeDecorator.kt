@@ -80,37 +80,28 @@ internal class SidebarBadgeDecorator(
             val position = adapterPosition(container, item)
             if (position < 0 || position >= apps.size) continue
             val app = apps[position]
-            val badge = item.findViewById<View>(badgeId) ?: addBadge(item) ?: continue
-            decorated++
             val member = isMember(app)
-            // A full drawer disables adding, so the add badge is greyed out and inert.
-            val enabled = member || canAdd
-            // Apps already in the drawer are masked to mark them as placed; when the drawer is
-            // full every icon is masked, because nothing more can be added at all.
-            val masked = member || !canAdd
-            item.findViewById<View>(iconId(container))?.alpha = if (masked) MASKED_ALPHA else 1f
+            // Apps already in the drawer are masked and carry no badge: they are removed from
+            // the drawer row's own disc. A full drawer masks everything, because nothing more
+            // can be added at all.
+            item.findViewById<View>(iconId(container))?.alpha =
+                if (member || !canAdd) MASKED_ALPHA else 1f
+            val existing = item.findViewById<View>(badgeId) as? TextView
+            if (member) {
+                existing?.visibility = View.GONE
+                item.setOnTouchListener { _, _ -> true }
+                continue
+            }
+            val badge = existing ?: addBadge(item) ?: continue
+            decorated++
+            val enabled = canAdd
             (badge as? TextView)?.let { view ->
-                val glyph = SidebarStrings.get(
-                    view.context,
-                    if (member) SidebarStrings.STRING_GLYPH_DROP else SidebarStrings.STRING_GLYPH_ADD,
-                    if (member) SidebarStrings.FALLBACK_GLYPH_DROP else SidebarStrings.FALLBACK_GLYPH_ADD
-                )
-                // Skip redundant writes: setText can request layout, and this runs on layout.
-                if (view.text.toString() != glyph || view.isEnabled != enabled) {
-                    view.text = glyph
+                if (view.visibility != View.VISIBLE || view.isEnabled != enabled) {
+                    view.visibility = View.VISIBLE
                     view.isEnabled = enabled
                     view.alpha = if (enabled) 1f else DISABLED_ALPHA
-                    view.background = disc(
-                        when {
-                            member -> DROP_COLOR
-                            enabled -> ADD_COLOR
-                            else -> MUTED_COLOR
-                        }
-                    )
-                    view.contentDescription = SidebarStrings.get(
-                        view.context,
-                        if (member) SidebarStrings.STRING_DROP else SidebarStrings.STRING_ADD,
-                        if (member) SidebarStrings.FALLBACK_DROP else SidebarStrings.FALLBACK_ADD
+                    view.background = SidebarBadgeStyle.disc(
+                        if (enabled) SidebarBadgeStyle.ADD_COLOR else SidebarBadgeStyle.MUTED_COLOR
                     )
                 }
             }
@@ -148,12 +139,18 @@ internal class SidebarBadgeDecorator(
             }
             return null
         }
-        val size = (BADGE_DP * item.resources.displayMetrics.density).toInt()
-        val badge = TextView(item.context).apply {
+        val badge = SidebarBadgeStyle.view(
+            item.context,
+            SidebarStrings.get(
+                item.context, SidebarStrings.STRING_GLYPH_ADD, SidebarStrings.FALLBACK_GLYPH_ADD
+            ),
+            SidebarStrings.get(
+                item.context, SidebarStrings.STRING_ADD, SidebarStrings.FALLBACK_ADD
+            ),
+            SidebarBadgeStyle.ADD_COLOR
+        ).apply {
             id = badgeId
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            textSize = 13f
+            val size = SidebarBadgeStyle.size(item.context)
             layoutParams = RelativeLayout.LayoutParams(size, size).apply {
                 addRule(RelativeLayout.ALIGN_TOP, anchorId)
                 addRule(RelativeLayout.ALIGN_END, anchorId)
@@ -161,11 +158,6 @@ internal class SidebarBadgeDecorator(
         }
         item.addView(badge)
         return badge
-    }
-
-    private fun disc(color: Int): GradientDrawable = GradientDrawable().apply {
-        shape = GradientDrawable.OVAL
-        setColor(color)
     }
 
     private fun adapterPosition(container: ViewGroup, item: View): Int {
@@ -192,11 +184,7 @@ internal class SidebarBadgeDecorator(
     }
 
     private companion object {
-        const val BADGE_DP = 20
         const val DISABLED_ALPHA = 0.35f
         const val MASKED_ALPHA = 0.35f
-        const val ADD_COLOR = 0xE62196F3.toInt()
-        const val DROP_COLOR = 0xE6E53935.toInt()
-        const val MUTED_COLOR = 0x66888888.toInt()
     }
 }
