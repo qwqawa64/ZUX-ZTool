@@ -14,8 +14,8 @@ Give the old build what it lacks, without porting the new build's code:
 
 1. **Drawer capacity** above the hard-coded 5 slots.
 2. **User-editable drawer ordering**, ideally `2 recent slots + N user-ordered slots`.
-3. **All-apps panel ordering** — see the finding in §3: this is *already* pinyin-sorted in the
-   old build; only an optional improvement is planned.
+3. **All-apps A–Z rail / grouping** — the panel's order is already correct pinyin; the rail was
+   never wired (§4.5).
 4. **Search in the all-apps panel.**
 
 ## 0. Decisions taken
@@ -24,7 +24,7 @@ Give the old build what it lacks, without porting the new build's code:
 |---|---|
 | Editing UX | **Stage B** — a `编辑` entry that switches the drawer into edit mode with per-row `▲`/`▼`/`✕` (keeps the host `ListView`; no drag-and-drop). Stage A (long-press menu) stays as a fallback if Stage B's row affordances turn out to be too cramped. |
 | Search placement | **In-panel `EditText`**, but §5.1 (IME focus on a `FLAG_NOT_FOCUSABLE` overlay) must be prototyped and proven **before** the rest of the search work starts. Fallback remains a ZTool-side search screen. |
-| Implementation start | **Deferred.** Requirement 3 (all-apps ordering) must first be confirmed against a concrete observed symptom — see §8. |
+| Implementation start | **Ready.** Requirement 3 was confirmed as **H1** (order is correct, the A–Z rail/grouping is missing) — see §4.5 and §8. |
 
 ## 1. Host facts (old build 1.18.02.26.20.2)
 
@@ -76,7 +76,7 @@ the 16-slot store plus an edit mode with drag/＋/✕. That is exactly what has 
 | 1 | Drawer shows many apps | hard cap 5 (`getCount()==5`, `getView` early-return, `generateTop5App` `min(5, …)`) | 16 slots | **Yes**, clean |
 | 2 | Editable drawer order | none — order is recency-driven and rewritten by the host | drag + ＋/✕ + `top_1..16` | **Yes**, via a hook-owned adapter + injected menus |
 | 2b | `2 recent + N user` hybrid | n/a (host already front-loads recents, but not user-orderable) | has 2 dynamic + up to 16 fixed, separated by a divider (not interleaved) | **Yes** — this is purely our composition rule |
-| 3 | All-apps "reasonable" order | **already** pinyin-sorted by `userId+label`, same comparator as the new build | same | **Already satisfied.** Optional polish only (dead A–Z index bar, `Collator`) |
+| 3 | All-apps "reasonable" order | order **is** correct pinyin; the A–Z rail/grouping was never wired (`mIndexBar` / `appsAlphabeticIndexBar` unassigned, `index_bar` `gone`) | same order; rail also dead | **Confirmed H1** → the work is to finish the rail, §4.5 |
 | 4 | All-apps search | absent | absent | **Yes, with one real risk** — IME focus, see §5.4 |
 
 ## 4. Hook design
@@ -167,16 +167,40 @@ the host cannot fight the user's order (and so the old build stops rewriting `to
   `AlertDialog` without a window token — use a `PopupWindow` like the host does, or set
   `dialog.window.setType(2038)` before `show()`.
 
-### 4.5 All-apps ordering (optional polish)
+### 4.5 All-apps ordering — confirmed as H1: wire up the dead A–Z rail
 
-The old build already sorts by pinyin. If a visible defect is confirmed, the cheap fixes are:
+Confirmed with the user: the panel's order **is** the intended pinyin order; what is missing is
+the A–Z rail / grouping, which makes it read as unordered. So this requirement is not a sort
+fix, it is a **feature that was never finished in the old build**.
 
-* Hook `SidebarAppUtils.covertMapToList` (or `generateLauncherApp`) and re-sort with
-  `java.text.Collator.getInstance(Locale.CHINA)` on the label only (drops the `userId` prefix
-  that currently groups by profile).
-* Wire the dead A–Z index bar: assign `mIndexBar` / `appsAlphabeticIndexBar`, make
-  `index_bar` visible, and feed `AppsAlphabeticIndexBar` pinyin initials instead of the raw
-  `appName.charAt(0)` (today the letters are Chinese characters while the order is pinyin).
+The host already ships the pieces, all unused:
+
+* layout `res/layout/drawer_window.xml` → `FrameLayout` → `zui.widget.AlphabeticIndexBar@id/index_bar`
+  (`layout_gravity="end|center_vertical"`, `visibility="gone"`);
+* `FloatService.mIndexBar` (`AlphabeticIndexBar`) and `FloatService.appsAlphabeticIndexBar`
+  (`ui.AppsAlphabeticIndexBar`) fields, **never assigned**;
+* `ui.AppsAlphabeticIndexBar` exists but is **not reusable here**: `setIndexBar(GridView, …)`
+  type-checks `adapter instanceof AppIconGridAdapter`, while the panel is a `RecyclerView` +
+  `AppIconRecyclerAdapter`.
+
+**Design (hook-side, ~1 small class):**
+
+1. In the `showAllAppWindow` after-hook, resolve `mDrawerContent.findViewById(id("index_bar"))`
+   and store it in `mIndexBar` (keeping the host field consistent).
+2. Derive the letter for an entry as the uppercase first character of
+   `PinYinUtils.toPinYin(appLabel)`; anything outside `A–Z` becomes `#`.
+3. `setValidAlphabetList(letters actually present)` so the rail only shows reachable letters.
+4. `setOnFocusedAlphabetChangeListener { _, focused -> mAppIconGv.scrollToPosition(firstIndex(focused)) }`.
+5. `mAppIconGv.addOnScrollListener { … setFocusAlphabet(letterOf(firstVisibleItem)) … }`.
+6. Toggle `index_bar` visibility (e.g. only when the panel holds more than ~20 entries).
+7. **Rail/order consistency**: today's sort key is `pinyin(userId + appLabel)`, so on a
+   multi-profile device the rail restarts at every profile boundary. If the device has profiles,
+   also hook `SidebarAppUtils.covertMapToList` and sort by `pinyin(appLabel)` with the user id as
+   a tiebreaker, so the rail stays monotonic. On a single-profile device the host sort already
+   matches the rail and step 7 can be skipped.
+8. Optional, independent of the rail: switch the comparator to
+   `java.text.Collator.getInstance(Locale.CHINA)` on the label, which orders Latin before CJK and
+   is what most users expect from an A–Z rail.
 
 ### 4.6 Search in the all-apps panel (prototype §5.1 first)
 
@@ -204,8 +228,9 @@ locales, per the repo rules):
 | `sidebar_drawer_recent_slots` | int | 2 | how many leading slots are recency-driven (0–3) |
 | `sidebar_drawer_edit_menu` | bool | true | long-press editing (Stage A) |
 | `sidebar_all_apps_search` | bool | true | inject the search box |
-| `sidebar_all_apps_collator_sort` | bool | false | §4.5 optional re-sort |
-| `sidebar_all_apps_index_bar` | bool | false | §4.5 optional A–Z bar |
+| `sidebar_all_apps_rail` | bool | true | §4.5 A–Z rail |
+| `sidebar_all_apps_rail_min_items` | int | 20 | hide the rail on short lists |
+| `sidebar_all_apps_collator_sort` | bool | false | §4.5 step 8 (`Collator` instead of per-char pinyin) |
 
 Plus a `重置抽屉顺序` action. Because the order lives in the host's private prefs, the reset is
 either an in-sidebar menu entry or a root/shell write from the module app.
@@ -260,25 +285,15 @@ either an in-sidebar menu entry or a root/shell write from the module app.
   the device, it needs the exact symptom (which apps, which order) before §4.5 is implemented.
 * Editing UX: settled — Stage B (`编辑` mode with `▲`/`▼`/`✕`).
 * Search placement: settled — in-panel `EditText`, gated on the §5.1 prototype.
-* **Requirement 3 is blocked on a symptom report** — see §8.
 
-## 8. Confirming the all-apps ordering symptom (blocking requirement 3)
+## 8. Confirming the all-apps ordering symptom — resolved as H1
 
 Both builds sort the all-apps panel with the same comparator
-(`pinyin(userId + appLabel).lowercase()`), so the code predicts **no ordering difference**.
-Before §4.5 is implemented, the observed symptom has to be pinned to one of these:
+(`pinyin(userId + appLabel).lowercase()`), so the code predicted no ordering difference.
+Confirmed with the user: the observed issue is **H1 — the order is the intended pinyin order, but
+there is no A–Z rail or grouping, so the panel reads as unordered**. Work item: §4.5.
 
-| # | Hypothesis | What the user would see |
-|---|---|---|
-| H1 | Ordering is fine, but there is no A–Z index/grouping, so it *looks* unordered | Chinese and Latin names interleaved by pinyin; no letter rail |
-| H2 | The complaint is really about the **drawer**, not the panel | Drawer order is recency-driven (`top_1..top_5` rewritten from `cur_visible_freeform_list`) and not user-controllable |
-| H3 | Multi-profile grouping | All work-profile (userId != 0) apps clumped after the primary user, because the sort key starts with the user id |
-| H4 | Latin/Chinese mixing | `WeChat` sorts next to `微信` (both key `w…`) instead of Latin-before-CJK |
-| H5 | Unwanted entries | Non-freeform-capable / system apps appear in the panel (the host filters by `supportsOvFreeformOnPkg`, but that is not a user-visible filter) |
-| H6 | Column count | Old = 5 columns, new = 6; a longer panel with wider gaps can read as "less ordered" |
-| H7 | Already-open apps | Entries that are currently floating are greyed (alpha 0.3) but stay in place; if the user expects them to move to the top this reads as "unordered" |
-
-Cheapest way to discriminate H1/H4/H6 from a real defect: compare the panel's order against the
-system launcher's own app-drawer pinyin order on the same device. If they agree, the ordering is
-the intended pinyin order and only §4.5's polish (index rail / `Collator`) applies. H2/H3/H5/H7
-are separate defects and would be handled by different hooks.
+The other hypotheses were ruled out and are recorded here only in case a second symptom shows up
+later: H2 drawer-vs-panel confusion, H3 multi-profile clumping, H4 Latin/CJK mixing, H5 unwanted
+entries, H6 column count (old 5 vs new 6), H7 greyed already-floating entries not moving to the
+top.
