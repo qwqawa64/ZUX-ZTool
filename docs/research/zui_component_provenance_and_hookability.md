@@ -521,7 +521,92 @@ Rules that follow from the findings above:
 
 ---
 
-## 4. Residual uncertainty
+## 4. Detecting ZUI UI components in an arbitrary APK
+
+Needed by the deferred discovery layer (Route 2): given an APK, decide whether it bundles
+the ZUI frontend component library at all.
+
+### 4.1 The predicate is package-level, not class-level
+
+A class-level marker produces false negatives. In the definitions-only sweep of the
+analysis set, `AI 实时字幕` and `网络管家` both bundle `zui.widget.ProgressBar` while
+defining neither `com.zui.internal.app.DialogController` nor `zui.app.MessageDialog`, and
+`健康使用设备` defines the controller without `MessageDialog`. A `DialogController`-based
+test would therefore classify two archives that really do ship ZUI widgets as
+"no ZUI components".
+
+Two defensible breadths:
+
+| Breadth | Packages | Meaning |
+|---|---|---|
+| Narrow (UI components) | `zui.app`, `zui.widget`, `zui.appcompat.*`, `zui.preference`, `com.zui.internal.app` | apps whose look this feature can actually change |
+| Broad (any library code) | any `zui.*` or `com.zui.*` | apps that merely bundle the library, including util/themes-only copies |
+
+### 4.2 DexKit 2.3.0 has no package-existence closure
+
+The query surface is five finders (`FindClass`, `FindMethod`, `FindField`,
+`BatchFindClassUsingStrings`, `BatchFindMethodUsingStrings`), and results are always
+classes, methods or fields — never a package. `FindClass` does compose into an existence
+test, because `searchPackages`, `excludePackages` and `findFirst` exist and `matcher` is
+optional (the official quick reference states that all conditions are optional).
+
+```kotlin
+// A: package filter
+bridge.findClass(FindClass {
+    searchPackages("zui.app", "zui.widget", "zui.appcompat", "zui.preference",
+                   "com.zui.internal.app")
+    findFirst(true)
+}).isNotEmpty()
+
+// B: explicit class-name prefix, with the match type chosen by the caller
+bridge.findClass(FindClass {
+    matcher(ClassMatcher {
+        anyOf(
+            ClassMatcher { className(StringMatcher("zui.app.", StringMatchType.StartsWith)) },
+            ClassMatcher { className(StringMatcher("zui.widget.", StringMatchType.StartsWith)) }
+            // ... one per package in the chosen breadth
+        )
+    })
+    findFirst(true)
+}).isNotEmpty()
+```
+
+Open question: whether `searchPackages` matches a package *prefix* or an *exact* package
+name. The official docs say only "Search classes in the specified packages"; the native
+implementation could not be read (GitHub unreachable from the analysis host, and the
+shipped `libdexkit.so` is stripped). Form B is the one whose semantics are known by
+construction, so prefer it until §4.4 says otherwise.
+
+`StringMatcher` defaults to `StringMatchType.Contains`, so an exact class match needs an
+explicit `StringMatchType.Equals`.
+
+### 4.3 No published complexity
+
+The official performance page states the traversal model only — DexKit keeps native
+class/method/field lists and `findClass` walks them in order, matching each condition —
+with no O() notation and no measurement for `searchPackages`. Its single benchmark
+(4310 ms to 77 ms) is about avoiding `declaredClass` inside `findMethod`, a different
+problem. `findFirst` is documented as "return the first result found immediately; results
+are not guaranteed to be unique due to multi-threading", and the 2.3.0 source carries an
+upstream `// TODO 有问题` above it.
+
+Consequence for a whole-device scan: cost is dominated by per-APK setup
+(`DexKitBridge.create()`), not by the query, and no vendor figure exists for either. A dex
+string-table scan for the `Lzui/` prefix answers the same predicate with bounded memory and
+no native bridge, which also stays clear of the hot-reload constraint recorded in
+`docs/dex_index/readme.md`.
+
+### 4.4 Deciding A against B on device
+
+The native library is Android-only, so the comparison has to run on the device. Use three
+APKs rather than one: `com.android.settings` (rich ZUI library) proves little on its own,
+since both forms returning "found" is consistent with either semantics. Add `网络管家` or
+`AI 实时字幕` (ZUI widgets, no dialog controller) and a non-Lenovo app as a negative
+control. Agreement on all three settles it; disagreement on the narrow case means
+`searchPackages` is exact-match and the package list has to be enumerated. Record wall
+time per form too, since no figure is published.
+
+## 5. Residual uncertainty
 
 * The analysis set contains `framework.jar`, `services.jar` and `framework-res.apk` only.
   If the device carried an additional boot-classpath jar defining `zui.app.*` (none is
