@@ -15,12 +15,13 @@ import android.widget.TextView
  * Drawer adapter owned by the hook, replacing the host's `AppIconListAdapter` so the
  * 5-slot cap and its `i >= 5` early return no longer apply.
  *
- * Renders the app rows plus one trailing action row (编辑 / 完成). In edit mode every row
- * also carries ▲ / ▼ / ✕ affordances.
+ * Renders the app rows plus, when [editable], one trailing action row (编辑 / 完成) that
+ * switches the list into an ordering mode where every row carries ▲ / ▼ / ✕ affordances.
  */
 internal class SidebarDrawerAdapter(
     private val context: Context,
     private val hostPackage: String,
+    private val editable: Boolean,
     private val callbacks: DrawerCallbacks
 ) : BaseAdapter() {
 
@@ -60,7 +61,7 @@ internal class SidebarDrawerAdapter(
 
     fun isEditMode(): Boolean = editMode
 
-    override fun getCount(): Int = items.size + 1
+    override fun getCount(): Int = items.size + if (editable) 1 else 0
 
     override fun getItem(position: Int): Any? = items.getOrNull(appIndex(position))
 
@@ -71,10 +72,15 @@ internal class SidebarDrawerAdapter(
     /**
      * The action row sits at the bottom normally, but at the top while editing: the edit list
      * is the full app permutation, so a trailing 完成 would be dozens of rows away.
+     * Returns -1 when ordering is switched off, i.e. the list is apps only.
      */
-    fun actionPosition(): Int = if (editMode) 0 else items.size
+    fun actionPosition(): Int = when {
+        !editable -> -1
+        editMode -> 0
+        else -> items.size
+    }
 
-    private fun appIndex(position: Int): Int = if (editMode) position - 1 else position
+    private fun appIndex(position: Int): Int = if (editable && editMode) position - 1 else position
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         if (position == actionPosition()) return actionRow()
@@ -117,7 +123,7 @@ internal class SidebarDrawerAdapter(
             alpha = if (alreadyVisible && !editMode) 0.3f else 1.0f
             layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
         })
-        if (editMode) {
+        if (editable && editMode) {
             row.addView(glyph(glyphUp, moveUpLabel) { callbacks.onMoveUp(app) })
             row.addView(glyph(glyphDown, moveDownLabel) { callbacks.onMoveDown(app) })
             row.addView(glyph(glyphRemove, removeLabel) { callbacks.onRemove(app) })

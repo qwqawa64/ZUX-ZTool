@@ -397,6 +397,33 @@ click listener would treat the "more" row as an app row. Our adapter and our lis
 therefore be the ones attached — `installDrawer()` re-asserts both, and logs
 `drawer ListView not found` / `took over the drawer adapter` so an on-device failure is visible.
 
+### Layering, and why the takeover cannot rely on the drawer-open lambda
+
+On-device log evidence: `took over the drawer adapter` appeared **once, at process start**
+(the `onCreate` hook), and never again when the drawer was opened — while the "more" row still
+launched an app, which proves our `generateTop5App` hook *did* run (`mAppTop5List` was longer
+than 5). So the host re-attached its own adapter when the drawer opened and the drawer-open
+lambda after-hook did not re-take over. The takeover therefore hooks
+`android.widget.ListView.setAdapter` and **posts** `installDrawer` to the next loop turn: that
+catches every path that attaches an adapter, and deferring avoids replacing the adapter from
+inside the host's own `setAdapter` call (which stopped the drawer from opening when tried
+synchronously).
+
+The three capabilities are layers, not independent modules, because the host's adapter is
+hard-capped at 5 rows and its click listener is index-coupled to `mAppTop5List` — owning the
+drawer contents means owning the adapter, and owning the adapter means owning all three:
+
+| Layer | Preference | Contents |
+|---|---|---|
+| 1. Capacity | `sidebar_drawer_enhance` + `sidebar_drawer_slots` | replaces the adapter, renders N rows |
+| 2. Recents | `sidebar_drawer_recent_slots` (0 disables) | `recents.take(N) + order` |
+| 3. Ordering UI | `sidebar_drawer_editable` | the 编辑 / 完成 row, ▲ ▼ ✕, persistence |
+
+Layers 2 and 3 are meaningless without layer 1. Layer 3 is separable and is switched off by
+`sidebar_drawer_editable = false`, which leaves a plain N-row drawer with no extra UI — useful
+both as a user option and as a way to tell "the adapter takeover failed" apart from "the edit
+UI failed".
+
 ### Capacity range
 
 The drawer's ListView is 1850 px tall with 180 px rows, so exactly **10 rows** are visible.

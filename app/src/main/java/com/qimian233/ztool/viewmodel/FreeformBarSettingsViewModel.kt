@@ -26,6 +26,11 @@ class FreeformBarSettingsViewModel(
         repository.saveEnhance(enabled)
     }
 
+    fun setEditable(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(editable = enabled)
+        repository.saveEditable(enabled)
+    }
+
     fun setDrawerSlots(count: Int) {
         val slots = count.coerceIn(
             FreeformBarSettingsRepository.SLOTS_MIN,
@@ -67,6 +72,7 @@ class FreeformBarSettingsViewModel(
 
 data class FreeformBarSettingsUiState(
     val enhanceEnabled: Boolean = PreferenceKeys.SIDEBAR_DRAWER_ENHANCE.default,
+    val editable: Boolean = PreferenceKeys.SIDEBAR_DRAWER_EDITABLE.default,
     val drawerSlots: Int = PreferenceKeys.SIDEBAR_DRAWER_SLOTS.default,
     val recentSlots: Int = PreferenceKeys.SIDEBAR_DRAWER_RECENT_SLOTS.default,
     val showRestartDialog: Boolean = false

@@ -670,6 +670,8 @@
     <string name="freeform_sidebar_drawer_section_title">Sidebar drawer</string>
     <string name="freeform_sidebar_drawer_enhance_title">Enhance sidebar drawer</string>
     <string name="freeform_sidebar_drawer_enhance_summary">Lifts the host\'s fixed 5-app cap so the drawer holds more apps, and makes the app order editable</string>
+    <string name="freeform_sidebar_drawer_editable_title">Allow reordering inside the drawer</string>
+    <string name="freeform_sidebar_drawer_editable_summary">Shows 编辑 at the bottom of the drawer; open it to reorder with ▲ ▼ or drop an app with ✕</string>
     <string name="freeform_sidebar_drawer_slots_title">Drawer capacity</string>
     <string name="freeform_sidebar_drawer_slots_summary">Maximum number of apps the drawer shows; the host hard-codes 5</string>
     <string name="freeform_sidebar_drawer_recent_slots_title">Recent-app slots</string>

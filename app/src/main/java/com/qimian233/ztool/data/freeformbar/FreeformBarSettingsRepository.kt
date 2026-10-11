@@ -21,6 +21,9 @@ class FreeformBarSettingsRepository(
             enhanceEnabled = prefsUtils.loadBooleanSetting(
                 KEY_ENHANCE, PreferenceKeys.SIDEBAR_DRAWER_ENHANCE.default
             ),
+            editable = prefsUtils.loadBooleanSetting(
+                KEY_EDITABLE, PreferenceKeys.SIDEBAR_DRAWER_EDITABLE.default
+            ),
             drawerSlots = prefsUtils.loadIntegerSetting(
                 KEY_SLOTS, PreferenceKeys.SIDEBAR_DRAWER_SLOTS.default
             ).coerceIn(SLOTS_MIN, SLOTS_MAX),
@@ -32,6 +35,10 @@ class FreeformBarSettingsRepository(
 
     fun saveEnhance(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_ENHANCE, enabled)
+    }
+
+    fun saveEditable(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_EDITABLE, enabled)
     }
 
     /** Stores the drawer capacity, clamped to the range the UI offers. */
@@ -69,6 +76,7 @@ class FreeformBarSettingsRepository(
         const val RECENT_SLOTS_MAX = 3
 
         private val KEY_ENHANCE = PreferenceKeys.SIDEBAR_DRAWER_ENHANCE.name
+        private val KEY_EDITABLE = PreferenceKeys.SIDEBAR_DRAWER_EDITABLE.name
         private val KEY_SLOTS = PreferenceKeys.SIDEBAR_DRAWER_SLOTS.name
         private val KEY_RECENT_SLOTS = PreferenceKeys.SIDEBAR_DRAWER_RECENT_SLOTS.name
     }

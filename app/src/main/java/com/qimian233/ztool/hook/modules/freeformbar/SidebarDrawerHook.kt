@@ -80,6 +80,27 @@ class SidebarDrawerHook : AppHookModule() {
             runCatching { resolve(composedKeys(context)) }.getOrElse { chain.proceed() }
         }
 
+        // Catch the host attaching its own adapter from any code path, not just the drawer-open
+        // lambda. Deferred to the next loop turn because the host sets its click listener right
+        // after setAdapter, and replacing the adapter inside the call upsets the ListView.
+        runCatching {
+            val setAdapter = findMethod(
+                android.widget.ListView::class.java, "setAdapter",
+                android.widget.ListAdapter::class.java
+            )
+            hookWithId(setAdapter, "sidebar_drawer_setadapter") { chain ->
+                val result = chain.proceed()
+                val listView = chain.thisObject as? ListView
+                val context = listView?.context
+                if (listView != null && context != null &&
+                    listView === appIconLvField?.get(context)
+                ) {
+                    listView.post { runCatching { installDrawer(context) } }
+                }
+                result
+            }
+        }.onFailure { logger.warn("could not hook ListView.setAdapter: " + it.message) }
+
         val onCreate = findMethod(floatServiceClass, "onCreate")
         hookWithId(onCreate, "sidebar_drawer_oncreate") { chain ->
             val result = chain.proceed()
@@ -127,6 +148,10 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun recentSlots(context: Context): Int =
         remotePreferences.getInt(PreferenceKeys.SIDEBAR_DRAWER_RECENT_SLOTS.name, 2).coerceIn(0, 4)
+
+    /** Whether the drawer exposes the 编辑 / 完成 row and the ▲ ▼ ✕ affordances. */
+    private fun editable(context: Context): Boolean =
+        remotePreferences.getBoolean(PreferenceKeys.SIDEBAR_DRAWER_EDITABLE.name, true)
 
     @Suppress("UNCHECKED_CAST")
     private fun appMap(): Map<String, Any> =
@@ -182,7 +207,8 @@ class SidebarDrawerHook : AppHookModule() {
             return
         }
         val drawerAdapter = adapter
-            ?: SidebarDrawerAdapter(context, hostPackage, callbacks(context)).also { adapter = it }
+            ?: SidebarDrawerAdapter(context, hostPackage, editable(context), callbacks(context))
+                .also { adapter = it }
         // The host re-attaches its own capped adapter and listener every time the drawer opens,
         // so both are re-asserted rather than only pushing data into the existing instance.
         if (listView.adapter !== drawerAdapter) {
@@ -218,7 +244,8 @@ class SidebarDrawerHook : AppHookModule() {
             openAllAppsPanel(context)
             return
         }
-        if (position == drawerAdapter.actionPosition()) {
+        val actionPosition = drawerAdapter.actionPosition()
+        if (actionPosition >= 0 && position == actionPosition) {
             toggleEditMode(context)
             return
         }
@@ -251,6 +278,7 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun toggleEditMode(context: Context) {
         val drawerAdapter = adapter ?: return
+        if (!editable(context)) return
         val next = !drawerAdapter.isEditMode()
         if (next) {
             // Materialise the visible order so ▲ / ▼ / ✕ operate on a full permutation.

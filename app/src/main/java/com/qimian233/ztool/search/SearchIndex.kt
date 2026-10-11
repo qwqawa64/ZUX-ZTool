@@ -1497,6 +1497,14 @@ object SearchIndex {
             summaryRes = R.string.freeform_sidebar_drawer_enhance_summary
         ),
         freeformBar.item(
+            id = "sidebar_drawer_editable",
+            titleRes = R.string.freeform_sidebar_drawer_editable_title,
+            summaryRes = R.string.freeform_sidebar_drawer_editable_summary,
+            parentTitleRes = R.string.freeform_sidebar_drawer_enhance_title,
+            parentKey = "sidebar_drawer_enhance",
+            parentMode = SearchParentMode.REQUIRE_ON
+        ),
+        freeformBar.item(
             id = "sidebar_drawer_slots",
             titleRes = R.string.freeform_sidebar_drawer_slots_title,
             summaryRes = R.string.freeform_sidebar_drawer_slots_summary,

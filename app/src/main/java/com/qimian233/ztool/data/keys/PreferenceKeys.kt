@@ -42,6 +42,7 @@ object PreferenceKeys {
     // limit and switches the drawer to a user-editable order. Module name of
     // SidebarDrawerHook.
     val SIDEBAR_DRAWER_ENHANCE = BoolKey("sidebar_drawer_enhance", false)
+    val SIDEBAR_DRAWER_EDITABLE = BoolKey("sidebar_drawer_editable", true)
     val DISABLE_HBM_THERMAL_LIMIT = BoolKey("disable_hbm_thermal_limit", false)
     // Raise media stream volume steps to 150 (Xiaomi fine volume alignment)
     val FINE_VOLUME_STEPS = BoolKey("fine_volume_steps", false)
@@ -339,6 +340,7 @@ object PreferenceKeys {
         LAUNCHER_FORCE_FREEFORM_ENTRY, FREEFORM_EDGE_BUBBLE,
         FREEFORM_KEEP_ALIVE_ENABLED,
         SIDEBAR_DRAWER_ENHANCE,
+        SIDEBAR_DRAWER_EDITABLE,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
         PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,

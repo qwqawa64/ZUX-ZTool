@@ -83,6 +83,7 @@ fun FreeformBarSettingsRoute(
             state = uiState,
             onBack = onBack,
             onEnhanceChanged = viewModel::setEnhance,
+            onEditableChanged = viewModel::setEditable,
             onDrawerSlotsChanged = viewModel::setDrawerSlots,
             onRecentSlotsChanged = viewModel::setRecentSlots,
             onRestartScope = viewModel::showRestartDialog,
@@ -147,6 +148,7 @@ private fun FreeformBarSettingsScreen(
     state: FreeformBarSettingsUiState,
     onBack: () -> Unit,
     onEnhanceChanged: (Boolean) -> Unit,
+    onEditableChanged: (Boolean) -> Unit,
     onDrawerSlotsChanged: (Int) -> Unit,
     onRecentSlotsChanged: (Int) -> Unit,
     onRestartScope: () -> Unit,
@@ -189,6 +191,7 @@ private fun FreeformBarSettingsScreen(
                     sections = freeformBarSettingsSections(
                         state = state,
                         onEnhanceChanged = onEnhanceChanged,
+                        onEditableChanged = onEditableChanged,
                         onDrawerSlotsChanged = onDrawerSlotsChanged,
                         onRecentSlotsChanged = onRecentSlotsChanged
                     ),
@@ -204,6 +207,7 @@ private fun FreeformBarSettingsScreen(
 private fun freeformBarSettingsSections(
     state: FreeformBarSettingsUiState,
     onEnhanceChanged: (Boolean) -> Unit,
+    onEditableChanged: (Boolean) -> Unit,
     onDrawerSlotsChanged: (Int) -> Unit,
     onRecentSlotsChanged: (Int) -> Unit
 ): List<SettingSection> {
@@ -221,6 +225,15 @@ private fun freeformBarSettingsSections(
                     )
                 )
                 if (state.enhanceEnabled) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.freeform_sidebar_drawer_editable_title),
+                            summary = stringResource(R.string.freeform_sidebar_drawer_editable_summary),
+                            checked = state.editable,
+                            onCheckedChange = onEditableChanged,
+                            key = "sidebar_drawer_editable"
+                        )
+                    )
                     add(
                         SettingItem.Slider(
                             title = stringResource(R.string.freeform_sidebar_drawer_slots_title),
