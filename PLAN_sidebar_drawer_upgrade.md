@@ -462,8 +462,28 @@ Badges are injected into the host's grid item views (`AppIconItemView`, a `Relat
 `appicon_iv` as the anchor) instead of replacing its adapter. State is re-derived from
 `getChildAdapterPosition` on every scroll and layout, so recycling cannot leave a stale binding,
 and item taps are swallowed with an `OnTouchListener` that the adapter's `OnClickListener`
-cannot overwrite. Membership is positional: the drawer is the first `slots` entries of the
-order, `+` drops an app into the last visible slot, `−` pushes it past the window.
+cannot overwrite.
+
+### Slots are explicit, not a window
+
+The first model treated the drawer as a **window over a permutation** (the first `capacity`
+entries of the order). That is wrong for editing: removing an app just pushed it past the window
+and the next app slid in, so the drawer always showed exactly `capacity` apps and could never
+hold fewer. The user could not get down to two apps.
+
+The model is now **explicit slots**: `ztool_drawer_members` holds the apps the user placed in the
+drawer, in order, and may be shorter than the slot count — even empty. `composedKeys` is
+`recent slots + member slots`, so:
+
+* `memberSlots = capacity - recentSlots`, which keeps the recent slots reserved and guarantees
+  everything the user added is visible;
+* `−` and `✕` remove from the members list, so the drawer really shrinks;
+* `+` appends while a slot is free, and otherwise takes the last slot, so the tap is never
+  silently ignored;
+* `▲ ▼` reorder within the members list only.
+
+Before the first customisation the members are the host's default head, and installs from the
+old model migrate by reading `ztool_drawer_order` (now write-only legacy) once.
 
 ### Capacity range
 

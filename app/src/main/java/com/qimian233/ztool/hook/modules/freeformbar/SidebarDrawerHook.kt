@@ -202,26 +202,33 @@ class SidebarDrawerHook : AppHookModule() {
     private fun recentKeys(context: Context): List<String> =
         SidebarDrawerStore.readRecent(context).ifEmpty { visibleFreeformKeys(context) }
 
-    /** Drawer content: recent slots first, then the user's order (or the host default). */
+    /** How many slots the user's own apps may occupy, i.e. the capacity minus the recent slots. */
+    private fun memberSlots(context: Context): Int =
+        (capacity(context) - recentSlots(context)).coerceAtLeast(1)
+
+    /**
+     * The apps occupying the user's slots, in order. Before the first customisation this is the
+     * host's default head, and for installs from the earlier window-over-a-permutation model it
+     * is that model's first `memberSlots` entries.
+     */
+    private fun memberKeys(context: Context): List<String> {
+        val known = allKeys(context)
+        if (!SidebarDrawerStore.isCustomized(context)) return known.take(memberSlots(context))
+        val knownSet = known.toSet()
+        val stored = SidebarDrawerStore.readMembers(context)
+            ?: SidebarDrawerStore.readLegacyOrder(context)
+        return stored.filter { it in knownSet }.take(memberSlots(context))
+    }
+
+    /** Drawer content: recent slots first, then the user's slots, which may be partly empty. */
     private fun composedKeys(context: Context): List<String> {
         val known = allKeys(context)
         if (known.isEmpty()) return emptyList()
         val knownSet = known.toSet()
-        val customized = SidebarDrawerStore.isCustomized(context)
-        val base = if (customized) SidebarDrawerStore.readOrder(context) else known
         val out = LinkedHashSet<String>()
         recentKeys(context).take(recentSlots(context)).forEach { if (it in knownSet) out += it }
-        base.forEach { if (it in knownSet) out += it }
+        memberKeys(context).forEach { out += it }
         return out.take(capacity(context))
-    }
-
-    /** Drawer content while editing: the user's order, cut to the visible slots. */
-    private fun editedKeys(context: Context): List<String> {
-        val known = allKeys(context)
-        val knownSet = known.toSet()
-        val ordered = LinkedHashSet(SidebarDrawerStore.readOrder(context).filter { it in knownSet })
-        ordered.addAll(known)
-        return ordered.toList().take(capacity(context))
     }
 
     private fun resolve(keys: List<String>): List<Any> {
@@ -283,7 +290,8 @@ class SidebarDrawerHook : AppHookModule() {
     private fun refreshDrawer(context: Context) {
         val drawerAdapter = adapter ?: return
         val editMode = drawerAdapter.isEditMode()
-        val items = resolve(if (editMode) editedKeys(context) else composedKeys(context))
+        // While editing, the drawer shows exactly the user's slots, so emptying one leaves a gap.
+        val items = resolve(if (editMode) memberKeys(context) else composedKeys(context))
         if (!editMode) appTop5ListField?.set(context, items)
         drawerAdapter.submit(items, visibleKeys(context), editMode)
     }
@@ -338,12 +346,12 @@ class SidebarDrawerHook : AppHookModule() {
         if (!editable(context)) return
         val next = !drawerAdapter.isEditMode()
         if (next) {
-            // Start editing from exactly what the user sees: the drawer content becomes the head
-            // of the order, so nothing shifts when the edit list appears.
-            val current = composedKeys(context)
-            val rest = allKeys(context).filterNot { it in current }
-            SidebarDrawerStore.writeOrder(context, current + rest)
-            SidebarDrawerStore.setCustomized(context, true)
+            // Take ownership of the slots, seeded from what the user currently sees so the first
+            // edit starts from a familiar set.
+            if (!SidebarDrawerStore.isCustomized(context)) {
+                SidebarDrawerStore.writeMembers(context, memberKeys(context))
+                SidebarDrawerStore.setCustomized(context, true)
+            }
             // The host only builds the grid adapter inside showAllAppWindow, so the panel would
             // stay empty if the edit layout merely made it visible.
             runCatching { showAllAppWindow?.invoke(context) }
@@ -355,7 +363,7 @@ class SidebarDrawerHook : AppHookModule() {
         if (next) runCatching { refreshBadges(context) }
             .onFailure { logger.error("failed to attach the badges", it) }
         drawerAdapter.submit(
-            resolve(if (next) editedKeys(context) else composedKeys(context)),
+            resolve(if (next) memberKeys(context) else composedKeys(context)),
             visibleKeys(context),
             next
         )
@@ -407,19 +415,26 @@ class SidebarDrawerHook : AppHookModule() {
         drawer.layoutParams = drawerParams
     }
 
-    /** Adds an app to the drawer's last visible slot, or pushes it past the window to drop it. */
+    /**
+     * Adds the app to the user's slots, or removes it. Slots are explicit, so removing leaves a
+     * gap instead of pulling the next app in from the full app list.
+     */
     private fun toggleMembership(context: Context, app: Any) {
         val key = SidebarReflect.keyOf(app) ?: return
-        val order = SidebarDrawerStore.readOrder(context).toMutableList()
-        val slots = capacity(context)
-        val member = order.indexOf(key) in 0 until slots
-        order.remove(key)
-        if (member) {
-            order.add(key)
+        val members = SidebarDrawerStore.readMembers(context)
+            ?: memberKeys(context).toMutableList()
+        val slots = memberSlots(context)
+        val present = key in members
+        val next = members.toMutableList()
+        if (present) {
+            next.remove(key)
+        } else if (next.size < slots) {
+            next.add(key)
         } else {
-            order.add((slots - 1).coerceIn(0, order.size), key)
+            // No free slot: take the last one, so the tap is never silently ignored.
+            next[next.size - 1] = key
         }
-        SidebarDrawerStore.writeOrder(context, order)
+        SidebarDrawerStore.writeMembers(context, next)
         SidebarDrawerStore.setCustomized(context, true)
         refreshDrawer(context)
         refreshBadges(context)
@@ -432,7 +447,7 @@ class SidebarDrawerHook : AppHookModule() {
         if (apps.isEmpty()) return
         // The membership set is built once: this runs from a layout listener, and rebuilding the
         // launcher app list per icon would stall the main thread.
-        val members = editedKeys(context).toHashSet()
+        val members = memberKeys(context).toHashSet()
         val member: (Any) -> Boolean = { SidebarReflect.keyOf(it)?.let { key -> key in members } == true }
         val toggle: (Any) -> Unit = { toggleMembership(context, it) }
         decorator.refresh(grid, apps, member, toggle)
@@ -454,15 +469,15 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun move(context: Context, app: Any, delta: Int) {
         val key = SidebarReflect.keyOf(app) ?: return
-        val order = SidebarDrawerStore.readOrder(context).toMutableList()
-        val index = order.indexOf(key)
+        val members = (SidebarDrawerStore.readMembers(context)
+            ?: memberKeys(context).toMutableList()).toMutableList()
+        val index = members.indexOf(key)
         val target = index + delta
-        // Movement stays inside the visible slots, so ▲ ▼ cannot push an app out of the drawer.
-        if (index < 0 || target < 0 || target >= order.size || target >= capacity(context)) return
-        val moved = order[index]
-        order[index] = order[target]
-        order[target] = moved
-        SidebarDrawerStore.writeOrder(context, order)
+        if (index < 0 || target < 0 || target >= members.size) return
+        val moved = members[index]
+        members[index] = members[target]
+        members[target] = moved
+        SidebarDrawerStore.writeMembers(context, members)
         SidebarDrawerStore.setCustomized(context, true)
         refreshDrawer(context)
         refreshBadges(context)
@@ -470,10 +485,10 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun remove(context: Context, app: Any) {
         val key = SidebarReflect.keyOf(app) ?: return
-        val order = SidebarDrawerStore.readOrder(context).toMutableList()
-        if (!order.remove(key)) return
-        order.add(key)
-        SidebarDrawerStore.writeOrder(context, order)
+        val members = (SidebarDrawerStore.readMembers(context)
+            ?: memberKeys(context).toMutableList()).toMutableList()
+        if (!members.remove(key)) return
+        SidebarDrawerStore.writeMembers(context, members)
         SidebarDrawerStore.setCustomized(context, true)
         refreshDrawer(context)
         refreshBadges(context)
