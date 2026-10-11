@@ -12,8 +12,7 @@ behaviour and metrics, never to obtain or style a component.**
 
 Analysis set: `F:\USER\Jadx项目\Lenovo` (Lenovo ZUX OS system apps + `framework.jar`,
 `framework-res.apk`, `services.jar`), decompiled with the JADX CLI at
-`D:\Program Files\Jadx\bin` (jadx 1.5.6). Working artifacts:
-`F:\USER\Jadx项目\Lenovo\_analysis\zui_widgets\`.
+`D:\Program Files\Jadx\bin` (jadx 1.5.6).
 
 ---
 
@@ -532,27 +531,3 @@ Rules that follow from the findings above:
 * The `zui.themes` theme-service path (`zuithemes` / `IThemeService` / `ThemeConfig` in
   `framework.jar`) is a *supported* appearance channel ZUI already offers. It was not
   exercised here; it is a plausible alternative to hooking for font/theme-level changes.
-
-## 5. Artifacts
-
-All under `F:\USER\Jadx项目\Lenovo\_analysis\zui_widgets\`:
-
-| Path | Contents |
-|---|---|
-| `dexlib.py` | pure-stdlib DEX reader (`defined_classes`, `all_strings`, `iter_dex_bytes`) |
-| `zui_defs.py`, `out/*.classes.txt`, `out/summary.json` | per-archive defined-vs-external ZUI class sets |
-| `sweep_markers.py`, `marker_sweep.txt`, `out/marker_sweep.json` | whole-folder sweep for the dialog stack |
-| `scan_reflection.py`, `reflection.txt` | reflection-pattern census |
-| `scan_res_zui.py`, `res_zui.txt`, `scan_layout_tags.py`, `layout_tags.txt` | resource and layout-tag census |
-| `arsc.py`, `verify_provenance.py`, `prove_bundled.py` (+ `out_provenance.txt`, `out_bundled.txt`) | pure-stdlib `resources.arsc` reader; proves each resource *name* lives in the APK's own table and is absent from `framework-res.apk` |
-| `zui_scan.py`, `zui_hierarchy.py`, `zui_arsc*.py`, `scan_zui_refs.py`, `scan_zui_usage.py`, `scan_reflect_ui.py` | DEX pool / superclass-chain / arsc-pool probes |
-| `launcher_res_probe.py`, `launcher_cmp_desktop.py`, `launcher_cmp_roles.py`, `cmp_settings.py` | cross-APK resource-ID and source-similarity comparison |
-| `reports/_zui_subset_compare.txt`, `reports/_zui_pool_systemui.txt`, `reports/_arsc*.txt` | raw probe outputs |
-| `src/{settings,systemui,systemui_full,launcher,desktoplauncher,framework-res}` | JADX 1.5.6 decompiled sources + resources |
-| `reports/{launcher,systemui,settings,zui-library-core}.md` | per-target deep dives (84 KB / 68 KB / 690 lines / 944 lines) |
-
-Tooling caveat: `arsc.py` is a hand-written reader validated against settings, launcher and
-desktoplauncher `public.xml` (96–99 % exact name matches). It is **not** reliable for
-SystemUI, whose `layout`/`anim` type chunks use `FLAG_OFFSET16` and whose key pool is
-name-mangled; for SystemUI rely on value-path strings, the `res/*.xml` byte search and
-`res/values/public.xml`.
