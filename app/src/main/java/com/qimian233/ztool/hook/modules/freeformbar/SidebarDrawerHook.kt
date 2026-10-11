@@ -40,6 +40,8 @@ class SidebarDrawerHook : AppHookModule() {
     private var appIconGvField: Field? = null
     private var appAllListField: Field? = null
     private var indexRail: SidebarIndexRail? = null
+    private var badgeDecorator: SidebarBadgeDecorator? = null
+    private var drawerWidth: Int = 0
     private var footViewField: Field? = null
     private var popupWindowField: Field? = null
     private var originalDrawerWidth: Int = 0
@@ -81,6 +83,7 @@ class SidebarDrawerHook : AppHookModule() {
         footViewField = findField(floatServiceClass, "mFootView")
         popupWindowField = findField(floatServiceClass, "popupWindow")
         indexRail = SidebarIndexRail(classLoader, logger)
+        badgeDecorator = SidebarBadgeDecorator(hostPackage, logger)
 
         hookWithId(generateTop5App, "sidebar_drawer_top5") { chain ->
             val context = chain.args[0] as? Context
@@ -122,8 +125,11 @@ class SidebarDrawerHook : AppHookModule() {
         if (allApps != null) {
             hookWithId(allApps, "sidebar_drawer_allapps") { chain ->
                 val result = chain.proceed()
-                runCatching { attachIndexRail(chain.thisObject as Context) }
+                val context = chain.thisObject as Context
+                runCatching { attachIndexRail(context) }
                     .onFailure { logger.error("failed to attach the index rail", it) }
+                runCatching { reapplyEditChrome(context) }
+                    .onFailure { logger.error("failed to restore the edit layout", it) }
                 result
             }
         }
@@ -132,8 +138,11 @@ class SidebarDrawerHook : AppHookModule() {
         if (drawerOpen != null) {
             hookWithId(drawerOpen, "sidebar_drawer_open") { chain ->
                 val result = chain.proceed()
-                runCatching { installDrawer(chain.thisObject as Context) }
+                val context = chain.thisObject as Context
+                runCatching { installDrawer(context) }
                     .onFailure { logger.error("failed to refresh drawer adapter", it) }
+                runCatching { reapplyEditChrome(context) }
+                    .onFailure { logger.error("failed to restore the edit layout", it) }
                 result
             }
         }
@@ -206,12 +215,13 @@ class SidebarDrawerHook : AppHookModule() {
         return out.take(capacity(context))
     }
 
-    /** Edit-mode list: the user's order first, then every remaining app. */
-    private fun editKeys(context: Context): List<String> {
-        val out = LinkedHashSet<String>()
-        SidebarDrawerStore.readOrder(context).forEach { out += it }
-        allKeys(context).forEach { out += it }
-        return out.toList()
+    /** Drawer content while editing: the user's order, cut to the visible slots. */
+    private fun editedKeys(context: Context): List<String> {
+        val known = allKeys(context).toSet()
+        val out = SidebarDrawerStore.readOrder(context).filter { it in known }
+        val ordered = LinkedHashSet(out)
+        allKeys(context).forEach { ordered += it }
+        return ordered.toList().take(capacity(context))
     }
 
     private fun resolve(keys: List<String>): List<Any> {
@@ -236,6 +246,14 @@ class SidebarDrawerHook : AppHookModule() {
         }
         listView.onItemClickListener = clickListener
         refreshDrawer(context)
+    }
+
+    /** The host hides one panel or the other whenever it opens them, so put the edit layout back. */
+    private fun reapplyEditChrome(context: Context) {
+        val drawerAdapter = adapter ?: return
+        if (!drawerAdapter.isEditMode()) return
+        applyEditLayout(context, true)
+        refreshBadges(context)
     }
 
     /** Builds the A–Z rail for the all-apps panel and hides the host's crashing one. */
@@ -265,7 +283,7 @@ class SidebarDrawerHook : AppHookModule() {
     private fun refreshDrawer(context: Context) {
         val drawerAdapter = adapter ?: return
         val editMode = drawerAdapter.isEditMode()
-        val items = resolve(if (editMode) editKeys(context) else composedKeys(context))
+        val items = resolve(if (editMode) editedKeys(context) else composedKeys(context))
         if (!editMode) appTop5ListField?.set(context, items)
         drawerAdapter.submit(items, visibleKeys(context), editMode)
     }
@@ -320,13 +338,18 @@ class SidebarDrawerHook : AppHookModule() {
         if (!editable(context)) return
         val next = !drawerAdapter.isEditMode()
         if (next) {
-            // Materialise the visible order so ▲ / ▼ / ✕ operate on a full permutation.
-            SidebarDrawerStore.writeOrder(context, editKeys(context))
+            // Start editing from exactly what the user sees: the drawer content becomes the head
+            // of the order, so nothing shifts when the edit list appears.
+            val current = composedKeys(context)
+            val rest = allKeys(context).filterNot { it in current }
+            SidebarDrawerStore.writeOrder(context, current + rest)
             SidebarDrawerStore.setCustomized(context, true)
         }
         applyEditWidth(context, next, drawerAdapter.glyphWidth)
+        applyEditLayout(context, next)
+        if (!next) runCatching { badgeDecorator?.clear() }
         drawerAdapter.submit(
-            resolve(if (next) editKeys(context) else composedKeys(context)),
+            resolve(if (next) editedKeys(context) else composedKeys(context)),
             visibleKeys(context),
             next
         )
@@ -350,6 +373,64 @@ class SidebarDrawerHook : AppHookModule() {
         layout.layoutParams = params
     }
 
+    /**
+     * Side by side while editing: the all-apps panel shifts left by the drawer's width and the
+     * drawer is pinned to the end, so the popup grows leftwards instead of covering the drawer.
+     */
+    private fun applyEditLayout(context: Context, edit: Boolean) {
+        val drawer = drawerLayoutField?.get(context) as? android.view.ViewGroup ?: return
+        val panel = allAppLayoutField?.get(context) as? android.view.ViewGroup ?: return
+        val drawerParams = drawer.layoutParams as? android.widget.FrameLayout.LayoutParams ?: return
+        val panelParams = panel.layoutParams as? android.widget.FrameLayout.LayoutParams ?: return
+        if (edit) {
+            if (drawerWidth == 0) drawerWidth = drawerParams.width
+            panelParams.marginEnd = drawerWidth
+            panelParams.gravity = android.view.Gravity.START or android.view.Gravity.CENTER_VERTICAL
+            drawerParams.gravity = android.view.Gravity.END or android.view.Gravity.TOP
+            panel.visibility = android.view.View.VISIBLE
+            drawer.visibility = android.view.View.VISIBLE
+        } else {
+            panelParams.marginEnd = 0
+            // Gravity.UNSPECIFIED_GRAVITY is @hide; -1 is its value and restores the XML default.
+            panelParams.gravity = -1
+            drawerParams.gravity = -1
+        }
+        panel.layoutParams = panelParams
+        drawer.layoutParams = drawerParams
+    }
+
+    /** The drawer's own content, which is what ▲ ▼ ✕ and the badges operate on. */
+    private fun isInDrawer(context: Context, app: Any): Boolean {
+        val key = SidebarReflect.keyOf(app) ?: return false
+        return key in editedKeys(context)
+    }
+
+    /** Adds an app to the drawer's last visible slot, or pushes it past the window to drop it. */
+    private fun toggleMembership(context: Context, app: Any) {
+        val key = SidebarReflect.keyOf(app) ?: return
+        val order = SidebarDrawerStore.readOrder(context).toMutableList()
+        val slots = capacity(context)
+        val member = order.indexOf(key) in 0 until slots
+        order.remove(key)
+        if (member) {
+            order.add(key)
+        } else {
+            order.add((slots - 1).coerceIn(0, order.size), key)
+        }
+        SidebarDrawerStore.writeOrder(context, order)
+        SidebarDrawerStore.setCustomized(context, true)
+        refreshDrawer(context)
+        refreshBadges(context)
+    }
+
+    private fun refreshBadges(context: Context) {
+        val decorator = badgeDecorator ?: return
+        val grid = appIconGvField?.get(context) as? android.view.View ?: return
+        val apps = appAllListField?.get(context) as? List<Any> ?: return
+        if (apps.isEmpty()) return
+        decorator.refresh(grid, apps, { isInDrawer(context, it) }, { toggleMembership(context, it) })
+    }
+
     private fun callbacks(context: Context) = object : SidebarDrawerAdapter.DrawerCallbacks {
         override fun onToggleEditMode() = toggleEditMode(context)
 
@@ -362,25 +443,29 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun move(context: Context, app: Any, delta: Int) {
         val key = SidebarReflect.keyOf(app) ?: return
-        val order = editKeys(context).toMutableList()
+        val order = SidebarDrawerStore.readOrder(context).toMutableList()
         val index = order.indexOf(key)
         val target = index + delta
-        if (index < 0 || target < 0 || target >= order.size) return
+        // Movement stays inside the visible slots, so ▲ ▼ cannot push an app out of the drawer.
+        if (index < 0 || target < 0 || target >= order.size || target >= capacity(context)) return
         val moved = order[index]
         order[index] = order[target]
         order[target] = moved
         SidebarDrawerStore.writeOrder(context, order)
         SidebarDrawerStore.setCustomized(context, true)
         refreshDrawer(context)
+        refreshBadges(context)
     }
 
     private fun remove(context: Context, app: Any) {
         val key = SidebarReflect.keyOf(app) ?: return
-        val order = editKeys(context).toMutableList()
+        val order = SidebarDrawerStore.readOrder(context).toMutableList()
         if (!order.remove(key)) return
+        order.add(key)
         SidebarDrawerStore.writeOrder(context, order)
         SidebarDrawerStore.setCustomized(context, true)
         refreshDrawer(context)
+        refreshBadges(context)
     }
 
     private companion object {

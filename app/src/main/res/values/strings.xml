@@ -1200,4 +1200,8 @@
     <string name="ztool_sidebar_drawer_glyph_up" translatable="false" tools:ignore="UnusedResources">▲</string>
     <string name="ztool_sidebar_drawer_glyph_down" translatable="false" tools:ignore="UnusedResources">▼</string>
     <string name="ztool_sidebar_drawer_glyph_remove" translatable="false" tools:ignore="UnusedResources">✕</string>
+    <string name="ztool_sidebar_drawer_glyph_add" translatable="false" tools:ignore="UnusedResources">+</string>
+    <string name="ztool_sidebar_drawer_glyph_drop" translatable="false" tools:ignore="UnusedResources">−</string>
+    <string name="ztool_sidebar_drawer_add" tools:ignore="UnusedResources">加入抽屉</string>
+    <string name="ztool_sidebar_drawer_drop" tools:ignore="UnusedResources">移出抽屉</string>
 </resources>
