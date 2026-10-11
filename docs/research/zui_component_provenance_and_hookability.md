@@ -551,14 +551,16 @@ test, because `searchPackages`, `excludePackages` and `findFirst` exist and `mat
 optional (the official quick reference states that all conditions are optional).
 
 ```kotlin
-// A: package filter
+// A: package filter. Each entry matches that package and everything under it, so the
+// broad breadth is just searchPackages("zui"); the narrow breadth lists the five below.
 bridge.findClass(FindClass {
     searchPackages("zui.app", "zui.widget", "zui.appcompat", "zui.preference",
                    "com.zui.internal.app")
     findFirst(true)
 }).isNotEmpty()
 
-// B: explicit class-name prefix, with the match type chosen by the caller
+// B: explicit class-name prefix. Equivalent for a known package list, and only worth
+// reaching for if the trie builder's semantics ever change.
 bridge.findClass(FindClass {
     matcher(ClassMatcher {
         anyOf(
@@ -571,11 +573,21 @@ bridge.findClass(FindClass {
 }).isNotEmpty()
 ```
 
-Open question: whether `searchPackages` matches a package *prefix* or an *exact* package
-name. The official docs say only "Search classes in the specified packages"; the native
-implementation could not be read (GitHub unreachable from the analysis host, and the
-shipped `libdexkit.so` is stripped). Form B is the one whose semantics are known by
-construction, so prefer it until §4.4 says otherwise.
+`searchPackages` semantics, resolved from the native source (the official docs do not say,
+and GitHub is unreachable from the analysis host, so the sources were read through the
+jsDelivr mirror). `DexKit::BuildPackagesMatchTrie` converts every entry by replacing `.`
+with `/`, prepending `L` when absent, and **appending `/` when absent**, then inserts it
+into a `PackageTrie`. `PackageTrie::search` walks the *searched* string and flags a match at
+any node along the path, so a stored key is a **prefix** match. The searched string is the
+Dalvik type descriptor (`type_names[class_def.class_idx]`), e.g. `Lzui/widget/ProgressBar;`.
+
+Consequences:
+
+* `searchPackages("zui")` becomes the key `Lzui/` and therefore covers `zui.app`,
+  `zui.widget`, `zui.appcompat.*` and every other sub-package.
+* It does **not** match `Lzuix/...`, because the trailing `/` is guaranteed by the builder.
+* Form A is correct as written; form B is unnecessary. The device comparison in §4.4 is
+  therefore not needed.
 
 `StringMatcher` defaults to `StringMatchType.Contains`, so an exact class match needs an
 explicit `StringMatchType.Equals`.
@@ -596,15 +608,24 @@ string-table scan for the `Lzui/` prefix answers the same predicate with bounded
 no native bridge, which also stays clear of the hot-reload constraint recorded in
 `docs/dex_index/readme.md`.
 
-### 4.4 Deciding A against B on device
+What the source does establish, in place of a published figure:
 
-The native library is Android-only, so the comparison has to run on the device. Use three
-APKs rather than one: `com.android.settings` (rich ZUI library) proves little on its own,
-since both forms returning "found" is consistent with either semantics. Add `网络管家` or
-`AI 实时字幕` (ZUI widgets, no dialog controller) and a non-Lenovo app as a negative
-control. Agreement on all three settles it; disagreement on the narrow case means
-`searchPackages` is exact-match and the package list has to be enumerated. Record wall
-time per form too, since no figure is published.
+* `FindClass` splits the dex's class-def list into `slice_size` chunks and submits them to a
+  thread pool; each chunk is a **linear scan** (`ScanFindRange`).
+* The package-trie test runs **before** the matcher, so it is a cheap
+  O(descriptor length) pre-filter per class.
+* `findFirst(true)` routes through `ConfigureFindFirstQuery`, which enables early exit and
+  raises the query to `LatencySensitive` priority: running tasks bail and no further slices
+  are submitted. An existence check is therefore best case O(1) and worst case O(C).
+* Without `findFirst` the scan is O(C) per dex, C being the class count.
+
+### 4.4 The A/B comparison is not needed
+
+It was proposed to run both forms against `com.android.settings` on the device to settle the
+`searchPackages` semantics. §4.2 now settles that from the source, so the device run would
+only re-derive it. Keep it in reserve if a future DexKit version changes the trie builder,
+in which case the three-APK set still applies: a rich ZUI app, a narrow one (`网络管家`,
+`AI 实时字幕`) and a non-Lenovo negative control.
 
 ## 5. Residual uncertainty
 
