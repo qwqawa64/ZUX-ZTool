@@ -243,6 +243,12 @@ class SidebarDrawerHook : AppHookModule() {
             logger.warn("drawer ListView not found, leaving the host adapter in place")
             return
         }
+        // The host restores its own views when the popup goes away, so a drawer reopened while
+        // editing would come back in the edit layout with no panel to edit in.
+        if (adapter?.isEditMode() == true) {
+            logger.info("drawer reopened while editing, leaving edit mode")
+            leaveEditMode(context)
+        }
         val drawerAdapter = adapter
             ?: SidebarDrawerAdapter(context, hostPackage, editable(context), callbacks(context))
                 .also { adapter = it }
@@ -284,7 +290,12 @@ class SidebarDrawerHook : AppHookModule() {
         SidebarDrawerStore.writeMembers(context, members)
         SidebarDrawerStore.setCustomized(context, true)
         // Membership is unchanged by a reorder, so the all-apps badges need no refresh here.
-        adapter?.let { submitDrawer(context, it, it.isEditMode(), members) }
+        adapter?.let { drawerAdapter ->
+            if (drawerAdapter.isEditMode()) {
+                drawerAdapter.animateSwap(from, to, drawerAdapter.rowHeight)
+            }
+            submitDrawer(context, drawerAdapter, drawerAdapter.isEditMode(), members)
+        }
     }
 
     /** The host hides one panel or the other whenever it opens them, so put the edit layout back. */
@@ -397,26 +408,40 @@ class SidebarDrawerHook : AppHookModule() {
     private fun toggleEditMode(context: Context) {
         val drawerAdapter = adapter ?: return
         if (!editable(context)) return
-        val next = !drawerAdapter.isEditMode()
-        if (next) {
-            // Take ownership of the slots, seeded from what the user currently sees so the first
-            // edit starts from a familiar set.
-            if (!SidebarDrawerStore.isCustomized(context)) {
-                SidebarDrawerStore.writeMembers(context, memberKeys(context))
-                SidebarDrawerStore.setCustomized(context, true)
-            }
-            // The host only builds the grid adapter inside showAllAppWindow, so the panel would
-            // stay empty if the edit layout merely made it visible.
-            runCatching { showAllAppWindow?.invoke(context) }
-                .onFailure { logger.error("failed to populate the all-apps panel", it) }
+        if (drawerAdapter.isEditMode()) {
+            leaveEditMode(context)
+            return
         }
-        applyEditLayout(context, next)
-        if (!next) runCatching { badgeDecorator?.clear() }
-        if (next) runCatching { refreshBadges(context) }
+        // Take ownership of the slots, seeded from what the user currently sees so the first
+        // edit starts from a familiar set.
+        if (!SidebarDrawerStore.isCustomized(context)) {
+            SidebarDrawerStore.writeMembers(context, memberKeys(context))
+            SidebarDrawerStore.setCustomized(context, true)
+        }
+        // The host only builds the grid adapter inside showAllAppWindow, so the panel would
+        // stay empty if the edit layout merely made it visible.
+        runCatching { showAllAppWindow?.invoke(context) }
+            .onFailure { logger.error("failed to populate the all-apps panel", it) }
+        applyEditLayout(context, true)
+        runCatching { refreshBadges(context) }
             .onFailure { logger.error("failed to attach the badges", it) }
-        submitDrawer(context, drawerAdapter, next)
-        // The action row moves to the other end of the list, so follow it. Posted because
-        // setSelection during a pending data change is dropped by the next layout pass.
+        submitDrawer(context, drawerAdapter, true)
+        // The action row moves to the top of the list, so follow it. Posted because setSelection
+        // during a pending data change is dropped by the next layout pass.
+        scrollToTop(context)
+    }
+
+    /** Puts the host's views back and drops the edit list; used by 完成 and by a drawer re-open. */
+    private fun leaveEditMode(context: Context) {
+        val drawerAdapter = adapter ?: return
+        applyEditLayout(context, false)
+        runCatching { badgeDecorator?.clear() }
+        drawerAdapter.setDraggingIndex(-1)
+        submitDrawer(context, drawerAdapter, false)
+        scrollToTop(context)
+    }
+
+    private fun scrollToTop(context: Context) {
         runCatching {
             val listView = appIconLvField?.get(context) as? ListView
             listView?.post { runCatching { listView.setSelection(0) } }

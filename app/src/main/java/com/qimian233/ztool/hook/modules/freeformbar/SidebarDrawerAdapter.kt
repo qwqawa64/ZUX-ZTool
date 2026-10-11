@@ -37,8 +37,10 @@ internal class SidebarDrawerAdapter(
     private var editMode: Boolean = false
     private var emptySlots: Int = 0
     private var draggingIndex: Int = -1
+    private val pendingOffsets = HashMap<Int, Float>()
 
-    private val rowHeight = dimen("top_list_item_height", 72)
+    /** Uniform row height; the swap animation measures row offsets with it. */
+    val rowHeight = dimen("top_list_item_height", 72)
     private val padTop = dimen("top_list_item_padding_top", 8)
 
     /**
@@ -70,6 +72,17 @@ internal class SidebarDrawerAdapter(
     }
 
     fun isEditMode(): Boolean = editMode
+
+    /**
+     * Starts the two rows of a swap at the offset they came from, so the exchange slides instead
+     * of jumping. Applied when the row is built: a posted runnable can beat the list's layout.
+     */
+    fun animateSwap(fromIndex: Int, toIndex: Int, rowHeight: Int) {
+        val distance = (toIndex - fromIndex) * rowHeight
+        if (distance == 0) return
+        pendingOffsets[toIndex] = -distance.toFloat()
+        pendingOffsets[fromIndex] = distance.toFloat()
+    }
 
     /** Marks the row being dragged, or -1 when no drag is running. */
     fun setDraggingIndex(index: Int) {
@@ -132,6 +145,7 @@ internal class SidebarDrawerAdapter(
 
     private fun actionRow(): View {
         val label = if (editMode) doneLabel else editLabel
+        val icon = SidebarIcons.get(context, if (editMode) SidebarIcons.DONE else SidebarIcons.EDIT)
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
@@ -140,12 +154,21 @@ internal class SidebarDrawerAdapter(
             )
             setPadding(0, padTop, 0, padTop)
         }
-        row.addView(TextView(context).apply {
-            text = label
-            setTextColor(Color.WHITE)
-            textSize = 13f
-            gravity = Gravity.CENTER
-        })
+        if (icon != null) {
+            val size = (ACTION_ICON_DP * context.resources.displayMetrics.density).toInt()
+            row.addView(ImageView(context).apply {
+                setImageDrawable(icon)
+                contentDescription = label
+                layoutParams = LinearLayout.LayoutParams(size, size)
+            })
+        } else {
+            row.addView(TextView(context).apply {
+                text = label
+                setTextColor(Color.WHITE)
+                textSize = 13f
+                gravity = Gravity.CENTER
+            })
+        }
         return row
     }
 
@@ -158,6 +181,10 @@ internal class SidebarDrawerAdapter(
             )
             setPadding(0, padTop, 0, padTop)
             alpha = if (index == draggingIndex) DRAGGING_ALPHA else 1f
+        }
+        pendingOffsets.remove(index)?.let { offset ->
+            row.translationY = offset
+            row.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
         }
         val icon = ImageView(context).apply {
             setImageDrawable(SidebarReflect.iconOf(app))
@@ -200,6 +227,8 @@ internal class SidebarDrawerAdapter(
 
     private companion object {
         const val DRAGGING_ALPHA = 0.5f
+        const val SWAP_ANIM_MS = 120L
+        const val ACTION_ICON_DP = 26
         const val EMPTY_CORNER_DP = 12
         const val EMPTY_FILL = 0x14FFFFFF
         const val EMPTY_STROKE = 0x4DFFFFFF

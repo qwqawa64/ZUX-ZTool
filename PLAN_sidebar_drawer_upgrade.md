@@ -528,6 +528,14 @@ therefore tracked by hand on the ListView's `OnTouchListener`:
 
 No auto-scroll is implemented: the drawer fits ten rows and the slot count is capped at eight.
 
+Swaps animate: the adapter is handed the two slot indices and starts those rows at the offset
+they came from. The offset is applied while the row is built rather than from a posted runnable,
+because a post can run before the list has laid out and would then move the old views.
+
+The action row is an icon (a pencil for 编辑, a check for 完成), resolved from this module's own
+drawables through the host context, and falls back to the text label if that lookup fails. The
+label string is still used as the content description.
+
 ### Capacity range
 
 The drawer's ListView is 1850 px tall with 180 px rows, so exactly **10 rows** are visible.
