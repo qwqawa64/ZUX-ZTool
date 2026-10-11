@@ -46,7 +46,6 @@ class SidebarDrawerHook : AppHookModule() {
     private var drawerWidth: Int = 0
     private var footViewField: Field? = null
     private var popupWindowField: Field? = null
-    private var originalDrawerWidth: Int = 0
 
     private var adapter: SidebarDrawerAdapter? = null
     private var hostPackage: String = ScopeKeys.FREEFORM_SIDEBAR.packageName
@@ -411,7 +410,6 @@ class SidebarDrawerHook : AppHookModule() {
             runCatching { showAllAppWindow?.invoke(context) }
                 .onFailure { logger.error("failed to populate the all-apps panel", it) }
         }
-        applyEditWidth(context, next, drawerAdapter.glyphWidth)
         applyEditLayout(context, next)
         if (!next) runCatching { badgeDecorator?.clear() }
         if (next) runCatching { refreshBadges(context) }
@@ -426,18 +424,6 @@ class SidebarDrawerHook : AppHookModule() {
     }
 
     /**
-     * The drawer is only `top_list_window_width` wide (70dp in landscape), so the two per-row
-     * glyphs need extra room while editing.
-     */
-    private fun applyEditWidth(context: Context, edit: Boolean, glyphWidth: Int) {
-        val layout = drawerLayoutField?.get(context) as? android.view.ViewGroup ?: return
-        val params = layout.layoutParams ?: return
-        if (originalDrawerWidth == 0) originalDrawerWidth = params.width
-        params.width = if (edit) originalDrawerWidth + (glyphWidth * 2) else originalDrawerWidth
-        layout.layoutParams = params
-    }
-
-    /**
      * Side by side while editing: the all-apps panel shifts left by the drawer's width and the
      * drawer is pinned to the end, so the popup grows leftwards instead of covering the drawer.
      */
@@ -447,7 +433,6 @@ class SidebarDrawerHook : AppHookModule() {
         val drawerParams = drawer.layoutParams as? android.widget.FrameLayout.LayoutParams ?: return
         val panelParams = panel.layoutParams as? android.widget.FrameLayout.LayoutParams ?: return
         if (edit) {
-            // applyEditWidth runs first, so this is the widened width the drawer actually occupies.
             val reserved = drawerParams.width.takeIf { it > 0 } ?: drawerWidth
             if (drawerWidth == 0) drawerWidth = reserved
             panelParams.marginEnd = reserved
@@ -510,21 +495,7 @@ class SidebarDrawerHook : AppHookModule() {
     private fun callbacks(context: Context) = object : SidebarDrawerAdapter.DrawerCallbacks {
         override fun onToggleEditMode() = toggleEditMode(context)
 
-        override fun onMoveUp(app: Any) = move(context, app, -1)
-
-        override fun onMoveDown(app: Any) = move(context, app, 1)
-
         override fun onRemove(app: Any) = remove(context, app)
-    }
-
-    private fun move(context: Context, app: Any, delta: Int) {
-        val key = SidebarReflect.keyOf(app) ?: return
-        val members = SidebarDrawerStore.readMembers(context) ?: memberKeys(context)
-        val index = members.indexOf(key)
-        if (index < 0) return
-        val target = index + delta
-        if (target !in members.indices) return
-        swapMembers(context, index, target)
     }
 
     /** Drops an app from the drawer, leaving its slot empty. */

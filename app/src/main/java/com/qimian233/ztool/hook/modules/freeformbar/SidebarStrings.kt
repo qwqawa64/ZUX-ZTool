@@ -14,10 +14,6 @@ internal object SidebarStrings {
 
     const val STRING_EDIT = "ztool_sidebar_drawer_edit"
     const val STRING_DONE = "ztool_sidebar_drawer_done"
-    const val STRING_MOVE_UP = "ztool_sidebar_drawer_move_up"
-    const val STRING_MOVE_DOWN = "ztool_sidebar_drawer_move_down"
-    const val STRING_GLYPH_UP = "ztool_sidebar_drawer_glyph_up"
-    const val STRING_GLYPH_DOWN = "ztool_sidebar_drawer_glyph_down"
     const val STRING_GLYPH_ADD = "ztool_sidebar_drawer_glyph_add"
     const val STRING_GLYPH_DROP = "ztool_sidebar_drawer_glyph_drop"
     const val STRING_ADD = "ztool_sidebar_drawer_add"
@@ -25,10 +21,6 @@ internal object SidebarStrings {
 
     const val FALLBACK_EDIT = "编辑"
     const val FALLBACK_DONE = "完成"
-    const val FALLBACK_MOVE_UP = "上移"
-    const val FALLBACK_MOVE_DOWN = "下移"
-    const val FALLBACK_GLYPH_UP = "▲"
-    const val FALLBACK_GLYPH_DOWN = "▼"
     const val FALLBACK_GLYPH_ADD = "+"
     const val FALLBACK_GLYPH_DROP = "−"
     const val FALLBACK_ADD = "加入抽屉"

@@ -483,7 +483,7 @@ drawer, in order, and may be shorter than the slot count — even empty. `compos
 * `−` and `✕` remove from the members list, so the drawer really shrinks;
 * `+` appends while a slot is free, and is **greyed out and inert** when the drawer is full, so
   an app the user chose is never silently displaced;
-* `▲ ▼` reorder within the members list only;
+* reordering is a long-press drag within the members list (the arrows were removed once dragging worked);
 * while editing, the free slots are rendered as empty outlines after the apps, so the edit list
   keeps its full length instead of shrinking as apps are removed.
 
@@ -505,7 +505,7 @@ therefore tracked by hand on the ListView's `OnTouchListener`:
 * A press that starts on a clickable child (the up/down glyphs or the remove disc) never starts
   a drag, so those keep working; the check walks the row's children recursively in row-local
   coordinates.
-* Swaps go through the same `swapMembers` as the arrows, and hand the produced list straight to
+* Swaps go through `swapMembers`, which hands the produced list straight to
   the adapter: re-deriving it costs a full pinyin sort of every installed app, which is too much
   to pay on each crossing. Membership does not change on a reorder, so the panel badges are left
   alone.

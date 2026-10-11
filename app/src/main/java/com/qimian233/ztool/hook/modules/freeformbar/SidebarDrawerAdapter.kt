@@ -29,8 +29,6 @@ internal class SidebarDrawerAdapter(
 
     internal interface DrawerCallbacks {
         fun onToggleEditMode()
-        fun onMoveUp(app: Any)
-        fun onMoveDown(app: Any)
         fun onRemove(app: Any)
     }
 
@@ -49,16 +47,9 @@ internal class SidebarDrawerAdapter(
      */
     private val iconSize = minOf(dimen("top_list_item_width", 72), rowHeight - 2 * padTop)
 
-    /** Tap width for one ▲ / ▼ / ✕ cell; the drawer is widened by 3x this in edit mode. */
-    val glyphWidth: Int = (GLYPH_DP * context.resources.displayMetrics.density).toInt()
-
     private val editLabel = SidebarStrings.get(context, SidebarStrings.STRING_EDIT, SidebarStrings.FALLBACK_EDIT)
     private val doneLabel = SidebarStrings.get(context, SidebarStrings.STRING_DONE, SidebarStrings.FALLBACK_DONE)
-    private val glyphUp = SidebarStrings.get(context, SidebarStrings.STRING_GLYPH_UP, SidebarStrings.FALLBACK_GLYPH_UP)
-    private val glyphDown = SidebarStrings.get(context, SidebarStrings.STRING_GLYPH_DOWN, SidebarStrings.FALLBACK_GLYPH_DOWN)
     private val glyphDrop = SidebarStrings.get(context, SidebarStrings.STRING_GLYPH_DROP, SidebarStrings.FALLBACK_GLYPH_DROP)
-    private val moveUpLabel = SidebarStrings.get(context, SidebarStrings.STRING_MOVE_UP, SidebarStrings.FALLBACK_MOVE_UP)
-    private val moveDownLabel = SidebarStrings.get(context, SidebarStrings.STRING_MOVE_DOWN, SidebarStrings.FALLBACK_MOVE_DOWN)
     private val dropLabel = SidebarStrings.get(context, SidebarStrings.STRING_DROP, SidebarStrings.FALLBACK_DROP)
 
     /**
@@ -173,10 +164,9 @@ internal class SidebarDrawerAdapter(
             alpha = if (alreadyVisible && !editMode) 0.3f else 1.0f
         }
         if (editable && editMode) {
-            // Removal sits on the icon itself, so the row only carries reordering glyphs.
+            // Removal sits on the icon itself and reordering is a long-press drag, so the row
+            // carries no extra controls.
             row.addView(iconWithRemoveBadge(icon, app))
-            row.addView(glyph(glyphUp, moveUpLabel) { callbacks.onMoveUp(app) })
-            row.addView(glyph(glyphDown, moveDownLabel) { callbacks.onMoveDown(app) })
         } else {
             row.addView(icon, LinearLayout.LayoutParams(iconSize, iconSize))
         }
@@ -202,24 +192,12 @@ internal class SidebarDrawerAdapter(
             )
         }
 
-    private fun glyph(text: String, description: String, onClick: () -> Unit): TextView =
-        TextView(context).apply {
-            this.text = text
-            contentDescription = description
-            setTextColor(Color.WHITE)
-            textSize = 14f
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(glyphWidth, ViewGroup.LayoutParams.MATCH_PARENT)
-            setOnClickListener { onClick() }
-        }
-
     private fun dimen(name: String, fallbackDp: Int): Int {
         val id = context.resources.getIdentifier(name, "dimen", hostPackage)
         return if (id != 0) context.resources.getDimensionPixelSize(id) else fallbackDp
     }
 
     private companion object {
-        const val GLYPH_DP = 26
         const val DRAGGING_ALPHA = 0.5f
         const val EMPTY_FILL = 0x14FFFFFF
         const val EMPTY_STROKE = 0x4DFFFFFF
