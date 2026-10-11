@@ -46,6 +46,8 @@ internal class SidebarBadgeDecorator(
         onToggle = toggle
         if (!watching) {
             container.viewTreeObserver.addOnScrollChangedListener { redraw() }
+            // Item views only exist after the grid lays out, and scrolling may never happen.
+            container.viewTreeObserver.addOnGlobalLayoutListener { redraw() }
             watching = true
         }
         redraw()
@@ -71,18 +73,22 @@ internal class SidebarBadgeDecorator(
             val app = apps[position]
             val badge = item.findViewById<View>(badgeId) ?: addBadge(item) ?: continue
             val member = isMember(app)
-            (badge as? TextView)?.apply {
-                text = SidebarStrings.get(
-                    context,
+            (badge as? TextView)?.let { view ->
+                val glyph = SidebarStrings.get(
+                    view.context,
                     if (member) SidebarStrings.STRING_GLYPH_DROP else SidebarStrings.STRING_GLYPH_ADD,
                     if (member) SidebarStrings.FALLBACK_GLYPH_DROP else SidebarStrings.FALLBACK_GLYPH_ADD
                 )
-                contentDescription = SidebarStrings.get(
-                    context,
-                    if (member) SidebarStrings.STRING_DROP else SidebarStrings.STRING_ADD,
-                    if (member) SidebarStrings.FALLBACK_DROP else SidebarStrings.FALLBACK_ADD
-                )
-                background = disc(if (member) DROP_COLOR else ADD_COLOR)
+                // Skip redundant writes: setText can request layout, and this runs on layout.
+                if (view.text.toString() != glyph) {
+                    view.text = glyph
+                    view.background = disc(if (member) DROP_COLOR else ADD_COLOR)
+                    view.contentDescription = SidebarStrings.get(
+                        view.context,
+                        if (member) SidebarStrings.STRING_DROP else SidebarStrings.STRING_ADD,
+                        if (member) SidebarStrings.FALLBACK_DROP else SidebarStrings.FALLBACK_ADD
+                    )
+                }
             }
             badge.setOnClickListener { onToggle(app) }
             item.setOnTouchListener { _, _ -> true }

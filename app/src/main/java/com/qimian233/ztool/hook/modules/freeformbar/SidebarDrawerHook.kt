@@ -344,10 +344,15 @@ class SidebarDrawerHook : AppHookModule() {
             val rest = allKeys(context).filterNot { it in current }
             SidebarDrawerStore.writeOrder(context, current + rest)
             SidebarDrawerStore.setCustomized(context, true)
+            // The host only builds the grid adapter inside showAllAppWindow, so the panel would
+            // stay empty if the edit layout merely made it visible.
+            runCatching { showAllAppWindow?.invoke(context) }
+                .onFailure { logger.error("failed to populate the all-apps panel", it) }
         }
         applyEditWidth(context, next, drawerAdapter.glyphWidth)
         applyEditLayout(context, next)
         if (!next) runCatching { badgeDecorator?.clear() }
+        if (next) runCatching { refreshBadges(context) }
         drawerAdapter.submit(
             resolve(if (next) editedKeys(context) else composedKeys(context)),
             visibleKeys(context),
@@ -383,7 +388,10 @@ class SidebarDrawerHook : AppHookModule() {
         val drawerParams = drawer.layoutParams as? android.widget.FrameLayout.LayoutParams ?: return
         val panelParams = panel.layoutParams as? android.widget.FrameLayout.LayoutParams ?: return
         if (edit) {
-            if (drawerWidth == 0) drawerWidth = drawerParams.width
+            // applyEditWidth runs first, so the drawer's current width is already widened.
+            if (drawerWidth == 0) {
+                drawerWidth = if (originalDrawerWidth > 0) originalDrawerWidth else drawerParams.width
+            }
             panelParams.marginEnd = drawerWidth
             panelParams.gravity = android.view.Gravity.START or android.view.Gravity.CENTER_VERTICAL
             drawerParams.gravity = android.view.Gravity.END or android.view.Gravity.TOP

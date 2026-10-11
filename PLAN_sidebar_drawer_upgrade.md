@@ -447,6 +447,24 @@ with — and the grid is scrolled through reflection, because the app bundles it
 Note the `#` group (digits and symbols) sorts **first**, since the host sorts by raw pinyin, so
 `#` leads both the grid and the rail.
 
+### Edit mode: both panels and membership badges
+
+The all-apps grid is **only ever populated inside `showAllAppWindow()`** — the host builds
+`AppIconRecyclerAdapter` there and nowhere else. Merely making `allapp_rl` visible leaves the
+panel blank, so entering edit mode calls `showAllAppWindow()` first and then re-shows the drawer
+and applies the side-by-side layout. Both host entry points hide one panel or the other, so the
+layout is re-asserted from the drawer-open and all-apps hooks as well.
+
+Side by side: the panel takes `marginEnd = drawer width` and the drawer is pinned to `END`, so
+the `wrap_content` popup grows leftwards (469dp + 94dp ≈ 563dp).
+
+Badges are injected into the host's grid item views (`AppIconItemView`, a `RelativeLayout`, with
+`appicon_iv` as the anchor) instead of replacing its adapter. State is re-derived from
+`getChildAdapterPosition` on every scroll and layout, so recycling cannot leave a stale binding,
+and item taps are swallowed with an `OnTouchListener` that the adapter's `OnClickListener`
+cannot overwrite. Membership is positional: the drawer is the first `slots` entries of the
+order, `+` drops an app into the last visible slot, `−` pushes it past the window.
+
 ### Capacity range
 
 The drawer's ListView is 1850 px tall with 180 px rows, so exactly **10 rows** are visible.
