@@ -18,6 +18,14 @@ Give the old build what it lacks, without porting the new build's code:
    old build; only an optional improvement is planned.
 4. **Search in the all-apps panel.**
 
+## 0. Decisions taken
+
+| Question | Decision |
+|---|---|
+| Editing UX | **Stage B** — a `编辑` entry that switches the drawer into edit mode with per-row `▲`/`▼`/`✕` (keeps the host `ListView`; no drag-and-drop). Stage A (long-press menu) stays as a fallback if Stage B's row affordances turn out to be too cramped. |
+| Search placement | **In-panel `EditText`**, but §5.1 (IME focus on a `FLAG_NOT_FOCUSABLE` overlay) must be prototyped and proven **before** the rest of the search work starts. Fallback remains a ZTool-side search screen. |
+| Implementation start | **Deferred.** Requirement 3 (all-apps ordering) must first be confirmed against a concrete observed symptom — see §8. |
+
 ## 1. Host facts (old build 1.18.02.26.20.2)
 
 | Fact | Where |
@@ -53,7 +61,8 @@ data model is fully readable and is what the old build should converge on.
 | Add | per-item ＋ (`drawerallappitem.xml@id/add_button_container`, `@string/float_edit_add`), shown when in edit mode for apps not already in the drawer (item types 4/5 = already present) |
 | Edit-mode strings | `float_edit` 编辑 / `float_edit_add` 添加 / `float_edit_down` 完成 / `float_edit_remove` 删除 |
 | Pinning | `PinAppReceiver` (action `…action.PIN_APP`) + `db.FixedAppProvider` (`content://com.zui.freeform.sidebar.provider/fixed_apps`, columns `_id, rank, package_name, class_name, app_label, icon, count, action`) |
-| All-apps sort | **identical to the old build** — `J0.C0258g.r()` with `J0.Y.b(userId + appName)`, and `J0.Y` is a byte-for-byte equivalent of `PinYinUtils` |
+| All-apps panel | `x2()` = `showAllDrawerView()`: `I0.b(this, C0270t.u(this))`, i.e. the **full pinyin-sorted app list**, in a **6-column** `GridLayoutManager`; `bVar.n(C0270t.K())` additionally marks apps already in the drawer (item types 4/5) |
+| All-apps sort | **identical to the old build** — `J0.C0258g.r()` with `J0.Y.b(userId + appName)`, and `J0.Y` is a byte-for-byte equivalent of `PinYinUtils`; `C0270t.u()` returns that same map's values |
 | All-apps search | **absent** (confirmed: no filter, no `EditText`, no search entry in `I0.b`) |
 | A–Z index bar | also dead (`F0.c.f478i` is bound but never used) |
 
@@ -143,25 +152,20 @@ state under our own keys this is harmless, but the hook should still hook
 `SidebarAppUtils.refreshTop5App(Context)` and short-circuit it while the feature is enabled, so
 the host cannot fight the user's order (and so the old build stops rewriting `top_5`).
 
-### 4.4 Edit UI — staged
+### 4.4 Edit UI — chosen: footer `编辑` mode with `▲`/`▼`/`✕`
 
-**Stage A (default, low risk): long-press action menus.**
-
-* Drawer row long-press → action sheet: `上移` / `下移` / `置顶` / `从侧边栏移除`.
-* All-apps item long-press → `添加到侧边栏` / `从侧边栏移除`.
-* Both mutate `ztool_drawer_order`, then `notifyDataSetChanged()` + rewrite `mAppTop5List`.
-* UI container: build a `PopupWindow` the same way the host does (a `Service` cannot show an
-  `AlertDialog` without a window token; if a dialog is preferred, set
-  `dialog.window.setType(2038)` before `show()`).
-
-**Stage B (optional, closer to the new build): footer `编辑` entry.**
-
-* Append an `编辑` row to our adapter (or repurpose the footer): in edit mode every row gets
-  `▲`/`▼`/`✕` affordances, and the all-apps panel marks apps already in the drawer (item
-  type analogue of the new build's types 4/5) with a `＋` to add them.
-* True drag-and-drop would require replacing `ListView@id/appicon_lv` with a `RecyclerView`
-  plus `ItemTouchHelper` (`makeMovementFlags(3, 0)` + `Collections.swap`, exactly as
-  `I0.f$a`). Feasible but invasive; only do it if the ▲/▼ version is judged insufficient.
+* Append an `编辑` row to our adapter (or repurpose the footer row) that toggles edit mode on
+  our hook-owned adapter; in edit mode every drawer row shows `▲` / `▼` / `✕` affordances, and
+  `✕` on the last row exits edit mode (`完成`).
+* While in edit mode the all-apps panel marks apps already in the drawer and shows a `＋` to
+  add them — the analogue of the new build's item types 4/5 and `add_button_container`.
+* Keep the host `ListView@id/appicon_lv`; do **not** swap it for a `RecyclerView`. Drag-and-drop
+  (`ItemTouchHelper` + `Collections.swap`, as in `I0.f$a`) is only worth it if the `▲`/`▼`
+  affordances prove too cramped for a 9–16 row drawer.
+* Fallback (Stage A) if Stage B's rows are too tight: long-press an item for a
+  `上移 / 下移 / 置顶 / 移除` action sheet. UI container note: a `Service` cannot show an
+  `AlertDialog` without a window token — use a `PopupWindow` like the host does, or set
+  `dialog.window.setType(2038)` before `show()`.
 
 ### 4.5 All-apps ordering (optional polish)
 
@@ -174,7 +178,7 @@ The old build already sorts by pinyin. If a visible defect is confirmed, the che
   `index_bar` visible, and feed `AppsAlphabeticIndexBar` pinyin initials instead of the raw
   `appName.charAt(0)` (today the letters are Chinese characters while the order is pinyin).
 
-### 4.6 Search in the all-apps panel
+### 4.6 Search in the all-apps panel (prototype §5.1 first)
 
 Hook `FloatService.showAllAppWindow()` (private, stable name) **after**:
 
@@ -254,5 +258,27 @@ either an in-sidebar menu entry or a root/shell write from the module app.
 * **§3 row 3**: the all-apps panel is already pinyin-sorted by the same comparator in both
   builds, so requirement 3 appears satisfied today. If a concrete mis-ordering was observed on
   the device, it needs the exact symptom (which apps, which order) before §4.5 is implemented.
-* Editing UX: is the Stage-A long-press menu acceptable, or is drag-and-drop (Stage B) required?
-* Search placement: in-panel (needs the §5.1 IME workaround) or a ZTool-side search screen?
+* Editing UX: settled — Stage B (`编辑` mode with `▲`/`▼`/`✕`).
+* Search placement: settled — in-panel `EditText`, gated on the §5.1 prototype.
+* **Requirement 3 is blocked on a symptom report** — see §8.
+
+## 8. Confirming the all-apps ordering symptom (blocking requirement 3)
+
+Both builds sort the all-apps panel with the same comparator
+(`pinyin(userId + appLabel).lowercase()`), so the code predicts **no ordering difference**.
+Before §4.5 is implemented, the observed symptom has to be pinned to one of these:
+
+| # | Hypothesis | What the user would see |
+|---|---|---|
+| H1 | Ordering is fine, but there is no A–Z index/grouping, so it *looks* unordered | Chinese and Latin names interleaved by pinyin; no letter rail |
+| H2 | The complaint is really about the **drawer**, not the panel | Drawer order is recency-driven (`top_1..top_5` rewritten from `cur_visible_freeform_list`) and not user-controllable |
+| H3 | Multi-profile grouping | All work-profile (userId != 0) apps clumped after the primary user, because the sort key starts with the user id |
+| H4 | Latin/Chinese mixing | `WeChat` sorts next to `微信` (both key `w…`) instead of Latin-before-CJK |
+| H5 | Unwanted entries | Non-freeform-capable / system apps appear in the panel (the host filters by `supportsOvFreeformOnPkg`, but that is not a user-visible filter) |
+| H6 | Column count | Old = 5 columns, new = 6; a longer panel with wider gaps can read as "less ordered" |
+| H7 | Already-open apps | Entries that are currently floating are greyed (alpha 0.3) but stay in place; if the user expects them to move to the top this reads as "unordered" |
+
+Cheapest way to discriminate H1/H4/H6 from a real defect: compare the panel's order against the
+system launcher's own app-drawer pinyin order on the same device. If they agree, the ordering is
+the intended pinyin order and only §4.5's polish (index rail / `Collator`) applies. H2/H3/H5/H7
+are separate defects and would be handled by different hooks.
