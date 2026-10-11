@@ -387,6 +387,16 @@ Root causes found and fixed:
 Verified after the fixes: footer → all-apps panel with no app launched; action row toggles
 编辑/完成 in both directions with the row following the mode; an app row still launches its app.
 
+### Reverted: leaving `mAppTop5List` alone
+
+An attempt to stop hooking `SidebarAppUtils.generateTop5App` and stop writing `mAppTop5List` was
+reverted on user feedback. The drawer adapter is built from that list, so it has to be replaced
+for the extra rows to appear at all. Note the coupling that remains: while our `generateTop5App`
+hook is active, `mAppTop5List` is longer than the host's own 5-row adapter, so the host's stock
+click listener would treat the "more" row as an app row. Our adapter and our listener must
+therefore be the ones attached — `installDrawer()` re-asserts both, and logs
+`drawer ListView not found` / `took over the drawer adapter` so an on-device failure is visible.
+
 ### Capacity range
 
 The drawer's ListView is 1850 px tall with 180 px rows, so exactly **10 rows** are visible.

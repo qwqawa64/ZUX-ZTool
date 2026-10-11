@@ -176,18 +176,25 @@ class SidebarDrawerHook : AppHookModule() {
     }
 
     private fun installDrawer(context: Context) {
-        val listView = appIconLvField?.get(context) as? ListView ?: return
+        val listView = appIconLvField?.get(context) as? ListView
+        if (listView == null) {
+            logger.warn("drawer ListView not found, leaving the host adapter in place")
+            return
+        }
         val drawerAdapter = adapter
             ?: SidebarDrawerAdapter(context, hostPackage, callbacks(context)).also { adapter = it }
-        // The host re-attaches its own capped adapter every time the drawer opens, so this
-        // must re-attach ours rather than only pushing data into the existing instance.
+        // The host re-attaches its own capped adapter and listener every time the drawer opens,
+        // so both are re-asserted rather than only pushing data into the existing instance.
         if (listView.adapter !== drawerAdapter) {
             listView.adapter = drawerAdapter
-            listView.onItemClickListener = android.widget.AdapterView.OnItemClickListener { _, view, position, _ ->
-                onItemClick(context, view, position)
-            }
+            logger.info("took over the drawer adapter")
         }
+        listView.onItemClickListener = clickListener
         refreshDrawer(context)
+    }
+
+    private val clickListener = android.widget.AdapterView.OnItemClickListener { parent, view, position, _ ->
+        onItemClick(parent.context, view, position)
     }
 
     private fun refreshDrawer(context: Context) {
