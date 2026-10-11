@@ -36,9 +36,14 @@ internal class SidebarDrawerAdapter(
     private var visibleKeys: List<String> = emptyList()
     private var editMode: Boolean = false
 
-    private val iconSize = dimen("top_list_item_width", 72)
     private val rowHeight = dimen("top_list_item_height", 72)
     private val padTop = dimen("top_list_item_padding_top", 8)
+
+    /**
+     * The host's `top_list_item_width` equals the row height, so using it verbatim after adding
+     * vertical row padding clips the icon on both edges.
+     */
+    private val iconSize = minOf(dimen("top_list_item_width", 72), rowHeight - 2 * padTop)
 
     /** Tap width for one ▲ / ▼ / ✕ cell; the drawer is widened by 3x this in edit mode. */
     val glyphWidth: Int = (GLYPH_DP * context.resources.displayMetrics.density).toInt()
