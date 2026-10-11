@@ -36,6 +36,9 @@ internal class SidebarBadgeDecorator(
     private var warnedUnresolved = false
     private var warnedDivergence = false
     private var reported = false
+    private var tracePass = false
+    private var lastPosition = -1
+    private var lastSource = "none"
 
     private var apps: () -> List<Any> = { emptyList() }
     private var isMember: (Any) -> Boolean = { false }
@@ -67,6 +70,7 @@ internal class SidebarBadgeDecorator(
             container.viewTreeObserver.addOnGlobalLayoutListener { redraw() }
             watching = true
         }
+        tracePass = true
         redraw()
     }
 
@@ -85,9 +89,20 @@ internal class SidebarBadgeDecorator(
         val container = grid ?: return
         val service = apps()
         val adapter = adapterList(container)
+        val tracing = tracePass
+        tracePass = false
         if (adapter != null && adapter !== service && !warnedDivergence) {
             warnedDivergence = true
             logger.warn("grid adapter list differs from the service list; resolving by adapter")
+        }
+        if (tracing) {
+            logger.trace(
+                "badge pass: children=" + container.childCount +
+                    " adapter=" + (adapter?.size ?: -1) +
+                    " service=" + service.size +
+                    " sameList=" + (adapter === service) +
+                    " canAdd=" + canAdd
+            )
         }
         var decorated = 0
         var unresolved = 0
@@ -103,17 +118,23 @@ internal class SidebarBadgeDecorator(
                 unresolved++
                 // Leave no trace of the host's own dimming for apps that are merely running.
                 item.findViewById<View>(iconId(container))?.alpha = 1f
+                report(item, tracing, "#" + index + " pos=" + lastPosition + " src=" + lastSource +
+                    " label=" + labelOf(item) + " UNRESOLVED alpha=1.0 badge=none")
                 continue
             }
             val member = isMember(app)
+            val key = SidebarReflect.keyOf(app)
             // Apps already in the drawer are masked and carry no badge: they are removed from
             // the drawer row's own disc. A full drawer masks everything, because nothing more
             // can be added at all.
-            item.findViewById<View>(iconId(container))?.alpha =
-                if (member || !canAdd) MASKED_ALPHA else 1f
+            val masked = member || !canAdd
+            item.findViewById<View>(iconId(container))?.alpha = if (masked) MASKED_ALPHA else 1f
             val existing = item.findViewById<View>(badgeId) as? TextView
             if (member) {
                 existing?.visibility = View.GONE
+                report(item, tracing, "#" + index + " pos=" + lastPosition + " src=" + lastSource +
+                    " label=" + labelOf(item) + " key=" + key + " member=true alpha=" +
+                    (if (masked) MASKED_ALPHA else 1f) + " badge=hidden")
                 continue
             }
             val badge = existing ?: addBadge(item) ?: continue
@@ -129,6 +150,10 @@ internal class SidebarBadgeDecorator(
                     )
                 }
             }
+            report(item, tracing, "#" + index + " pos=" + lastPosition + " src=" + lastSource +
+                " label=" + labelOf(item) + " key=" + key + " member=false alpha=" +
+                (if (masked) MASKED_ALPHA else 1f) + " badge=" +
+                (if (enabled) "add" else "add-disabled"))
             badge.setOnClickListener(
                 if (enabled) {
                     // Resolve the app when the tap happens: the item view can be rebound to a
@@ -151,6 +176,13 @@ internal class SidebarBadgeDecorator(
         }
     }
 
+    /** Logs a decision for one item on a trace pass, or as soon as it changes. */
+    private fun report(item: View, tracing: Boolean, line: String) {
+        if (!tracing && item.getTag(badgeId) == line) return
+        item.setTag(badgeId, line)
+        logger.trace("badge " + line)
+    }
+
     /**
      * The app a grid item currently shows.
      *
@@ -166,11 +198,22 @@ internal class SidebarBadgeDecorator(
         service: List<Any>
     ): Any? {
         val position = adapterPosition(container, item)
-        adapter?.getOrNull(position)?.let { return it }
-        val label = labelOf(item) ?: return service.getOrNull(position)
-        adapter?.firstOrNull { SidebarReflect.labelOf(it) == label }?.let { return it }
-        return service.firstOrNull { SidebarReflect.labelOf(it) == label }
-            ?: service.getOrNull(position)
+        lastPosition = position
+        adapter?.getOrNull(position)?.let { lastSource = "adapter"; return it }
+        val label = labelOf(item) ?: run {
+            lastSource = "none"
+            return service.getOrNull(position)?.also { lastSource = "service" }
+        }
+        adapter?.firstOrNull { SidebarReflect.labelOf(it) == label }?.let {
+            lastSource = "adapter-label"
+            return it
+        }
+        service.firstOrNull { SidebarReflect.labelOf(it) == label }?.let {
+            lastSource = "service-label"
+            return it
+        }
+        lastSource = "none"
+        return service.getOrNull(position)?.also { lastSource = "service" }
     }
 
     private fun adapterList(container: ViewGroup): List<Any>? {

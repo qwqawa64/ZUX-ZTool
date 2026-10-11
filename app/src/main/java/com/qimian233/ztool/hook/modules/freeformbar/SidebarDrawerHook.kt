@@ -493,6 +493,13 @@ class SidebarDrawerHook : AppHookModule() {
         val member: (Any) -> Boolean = { SidebarReflect.keyOf(it)?.let { key -> key in members } == true }
         val toggle: (Any) -> Unit = { toggleMembership(context, it) }
         val canAdd = members.size < memberSlots(context)
+        logger.trace(
+            "badge refresh: children=" + gridChildren +
+                " service=" + list().size +
+                " members=" + members.size +
+                " memberSlots=" + memberSlots(context) +
+                " canAdd=" + canAdd
+        )
         decorator.refresh(grid, list, member, toggle, canAdd)
         // The grid may not have created its item views yet, so retry once now and once after the
         // next layout settles; the scroll and layout listeners cover the rest.
