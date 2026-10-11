@@ -211,12 +211,22 @@ class SidebarDrawerHook : AppHookModule() {
                 .also { adapter = it }
         // The host re-attaches its own capped adapter and listener every time the drawer opens,
         // so both are re-asserted rather than only pushing data into the existing instance.
-        if (listView.adapter !== drawerAdapter) {
+        if (currentAdapter(listView) !== drawerAdapter) {
             listView.adapter = drawerAdapter
             logger.info("took over the drawer adapter")
         }
         listView.onItemClickListener = clickListener
         refreshDrawer(context)
+    }
+
+    /**
+     * `ListView.getAdapter()` returns a `HeaderViewListAdapter` wrapper as soon as the host has
+     * attached its "more" footer, so identity has to be checked against the wrapped adapter.
+     * Comparing against the wrapper would never match and re-set the adapter forever.
+     */
+    private fun currentAdapter(listView: ListView): android.widget.ListAdapter? {
+        val current = listView.adapter ?: return null
+        return if (current is android.widget.HeaderViewListAdapter) current.wrappedAdapter else current
     }
 
     private val clickListener = android.widget.AdapterView.OnItemClickListener { parent, view, position, _ ->
