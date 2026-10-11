@@ -59,7 +59,12 @@ class FreeformBarSettingsRepository(
 
     companion object {
         const val SLOTS_MIN = 6
-        const val SLOTS_MAX = 16
+
+        /**
+         * The drawer only fits 10 rows (8 apps + the action row + the host's "more" row), so a
+         * larger capacity would push the edit affordance off-screen.
+         */
+        const val SLOTS_MAX = 8
         const val RECENT_SLOTS_MIN = 0
         const val RECENT_SLOTS_MAX = 3
 

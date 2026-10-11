@@ -224,7 +224,7 @@ locales, per the repo rules):
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `sidebar_drawer_slots` | int | 8 | drawer capacity (6–16) |
+| `sidebar_drawer_slots` | int | 8 | drawer capacity (6–8, see below) |
 | `sidebar_drawer_recent_slots` | int | 2 | how many leading slots are recency-driven (0–3) |
 | `sidebar_drawer_edit_menu` | bool | true | long-press editing (Stage A) |
 | `sidebar_all_apps_search` | bool | true | inject the search box |
@@ -386,6 +386,14 @@ Root causes found and fixed:
 
 Verified after the fixes: footer → all-apps panel with no app launched; action row toggles
 编辑/完成 in both directions with the row following the mode; an app row still launches its app.
+
+### Capacity range
+
+The drawer's ListView is 1850 px tall with 180 px rows, so exactly **10 rows** are visible.
+The list is `capacity + 1` (our action row) + 1 (the host's "more" row), which caps the usable
+capacity at **8**. The slider range is therefore 6–8: anything larger pushes 编辑 and the "more"
+row below the fold, inside a hover-driven popup that dismisses itself — the opposite of the
+"one tap away" requirement. Both the frontend and the hook clamp to this range.
 
 ### Not started
 

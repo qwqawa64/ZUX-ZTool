@@ -310,6 +310,7 @@ class SidebarDrawerHook : AppHookModule() {
     }
 
     private companion object {
-        const val MAX_SLOTS = 16
+        /** The drawer fits 10 rows, two of which are the action row and the host's "more" row. */
+        const val MAX_SLOTS = 8
     }
 }
