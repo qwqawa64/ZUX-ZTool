@@ -110,7 +110,7 @@ max level **only while that realignment is active**.
 
 **Option A — read the same source as the dialog (exact for the active route).** The hook's
 callbacks run after `chain.proceed()`, so during a drag the stream already holds the
-ceil'd level:
+ceil'd level. **This is what `VolumeSliderPercentageHook` implements now:**
 
 ```kotlin
 val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -133,9 +133,9 @@ val percent = (level * 100 / maxLevel).coerceIn(0, 100)
 Still disagrees with the dialog when the slider range is stale (cause 3); keep the
 `FineVolumeStepsSliderHook` realignment as the precondition.
 
-Both options only need `getVolumeProgress()` (and the now-redundant `formatPercent()`
-re-scaling) changed; the call sites (`refreshVolumeLabel`, `refreshVolumeFromToggleSlider`,
-`on_progress_changed`) can stay as they are.
+The change is confined to `getVolumeProgress()` (plus the now-plain `formatPercent()`);
+the call sites (`refreshVolumeLabel`, `refreshVolumeFromToggleSlider`,
+`on_progress_changed`) and the color-ramp path (`getVolumeRawProgress`) stay as they are.
 
 ## 5. On-device verification checklist
 

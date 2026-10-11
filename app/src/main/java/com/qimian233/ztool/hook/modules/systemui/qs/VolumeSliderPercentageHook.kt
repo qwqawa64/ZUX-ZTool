@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
+import android.media.AudioManager
 import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.Gravity
@@ -206,7 +207,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
                 return
             }
             val rawProgress2 = getVolumeRawProgress(sliderView, rawProgress)
-            val volumeProgress = getVolumeProgress(sliderView, rawProgress)
+            val volumeProgress = getVolumeProgress(sliderView)
             if (rawProgress2 == null || volumeProgress == null) {
                 setPercentTextIfChanged(percentView, "--%")
                 return
@@ -226,7 +227,7 @@ class VolumeSliderPercentageHook : AppHookModule() {
         }
         try {
             val rawProgress2 = getVolumeRawProgress(sliderView, null)
-            val volumeProgress = getVolumeProgress(sliderView, null)
+            val volumeProgress = getVolumeProgress(sliderView)
             if (rawProgress2 == null || volumeProgress == null) {
                 return
             }
@@ -260,28 +261,32 @@ class VolumeSliderPercentageHook : AppHookModule() {
         }
     }
 
-    private fun getVolumeProgress(sliderView: Any, rawProgress: Int?): Int? {
+    // See docs/research/media_output_dialog_volume_percentage.md
+    /**
+     * Volume percentage, derived from the media stream exactly like MediaOutputDialog
+     * derives it from the output route: `level * 100 / maxLevel`, truncated.
+     *
+     * @return 0..100, or null when the stream max is unavailable.
+     */
+    private fun getVolumeProgress(sliderView: Any): Int? {
         return try {
-            val volumeSlider = sliderView.javaClass
-                .getDeclaredField("mMediaVolumeSlider").get(sliderView) as SeekBar
-            val progress = rawProgress ?: volumeSlider.progress
-            val min = volumeSlider.min
-            val max = volumeSlider.max
-            val range = 1.coerceAtLeast(max - min)
-            var percent = (((progress - min) * 100f) / range).roundToInt()
-            percent = 0.coerceAtLeast(100.coerceAtMost(percent))
-            percent
+            val context = (sliderView as? View)?.context ?: return null
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                ?: return null
+            val maxLevel = audioManager.getStreamMaxVolume(STREAM_MUSIC)
+            if (maxLevel <= 0) {
+                return null
+            }
+            val level = audioManager.getStreamVolume(STREAM_MUSIC)
+            (level * 100 / maxLevel).coerceIn(0, 100)
         } catch (t: Throwable) {
             logger.error("Failed to resolve volume progress", t)
             null
         }
     }
 
-    private fun formatPercent(progress: Int): String {
-        val range = 1.coerceAtLeast(100)
-        var value = ((progress * 100f) / range).roundToInt()
-        value = 0.coerceAtLeast(100.coerceAtMost(value))
-        return String.format(Locale.US, "%d%%", value)
+    private fun formatPercent(percent: Int): String {
+        return String.format(Locale.US, "%d%%", percent)
     }
 
     private fun createPercentView(context: Context): TextView {
@@ -509,5 +514,8 @@ class VolumeSliderPercentageHook : AppHookModule() {
         private const val LABEL_GAP_DP = 2
         private const val BASE_PERCENT_COLOR = 0xffd8d8d8.toInt()
         private const val STOCK_VOLUME_RAW_RANGE = 100_000
+
+        /** android.media.AudioManager.STREAM_MUSIC */
+        private const val STREAM_MUSIC = 3
     }
 }
