@@ -41,6 +41,8 @@ class SidebarDrawerHook : AppHookModule() {
     private var appAllListField: Field? = null
     private var indexRail: SidebarIndexRail? = null
     private var badgeDecorator: SidebarBadgeDecorator? = null
+    private var dragReorder: SidebarDragReorder? = null
+    private var memberCount: Int = 0
     private var drawerWidth: Int = 0
     private var footViewField: Field? = null
     private var popupWindowField: Field? = null
@@ -252,7 +254,38 @@ class SidebarDrawerHook : AppHookModule() {
             logger.info("took over the drawer adapter")
         }
         listView.onItemClickListener = clickListener
+        val drag = dragReorder ?: SidebarDragReorder(
+            logger,
+            isDraggable = { position -> memberIndexAt(position) >= 0 },
+            onSwap = { from, to -> swapMembers(context, memberIndexAt(from), memberIndexAt(to)) },
+            onDragging = { position ->
+                adapter?.setDraggingIndex(if (position < 0) -1 else memberIndexAt(position))
+            }
+        ).also { dragReorder = it }
+        drag.attach(listView)
         refreshDrawer(context)
+    }
+
+    /** Adapter position to member index, or -1 when that position is not a draggable app row. */
+    private fun memberIndexAt(position: Int): Int {
+        val drawerAdapter = adapter ?: return -1
+        if (!drawerAdapter.isEditMode()) return -1
+        val index = position - 1
+        return if (index in 0 until memberCount) index else -1
+    }
+
+    /** Swaps two slots and persists, so a drag and the arrows share one code path. */
+    private fun swapMembers(context: Context, from: Int, to: Int) {
+        val members = (SidebarDrawerStore.readMembers(context)
+            ?: memberKeys(context).toMutableList()).toMutableList()
+        if (from !in members.indices || to !in members.indices) return
+        val moved = members[from]
+        members[from] = members[to]
+        members[to] = moved
+        SidebarDrawerStore.writeMembers(context, members)
+        SidebarDrawerStore.setCustomized(context, true)
+        // Membership is unchanged by a reorder, so the all-apps badges need no refresh here.
+        adapter?.let { submitDrawer(context, it, it.isEditMode(), members) }
     }
 
     /** The host hides one panel or the other whenever it opens them, so put the edit layout back. */
@@ -295,14 +328,24 @@ class SidebarDrawerHook : AppHookModule() {
     /**
      * While editing, the drawer shows exactly the user's slots followed by the free ones as
      * placeholders, so its length stays constant instead of shrinking as apps are removed.
+     *
+     * [memberOverride] lets a reorder hand over the list it just produced: re-deriving it costs a
+     * full pinyin sort of every installed app, which is too much to pay on every drag crossing.
      */
     private fun submitDrawer(
         context: Context,
         drawerAdapter: SidebarDrawerAdapter,
-        editMode: Boolean
+        editMode: Boolean,
+        memberOverride: List<String>? = null
     ) {
-        val items = resolve(if (editMode) memberKeys(context) else composedKeys(context))
+        val keys = when {
+            !editMode -> composedKeys(context)
+            memberOverride != null -> memberOverride
+            else -> memberKeys(context)
+        }
+        val items = resolve(keys)
         val empty = if (editMode) (memberSlots(context) - items.size).coerceAtLeast(0) else 0
+        memberCount = if (editMode) items.size else 0
         if (!editMode) appTop5ListField?.set(context, items)
         drawerAdapter.submit(items, visibleKeys(context), editMode, empty)
     }
@@ -476,18 +519,12 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun move(context: Context, app: Any, delta: Int) {
         val key = SidebarReflect.keyOf(app) ?: return
-        val members = (SidebarDrawerStore.readMembers(context)
-            ?: memberKeys(context).toMutableList()).toMutableList()
+        val members = SidebarDrawerStore.readMembers(context) ?: memberKeys(context)
         val index = members.indexOf(key)
+        if (index < 0) return
         val target = index + delta
-        if (index < 0 || target < 0 || target >= members.size) return
-        val moved = members[index]
-        members[index] = members[target]
-        members[target] = moved
-        SidebarDrawerStore.writeMembers(context, members)
-        SidebarDrawerStore.setCustomized(context, true)
-        refreshDrawer(context)
-        refreshBadges(context)
+        if (target !in members.indices) return
+        swapMembers(context, index, target)
     }
 
     /** Drops an app from the drawer, leaving its slot empty. */

@@ -38,6 +38,7 @@ internal class SidebarDrawerAdapter(
     private var visibleKeys: List<String> = emptyList()
     private var editMode: Boolean = false
     private var emptySlots: Int = 0
+    private var draggingIndex: Int = -1
 
     private val rowHeight = dimen("top_list_item_height", 72)
     private val padTop = dimen("top_list_item_padding_top", 8)
@@ -79,6 +80,13 @@ internal class SidebarDrawerAdapter(
 
     fun isEditMode(): Boolean = editMode
 
+    /** Marks the row being dragged, or -1 when no drag is running. */
+    fun setDraggingIndex(index: Int) {
+        if (draggingIndex == index) return
+        draggingIndex = index
+        notifyDataSetChanged()
+    }
+
     private fun rowCount(): Int = items.size + emptySlots
 
     override fun getCount(): Int = rowCount() + if (editable) 1 else 0
@@ -106,7 +114,7 @@ internal class SidebarDrawerAdapter(
         val app = items.getOrNull(appIndex(position))
         if (app == null) return emptyRow()
         val key = SidebarReflect.keyOf(app)
-        return appRow(app, key != null && visibleKeys.contains(key))
+        return appRow(app, key != null && visibleKeys.contains(key), appIndex(position))
     }
 
     /** A free slot: an empty outline the size of an icon, so the list keeps its full length. */
@@ -149,7 +157,7 @@ internal class SidebarDrawerAdapter(
         return row
     }
 
-    private fun appRow(app: Any, alreadyVisible: Boolean): View {
+    private fun appRow(app: Any, alreadyVisible: Boolean, index: Int): View {
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -157,6 +165,7 @@ internal class SidebarDrawerAdapter(
                 ViewGroup.LayoutParams.MATCH_PARENT, rowHeight
             )
             setPadding(0, padTop, 0, padTop)
+            alpha = if (index == draggingIndex) DRAGGING_ALPHA else 1f
         }
         val icon = ImageView(context).apply {
             setImageDrawable(SidebarReflect.iconOf(app))
@@ -211,6 +220,7 @@ internal class SidebarDrawerAdapter(
 
     private companion object {
         const val GLYPH_DP = 26
+        const val DRAGGING_ALPHA = 0.5f
         const val EMPTY_FILL = 0x14FFFFFF
         const val EMPTY_STROKE = 0x4DFFFFFF
         const val EMPTY_STROKE_WIDTH = 3

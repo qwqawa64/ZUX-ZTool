@@ -490,6 +490,28 @@ drawer, in order, and may be shorter than the slot count — even empty. `compos
 Before the first customisation the members are the host's default head, and installs from the
 old model migrate by reading `ztool_drawer_order` (now write-only legacy) once.
 
+### Drag reordering
+
+The drawer is the host's `ListView` and the host calls `ListView` methods on that field, so it
+cannot be swapped for a RecyclerView and `ItemTouchHelper` is unavailable. The gesture is
+therefore tracked by hand on the ListView's `OnTouchListener`:
+
+* `ACTION_DOWN` returns false, so the ListView keeps its own scrolling until the press matures;
+  a move past the touch slop cancels the pending drag, which is how scrolling still wins.
+* A long press takes the gesture over: the ListView is sent a synthetic `ACTION_CANCEL` through
+  `onTouchEvent` (not `dispatchTouchEvent`, which would re-enter our own listener) so its touch
+  state is reset, and every later event is consumed, which also suppresses the item click.
+* `ACTION_MOVE` maps the finger to a row with `pointToPosition` and swaps live.
+* A press that starts on a clickable child (the up/down glyphs or the remove disc) never starts
+  a drag, so those keep working; the check walks the row's children recursively in row-local
+  coordinates.
+* Swaps go through the same `swapMembers` as the arrows, and hand the produced list straight to
+  the adapter: re-deriving it costs a full pinyin sort of every installed app, which is too much
+  to pay on each crossing. Membership does not change on a reorder, so the panel badges are left
+  alone.
+
+No auto-scroll is implemented: the drawer fits ten rows and the slot count is capped at eight.
+
 ### Capacity range
 
 The drawer's ListView is 1850 px tall with 180 px rows, so exactly **10 rows** are visible.
