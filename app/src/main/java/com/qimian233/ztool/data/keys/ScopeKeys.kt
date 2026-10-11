@@ -34,4 +34,5 @@ object ScopeKeys {
     val SOGOU_OEM_IME = Scope("com.sohu.inputmethod.sogou.oem", HowToRestart.KillAll)
     val LENOVO_DEVICE_SERVICE = Scope("com.lenovo.lsf.device", HowToRestart.AmStop)
     val TAB_PUSHOUT = Scope("com.tblenovo.tabpushout", HowToRestart.AmStop)
+    val FREEFORM_SIDEBAR = Scope("com.zui.freeform.sidebar", HowToRestart.KillAll)
 }

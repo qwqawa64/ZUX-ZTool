@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.base
 
 import com.qimian233.ztool.hook.modules.documentsui.DocumentsUIBypass
+import com.qimian233.ztool.hook.modules.freeformbar.SidebarSearchProbe
 import com.qimian233.ztool.hook.modules.gametool.AutoMistakeTouchHook
 import com.qimian233.ztool.hook.modules.gametool.CpuFrequencyFix
 import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook
@@ -288,6 +289,8 @@ object HookManager {
         registerHookModule(ChargeAnimationFixModule())
 
         registerHookModule(DocumentsUIBypass())
+
+        registerHookModule(SidebarSearchProbe())
 
         registerHookModule(DisableAllVirusScans())
         registerHookModule(EnableAutorunByDefault())

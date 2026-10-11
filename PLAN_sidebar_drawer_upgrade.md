@@ -23,7 +23,7 @@ Give the old build what it lacks, without porting the new build's code:
 | Question | Decision |
 |---|---|
 | Editing UX | **Stage B** — a `编辑` entry that switches the drawer into edit mode with per-row `▲`/`▼`/`✕` (keeps the host `ListView`; no drag-and-drop). Stage A (long-press menu) stays as a fallback if Stage B's row affordances turn out to be too cramped. |
-| Search placement | **In-panel `EditText`**, but §5.1 (IME focus on a `FLAG_NOT_FOCUSABLE` overlay) must be prototyped and proven **before** the rest of the search work starts. Fallback remains a ZTool-side search screen. |
+| Search placement | **In-panel `EditText` — verified working on-device, no window-flag change needed.** See §5.1 and §9. |
 | Implementation start | **Ready.** Requirement 3 was confirmed as **H1** (order is correct, the A–Z rail/grouping is missing) — see §4.5 and §8. |
 
 ## 1. Host facts (old build 1.18.02.26.20.2)
@@ -202,7 +202,7 @@ The host already ships the pieces, all unused:
    `java.text.Collator.getInstance(Locale.CHINA)` on the label, which orders Latin before CJK and
    is what most users expect from an A–Z rail.
 
-### 4.6 Search in the all-apps panel (prototype §5.1 first)
+### 4.6 Search in the all-apps panel
 
 Hook `FloatService.showAllAppWindow()` (private, stable name) **after**:
 
@@ -237,14 +237,16 @@ either an in-sidebar menu entry or a root/shell write from the module app.
 
 ## 5. Risks and mitigations
 
-1. **IME focus on the search box (the only real blocker).** The overlay window is created with
-   `FLAG_NOT_FOCUSABLE`, and the panel is a `PopupWindow` sub-window of it, so an `EditText`
-   there will normally not receive input focus / show the IME. Mitigation: while the search box
-   is focused, clear `FLAG_NOT_FOCUSABLE` on the overlay's `mLayoutParams` and
-   `windowManager.updateViewLayout(...)`, restore the original flags on dismiss
-   (`popupWindow.setOnDismissListener`). Fallback if that misbehaves: launch a ZTool-side search
-   Activity and push the selection back through a broadcast. **Prototype this first** — it
-   determines whether requirement 4 is delivered in-panel or out-of-panel.
+1. **IME focus on the search box — RESOLVED on-device, no mitigation needed.** The assumption
+   that `FLAG_NOT_FOCUSABLE` on the overlay would block the IME turned out to be wrong: the panel
+   is a separate focusable `PopupWindow` (sub-window) that takes input focus on its own. Verified
+   twice on TB710FU (ZUXOS, sidebar 1.18.02.26.20.2) — see §9. Consequence for §4.6: do **not**
+   touch `mLayoutParams.flags`; the probe's phase B (clearing the flag) produced no behavioural
+   difference.
+   Remaining layout note from the same run: the keyboard **overlays** rather than resizes the
+   panel (the panel kept its height; the screenshot shows the grid behind the keyboard), so keep
+   the search box pinned at the top of `allapp_rl` and let the grid scroll, or set the popup's
+   `softInputMode` to `ADJUST_RESIZE` if the grid should shrink instead.
 2. **`System.exit(0)` in `FloatService.onDestroy()`** kills the whole `android.uid.system`
    process. Never force a service restart from the hook; use the module's scope-restart path.
 3. **Synthetic lambda names** (`lambda$new$1$com-zui-freeform-sidebar-FloatService`) are
@@ -280,11 +282,9 @@ either an in-sidebar menu entry or a root/shell write from the module app.
 
 ## 7. Open questions
 
-* **§3 row 3**: the all-apps panel is already pinyin-sorted by the same comparator in both
-  builds, so requirement 3 appears satisfied today. If a concrete mis-ordering was observed on
-  the device, it needs the exact symptom (which apps, which order) before §4.5 is implemented.
 * Editing UX: settled — Stage B (`编辑` mode with `▲`/`▼`/`✕`).
-* Search placement: settled — in-panel `EditText`, gated on the §5.1 prototype.
+* Search placement: settled — in-panel `EditText`; the §5.1 blocker is resolved (§9).
+* Still open: whether to mirror the order into the new build's `top_1..top_16` format (§5.6).
 
 ## 8. Confirming the all-apps ordering symptom — resolved as H1
 
@@ -297,3 +297,38 @@ The other hypotheses were ruled out and are recorded here only in case a second 
 later: H2 drawer-vs-panel confusion, H3 multi-profile clumping, H4 Latin/CJK mixing, H5 unwanted
 entries, H6 column count (old 5 vs new 6), H7 greyed already-floating entries not moving to the
 top.
+
+## 9. IME prototype — result
+
+Probe: `hook/modules/freeformbar/SidebarSearchProbe.kt` (registered as `hook_test`, armed only by
+`Settings.Global.ztool_ime_probe = 1`; **delete it when the real feature lands**). Tested on
+TB710FU (ZUXOS, sidebar 1.18.02.26.20.2 in `/system/priv-app`, KernelSU + LSPosed, scope already
+enabled for `com.zui.freeform.sidebar`).
+
+Procedure: `am startservice com.zui.freeform.sidebar/.FloatService`, then the probe injects an
+`EditText` into `mAllAppLayout` and drives two phases.
+
+| Phase | Overlay flags | Result |
+|---|---|---|
+| A — untouched | `0x1000128` (`FLAG_NOT_FOCUSABLE` set) | `showSoftInput=true focus=true windowFocus=true imm.isActive=true isAcceptingText=true`; `adb shell input text aaa` reached the box (`TEXT_CHANGED 'a'/'aa'/'aaa'`); `dumpsys input_method` → `mInputShown=true`, `mServedView=android.widget.EditText{…}` |
+| B — flag cleared | `0x1000120` | identical behaviour; clearing the flag changed nothing |
+
+Second run, realistic path (no explicit `showSoftInput`, just `input tap` on the box):
+
+```
+READY_FOR_TAP screen=[2027,151] size=1173x118 center=[2613,210] focus=false immActive=true accepting=false
+AFTER_TAP     text='' focus=true windowFocus=true immActive=true accepting=true visibleFrame=[98,1033] rootH=935
+```
+
+`visibleFrame.bottom` fell from 1999 to 1033 (~966 px of keyboard) and the screenshot shows the
+Sogou keyboard displayed over the panel with the probe box focused.
+
+**Conclusions**
+
+1. The panel `PopupWindow` takes input focus independently of the parent overlay's
+   `FLAG_NOT_FOCUSABLE`; the IME attaches and is usable. No flag manipulation is required.
+2. The keyboard **overlays** the panel instead of resizing it (the panel keeps its height), so
+   §4.6 must either keep the search box at the top of `allapp_rl` and let the grid scroll, or set
+   the popup's `softInputMode` to `ADJUST_RESIZE`.
+3. Key injection (`input text`) reaches the box, so the filter path can be exercised from adb
+   during verification.
