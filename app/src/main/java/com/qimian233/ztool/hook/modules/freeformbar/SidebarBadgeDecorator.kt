@@ -26,6 +26,7 @@ internal class SidebarBadgeDecorator(
 
     private val badgeId = View.generateViewId()
     private var grid: ViewGroup? = null
+    private var positionMethod: java.lang.reflect.Method? = null
     private var watching = false
     private var warnedNoAnchor = false
     private var warnedNoPosition = false
@@ -108,7 +109,17 @@ internal class SidebarBadgeDecorator(
                     )
                 }
             }
-            badge.setOnClickListener(if (enabled) View.OnClickListener { onToggle(app) } else null)
+            badge.setOnClickListener(
+                if (enabled) {
+                    // Resolve the app when the tap happens: the item view can be rebound to a
+                    // different app between a redraw and the tap, so a captured app goes stale.
+                    View.OnClickListener {
+                        apps.getOrNull(adapterPosition(container, item))?.let(onToggle)
+                    }
+                } else {
+                    null
+                }
+            )
             item.setOnTouchListener { _, _ -> true }
         }
         if (decorated > 0 && !reported) {
@@ -152,11 +163,12 @@ internal class SidebarBadgeDecorator(
         setColor(color)
     }
 
-    private fun adapterPosition(container: ViewGroup, item: View): Int =
-        runCatching {
+    private fun adapterPosition(container: ViewGroup, item: View): Int {
+        val method = positionMethod ?: runCatching {
             container.javaClass.getMethod("getChildAdapterPosition", View::class.java)
-                .invoke(container, item) as Int
-        }.getOrDefault(-1)
+        }.getOrNull()?.also { positionMethod = it } ?: return -1
+        return runCatching { method.invoke(container, item) as Int }.getOrDefault(-1)
+    }
 
     private fun rebind(container: ViewGroup) {
         runCatching {

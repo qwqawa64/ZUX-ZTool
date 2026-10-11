@@ -462,7 +462,10 @@ Badges are injected into the host's grid item views (`AppIconItemView`, a `Relat
 `appicon_iv` as the anchor) instead of replacing its adapter. State is re-derived from
 `getChildAdapterPosition` on every scroll and layout, so recycling cannot leave a stale binding,
 and item taps are swallowed with an `OnTouchListener` that the adapter's `OnClickListener`
-cannot overwrite.
+cannot overwrite. The badge's click handler resolves its app **at tap time** rather than
+capturing it: an item view can be rebound between a redraw and the tap, and a captured app would
+then add the wrong one. The drawer's own rows never reuse `convertView`, so their glyph
+listeners always hold the app they were built for.
 
 ### Slots are explicit, not a window
 
