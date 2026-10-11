@@ -424,6 +424,29 @@ Layers 2 and 3 are meaningless without layer 1. Layer 3 is separable and is swit
 both as a user option and as a way to tell "the adapter takeover failed" apart from "the edit
 UI failed".
 
+### A–Z rail
+
+The all-apps layout already ships `zui.widget.AlphabeticIndexBar` (id `index_bar`, GONE in all
+three layout variants), and the grid's `paddingEnd` (30dp at sw400dp) reserves room for it — the
+host clearly intended a rail and never finished it. Two findings decided the implementation:
+
+* The class is not in the app's own dex nor findable in the platform jars; it is reached through
+  the layout's fully-qualified name, so the rail is located **by class**, never by resource id.
+* **The host bar cannot be used as-is.** On `dispatchTouchEvent` it shows its own `PopupWindow`,
+  and inside the drawer's `PopupWindow` that call dies with
+  `BadTokenException: token ... is not valid` — a fatal crash of the whole sidebar process.
+  Its token is stale because the drawer content is inflated once while the popup around it is
+  dismissed and re-shown on every open.
+
+So the host bar is hidden and `SidebarIndexRail` draws the rail in the same slot (it copies the
+host bar's layout params). It only calls `scrollToPosition` on the grid, so it has no window of
+its own to fail. Letters come from `PinYinUtils.toPinYin(appName)` — the helper the host sorts
+with — and the grid is scrolled through reflection, because the app bundles its own copy of
+`androidx.recyclerview` and linking ours would risk a duplicate class.
+
+Note the `#` group (digits and symbols) sorts **first**, since the host sorts by raw pinyin, so
+`#` leads both the grid and the rail.
+
 ### Capacity range
 
 The drawer's ListView is 1850 px tall with 180 px rows, so exactly **10 rows** are visible.

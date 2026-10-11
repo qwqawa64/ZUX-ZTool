@@ -39,7 +39,7 @@ class SidebarDrawerHook : AppHookModule() {
     private var allAppLayoutField: Field? = null
     private var appIconGvField: Field? = null
     private var appAllListField: Field? = null
-    private var indexBar: SidebarIndexBar? = null
+    private var indexRail: SidebarIndexRail? = null
     private var footViewField: Field? = null
     private var popupWindowField: Field? = null
     private var originalDrawerWidth: Int = 0
@@ -80,7 +80,7 @@ class SidebarDrawerHook : AppHookModule() {
         appAllListField = findField(floatServiceClass, "mAppAllList")
         footViewField = findField(floatServiceClass, "mFootView")
         popupWindowField = findField(floatServiceClass, "popupWindow")
-        indexBar = SidebarIndexBar(classLoader, logger)
+        indexRail = SidebarIndexRail(classLoader, logger)
 
         hookWithId(generateTop5App, "sidebar_drawer_top5") { chain ->
             val context = chain.args[0] as? Context
@@ -122,8 +122,8 @@ class SidebarDrawerHook : AppHookModule() {
         if (allApps != null) {
             hookWithId(allApps, "sidebar_drawer_allapps") { chain ->
                 val result = chain.proceed()
-                runCatching { attachIndexBar(chain.thisObject as Context) }
-                    .onFailure { logger.error("failed to attach the index bar", it) }
+                runCatching { attachIndexRail(chain.thisObject as Context) }
+                    .onFailure { logger.error("failed to attach the index rail", it) }
                 result
             }
         }
@@ -153,7 +153,7 @@ class SidebarDrawerHook : AppHookModule() {
             result
         }
 
-        logger.info("sidebar drawer hook installed, index bar available=" + (indexBar?.available == true))
+        logger.info("sidebar drawer hook installed")
     }
 
     /** The drawer-open path is an R8 lambda, so match it by prefix instead of by name. */
@@ -238,19 +238,14 @@ class SidebarDrawerHook : AppHookModule() {
         refreshDrawer(context)
     }
 
-    /** Wires the host's dormant A–Z rail to the all-apps grid. */
-    private fun attachIndexBar(context: Context) {
-        val bar = indexBar ?: return
-        if (!bar.available) return
+    /** Builds the A–Z rail for the all-apps panel and hides the host's crashing one. */
+    private fun attachIndexRail(context: Context) {
+        val rail = indexRail ?: return
         val panel = allAppLayoutField?.get(context) as? android.view.ViewGroup ?: return
         val grid = appIconGvField?.get(context) as? android.view.View ?: return
         val apps = appAllListField?.get(context) as? List<Any> ?: return
-        val barView = bar.findBar(panel)
-        if (barView == null) {
-            logger.warn("index bar view not found in the all-apps panel")
-            return
-        }
-        bar.attach(barView, grid, apps)
+        if (apps.isEmpty()) return
+        rail.attach(panel, grid, apps)
     }
 
     /**
