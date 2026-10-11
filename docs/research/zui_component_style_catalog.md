@@ -424,6 +424,10 @@ Dialog and picker layouts are ordinary app-local layouts: `message_dialog`,
 
 ## 8. Reading this catalog when hooking
 
+The tick-list form of this inventory — one work item per hookable unit, with its hook
+anchor, style entry and per-APK coverage — is
+[zui_ui_hook_work_order.md](zui_ui_hook_work_order.md).
+
 The library is a **pruned subset per APK** — SystemUI has no `ProgressDialogX` /
 `DatePickerDialogX` / `TimePickerDialogX`, and `SeekBarNps` exists only there. Always resolve
 tokens by name and fall back; never hardcode an id or a resource number. The hookable
