@@ -79,9 +79,11 @@ internal class SidebarDragReorder(
         }
         val target = view.pointToPosition(view.width / 2, event.y.toInt())
         if (target >= 0 && target != dragging && isDraggable(target)) {
+            // Highlight first: the swap rebuilds the list, and a rebuild after it would replace
+            // the rows that are mid-animation.
+            onDragging(target)
             onSwap(dragging, target)
             dragging = target
-            onDragging(dragging)
         }
         return true
     }

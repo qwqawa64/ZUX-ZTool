@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.freeformbar
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -12,19 +13,21 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.qimian233.ztool.hook.base.ModuleLog
 
 /**
  * Drawer adapter owned by the hook, replacing the host's `AppIconListAdapter` so the
  * 5-slot cap and its `i >= 5` early return no longer apply.
  *
- * Renders the app rows plus, when [editable], one trailing action row (编辑 / 完成) that
- * switches the list into an ordering mode where every row carries ▲ / ▼ / ✕ affordances.
+ * Renders the app rows plus, when [editable], an action row (编辑 / 完成) that switches the list
+ * into an ordering mode where each row carries a remove disc and is reordered by dragging.
  */
 internal class SidebarDrawerAdapter(
     private val context: Context,
     private val hostPackage: String,
     private val editable: Boolean,
-    private val callbacks: DrawerCallbacks
+    private val callbacks: DrawerCallbacks,
+    private val logger: ModuleLog
 ) : BaseAdapter() {
 
     internal interface DrawerCallbacks {
@@ -80,6 +83,8 @@ internal class SidebarDrawerAdapter(
     fun animateSwap(fromIndex: Int, toIndex: Int, rowHeight: Int) {
         val distance = (toIndex - fromIndex) * rowHeight
         if (distance == 0) return
+        logger.trace("swap animation queued from=" + fromIndex + " to=" + toIndex +
+            " distance=" + distance)
         pendingOffsets[toIndex] = -distance.toFloat()
         pendingOffsets[fromIndex] = distance.toFloat()
     }
@@ -89,6 +94,11 @@ internal class SidebarDrawerAdapter(
         if (draggingIndex == index) return
         draggingIndex = index
         notifyDataSetChanged()
+    }
+
+    /** Moves the drag highlight without rebuilding; the caller's next submit renders it. */
+    fun setDraggingIndexSilently(index: Int) {
+        draggingIndex = index
     }
 
     private fun rowCount(): Int = items.size + emptySlots
@@ -132,12 +142,7 @@ internal class SidebarDrawerAdapter(
             setPadding(0, padTop, 0, padTop)
         }
         row.addView(View(context).apply {
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = EMPTY_CORNER_DP * context.resources.displayMetrics.density
-                setColor(EMPTY_FILL)
-                setStroke(EMPTY_STROKE_WIDTH, EMPTY_STROKE)
-            }
+            background = tile(SLOT_FILL)
             layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
         })
         return row
@@ -154,22 +159,46 @@ internal class SidebarDrawerAdapter(
             )
             setPadding(0, padTop, 0, padTop)
         }
-        if (icon != null) {
-            val size = (ACTION_ICON_DP * context.resources.displayMetrics.density).toInt()
-            row.addView(ImageView(context).apply {
-                setImageDrawable(icon)
-                contentDescription = label
-                layoutParams = LinearLayout.LayoutParams(size, size)
-            })
-        } else {
+        if (icon == null) {
             row.addView(TextView(context).apply {
                 text = label
                 setTextColor(Color.WHITE)
                 textSize = 13f
                 gravity = Gravity.CENTER
             })
+            return row
         }
+        val size = (ACTION_BUTTON_DP * context.resources.displayMetrics.density).toInt()
+        // Clickable so it owns its pressed state; the host's item click then never fires for it.
+        row.addView(FrameLayout(context).apply {
+            background = buttonBackground()
+            isClickable = true
+            contentDescription = label
+            setOnClickListener { callbacks.onToggleEditMode() }
+            layoutParams = LinearLayout.LayoutParams(size, size)
+            addView(ImageView(context).apply {
+                setImageDrawable(icon)
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+                ).apply {
+                    val inset = (ACTION_ICON_INSET_DP * context.resources.displayMetrics.density).toInt()
+                    setMargins(inset, inset, inset, inset)
+                }
+            })
+        })
         return row
+    }
+
+    /** The placeholder's tile without its border, darkened, plus a pressed state. */
+    private fun buttonBackground(): StateListDrawable = StateListDrawable().apply {
+        addState(intArrayOf(android.R.attr.state_pressed), tile(BUTTON_FILL_PRESSED))
+        addState(intArrayOf(), tile(BUTTON_FILL))
+    }
+
+    private fun tile(color: Int): GradientDrawable = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        cornerRadius = TILE_CORNER_DP * context.resources.displayMetrics.density
+        setColor(color)
     }
 
     private fun appRow(app: Any, alreadyVisible: Boolean, index: Int): View {
@@ -183,6 +212,7 @@ internal class SidebarDrawerAdapter(
             alpha = if (index == draggingIndex) DRAGGING_ALPHA else 1f
         }
         pendingOffsets.remove(index)?.let { offset ->
+            logger.trace("swap animation applied to row " + index + " offset=" + offset)
             row.translationY = offset
             row.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
         }
@@ -228,10 +258,11 @@ internal class SidebarDrawerAdapter(
     private companion object {
         const val DRAGGING_ALPHA = 0.5f
         const val SWAP_ANIM_MS = 120L
-        const val ACTION_ICON_DP = 26
-        const val EMPTY_CORNER_DP = 12
-        const val EMPTY_FILL = 0x14FFFFFF
-        const val EMPTY_STROKE = 0x4DFFFFFF
-        const val EMPTY_STROKE_WIDTH = 3
+        const val ACTION_BUTTON_DP = 46
+        const val ACTION_ICON_INSET_DP = 11
+        const val TILE_CORNER_DP = 12f
+        const val SLOT_FILL = 0x14FFFFFF
+        const val BUTTON_FILL = 0x33FFFFFF
+        const val BUTTON_FILL_PRESSED = 0x80FFFFFF.toInt()
     }
 }

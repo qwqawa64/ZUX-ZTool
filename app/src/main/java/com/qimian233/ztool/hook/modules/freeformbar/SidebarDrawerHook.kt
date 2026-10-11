@@ -250,7 +250,7 @@ class SidebarDrawerHook : AppHookModule() {
             leaveEditMode(context)
         }
         val drawerAdapter = adapter
-            ?: SidebarDrawerAdapter(context, hostPackage, editable(context), callbacks(context))
+            ?: SidebarDrawerAdapter(context, hostPackage, editable(context), callbacks(context), logger)
                 .also { adapter = it }
         // The host re-attaches its own capped adapter and listener every time the drawer opens,
         // so both are re-asserted rather than only pushing data into the existing instance.
@@ -264,7 +264,12 @@ class SidebarDrawerHook : AppHookModule() {
             isDraggable = { position -> memberIndexAt(position) >= 0 },
             onSwap = { from, to -> swapMembers(context, memberIndexAt(from), memberIndexAt(to)) },
             onDragging = { position ->
-                adapter?.setDraggingIndex(if (position < 0) -1 else memberIndexAt(position))
+                // A crossing is followed by the swap's own submit, so only the drag's end needs
+                // a rebuild of its own.
+                val index = if (position < 0) -1 else memberIndexAt(position)
+                adapter?.let {
+                    if (index < 0) it.setDraggingIndex(-1) else it.setDraggingIndexSilently(index)
+                }
             }
         ).also { dragReorder = it }
         drag.attach(listView)
