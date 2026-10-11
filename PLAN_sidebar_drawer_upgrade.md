@@ -365,6 +365,28 @@ persisted into `ztool_drawer_order` (a full permutation, `;`-joined `pkg:userId`
 | LSPosed serves `getRemotePreferences` from its own `modules_config.db` → `module_configs`, not from the module's `shared_prefs` file | Writing the app's `xposed_module_config.xml` does **not** enable a hook; test enablement has to go through the app's own service path (or the DB) |
 | The test device already has `('com.qimian233.ztool', 'com.zui.freeform.sidebar')` in LSPosed's `scope` table | No scope work needed on that device; `scope.list` still had to gain the entry for other users |
 
+### Fixes after the first on-device round
+
+Reported: tapping the host's "..." (more) footer opened an app instead of the all-apps panel.
+
+Root causes found and fixed:
+
+1. **The panel was opened the wrong way.** The host's own "more" path is
+   `setAnimationStyle(0)` → `update()` → `dismiss()` → `post(showAllAppWindow())`, because
+   `showAllAppWindow()` starts with `showPopupWindow()`, which early-returns while the popup is
+   still showing — so the popup was never rebuilt for the grid content. `openAllAppsPanel()` now
+   mirrors the host's sequence exactly.
+2. **Footer detection by position was fragile.** The footer is now identified by view identity
+   (`view === mFootView`) instead of by `adapter.count`, so it survives any change in how many
+   footer views the host attaches. Positions are only used for the action row and app rows.
+3. **完成 was unreachable in edit mode.** Edit mode lists the full app permutation, so a trailing
+   action row sat dozens of rows down. The action row now renders at the **top** while editing
+   (`SidebarDrawerAdapter.actionPosition()`) and the list scrolls to it after the toggle; in
+   normal mode it stays at the bottom as before.
+
+Verified after the fixes: footer → all-apps panel with no app launched; action row toggles
+编辑/完成 in both directions with the row following the mode; an app row still launches its app.
+
 ### Not started
 
 * §4.5 A–Z rail / grouping (requirement 3).

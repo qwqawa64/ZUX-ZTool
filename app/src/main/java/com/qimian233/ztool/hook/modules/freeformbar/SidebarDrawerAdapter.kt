@@ -62,15 +62,23 @@ internal class SidebarDrawerAdapter(
 
     override fun getCount(): Int = items.size + 1
 
-    override fun getItem(position: Int): Any? = items.getOrNull(position)
+    override fun getItem(position: Int): Any? = items.getOrNull(appIndex(position))
 
     override fun getItemId(position: Int): Long = position.toLong()
 
     override fun isEnabled(position: Int): Boolean = true
 
+    /**
+     * The action row sits at the bottom normally, but at the top while editing: the edit list
+     * is the full app permutation, so a trailing 完成 would be dozens of rows away.
+     */
+    fun actionPosition(): Int = if (editMode) 0 else items.size
+
+    private fun appIndex(position: Int): Int = if (editMode) position - 1 else position
+
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        if (position >= items.size) return actionRow()
-        val app = items[position]
+        if (position == actionPosition()) return actionRow()
+        val app = items.getOrNull(appIndex(position)) ?: return actionRow()
         val key = SidebarReflect.keyOf(app)
         return appRow(app, key != null && visibleKeys.contains(key))
     }

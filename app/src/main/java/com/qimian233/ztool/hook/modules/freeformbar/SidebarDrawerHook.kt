@@ -36,6 +36,8 @@ class SidebarDrawerHook : AppHookModule() {
     private var appIconLvField: Field? = null
     private var appTop5ListField: Field? = null
     private var drawerLayoutField: Field? = null
+    private var footViewField: Field? = null
+    private var popupWindowField: Field? = null
     private var originalDrawerWidth: Int = 0
 
     private var adapter: SidebarDrawerAdapter? = null
@@ -69,6 +71,8 @@ class SidebarDrawerHook : AppHookModule() {
         appIconLvField = findField(floatServiceClass, "mAppIconLv")
         appTop5ListField = findField(floatServiceClass, "mAppTop5List")
         drawerLayoutField = findField(floatServiceClass, "mDrawerLayout")
+        footViewField = findField(floatServiceClass, "mFootView")
+        popupWindowField = findField(floatServiceClass, "popupWindow")
 
         hookWithId(generateTop5App, "sidebar_drawer_top5") { chain ->
             val context = chain.args[0] as? Context
@@ -179,8 +183,8 @@ class SidebarDrawerHook : AppHookModule() {
         // must re-attach ours rather than only pushing data into the existing instance.
         if (listView.adapter !== drawerAdapter) {
             listView.adapter = drawerAdapter
-            listView.onItemClickListener = android.widget.AdapterView.OnItemClickListener { _, _, position, _ ->
-                onItemClick(context, position)
+            listView.onItemClickListener = android.widget.AdapterView.OnItemClickListener { _, view, position, _ ->
+                onItemClick(context, view, position)
             }
         }
         refreshDrawer(context)
@@ -198,24 +202,43 @@ class SidebarDrawerHook : AppHookModule() {
         runCatching { visibleAppsList?.invoke(context) as? List<String> }.getOrNull() ?: emptyList()
 
     /**
-     * ListView positions: `0 until itemCount` are apps, `itemCount` is our 编辑 / 完成 row,
-     * and `itemCount + 1` is the host's own "more" footer.
+     * The host's "more" footer is identified by view identity, so the mapping survives the
+     * host adding or removing footer views; the action row is located through the adapter.
      */
-    private fun onItemClick(context: Context, position: Int) {
+    private fun onItemClick(context: Context, view: android.view.View?, position: Int) {
         val drawerAdapter = adapter ?: return
-        val itemCount = drawerAdapter.count - 1
-        when (position) {
-            itemCount -> toggleEditMode(context)
-            drawerAdapter.count -> runCatching { showAllAppWindow?.invoke(context) }
-            in 0 until itemCount -> {
-                if (drawerAdapter.isEditMode()) return
-                val app = drawerAdapter.getItem(position) ?: return
-                SidebarReflect.keyOf(app)?.let { SidebarDrawerStore.pushRecent(context, it) }
-                runCatching { launchApp?.invoke(context, app) }
-                runCatching {
-                    collectDataTop5?.invoke(context, 1, SidebarReflect.call(app, "getPkgName"))
-                }
-            }
+        if (view != null && view === footViewField?.get(context)) {
+            openAllAppsPanel(context)
+            return
+        }
+        if (position == drawerAdapter.actionPosition()) {
+            toggleEditMode(context)
+            return
+        }
+        if (drawerAdapter.isEditMode()) return
+        val app = drawerAdapter.getItem(position) ?: return
+        SidebarReflect.keyOf(app)?.let { SidebarDrawerStore.pushRecent(context, it) }
+        runCatching { launchApp?.invoke(context, app) }
+        runCatching {
+            collectDataTop5?.invoke(context, 1, SidebarReflect.call(app, "getPkgName"))
+        }
+    }
+
+    /**
+     * Mirrors the host's own "more" path: it dismisses the popup and re-shows it in all-apps
+     * mode, because `showAllAppWindow` only rebuilds the popup when it is not already showing.
+     */
+    private fun openAllAppsPanel(context: Context) {
+        val popup = popupWindowField?.get(context) as? android.widget.PopupWindow
+        if (popup != null) {
+            popup.animationStyle = 0
+            popup.update()
+            popup.dismiss()
+        }
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            runCatching { showAllAppWindow?.invoke(context) }
+                .onFailure { logger.error("failed to open the all-apps panel", it) }
+            runCatching { collectDataTop5?.invoke(context, 2, null) }
         }
     }
 
@@ -233,6 +256,12 @@ class SidebarDrawerHook : AppHookModule() {
             visibleKeys(context),
             next
         )
+        // The action row moves to the other end of the list, so follow it. Posted because
+        // setSelection during a pending data change is dropped by the next layout pass.
+        runCatching {
+            val listView = appIconLvField?.get(context) as? ListView
+            listView?.post { listView.setSelection(0) }
+        }
     }
 
     /**
