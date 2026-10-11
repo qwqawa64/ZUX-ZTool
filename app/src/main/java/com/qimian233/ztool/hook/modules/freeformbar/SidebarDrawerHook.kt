@@ -36,6 +36,10 @@ class SidebarDrawerHook : AppHookModule() {
     private var appIconLvField: Field? = null
     private var appTop5ListField: Field? = null
     private var drawerLayoutField: Field? = null
+    private var allAppLayoutField: Field? = null
+    private var appIconGvField: Field? = null
+    private var appAllListField: Field? = null
+    private var indexBar: SidebarIndexBar? = null
     private var footViewField: Field? = null
     private var popupWindowField: Field? = null
     private var originalDrawerWidth: Int = 0
@@ -71,8 +75,12 @@ class SidebarDrawerHook : AppHookModule() {
         appIconLvField = findField(floatServiceClass, "mAppIconLv")
         appTop5ListField = findField(floatServiceClass, "mAppTop5List")
         drawerLayoutField = findField(floatServiceClass, "mDrawerLayout")
+        allAppLayoutField = findField(floatServiceClass, "mAllAppLayout")
+        appIconGvField = findField(floatServiceClass, "mAppIconGv")
+        appAllListField = findField(floatServiceClass, "mAppAllList")
         footViewField = findField(floatServiceClass, "mFootView")
         popupWindowField = findField(floatServiceClass, "popupWindow")
+        indexBar = SidebarIndexBar(classLoader, logger)
 
         hookWithId(generateTop5App, "sidebar_drawer_top5") { chain ->
             val context = chain.args[0] as? Context
@@ -109,6 +117,17 @@ class SidebarDrawerHook : AppHookModule() {
             result
         }
 
+        // The all-apps panel is rebuilt on every show, so the rail is re-attached there.
+        val allApps = showAllAppWindow
+        if (allApps != null) {
+            hookWithId(allApps, "sidebar_drawer_allapps") { chain ->
+                val result = chain.proceed()
+                runCatching { attachIndexBar(chain.thisObject as Context) }
+                    .onFailure { logger.error("failed to attach the index bar", it) }
+                result
+            }
+        }
+
         val drawerOpen = findDrawerOpenMethod(floatServiceClass)
         if (drawerOpen != null) {
             hookWithId(drawerOpen, "sidebar_drawer_open") { chain ->
@@ -134,7 +153,7 @@ class SidebarDrawerHook : AppHookModule() {
             result
         }
 
-        logger.info("sidebar drawer hook installed")
+        logger.info("sidebar drawer hook installed, index bar available=" + (indexBar?.available == true))
     }
 
     /** The drawer-open path is an R8 lambda, so match it by prefix instead of by name. */
@@ -217,6 +236,21 @@ class SidebarDrawerHook : AppHookModule() {
         }
         listView.onItemClickListener = clickListener
         refreshDrawer(context)
+    }
+
+    /** Wires the host's dormant A–Z rail to the all-apps grid. */
+    private fun attachIndexBar(context: Context) {
+        val bar = indexBar ?: return
+        if (!bar.available) return
+        val panel = allAppLayoutField?.get(context) as? android.view.ViewGroup ?: return
+        val grid = appIconGvField?.get(context) as? android.view.View ?: return
+        val apps = appAllListField?.get(context) as? List<Any> ?: return
+        val barView = bar.findBar(panel)
+        if (barView == null) {
+            logger.warn("index bar view not found in the all-apps panel")
+            return
+        }
+        bar.attach(barView, grid, apps)
     }
 
     /**
