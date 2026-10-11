@@ -108,7 +108,7 @@ internal class SidebarDrawerAdapter(
         return appRow(app, key != null && visibleKeys.contains(key), appIndex(position))
     }
 
-    /** A free slot: an empty outline the size of an icon, so the list keeps its full length. */
+    /** A free slot: an empty rounded tile the size of an icon, so the list keeps its length. */
     private fun emptyRow(): View {
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -120,7 +120,8 @@ internal class SidebarDrawerAdapter(
         }
         row.addView(View(context).apply {
             background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = EMPTY_CORNER_DP * context.resources.displayMetrics.density
                 setColor(EMPTY_FILL)
                 setStroke(EMPTY_STROKE_WIDTH, EMPTY_STROKE)
             }
@@ -151,7 +152,7 @@ internal class SidebarDrawerAdapter(
     private fun appRow(app: Any, alreadyVisible: Boolean, index: Int): View {
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            gravity = Gravity.CENTER
             layoutParams = AbsListView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, rowHeight
             )
@@ -199,6 +200,7 @@ internal class SidebarDrawerAdapter(
 
     private companion object {
         const val DRAGGING_ALPHA = 0.5f
+        const val EMPTY_CORNER_DP = 12
         const val EMPTY_FILL = 0x14FFFFFF
         const val EMPTY_STROKE = 0x4DFFFFFF
         const val EMPTY_STROKE_WIDTH = 3

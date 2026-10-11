@@ -28,20 +28,26 @@ internal class SidebarBadgeDecorator(
     private var grid: ViewGroup? = null
     private var positionMethod: java.lang.reflect.Method? = null
     private var iconViewId = 0
+    private var labelViewId = 0
     private var watching = false
     private var warnedNoAnchor = false
-    private var warnedNoPosition = false
+    private var warnedUnresolved = false
     private var reported = false
 
-    private var apps: List<Any> = emptyList()
+    private var apps: () -> List<Any> = { emptyList() }
     private var isMember: (Any) -> Boolean = { false }
     private var onToggle: (Any) -> Unit = {}
     private var canAdd: Boolean = true
 
-    /** Shows or refreshes the badges for [apps]; call again whenever the panel is re-shown. */
+    /**
+     * Shows or refreshes the badges; call again whenever the panel is re-shown.
+     *
+     * [appList] is a provider rather than a list because the host swaps its own all-apps list
+     * out, and a captured copy would then index the wrong app.
+     */
     fun refresh(
         gridView: View,
-        appList: List<Any>,
+        appList: () -> List<Any>,
         member: (Any) -> Boolean,
         toggle: (Any) -> Unit,
         addAllowed: Boolean
@@ -74,12 +80,21 @@ internal class SidebarBadgeDecorator(
 
     private fun redraw() {
         val container = grid ?: return
+        val list = apps()
         var decorated = 0
+        var unresolved = 0
         for (index in 0 until container.childCount) {
             val item = container.getChildAt(index) as? ViewGroup ?: continue
-            val position = adapterPosition(container, item)
-            if (position < 0 || position >= apps.size) continue
-            val app = apps[position]
+            // The host disables the row for apps already open in a small window, which would
+            // also block our badge and our touch listener; while picking apps the row must stay
+            // interactive, and its own click is swallowed below anyway.
+            item.isEnabled = true
+            item.setOnTouchListener { _, _ -> true }
+            val app = appFor(container, item, list)
+            if (app == null) {
+                unresolved++
+                continue
+            }
             val member = isMember(app)
             // Apps already in the drawer are masked and carry no badge: they are removed from
             // the drawer row's own disc. A full drawer masks everything, because nothing more
@@ -89,7 +104,6 @@ internal class SidebarBadgeDecorator(
             val existing = item.findViewById<View>(badgeId) as? TextView
             if (member) {
                 existing?.visibility = View.GONE
-                item.setOnTouchListener { _, _ -> true }
                 continue
             }
             val badge = existing ?: addBadge(item) ?: continue
@@ -109,25 +123,42 @@ internal class SidebarBadgeDecorator(
                 if (enabled) {
                     // Resolve the app when the tap happens: the item view can be rebound to a
                     // different app between a redraw and the tap, so a captured app goes stale.
-                    View.OnClickListener {
-                        apps.getOrNull(adapterPosition(container, item))?.let(onToggle)
-                    }
+                    View.OnClickListener { appFor(container, item, apps())?.let(onToggle) }
                 } else {
                     null
                 }
             )
-            item.setOnTouchListener { _, _ -> true }
         }
         if (decorated > 0 && !reported) {
             reported = true
             logger.info("add/remove badges attached to " + decorated + " icons")
         }
-        if (decorated == 0 && container.childCount > 0 && !warnedNoPosition) {
-            warnedNoPosition = true
-            logger.warn(
-                "badges: " + container.childCount + " item views but no adapter positions"
-            )
+        if (unresolved > 0 && !warnedUnresolved) {
+            warnedUnresolved = true
+            logger.warn("badges: " + unresolved + " item views could not be matched to an app")
         }
+    }
+
+    /**
+     * The app a grid item currently shows: by adapter position when the grid reports one, and
+     * otherwise by matching the item's label, so an item the RecyclerView cannot place still
+     * gets its badge and its tap handled.
+     */
+    private fun appFor(container: ViewGroup, item: View, list: List<Any>): Any? {
+        list.getOrNull(adapterPosition(container, item))?.let { return it }
+        val label = labelOf(item) ?: return null
+        return list.firstOrNull { SidebarReflect.labelOf(it) == label }
+    }
+
+    private fun labelOf(item: View): String? {
+        val id = labelId(item) ?: return null
+        val text = (item.findViewById<View>(id) as? TextView)?.text?.toString()
+        return text?.takeIf { it.isNotEmpty() }
+    }
+
+    private fun labelId(item: View): Int? {
+        if (labelViewId == 0) labelViewId = resourceId(item, "appname_tv")
+        return labelViewId.takeIf { it != 0 }
     }
 
     private fun addBadge(item: ViewGroup): View? {

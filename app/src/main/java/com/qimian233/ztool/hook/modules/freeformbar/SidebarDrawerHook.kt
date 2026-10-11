@@ -445,6 +445,10 @@ class SidebarDrawerHook : AppHookModule() {
             // Gravity.UNSPECIFIED_GRAVITY is @hide; -1 is its value and restores the XML default.
             panelParams.gravity = -1
             drawerParams.gravity = -1
+            // Entering edit mode ran the host's all-apps path, which hid the drawer; leaving it
+            // has to put the drawer back, or the panel would stay on screen.
+            panel.visibility = android.view.View.GONE
+            drawer.visibility = android.view.View.VISIBLE
         }
         panel.layoutParams = panelParams
         drawer.layoutParams = drawerParams
@@ -477,19 +481,22 @@ class SidebarDrawerHook : AppHookModule() {
     private fun refreshBadges(context: Context) {
         val decorator = badgeDecorator ?: return
         val grid = appIconGvField?.get(context) as? android.view.View ?: return
-        val apps = appAllListField?.get(context) as? List<Any> ?: return
-        if (apps.isEmpty()) return
+        // The host replaces its own all-apps list, so hand over a provider rather than a snapshot.
+        val list: () -> List<Any> = {
+            appAllListField?.get(context) as? List<Any> ?: emptyList()
+        }
+        if (list().isEmpty()) return
         // The membership set is built once: this runs from a layout listener, and rebuilding the
         // launcher app list per icon would stall the main thread.
         val members = memberKeys(context).toHashSet()
         val member: (Any) -> Boolean = { SidebarReflect.keyOf(it)?.let { key -> key in members } == true }
         val toggle: (Any) -> Unit = { toggleMembership(context, it) }
         val canAdd = members.size < memberSlots(context)
-        decorator.refresh(grid, apps, member, toggle, canAdd)
+        decorator.refresh(grid, list, member, toggle, canAdd)
         // The grid may not have created its item views yet, so retry once now and once after the
         // next layout settles; the scroll and layout listeners cover the rest.
-        grid.post { runCatching { decorator.refresh(grid, apps, member, toggle, canAdd) } }
-        grid.postDelayed({ runCatching { decorator.refresh(grid, apps, member, toggle, canAdd) } }, 300L)
+        grid.post { runCatching { decorator.refresh(grid, list, member, toggle, canAdd) } }
+        grid.postDelayed({ runCatching { decorator.refresh(grid, list, member, toggle, canAdd) } }, 300L)
     }
 
     private fun callbacks(context: Context) = object : SidebarDrawerAdapter.DrawerCallbacks {
