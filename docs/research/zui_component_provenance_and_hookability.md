@@ -627,6 +627,23 @@ only re-derive it. Keep it in reserve if a future DexKit version changes the tri
 in which case the three-APK set still applies: a rich ZUI app, a narrow one (`网络管家`,
 `AI 实时字幕`) and a non-Lenovo negative control.
 
+### 4.5 Measured on device
+
+The shipped scanner (`ZuiComponentScanner`) walks the dex string table in bounded windows,
+so the DexKit figures above never applied to it. Measured on the Lenovo ZUX OS device:
+
+* A cold full scan of the installed app set takes about **30 s**. This is far below the
+  earlier "minutes" estimate, which had assumed dex entries are always deflated; the cost
+  is dominated by reading the dex bytes, and negative packages pay the full read.
+* The predicate selected **47 apps** as bundling ZUI frontend components while sitting
+  outside the module scope. A class-level marker would have selected noticeably fewer:
+  the widget-only archives found in §4.1 carry no dialog class at all.
+* A single `requestScope` call carrying all 47 packages is accepted by the framework, so
+  no batching or chunking is needed at this scale.
+
+Verdicts are cached per `(packageName, sourceDir, lastUpdateTime)`, so this cost is paid
+once per app version; later page visits only rescan fingerprint changes.
+
 ## 5. Residual uncertainty
 
 * The analysis set contains `framework.jar`, `services.jar` and `framework-res.apk` only.
