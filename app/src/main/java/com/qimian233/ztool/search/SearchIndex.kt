@@ -216,6 +216,16 @@ object SearchIndex {
             featureDestination = FeatureDestination.DeviceService,
             groupTitleRes = R.string.search_group_feature_cards
         ),
+        SearchEntry(
+            id = "feature_card_freeform_bar",
+            route = FeatureDestination.FreeformBar.route,
+            titleRes = R.string.freeform_sidebar_app_name,
+            summaryRes = R.string.freeform_sidebar_app_description,
+            requiresPackage = ScopeKeys.FREEFORM_SIDEBAR.packageName,
+            isFeatureCard = true,
+            featureDestination = FeatureDestination.FreeformBar,
+            groupTitleRes = R.string.search_group_feature_cards
+        ),
         // No requiresPackage: the card is not tied to any single installed app.
         SearchEntry(
             id = "feature_card_ui_components",
@@ -338,6 +348,12 @@ object SearchIndex {
         route = FeatureDestination.DeviceService.route,
         groupTitleRes = R.string.device_service_app_name,
         requiresPackage = ScopeKeys.LENOVO_DEVICE_SERVICE.packageName
+    )
+
+    private val freeformBar = Screen(
+        route = FeatureDestination.FreeformBar.route,
+        groupTitleRes = R.string.freeform_sidebar_app_name,
+        requiresPackage = ScopeKeys.FREEFORM_SIDEBAR.packageName
     )
 
     private val uiComponents = Screen(
@@ -1473,6 +1489,26 @@ object SearchIndex {
             id = "sogou_ime_half_width_punct",
             titleRes = R.string.system_framework_half_width_punct_title,
             summaryRes = R.string.system_framework_half_width_punct_summary
+        ),
+
+        freeformBar.item(
+            id = "sidebar_drawer_enhance",
+            titleRes = R.string.freeform_sidebar_drawer_enhance_title,
+            summaryRes = R.string.freeform_sidebar_drawer_enhance_summary
+        ),
+        freeformBar.item(
+            id = "sidebar_drawer_slots",
+            titleRes = R.string.freeform_sidebar_drawer_slots_title,
+            summaryRes = R.string.freeform_sidebar_drawer_slots_summary,
+            parentTitleRes = R.string.freeform_sidebar_drawer_enhance_title,
+            parentKey = "sidebar_drawer_enhance"
+        ),
+        freeformBar.item(
+            id = "sidebar_drawer_recent_slots",
+            titleRes = R.string.freeform_sidebar_drawer_recent_slots_title,
+            summaryRes = R.string.freeform_sidebar_drawer_recent_slots_summary,
+            parentTitleRes = R.string.freeform_sidebar_drawer_enhance_title,
+            parentKey = "sidebar_drawer_enhance"
         ),
 
         appSettings.item(

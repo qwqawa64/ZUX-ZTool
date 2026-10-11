@@ -74,6 +74,7 @@ enum class FeatureDestination(
     ZuiPerformance("feature/zui-performance"),
     SogouIme("feature/sogou-ime"),
     DeviceService("feature/device-service"),
+    FreeformBar("feature/freeform-bar"),
     UiComponents("feature/ui-components")
 }
 
@@ -307,6 +308,14 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 packageName = ScopeKeys.LENOVO_DEVICE_SERVICE.packageName,
                 destination = FeatureDestination.DeviceService,
                 scopePackages = ScopeUtils.getScopePackages(FeatureDestination.DeviceService)
+            ),
+            featureItem(
+                context = context,
+                nameRes = R.string.freeform_sidebar_app_name,
+                descriptionRes = R.string.freeform_sidebar_app_description,
+                packageName = ScopeKeys.FREEFORM_SIDEBAR.packageName,
+                destination = FeatureDestination.FreeformBar,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.FreeformBar)
             ),
             // Cross-app card: no owning package, and the LSPosed scope is the app selector,
             // so an empty scopePackages keeps the in-scope gate vacuously true.

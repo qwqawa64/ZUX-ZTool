@@ -332,3 +332,50 @@ Sogou keyboard displayed over the panel with the probe box focused.
    the popup's `softInputMode` to `ADJUST_RESIZE`.
 3. Key injection (`input text`) reaches the box, so the filter path can be exercised from adb
    during verification.
+
+## 10. Implementation status
+
+### Done and verified on-device (TB710FU, host 1.18.02.26.20.2)
+
+Requirements 1 (capacity) and 2 (user-editable ordering) are implemented:
+
+* `hook/modules/freeformbar/SidebarDrawerHook.kt` — hooks `SidebarAppUtils.generateTop5App`
+  (drawer data), the R8 drawer-open lambda, `FloatService.onCreate` and
+  `FloatService.PackageReceiver.onReceive` (adapter + click listener installation).
+* `hook/modules/freeformbar/SidebarDrawerAdapter.kt` — hook-owned `BaseAdapter`: app rows plus a
+  trailing 编辑 / 完成 row, and ▲ / ▼ / ✕ per row while editing.
+* `hook/modules/freeformbar/SidebarDrawerStore.kt` — order / recency / customized flag in the
+  host's `freeform_preferences` under private `ztool_*` keys.
+* `hook/modules/freeformbar/SidebarReflect.kt` — cached reflection onto `utils.AppInfo`.
+* `ScopeKeys.FREEFORM_SIDEBAR` + `scope.list` entry; `PreferenceKeys.SIDEBAR_DRAWER_*`.
+
+Observed on device: drawer shows the configured capacity (8) instead of 5; the 编辑 row enters
+an edit mode where every row carries ▲ ▼ ✕; ▲ swaps two entries and ✕ removes one, both
+persisted into `ztool_drawer_order` (a full permutation, `;`-joined `pkg:userId`);
+`ztool_drawer_customized` flips to true; launching an entry records `ztool_drawer_recent`.
+
+### Host facts discovered while implementing (not in §1)
+
+| Fact | Consequence |
+|---|---|
+| The host re-attaches **its own** `AppIconListAdapter` inside the drawer-open lambda, after our `onCreate` install | The after-hook must **re-attach** our adapter, not merely push data into it |
+| The drawer-open method is the private R8 lambda `lambda$new$1$com-zui-freeform-sidebar-FloatService` | Resolve by prefix scan **and** `setAccessible(true)`; `findMethod` handles the accessible flag, a raw `declaredMethods` scan does not |
+| ListView positions with the host's "more" footer present | apps `0 until n`, our 编辑 row at `n`, host footer at `n + 1` |
+| Drawer width is only `top_list_window_width` = **70dp** landscape / 94dp sw400dp, while the icon is 48–72dp | Three per-row glyphs cannot fit; the hook widens `mDrawerLayout` by `3 × 26dp` while editing and restores it afterwards |
+| LSPosed serves `getRemotePreferences` from its own `modules_config.db` → `module_configs`, not from the module's `shared_prefs` file | Writing the app's `xposed_module_config.xml` does **not** enable a hook; test enablement has to go through the app's own service path (or the DB) |
+| The test device already has `('com.qimian233.ztool', 'com.zui.freeform.sidebar')` in LSPosed's `scope` table | No scope work needed on that device; `scope.list` still had to gain the entry for other users |
+
+### Not started
+
+* §4.5 A–Z rail / grouping (requirement 3).
+* §4.6 search box (requirement 4) — unblocked by §9, not yet written.
+* Frontend settings page (feature card, switch, two sliders, strings, search index) — in
+  progress; the hook is already driven by `PreferenceKeys.SIDEBAR_DRAWER_ENHANCE`,
+  `SIDEBAR_DRAWER_SLOTS` and `SIDEBAR_DRAWER_RECENT_SLOTS`.
+
+### Note on testing
+
+Because LSPosed serves remote preferences from its own DB, the on-device hook testing used a
+temporary `isEnabled()` override plus a `Settings.Global` auto-open trigger. **Both were removed
+before the commit**; the shipped module only runs when `sidebar_drawer_enhance` is set through
+the app.

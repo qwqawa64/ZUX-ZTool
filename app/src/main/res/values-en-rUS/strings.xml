@@ -665,6 +665,17 @@
     <string name="device_service_disable_tab_pushout_sdac_title">Disable SDAC activation (Device Service Support)</string>
     <string name="device_service_disable_tab_pushout_sdac_summary">Intercepts the keep-alive alarm and activation registration of the companion app "Device Service Support" (com.tblenovo.tabpushout, tablet channel), blocking uploads of device identifiers, Wi-Fi access point lists and region info to sdac.lenovo.com. Its registration status is one of the conditions lifting the push deferral in Device Service, so push keep-alive is curbed as well.</string>
 
+    <string name="freeform_sidebar_app_name">Freeform sidebar</string>
+    <string name="freeform_sidebar_app_description">Raise the sidebar drawer capacity and reorder its apps from inside the drawer</string>
+    <string name="freeform_sidebar_drawer_section_title">Sidebar drawer</string>
+    <string name="freeform_sidebar_drawer_enhance_title">Enhance sidebar drawer</string>
+    <string name="freeform_sidebar_drawer_enhance_summary">Lifts the host\'s fixed 5-app cap so the drawer holds more apps, and makes the app order editable</string>
+    <string name="freeform_sidebar_drawer_slots_title">Drawer capacity</string>
+    <string name="freeform_sidebar_drawer_slots_summary">Maximum number of apps the drawer shows; the host hard-codes 5</string>
+    <string name="freeform_sidebar_drawer_recent_slots_title">Recent-app slots</string>
+    <string name="freeform_sidebar_drawer_recent_slots_summary">Leading drawer slots filled with recently used freeform apps; the remaining slots follow your own order</string>
+    <string name="freeform_sidebar_drawer_usage_summary">While enabled the drawer holds more apps. Tap 编辑 at the bottom of the drawer to reorder with ▲ ▼ or drop an app with ✕, then tap 完成.</string>
+
     <string name="ui_components_app_name">UI components</string>
     <string name="ui_components_app_description">Restyle ZUI dialogs across system apps</string>
     <string name="ui_components_dialog_skin_title">Dialog button container</string>
@@ -1125,4 +1136,13 @@
     <string name="about_dev_qimian233">Qimian233</string>
     <string name="about_dev_wasd_destroy">WASDDestroy</string>
     <string name="about_dev_uuuddddl">uuuddddl</string>
+    <!-- Read by the hook (SidebarDrawerHook) via getIdentifier; do not rename or remove -->
+    <string name="ztool_sidebar_drawer_edit" tools:ignore="UnusedResources">Edit</string>
+    <string name="ztool_sidebar_drawer_done" tools:ignore="UnusedResources">Done</string>
+    <string name="ztool_sidebar_drawer_move_up" tools:ignore="UnusedResources">Move up</string>
+    <string name="ztool_sidebar_drawer_move_down" tools:ignore="UnusedResources">Move down</string>
+    <string name="ztool_sidebar_drawer_remove" tools:ignore="UnusedResources">Remove</string>
+    <string name="ztool_sidebar_drawer_glyph_up" translatable="false" tools:ignore="UnusedResources">▲</string>
+    <string name="ztool_sidebar_drawer_glyph_down" translatable="false" tools:ignore="UnusedResources">▼</string>
+    <string name="ztool_sidebar_drawer_glyph_remove" translatable="false" tools:ignore="UnusedResources">✕</string>
 </resources>

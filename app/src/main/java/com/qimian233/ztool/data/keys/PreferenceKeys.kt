@@ -38,6 +38,10 @@ object PreferenceKeys {
     // Shared switch of the freeform keep-alive pair (system OomAdjuster pin + launcher
     // recents-cleaner bypass); module name of both hook classes
     val FREEFORM_KEEP_ALIVE_ENABLED = BoolKey("freeform_keep_alive_enabled", false)
+    // Sidebar (com.zui.freeform.sidebar) drawer: lifts the host's hard-coded 5-slot
+    // limit and switches the drawer to a user-editable order. Module name of
+    // SidebarDrawerHook.
+    val SIDEBAR_DRAWER_ENHANCE = BoolKey("sidebar_drawer_enhance", false)
     val DISABLE_HBM_THERMAL_LIMIT = BoolKey("disable_hbm_thermal_limit", false)
     // Raise media stream volume steps to 150 (Xiaomi fine volume alignment)
     val FINE_VOLUME_STEPS = BoolKey("fine_volume_steps", false)
@@ -273,6 +277,11 @@ object PreferenceKeys {
     // never touched. When LAUNCHER_WIDE_GRID_SQUARE is set, the inset is computed by
     // the hook to produce square cells and this value is ignored.
     val LAUNCHER_WIDE_GRID_SIDE_INSET = IntKey("launcher_wide_grid_side_inset", 0)
+    // Sidebar drawer capacity (the host hard-codes 5) and how many leading slots are
+    // filled from recently used freeform apps; the remaining slots follow the order
+    // the user arranges in the drawer's edit mode.
+    val SIDEBAR_DRAWER_SLOTS = IntKey("sidebar_drawer_slots", 8)
+    val SIDEBAR_DRAWER_RECENT_SLOTS = IntKey("sidebar_drawer_recent_slots", 2)
 
     // ═══════════════════════════════════════════════════════════
     // Float keys
@@ -329,6 +338,7 @@ object PreferenceKeys {
         KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH, FORCE_RELATIVE_APP_FREEFORM,
         LAUNCHER_FORCE_FREEFORM_ENTRY, FREEFORM_EDGE_BUBBLE,
         FREEFORM_KEEP_ALIVE_ENABLED,
+        SIDEBAR_DRAWER_ENHANCE,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
         PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,
@@ -415,6 +425,7 @@ object PreferenceKeys {
         QS_PANEL_WIDTH_PERCENT, QS_TILE_COLUMNS,
         CHARGE_ANIMATION_DURATION_MS, LOCK_SCREEN_CLOCK_COLOR_VALUE,
         LAUNCHER_WIDE_GRID_SIDE_INSET,
+        SIDEBAR_DRAWER_SLOTS, SIDEBAR_DRAWER_RECENT_SLOTS,
         LAUNCHER_BIG_FOLDER_TUNE_GAP_H, LAUNCHER_BIG_FOLDER_TUNE_GAP_V,
         LAUNCHER_BIG_FOLDER_TUNE_BG_X, LAUNCHER_BIG_FOLDER_TUNE_BG_Y,
         LAUNCHER_BIG_FOLDER_TUNE_SHIFT_X, LAUNCHER_BIG_FOLDER_TUNE_SHIFT_Y

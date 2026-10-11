@@ -65,6 +65,7 @@ object ScopeUtils {
                 ScopeKeys.LENOVO_DEVICE_SERVICE,
                 ScopeKeys.TAB_PUSHOUT
             )
+            FeatureDestination.FreeformBar -> listOf(ScopeKeys.FREEFORM_SIDEBAR)
             // Cross-app feature: the effective set is whatever the user ticked in the
             // LSPosed manager, so there is no fixed scope list to restart.
             FeatureDestination.UiComponents -> emptyList()

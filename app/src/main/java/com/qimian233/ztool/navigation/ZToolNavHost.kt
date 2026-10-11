@@ -20,6 +20,7 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.screens.features.FeaturesMainRoute
+import com.qimian233.ztool.screens.freeformbar.FreeformBarSettingsRoute
 import com.qimian233.ztool.screens.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.screens.home.HomeCardPreviewRoute
 import com.qimian233.ztool.screens.home.HomeMainRoute
@@ -745,6 +746,27 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
+            route = routeWithTarget(FeatureDestination.FreeformBar.route),
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
+            FreeformBarSettingsRoute(
+                title = stringResource(R.string.freeform_sidebar_app_name),
+                packageName = ScopeKeys.FREEFORM_SIDEBAR.packageName,
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                targetId = backStackEntry.highlightTarget(),
+            )
+        }
+        composable(
             route = routeWithTarget(FeatureDestination.UiComponents.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
@@ -962,6 +984,7 @@ private fun navigationRouteIndex(rawRoute: String?): Int {
         FeatureDestination.ZuiPerformance.route -> 2
         FeatureDestination.SogouIme.route -> 2
         FeatureDestination.DeviceService.route -> 2
+        FeatureDestination.FreeformBar.route -> 2
         FeatureDestination.UiComponents.route -> 2
         MainRoute.Settings.name -> 3
         HiddenRoute.SETTINGS_THEME -> 4
