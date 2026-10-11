@@ -485,7 +485,8 @@ class SidebarDrawerHook : AppHookModule() {
         val list: () -> List<Any> = {
             appAllListField?.get(context) as? List<Any> ?: emptyList()
         }
-        if (list().isEmpty()) return
+        val gridChildren = (grid as? android.view.ViewGroup)?.childCount ?: 0
+        if (list().isEmpty() && gridChildren == 0) return
         // The membership set is built once: this runs from a layout listener, and rebuilding the
         // launcher app list per icon would stall the main thread.
         val members = memberKeys(context).toHashSet()

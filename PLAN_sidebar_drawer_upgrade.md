@@ -490,6 +490,22 @@ drawer, in order, and may be shorter than the slot count — even empty. `compos
 Before the first customisation the members are the host's default head, and installs from the
 old model migrate by reading `ztool_drawer_order` (now write-only legacy) once.
 
+### Why the panel badges pointed at the wrong app
+
+Two host behaviours combine here:
+
+* `FloatService.showAllAppWindow` builds the grid adapter from `mAppAllList`, but
+  `PackageReceiver` and `LanguageReceiver` reassign `mAppAllList` **without rebinding the grid**.
+  After any install, package change or locale change, `mAppAllList[N]` is no longer the app shown
+  at grid position N, so indexing it by adapter position paints the wrong app's state. The grid's
+  own adapter list (`mAppInfoList`, found by name, else by matching `getItemCount`) is the only
+  authoritative source; the displayed label is the fallback.
+* `FloatService.getVisiableAppsList` does not read `cur_visible_freeform_list`; it walks
+  `ActivityManager.getRunningTasks(15)` and returns every visible task. The grid dims those items
+  (`setEnabled(false)`, icon alpha 0.3) and disables their clicks, which is why many apps look
+  "disabled" regardless of freeform state. Enabling the row and owning the icon alpha in edit
+  mode is what makes them selectable again.
+
 ### Drag reordering
 
 The drawer is the host's `ListView` and the host calls `ListView` methods on that field, so it

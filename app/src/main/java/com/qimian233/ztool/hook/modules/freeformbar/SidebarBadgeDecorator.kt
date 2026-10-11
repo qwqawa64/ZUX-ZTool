@@ -27,11 +27,14 @@ internal class SidebarBadgeDecorator(
     private val badgeId = View.generateViewId()
     private var grid: ViewGroup? = null
     private var positionMethod: java.lang.reflect.Method? = null
+    private var adapterMethod: java.lang.reflect.Method? = null
+    private var listField: java.lang.reflect.Field? = null
     private var iconViewId = 0
     private var labelViewId = 0
     private var watching = false
     private var warnedNoAnchor = false
     private var warnedUnresolved = false
+    private var warnedDivergence = false
     private var reported = false
 
     private var apps: () -> List<Any> = { emptyList() }
@@ -80,7 +83,12 @@ internal class SidebarBadgeDecorator(
 
     private fun redraw() {
         val container = grid ?: return
-        val list = apps()
+        val service = apps()
+        val adapter = adapterList(container)
+        if (adapter != null && adapter !== service && !warnedDivergence) {
+            warnedDivergence = true
+            logger.warn("grid adapter list differs from the service list; resolving by adapter")
+        }
         var decorated = 0
         var unresolved = 0
         for (index in 0 until container.childCount) {
@@ -90,9 +98,11 @@ internal class SidebarBadgeDecorator(
             // interactive, and its own click is swallowed below anyway.
             item.isEnabled = true
             item.setOnTouchListener { _, _ -> true }
-            val app = appFor(container, item, list)
+            val app = appFor(container, item, adapter, service)
             if (app == null) {
                 unresolved++
+                // Leave no trace of the host's own dimming for apps that are merely running.
+                item.findViewById<View>(iconId(container))?.alpha = 1f
                 continue
             }
             val member = isMember(app)
@@ -123,7 +133,9 @@ internal class SidebarBadgeDecorator(
                 if (enabled) {
                     // Resolve the app when the tap happens: the item view can be rebound to a
                     // different app between a redraw and the tap, so a captured app goes stale.
-                    View.OnClickListener { appFor(container, item, apps())?.let(onToggle) }
+                    View.OnClickListener {
+                        appFor(container, item, adapterList(container), apps())?.let(onToggle)
+                    }
                 } else {
                     null
                 }
@@ -140,25 +152,62 @@ internal class SidebarBadgeDecorator(
     }
 
     /**
-     * The app a grid item currently shows: by adapter position when the grid reports one, and
-     * otherwise by matching the item's label, so an item the RecyclerView cannot place still
-     * gets its badge and its tap handled.
+     * The app a grid item currently shows.
+     *
+     * The grid's own adapter list is authoritative: the host's package and locale receivers
+     * reassign the service's all-apps list without rebinding the grid, so indexing that list by
+     * adapter position yields a different app. The shown label is the second source, and the
+     * caller's list the last.
      */
-    private fun appFor(container: ViewGroup, item: View, list: List<Any>): Any? {
-        list.getOrNull(adapterPosition(container, item))?.let { return it }
-        val label = labelOf(item) ?: return null
-        return list.firstOrNull { SidebarReflect.labelOf(it) == label }
+    private fun appFor(
+        container: ViewGroup,
+        item: View,
+        adapter: List<Any>?,
+        service: List<Any>
+    ): Any? {
+        val position = adapterPosition(container, item)
+        adapter?.getOrNull(position)?.let { return it }
+        val label = labelOf(item) ?: return service.getOrNull(position)
+        adapter?.firstOrNull { SidebarReflect.labelOf(it) == label }?.let { return it }
+        return service.firstOrNull { SidebarReflect.labelOf(it) == label }
+            ?: service.getOrNull(position)
+    }
+
+    private fun adapterList(container: ViewGroup): List<Any>? {
+        val adapter = adapterOf(container) ?: return null
+        val field = listField ?: listFieldOf(adapter)?.also { listField = it } ?: return null
+        return runCatching { field.get(adapter) as? List<Any> }.getOrNull()
+    }
+
+    private fun adapterOf(container: ViewGroup): Any? {
+        val method = adapterMethod ?: runCatching {
+            container.javaClass.getMethod("getAdapter")
+        }.getOrNull()?.also { adapterMethod = it } ?: return null
+        return runCatching { method.invoke(container) }.getOrNull()
+    }
+
+    /** The adapter's item list, found by name first and by item count otherwise. */
+    private fun listFieldOf(adapter: Any): java.lang.reflect.Field? {
+        val count = runCatching {
+            adapter.javaClass.getMethod("getItemCount").invoke(adapter) as Int
+        }.getOrDefault(-1)
+        val candidates = adapter.javaClass.declaredFields.filter {
+            List::class.java.isAssignableFrom(it.type)
+        }
+        return candidates.firstOrNull { it.name == "mAppInfoList" }
+            ?: candidates.firstOrNull { field ->
+                runCatching {
+                    field.isAccessible = true
+                    (field.get(adapter) as? List<*>)?.size == count
+                }.getOrDefault(false)
+            }
     }
 
     private fun labelOf(item: View): String? {
-        val id = labelId(item) ?: return null
-        val text = (item.findViewById<View>(id) as? TextView)?.text?.toString()
-        return text?.takeIf { it.isNotEmpty() }
-    }
-
-    private fun labelId(item: View): Int? {
         if (labelViewId == 0) labelViewId = resourceId(item, "appname_tv")
-        return labelViewId.takeIf { it != 0 }
+        if (labelViewId == 0) return null
+        val text = (item.findViewById<View>(labelViewId) as? TextView)?.text?.toString()
+        return text?.takeIf { it.isNotEmpty() }
     }
 
     private fun addBadge(item: ViewGroup): View? {
