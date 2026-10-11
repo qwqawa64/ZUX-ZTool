@@ -217,10 +217,10 @@ class SidebarDrawerHook : AppHookModule() {
 
     /** Drawer content while editing: the user's order, cut to the visible slots. */
     private fun editedKeys(context: Context): List<String> {
-        val known = allKeys(context).toSet()
-        val out = SidebarDrawerStore.readOrder(context).filter { it in known }
-        val ordered = LinkedHashSet(out)
-        allKeys(context).forEach { ordered += it }
+        val known = allKeys(context)
+        val knownSet = known.toSet()
+        val ordered = LinkedHashSet(SidebarDrawerStore.readOrder(context).filter { it in knownSet })
+        ordered.addAll(known)
         return ordered.toList().take(capacity(context))
     }
 
@@ -353,6 +353,7 @@ class SidebarDrawerHook : AppHookModule() {
         applyEditLayout(context, next)
         if (!next) runCatching { badgeDecorator?.clear() }
         if (next) runCatching { refreshBadges(context) }
+            .onFailure { logger.error("failed to attach the badges", it) }
         drawerAdapter.submit(
             resolve(if (next) editedKeys(context) else composedKeys(context)),
             visibleKeys(context),
@@ -388,11 +389,10 @@ class SidebarDrawerHook : AppHookModule() {
         val drawerParams = drawer.layoutParams as? android.widget.FrameLayout.LayoutParams ?: return
         val panelParams = panel.layoutParams as? android.widget.FrameLayout.LayoutParams ?: return
         if (edit) {
-            // applyEditWidth runs first, so the drawer's current width is already widened.
-            if (drawerWidth == 0) {
-                drawerWidth = if (originalDrawerWidth > 0) originalDrawerWidth else drawerParams.width
-            }
-            panelParams.marginEnd = drawerWidth
+            // applyEditWidth runs first, so this is the widened width the drawer actually occupies.
+            val reserved = drawerParams.width.takeIf { it > 0 } ?: drawerWidth
+            if (drawerWidth == 0) drawerWidth = reserved
+            panelParams.marginEnd = reserved
             panelParams.gravity = android.view.Gravity.START or android.view.Gravity.CENTER_VERTICAL
             drawerParams.gravity = android.view.Gravity.END or android.view.Gravity.TOP
             panel.visibility = android.view.View.VISIBLE
@@ -405,12 +405,6 @@ class SidebarDrawerHook : AppHookModule() {
         }
         panel.layoutParams = panelParams
         drawer.layoutParams = drawerParams
-    }
-
-    /** The drawer's own content, which is what ▲ ▼ ✕ and the badges operate on. */
-    private fun isInDrawer(context: Context, app: Any): Boolean {
-        val key = SidebarReflect.keyOf(app) ?: return false
-        return key in editedKeys(context)
     }
 
     /** Adds an app to the drawer's last visible slot, or pushes it past the window to drop it. */
@@ -436,7 +430,16 @@ class SidebarDrawerHook : AppHookModule() {
         val grid = appIconGvField?.get(context) as? android.view.View ?: return
         val apps = appAllListField?.get(context) as? List<Any> ?: return
         if (apps.isEmpty()) return
-        decorator.refresh(grid, apps, { isInDrawer(context, it) }, { toggleMembership(context, it) })
+        // The membership set is built once: this runs from a layout listener, and rebuilding the
+        // launcher app list per icon would stall the main thread.
+        val members = editedKeys(context).toHashSet()
+        val member: (Any) -> Boolean = { SidebarReflect.keyOf(it)?.let { key -> key in members } == true }
+        val toggle: (Any) -> Unit = { toggleMembership(context, it) }
+        decorator.refresh(grid, apps, member, toggle)
+        // The grid may not have created its item views yet, so retry once now and once after the
+        // next layout settles; the scroll and layout listeners cover the rest.
+        grid.post { runCatching { decorator.refresh(grid, apps, member, toggle) } }
+        grid.postDelayed({ runCatching { decorator.refresh(grid, apps, member, toggle) } }, 300L)
     }
 
     private fun callbacks(context: Context) = object : SidebarDrawerAdapter.DrawerCallbacks {

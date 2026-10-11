@@ -27,6 +27,9 @@ internal class SidebarBadgeDecorator(
     private val badgeId = View.generateViewId()
     private var grid: ViewGroup? = null
     private var watching = false
+    private var warnedNoAnchor = false
+    private var warnedNoPosition = false
+    private var reported = false
 
     private var apps: List<Any> = emptyList()
     private var isMember: (Any) -> Boolean = { false }
@@ -66,12 +69,14 @@ internal class SidebarBadgeDecorator(
 
     private fun redraw() {
         val container = grid ?: return
+        var decorated = 0
         for (index in 0 until container.childCount) {
             val item = container.getChildAt(index) as? ViewGroup ?: continue
             val position = adapterPosition(container, item)
             if (position < 0 || position >= apps.size) continue
             val app = apps[position]
             val badge = item.findViewById<View>(badgeId) ?: addBadge(item) ?: continue
+            decorated++
             val member = isMember(app)
             (badge as? TextView)?.let { view ->
                 val glyph = SidebarStrings.get(
@@ -93,12 +98,25 @@ internal class SidebarBadgeDecorator(
             badge.setOnClickListener { onToggle(app) }
             item.setOnTouchListener { _, _ -> true }
         }
+        if (decorated > 0 && !reported) {
+            reported = true
+            logger.info("add/remove badges attached to " + decorated + " icons")
+        }
+        if (decorated == 0 && container.childCount > 0 && !warnedNoPosition) {
+            warnedNoPosition = true
+            logger.warn(
+                "badges: " + container.childCount + " item views but no adapter positions"
+            )
+        }
     }
 
     private fun addBadge(item: ViewGroup): View? {
         val iconId = resourceId(item, "appicon_iv")
         if (iconId == 0 || item !is RelativeLayout) {
-            logger.warn("all-apps item has no icon anchor, skipping badges")
+            if (!warnedNoAnchor) {
+                warnedNoAnchor = true
+                logger.warn("all-apps item has no icon anchor, skipping badges")
+            }
             return null
         }
         val size = (BADGE_DP * item.resources.displayMetrics.density).toInt()
