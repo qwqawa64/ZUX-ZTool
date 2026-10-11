@@ -470,8 +470,6 @@ class SidebarDrawerHook : AppHookModule() {
         override fun onMoveUp(app: Any) = move(context, app, -1)
 
         override fun onMoveDown(app: Any) = move(context, app, 1)
-
-        override fun onRemove(app: Any) = remove(context, app)
     }
 
     private fun move(context: Context, app: Any, delta: Int) {
@@ -484,17 +482,6 @@ class SidebarDrawerHook : AppHookModule() {
         val moved = members[index]
         members[index] = members[target]
         members[target] = moved
-        SidebarDrawerStore.writeMembers(context, members)
-        SidebarDrawerStore.setCustomized(context, true)
-        refreshDrawer(context)
-        refreshBadges(context)
-    }
-
-    private fun remove(context: Context, app: Any) {
-        val key = SidebarReflect.keyOf(app) ?: return
-        val members = (SidebarDrawerStore.readMembers(context)
-            ?: memberKeys(context).toMutableList()).toMutableList()
-        if (!members.remove(key)) return
         SidebarDrawerStore.writeMembers(context, members)
         SidebarDrawerStore.setCustomized(context, true)
         refreshDrawer(context)

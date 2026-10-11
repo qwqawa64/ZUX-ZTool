@@ -753,12 +753,12 @@
     <string name="freeform_sidebar_drawer_enhance_title">增强侧边栏抽屉</string>
     <string name="freeform_sidebar_drawer_enhance_summary">解除系统固定的 5 个应用上限，抽屉可容纳更多应用，并允许调整应用顺序</string>
     <string name="freeform_sidebar_drawer_editable_title">允许在抽屉内调整顺序</string>
-    <string name="freeform_sidebar_drawer_editable_summary">在抽屉底部显示「编辑」，进入后可用 ▲ ▼ 调整顺序、用 ✕ 将应用移出抽屉</string>
+    <string name="freeform_sidebar_drawer_editable_summary">在抽屉底部显示「编辑」，进入后可用 ▲ ▼ 调整顺序；应用增减在左侧全部应用面板用 + / − 完成</string>
     <string name="freeform_sidebar_drawer_slots_title">抽屉容量</string>
     <string name="freeform_sidebar_drawer_slots_summary">抽屉最多显示的应用数量，系统固定为 5 个</string>
     <string name="freeform_sidebar_drawer_recent_slots_title">最近使用槽位</string>
     <string name="freeform_sidebar_drawer_recent_slots_summary">抽屉开头的槽位由最近使用过的小窗应用填充，其余槽位按自定义顺序排列</string>
-    <string name="freeform_sidebar_drawer_usage_summary">开启后抽屉可容纳更多应用。点击抽屉底部的“编辑”，用 ▲ ▼ 调整顺序、用 ✕ 将应用移出抽屉，完成后点击“完成”。</string>
+    <string name="freeform_sidebar_drawer_usage_summary">开启后抽屉可容纳更多应用。点击抽屉底部的“编辑”，用 ▲ ▼ 调整顺序，在左侧全部应用面板用 + / − 增减应用，完成后点击“完成”。</string>
 
     <string name="ui_components_app_name">用户界面组件</string>
     <string name="ui_components_app_description">统一调整系统内 ZUI 对话框的外观</string>
@@ -1196,10 +1196,8 @@
     <string name="ztool_sidebar_drawer_done" tools:ignore="UnusedResources">完成</string>
     <string name="ztool_sidebar_drawer_move_up" tools:ignore="UnusedResources">上移</string>
     <string name="ztool_sidebar_drawer_move_down" tools:ignore="UnusedResources">下移</string>
-    <string name="ztool_sidebar_drawer_remove" tools:ignore="UnusedResources">移除</string>
     <string name="ztool_sidebar_drawer_glyph_up" translatable="false" tools:ignore="UnusedResources">▲</string>
     <string name="ztool_sidebar_drawer_glyph_down" translatable="false" tools:ignore="UnusedResources">▼</string>
-    <string name="ztool_sidebar_drawer_glyph_remove" translatable="false" tools:ignore="UnusedResources">✕</string>
     <string name="ztool_sidebar_drawer_glyph_add" translatable="false" tools:ignore="UnusedResources">+</string>
     <string name="ztool_sidebar_drawer_glyph_drop" translatable="false" tools:ignore="UnusedResources">−</string>
     <string name="ztool_sidebar_drawer_add" tools:ignore="UnusedResources">加入抽屉</string>

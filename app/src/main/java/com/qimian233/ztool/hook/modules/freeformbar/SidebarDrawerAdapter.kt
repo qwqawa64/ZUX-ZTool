@@ -30,7 +30,6 @@ internal class SidebarDrawerAdapter(
         fun onToggleEditMode()
         fun onMoveUp(app: Any)
         fun onMoveDown(app: Any)
-        fun onRemove(app: Any)
     }
 
     private var items: List<Any> = emptyList()
@@ -54,10 +53,8 @@ internal class SidebarDrawerAdapter(
     private val doneLabel = SidebarStrings.get(context, SidebarStrings.STRING_DONE, SidebarStrings.FALLBACK_DONE)
     private val glyphUp = SidebarStrings.get(context, SidebarStrings.STRING_GLYPH_UP, SidebarStrings.FALLBACK_GLYPH_UP)
     private val glyphDown = SidebarStrings.get(context, SidebarStrings.STRING_GLYPH_DOWN, SidebarStrings.FALLBACK_GLYPH_DOWN)
-    private val glyphRemove = SidebarStrings.get(context, SidebarStrings.STRING_GLYPH_REMOVE, SidebarStrings.FALLBACK_GLYPH_REMOVE)
     private val moveUpLabel = SidebarStrings.get(context, SidebarStrings.STRING_MOVE_UP, SidebarStrings.FALLBACK_MOVE_UP)
     private val moveDownLabel = SidebarStrings.get(context, SidebarStrings.STRING_MOVE_DOWN, SidebarStrings.FALLBACK_MOVE_DOWN)
-    private val removeLabel = SidebarStrings.get(context, SidebarStrings.STRING_REMOVE, SidebarStrings.FALLBACK_REMOVE)
 
     /**
      * [newEmptySlots] renders that many placeholder rows after the apps, so an edit list keeps
@@ -164,9 +161,9 @@ internal class SidebarDrawerAdapter(
             layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
         })
         if (editable && editMode) {
+            // Removal lives on the all-apps panel's minus badge, so the row only reorders.
             row.addView(glyph(glyphUp, moveUpLabel) { callbacks.onMoveUp(app) })
             row.addView(glyph(glyphDown, moveDownLabel) { callbacks.onMoveDown(app) })
-            row.addView(glyph(glyphRemove, removeLabel) { callbacks.onRemove(app) })
         }
         // No row-level click listener: the host's ListView item click drives both
         // launching (normal mode) and ignoring taps on empty row areas (edit mode).

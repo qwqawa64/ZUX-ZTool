@@ -27,6 +27,7 @@ internal class SidebarBadgeDecorator(
     private val badgeId = View.generateViewId()
     private var grid: ViewGroup? = null
     private var positionMethod: java.lang.reflect.Method? = null
+    private var iconViewId = 0
     private var watching = false
     private var warnedNoAnchor = false
     private var warnedNoPosition = false
@@ -84,6 +85,10 @@ internal class SidebarBadgeDecorator(
             val member = isMember(app)
             // A full drawer disables adding, so the add badge is greyed out and inert.
             val enabled = member || canAdd
+            // Apps already in the drawer are masked to mark them as placed; when the drawer is
+            // full every icon is masked, because nothing more can be added at all.
+            val masked = member || !canAdd
+            item.findViewById<View>(iconId(container))?.alpha = if (masked) MASKED_ALPHA else 1f
             (badge as? TextView)?.let { view ->
                 val glyph = SidebarStrings.get(
                     view.context,
@@ -135,8 +140,8 @@ internal class SidebarBadgeDecorator(
     }
 
     private fun addBadge(item: ViewGroup): View? {
-        val iconId = resourceId(item, "appicon_iv")
-        if (iconId == 0 || item !is RelativeLayout) {
+        val anchorId = iconId(item)
+        if (anchorId == 0 || item !is RelativeLayout) {
             if (!warnedNoAnchor) {
                 warnedNoAnchor = true
                 logger.warn("all-apps item has no icon anchor, skipping badges")
@@ -150,8 +155,8 @@ internal class SidebarBadgeDecorator(
             setTextColor(Color.WHITE)
             textSize = 13f
             layoutParams = RelativeLayout.LayoutParams(size, size).apply {
-                addRule(RelativeLayout.ALIGN_TOP, iconId)
-                addRule(RelativeLayout.ALIGN_END, iconId)
+                addRule(RelativeLayout.ALIGN_TOP, anchorId)
+                addRule(RelativeLayout.ALIGN_END, anchorId)
             }
         }
         item.addView(badge)
@@ -181,9 +186,15 @@ internal class SidebarBadgeDecorator(
     private fun resourceId(view: View, name: String): Int =
         view.resources.getIdentifier(name, "id", hostPackage)
 
+    private fun iconId(container: ViewGroup): Int {
+        if (iconViewId == 0) iconViewId = resourceId(container, "appicon_iv")
+        return iconViewId
+    }
+
     private companion object {
         const val BADGE_DP = 20
         const val DISABLED_ALPHA = 0.35f
+        const val MASKED_ALPHA = 0.35f
         const val ADD_COLOR = 0xE62196F3.toInt()
         const val DROP_COLOR = 0xE6E53935.toInt()
         const val MUTED_COLOR = 0x66888888.toInt()
