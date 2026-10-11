@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
+import com.qimian233.ztool.data.keys.LogLevel
 import com.qimian233.ztool.hook.base.ModuleLog
 
 /**
@@ -65,13 +66,18 @@ internal class SidebarBadgeDecorator(
         onToggle = toggle
         canAdd = addAllowed
         if (!watching) {
-            container.viewTreeObserver.addOnScrollChangedListener { redraw() }
+            // A throw here would run inside the host's layout pass and kill its process.
+            container.viewTreeObserver.addOnScrollChangedListener {
+                runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
+            }
             // Item views only exist after the grid lays out, and scrolling may never happen.
-            container.viewTreeObserver.addOnGlobalLayoutListener { redraw() }
+            container.viewTreeObserver.addOnGlobalLayoutListener {
+                runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
+            }
             watching = true
         }
         tracePass = true
-        redraw()
+        runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
     }
 
     /** Removes the badges and restores normal item taps, e.g. when leaving edit mode. */
@@ -89,13 +95,16 @@ internal class SidebarBadgeDecorator(
         val container = grid ?: return
         val service = apps()
         val adapter = adapterList(container)
-        val tracing = tracePass
+        // Building the trace strings costs reflective calls per item, so skip it entirely
+        // unless the level actually asks for them.
+        val tracing = ModuleLog.shouldLog(LogLevel.TRACE)
+        val force = tracePass
         tracePass = false
         if (adapter != null && adapter !== service && !warnedDivergence) {
             warnedDivergence = true
             logger.warn("grid adapter list differs from the service list; resolving by adapter")
         }
-        if (tracing) {
+        if (tracing && force) {
             logger.trace(
                 "badge pass: children=" + container.childCount +
                     " adapter=" + (adapter?.size ?: -1) +
@@ -118,8 +127,10 @@ internal class SidebarBadgeDecorator(
                 unresolved++
                 // Leave no trace of the host's own dimming for apps that are merely running.
                 item.findViewById<View>(iconId(container))?.alpha = 1f
-                report(item, tracing, "#" + index + " pos=" + lastPosition + " src=" + lastSource +
-                    " label=" + labelOf(item) + " UNRESOLVED alpha=1.0 badge=none")
+                report(item, tracing, force) {
+                    "#" + index + " pos=" + lastPosition + " src=" + lastSource +
+                        " label=" + labelOf(item) + " UNRESOLVED alpha=1.0 badge=none"
+                }
                 continue
             }
             val member = isMember(app)
@@ -132,9 +143,11 @@ internal class SidebarBadgeDecorator(
             val existing = item.findViewById<View>(badgeId) as? TextView
             if (member) {
                 existing?.visibility = View.GONE
-                report(item, tracing, "#" + index + " pos=" + lastPosition + " src=" + lastSource +
-                    " label=" + labelOf(item) + " key=" + key + " member=true alpha=" +
-                    (if (masked) MASKED_ALPHA else 1f) + " badge=hidden")
+                report(item, tracing, force) {
+                    "#" + index + " pos=" + lastPosition + " src=" + lastSource +
+                        " label=" + labelOf(item) + " key=" + key + " member=true alpha=" +
+                        (if (masked) MASKED_ALPHA else 1f) + " badge=hidden"
+                }
                 continue
             }
             val badge = existing ?: addBadge(item) ?: continue
@@ -150,10 +163,12 @@ internal class SidebarBadgeDecorator(
                     )
                 }
             }
-            report(item, tracing, "#" + index + " pos=" + lastPosition + " src=" + lastSource +
-                " label=" + labelOf(item) + " key=" + key + " member=false alpha=" +
-                (if (masked) MASKED_ALPHA else 1f) + " badge=" +
-                (if (enabled) "add" else "add-disabled"))
+            report(item, tracing, force) {
+                "#" + index + " pos=" + lastPosition + " src=" + lastSource +
+                    " label=" + labelOf(item) + " key=" + key + " member=false alpha=" +
+                    (if (masked) MASKED_ALPHA else 1f) + " badge=" +
+                    (if (enabled) "add" else "add-disabled")
+            }
             badge.setOnClickListener(
                 if (enabled) {
                     // Resolve the app when the tap happens: the item view can be rebound to a
@@ -176,10 +191,15 @@ internal class SidebarBadgeDecorator(
         }
     }
 
+    /** Last reported decision per item view; weak so recycled views cannot be kept alive. */
+    private val lastReported = java.util.WeakHashMap<View, String>()
+
     /** Logs a decision for one item on a trace pass, or as soon as it changes. */
-    private fun report(item: View, tracing: Boolean, line: String) {
-        if (!tracing && item.getTag(badgeId) == line) return
-        item.setTag(badgeId, line)
+    private fun report(item: View, tracing: Boolean, force: Boolean, build: () -> String) {
+        if (!tracing) return
+        val line = build()
+        if (!force && lastReported[item] == line) return
+        lastReported[item] = line
         logger.trace("badge " + line)
     }
 

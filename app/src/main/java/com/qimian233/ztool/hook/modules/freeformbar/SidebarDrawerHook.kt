@@ -419,7 +419,7 @@ class SidebarDrawerHook : AppHookModule() {
         // setSelection during a pending data change is dropped by the next layout pass.
         runCatching {
             val listView = appIconLvField?.get(context) as? ListView
-            listView?.post { listView.setSelection(0) }
+            listView?.post { runCatching { listView.setSelection(0) } }
         }
     }
 

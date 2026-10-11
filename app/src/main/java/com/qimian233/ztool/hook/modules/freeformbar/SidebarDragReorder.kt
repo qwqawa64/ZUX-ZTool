@@ -36,7 +36,13 @@ internal class SidebarDragReorder(
         listView = view
         slop = ViewConfiguration.get(view.context).scaledTouchSlop
         longPressTimeout = ViewConfiguration.getLongPressTimeout().toLong()
-        view.setOnTouchListener { _, event -> handle(event) }
+        view.setOnTouchListener { _, event ->
+            // A throw here would run inside the host's touch dispatch and kill its process.
+            runCatching { handle(event) }.getOrElse {
+                logger.error("drag gesture failed", it)
+                false
+            }
+        }
     }
 
     private fun handle(event: MotionEvent): Boolean {
@@ -57,7 +63,10 @@ internal class SidebarDragReorder(
         if (clickableChildAt(view, position, event.x, event.y) != null) return false
         downY = event.y
         // Returning false keeps the ListView's own scrolling alive until the press matures.
-        longPress = Runnable { beginDrag(view, position) }.also {
+        longPress = Runnable {
+            runCatching { beginDrag(view, position) }
+                .onFailure { logger.error("drag start failed", it) }
+        }.also {
             view.postDelayed(it, longPressTimeout)
         }
         return false
