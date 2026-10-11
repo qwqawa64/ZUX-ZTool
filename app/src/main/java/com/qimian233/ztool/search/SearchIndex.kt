@@ -1152,6 +1152,24 @@ object SearchIndex {
             summaryRes = R.string.ui_components_dialog_skin_summary
         ),
 
+        uiComponents.item(
+            id = "ui_components_scan",
+            titleRes = R.string.ui_components_scan_title,
+            summaryRes = R.string.ui_components_scan_summary_idle
+        ),
+
+        uiComponents.item(
+            id = "ui_components_scope_pending",
+            titleRes = R.string.ui_components_scope_pending_title,
+            summaryRes = R.string.ui_components_scope_pending_summary
+        ),
+
+        uiComponents.item(
+            id = "ui_components_scan_cancel",
+            titleRes = R.string.ui_components_scan_cancel_title,
+            summaryRes = R.string.ui_components_scan_cancel_summary
+        ),
+
         packageInstaller.item(
             id = "package_installer_enable_row_style",
             titleRes = R.string.package_installer_enable_row_style_title,

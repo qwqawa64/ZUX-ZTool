@@ -19,6 +19,8 @@ data class ZuiComponentScanState(
     val total: Int = 0,
     val currentPackage: String = "",
     val hasScannedOnce: Boolean = false,
+    /** Packages carrying a verdict, scanned or not. */
+    val scannedApps: Int = 0,
     val zuiPackages: List<String> = emptyList(),
     /** Increments when a user-triggered run finishes, so the UI can react once. */
     val completedManualRuns: Int = 0
@@ -102,6 +104,7 @@ object ZuiComponentScanManager {
                     store.save(snapshot)
                     _state.value = _state.value.copy(
                         scanned = index + 1,
+                        scannedApps = snapshot.verdicts.size,
                         zuiPackages = zuiPackagesOf(snapshot)
                     )
                 }
@@ -121,6 +124,7 @@ object ZuiComponentScanManager {
     private fun publish(snapshot: ZuiComponentScanSnapshot) {
         _state.value = _state.value.copy(
             hasScannedOnce = snapshot.firstScanStarted,
+            scannedApps = snapshot.verdicts.size,
             zuiPackages = zuiPackagesOf(snapshot)
         )
     }

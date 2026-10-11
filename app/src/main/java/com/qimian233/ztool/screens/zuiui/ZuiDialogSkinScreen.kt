@@ -5,6 +5,8 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -12,6 +14,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,16 +34,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.zuiui.PendingScopeApp
+import com.qimian233.ztool.data.zuiui.ScopeRequestOutcome
+import com.qimian233.ztool.data.zuiui.ZuiComponentScanRepository
 import com.qimian233.ztool.data.zuiui.ZuiDialogSkinRepository
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
+import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
+import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
+import com.qimian233.ztool.viewmodel.ZuiComponentScanUiState
 import com.qimian233.ztool.viewmodel.ZuiDialogSkinUiState
 import com.qimian233.ztool.viewmodel.ZuiDialogSkinViewModel
 
@@ -56,16 +66,19 @@ fun ZuiDialogSkinRoute(
         ViewModelProvider(
             owner,
             ZuiDialogSkinViewModelFactory(
-                ZuiDialogSkinRepository(context.applicationContext)
+                ZuiDialogSkinRepository(context.applicationContext),
+                ZuiComponentScanRepository(context.applicationContext)
             )
         )[ZuiDialogSkinViewModel::class.java]
     }
 
     LaunchedEffect(viewModel) {
         viewModel.loadSettings()
+        viewModel.onEnterPage()
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val scanState by viewModel.scanState.collectAsState()
     val scrollState = rememberScrollState()
     val highlightRegistry = remember { HighlightAnchorRegistry() }
 
@@ -78,8 +91,12 @@ fun ZuiDialogSkinRoute(
         ZuiDialogSkinScreen(
             title = title,
             state = uiState,
+            scanState = scanState,
             onBack = onBack,
             onDialogSkinChanged = viewModel::setDialogSkinEnabled,
+            onScan = viewModel::startScan,
+            onCancelScan = viewModel::cancelScan,
+            onOpenRecommendations = viewModel::openRecommendations,
             onApply = {
                 viewModel.applyChanges(
                     onUnsupported = {
@@ -105,16 +122,42 @@ fun ZuiDialogSkinRoute(
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
         )
+
+        if (scanState.showRecommendationDialog) {
+            RecommendationDialog(
+                pending = scanState.pending,
+                onDismiss = viewModel::dismissRecommendations,
+                onConfirm = {
+                    viewModel.dismissRecommendations()
+                    viewModel.applyRecommendedScope { outcome ->
+                        val message = when (outcome) {
+                            is ScopeRequestOutcome.Approved ->
+                                context.getString(R.string.ui_components_recommend_approved)
+
+                            is ScopeRequestOutcome.Failed -> context.getString(
+                                R.string.ui_components_recommend_failed,
+                                outcome.reason
+                            )
+
+                            ScopeRequestOutcome.Unavailable ->
+                                context.getString(R.string.ui_components_recommend_unavailable)
+                        }
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
+        }
     }
 }
 
 private class ZuiDialogSkinViewModelFactory(
-    private val repository: ZuiDialogSkinRepository
+    private val repository: ZuiDialogSkinRepository,
+    private val scanRepository: ZuiComponentScanRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ZuiDialogSkinViewModel::class.java)) {
-            return ZuiDialogSkinViewModel(repository) as T
+            return ZuiDialogSkinViewModel(repository, scanRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
@@ -124,8 +167,12 @@ private class ZuiDialogSkinViewModelFactory(
 private fun ZuiDialogSkinScreen(
     title: String,
     state: ZuiDialogSkinUiState,
+    scanState: ZuiComponentScanUiState,
     onBack: () -> Unit,
     onDialogSkinChanged: (Boolean) -> Unit,
+    onScan: () -> Unit,
+    onCancelScan: () -> Unit,
+    onOpenRecommendations: () -> Unit,
     onApply: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -165,7 +212,11 @@ private fun ZuiDialogSkinScreen(
                 ZToolSettingsList(
                     sections = zuiDialogSkinSections(
                         state = state,
-                        onDialogSkinChanged = onDialogSkinChanged
+                        scanState = scanState,
+                        onDialogSkinChanged = onDialogSkinChanged,
+                        onScan = onScan,
+                        onCancelScan = onCancelScan,
+                        onOpenRecommendations = onOpenRecommendations
                     ),
                     bottomPadding = 88.dp,
                     highlightRegistry = highlightRegistry
@@ -178,7 +229,11 @@ private fun ZuiDialogSkinScreen(
 @Composable
 private fun zuiDialogSkinSections(
     state: ZuiDialogSkinUiState,
-    onDialogSkinChanged: (Boolean) -> Unit
+    scanState: ZuiComponentScanUiState,
+    onDialogSkinChanged: (Boolean) -> Unit,
+    onScan: () -> Unit,
+    onCancelScan: () -> Unit,
+    onOpenRecommendations: () -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -200,7 +255,133 @@ private fun zuiDialogSkinSections(
                     key = "ui_components_dialog_skin"
                 )
             )
+        ),
+        SettingSection(
+            title = stringResource(R.string.ui_components_scope_section_title),
+            items = buildList {
+                add(
+                    SettingItem.Action(
+                        key = "ui_components_scan",
+                        title = stringResource(R.string.ui_components_scan_title),
+                        summary = scanSummary(scanState),
+                        onClick = onScan,
+                        enabled = !scanState.running,
+                        icon = if (scanState.running) null else Icons.Rounded.Search,
+                        trailingContent = if (scanState.running) {
+                            {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.height(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        } else null
+                    )
+                )
+                if (scanState.running) {
+                    add(
+                        SettingItem.Action(
+                            key = "ui_components_scan_cancel",
+                            title = stringResource(R.string.ui_components_scan_cancel_title),
+                            summary = stringResource(R.string.ui_components_scan_cancel_summary),
+                            onClick = onCancelScan
+                        )
+                    )
+                } else if (scanState.pending.isNotEmpty()) {
+                    add(
+                        SettingItem.Action(
+                            key = "ui_components_scope_pending",
+                            title = stringResource(R.string.ui_components_scope_pending_title),
+                            summary = stringResource(
+                                R.string.ui_components_scope_pending_summary,
+                                scanState.pending.size
+                            ),
+                            onClick = onOpenRecommendations
+                        )
+                    )
+                }
+            }
         )
+    )
+}
+
+@Composable
+private fun scanSummary(scanState: ZuiComponentScanUiState): String = when {
+    scanState.running -> stringResource(
+        R.string.ui_components_scan_summary_running,
+        scanState.scanned,
+        scanState.total
+    )
+
+    !scanState.hasScannedOnce -> stringResource(R.string.ui_components_scan_summary_idle)
+
+    else -> stringResource(
+        R.string.ui_components_scan_summary_done,
+        scanState.scannedApps,
+        scanState.zuiApps
+    )
+}
+
+@Composable
+private fun RecommendationDialog(
+    pending: List<PendingScopeApp>,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    ZToolDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.ui_components_recommend_title)) },
+        text = {
+            if (pending.isEmpty()) {
+                Text(stringResource(R.string.ui_components_recommend_empty))
+            } else {
+                Column {
+                    Text(
+                        stringResource(
+                            R.string.ui_components_recommend_message,
+                            pending.size
+                        )
+                    )
+                    Column(
+                        modifier = Modifier
+                            .heightIn(max = 240.dp)
+                            .verticalScroll(rememberScrollState())
+                            .padding(top = 8.dp)
+                    ) {
+                        pending.forEach { app ->
+                            Text(
+                                text = app.label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (pending.isEmpty()) {
+                ZToolTextButton(
+                    onClick = onDismiss,
+                    text = stringResource(R.string.common_confirm)
+                )
+            } else {
+                ZToolTextButton(
+                    onClick = onConfirm,
+                    text = stringResource(R.string.common_confirm)
+                )
+            }
+        },
+        dismissButton = if (pending.isEmpty()) {
+            null
+        } else {
+            {
+                ZToolTextButton(
+                    onClick = onDismiss,
+                    text = stringResource(R.string.common_cancel),
+                    isPrimary = false
+                )
+            }
+        }
     )
 }
 
