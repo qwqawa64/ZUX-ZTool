@@ -34,19 +34,22 @@ internal class SidebarBadgeDecorator(
     private var apps: List<Any> = emptyList()
     private var isMember: (Any) -> Boolean = { false }
     private var onToggle: (Any) -> Unit = {}
+    private var canAdd: Boolean = true
 
     /** Shows or refreshes the badges for [apps]; call again whenever the panel is re-shown. */
     fun refresh(
         gridView: View,
         appList: List<Any>,
         member: (Any) -> Boolean,
-        toggle: (Any) -> Unit
+        toggle: (Any) -> Unit,
+        addAllowed: Boolean
     ) {
         val container = gridView as? ViewGroup ?: return
         grid = container
         apps = appList
         isMember = member
         onToggle = toggle
+        canAdd = addAllowed
         if (!watching) {
             container.viewTreeObserver.addOnScrollChangedListener { redraw() }
             // Item views only exist after the grid lays out, and scrolling may never happen.
@@ -78,6 +81,8 @@ internal class SidebarBadgeDecorator(
             val badge = item.findViewById<View>(badgeId) ?: addBadge(item) ?: continue
             decorated++
             val member = isMember(app)
+            // A full drawer disables adding, so the add badge is greyed out and inert.
+            val enabled = member || canAdd
             (badge as? TextView)?.let { view ->
                 val glyph = SidebarStrings.get(
                     view.context,
@@ -85,9 +90,17 @@ internal class SidebarBadgeDecorator(
                     if (member) SidebarStrings.FALLBACK_GLYPH_DROP else SidebarStrings.FALLBACK_GLYPH_ADD
                 )
                 // Skip redundant writes: setText can request layout, and this runs on layout.
-                if (view.text.toString() != glyph) {
+                if (view.text.toString() != glyph || view.isEnabled != enabled) {
                     view.text = glyph
-                    view.background = disc(if (member) DROP_COLOR else ADD_COLOR)
+                    view.isEnabled = enabled
+                    view.alpha = if (enabled) 1f else DISABLED_ALPHA
+                    view.background = disc(
+                        when {
+                            member -> DROP_COLOR
+                            enabled -> ADD_COLOR
+                            else -> MUTED_COLOR
+                        }
+                    )
                     view.contentDescription = SidebarStrings.get(
                         view.context,
                         if (member) SidebarStrings.STRING_DROP else SidebarStrings.STRING_ADD,
@@ -95,7 +108,7 @@ internal class SidebarBadgeDecorator(
                     )
                 }
             }
-            badge.setOnClickListener { onToggle(app) }
+            badge.setOnClickListener(if (enabled) View.OnClickListener { onToggle(app) } else null)
             item.setOnTouchListener { _, _ -> true }
         }
         if (decorated > 0 && !reported) {
@@ -158,7 +171,9 @@ internal class SidebarBadgeDecorator(
 
     private companion object {
         const val BADGE_DP = 20
+        const val DISABLED_ALPHA = 0.35f
         const val ADD_COLOR = 0xE62196F3.toInt()
         const val DROP_COLOR = 0xE6E53935.toInt()
+        const val MUTED_COLOR = 0x66888888.toInt()
     }
 }

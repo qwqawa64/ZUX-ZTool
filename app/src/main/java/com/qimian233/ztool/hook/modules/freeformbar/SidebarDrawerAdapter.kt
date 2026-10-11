@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.freeformbar
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -35,6 +36,7 @@ internal class SidebarDrawerAdapter(
     private var items: List<Any> = emptyList()
     private var visibleKeys: List<String> = emptyList()
     private var editMode: Boolean = false
+    private var emptySlots: Int = 0
 
     private val rowHeight = dimen("top_list_item_height", 72)
     private val padTop = dimen("top_list_item_padding_top", 8)
@@ -57,16 +59,28 @@ internal class SidebarDrawerAdapter(
     private val moveDownLabel = SidebarStrings.get(context, SidebarStrings.STRING_MOVE_DOWN, SidebarStrings.FALLBACK_MOVE_DOWN)
     private val removeLabel = SidebarStrings.get(context, SidebarStrings.STRING_REMOVE, SidebarStrings.FALLBACK_REMOVE)
 
-    fun submit(newItems: List<Any>, newVisibleKeys: List<String>, newEditMode: Boolean) {
+    /**
+     * [newEmptySlots] renders that many placeholder rows after the apps, so an edit list keeps
+     * its full length instead of shrinking as apps are removed.
+     */
+    fun submit(
+        newItems: List<Any>,
+        newVisibleKeys: List<String>,
+        newEditMode: Boolean,
+        newEmptySlots: Int = 0
+    ) {
         items = newItems
         visibleKeys = newVisibleKeys
         editMode = newEditMode
+        emptySlots = if (newEditMode) newEmptySlots.coerceAtLeast(0) else 0
         notifyDataSetChanged()
     }
 
     fun isEditMode(): Boolean = editMode
 
-    override fun getCount(): Int = items.size + if (editable) 1 else 0
+    private fun rowCount(): Int = items.size + emptySlots
+
+    override fun getCount(): Int = rowCount() + if (editable) 1 else 0
 
     override fun getItem(position: Int): Any? = items.getOrNull(appIndex(position))
 
@@ -75,23 +89,44 @@ internal class SidebarDrawerAdapter(
     override fun isEnabled(position: Int): Boolean = true
 
     /**
-     * The action row sits at the bottom normally, but at the top while editing: the edit list
-     * is the full app permutation, so a trailing 完成 would be dozens of rows away.
-     * Returns -1 when ordering is switched off, i.e. the list is apps only.
+     * The action row sits at the bottom normally, but at the top while editing, so 完成 is always
+     * in reach. Returns -1 when ordering is switched off, i.e. the list is apps only.
      */
     fun actionPosition(): Int = when {
         !editable -> -1
         editMode -> 0
-        else -> items.size
+        else -> rowCount()
     }
 
     private fun appIndex(position: Int): Int = if (editable && editMode) position - 1 else position
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         if (position == actionPosition()) return actionRow()
-        val app = items.getOrNull(appIndex(position)) ?: return actionRow()
+        val app = items.getOrNull(appIndex(position))
+        if (app == null) return emptyRow()
         val key = SidebarReflect.keyOf(app)
         return appRow(app, key != null && visibleKeys.contains(key))
+    }
+
+    /** A free slot: an empty outline the size of an icon, so the list keeps its full length. */
+    private fun emptyRow(): View {
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            layoutParams = AbsListView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, rowHeight
+            )
+            setPadding(0, padTop, 0, padTop)
+        }
+        row.addView(View(context).apply {
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(EMPTY_FILL)
+                setStroke(EMPTY_STROKE_WIDTH, EMPTY_STROKE)
+            }
+            layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
+        })
+        return row
     }
 
     private fun actionRow(): View {
@@ -156,5 +191,8 @@ internal class SidebarDrawerAdapter(
 
     private companion object {
         const val GLYPH_DP = 26
+        const val EMPTY_FILL = 0x14FFFFFF
+        const val EMPTY_STROKE = 0x4DFFFFFF
+        const val EMPTY_STROKE_WIDTH = 3
     }
 }

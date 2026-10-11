@@ -289,11 +289,22 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun refreshDrawer(context: Context) {
         val drawerAdapter = adapter ?: return
-        val editMode = drawerAdapter.isEditMode()
-        // While editing, the drawer shows exactly the user's slots, so emptying one leaves a gap.
+        submitDrawer(context, drawerAdapter, drawerAdapter.isEditMode())
+    }
+
+    /**
+     * While editing, the drawer shows exactly the user's slots followed by the free ones as
+     * placeholders, so its length stays constant instead of shrinking as apps are removed.
+     */
+    private fun submitDrawer(
+        context: Context,
+        drawerAdapter: SidebarDrawerAdapter,
+        editMode: Boolean
+    ) {
         val items = resolve(if (editMode) memberKeys(context) else composedKeys(context))
+        val empty = if (editMode) (memberSlots(context) - items.size).coerceAtLeast(0) else 0
         if (!editMode) appTop5ListField?.set(context, items)
-        drawerAdapter.submit(items, visibleKeys(context), editMode)
+        drawerAdapter.submit(items, visibleKeys(context), editMode, empty)
     }
 
     private fun visibleKeys(context: Context): List<String> =
@@ -362,11 +373,7 @@ class SidebarDrawerHook : AppHookModule() {
         if (!next) runCatching { badgeDecorator?.clear() }
         if (next) runCatching { refreshBadges(context) }
             .onFailure { logger.error("failed to attach the badges", it) }
-        drawerAdapter.submit(
-            resolve(if (next) memberKeys(context) else composedKeys(context)),
-            visibleKeys(context),
-            next
-        )
+        submitDrawer(context, drawerAdapter, next)
         // The action row moves to the other end of the list, so follow it. Posted because
         // setSelection during a pending data change is dropped by the next layout pass.
         runCatching {
@@ -417,22 +424,21 @@ class SidebarDrawerHook : AppHookModule() {
 
     /**
      * Adds the app to the user's slots, or removes it. Slots are explicit, so removing leaves a
-     * gap instead of pulling the next app in from the full app list.
+     * gap instead of pulling the next app in from the full app list, and a full drawer refuses
+     * the addition rather than silently displacing an app the user chose.
      */
     private fun toggleMembership(context: Context, app: Any) {
         val key = SidebarReflect.keyOf(app) ?: return
         val members = SidebarDrawerStore.readMembers(context)
             ?: memberKeys(context).toMutableList()
-        val slots = memberSlots(context)
         val present = key in members
         val next = members.toMutableList()
         if (present) {
             next.remove(key)
-        } else if (next.size < slots) {
+        } else if (next.size < memberSlots(context)) {
             next.add(key)
         } else {
-            // No free slot: take the last one, so the tap is never silently ignored.
-            next[next.size - 1] = key
+            return
         }
         SidebarDrawerStore.writeMembers(context, next)
         SidebarDrawerStore.setCustomized(context, true)
@@ -450,11 +456,12 @@ class SidebarDrawerHook : AppHookModule() {
         val members = memberKeys(context).toHashSet()
         val member: (Any) -> Boolean = { SidebarReflect.keyOf(it)?.let { key -> key in members } == true }
         val toggle: (Any) -> Unit = { toggleMembership(context, it) }
-        decorator.refresh(grid, apps, member, toggle)
+        val canAdd = members.size < memberSlots(context)
+        decorator.refresh(grid, apps, member, toggle, canAdd)
         // The grid may not have created its item views yet, so retry once now and once after the
         // next layout settles; the scroll and layout listeners cover the rest.
-        grid.post { runCatching { decorator.refresh(grid, apps, member, toggle) } }
-        grid.postDelayed({ runCatching { decorator.refresh(grid, apps, member, toggle) } }, 300L)
+        grid.post { runCatching { decorator.refresh(grid, apps, member, toggle, canAdd) } }
+        grid.postDelayed({ runCatching { decorator.refresh(grid, apps, member, toggle, canAdd) } }, 300L)
     }
 
     private fun callbacks(context: Context) = object : SidebarDrawerAdapter.DrawerCallbacks {

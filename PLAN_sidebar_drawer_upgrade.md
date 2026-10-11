@@ -478,9 +478,11 @@ drawer, in order, and may be shorter than the slot count — even empty. `compos
 * `memberSlots = capacity - recentSlots`, which keeps the recent slots reserved and guarantees
   everything the user added is visible;
 * `−` and `✕` remove from the members list, so the drawer really shrinks;
-* `+` appends while a slot is free, and otherwise takes the last slot, so the tap is never
-  silently ignored;
-* `▲ ▼` reorder within the members list only.
+* `+` appends while a slot is free, and is **greyed out and inert** when the drawer is full, so
+  an app the user chose is never silently displaced;
+* `▲ ▼` reorder within the members list only;
+* while editing, the free slots are rendered as empty outlines after the apps, so the edit list
+  keeps its full length instead of shrinking as apps are removed.
 
 Before the first customisation the members are the host's default head, and installs from the
 old model migrate by reading `ztool_drawer_order` (now write-only legacy) once.
