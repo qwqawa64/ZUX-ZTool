@@ -191,12 +191,14 @@ internal class SidebarBadgeDecorator(
             )
             // The badge is clickable, so it consumes the gesture and can squeeze the icon too.
             badge.setOnTouchListener { _, event ->
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN ->
-                        SidebarPressScale.press(item.findViewById<View>(iconId(container)))
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
-                        SidebarPressScale.releasePressed()
-                }
+                runCatching {
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN ->
+                            SidebarPressScale.press(item.findViewById<View>(iconId(container)))
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                            SidebarPressScale.releasePressed()
+                    }
+                }.onFailure { logger.error("badge press failed", it) }
                 false
             }
         }
