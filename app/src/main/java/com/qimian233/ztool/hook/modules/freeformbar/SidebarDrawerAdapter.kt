@@ -218,9 +218,13 @@ internal class SidebarDrawerAdapter(
             alpha = if (index == draggingIndex) DRAGGING_ALPHA else 1f
         }
         pendingOffsets.remove(index)?.let { offset ->
-            logger.trace("swap animation applied to row " + index + " offset=" + offset)
-            row.translationY = offset
-            row.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
+            // Posted, not applied here: a row is built before it is attached, and an animator
+            // started on a detached view is dropped, which left the offset stuck in place.
+            row.post {
+                logger.trace("swap animation applied to row " + index + " offset=" + offset)
+                row.translationY = offset
+                row.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
+            }
         }
         val icon = ImageView(context).apply {
             // Carries the host's icon id so press feedback can find the icon, not the whole row.

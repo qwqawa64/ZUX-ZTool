@@ -260,7 +260,7 @@ internal class SidebarBadgeDecorator(
             runCatching {
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN ->
-                        SidebarPressScale.press(item.findViewById<View>(iconId(container)), item)
+                        SidebarPressScale.press(item.findViewById<View>(iconId(container)))
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
                         SidebarPressScale.release()
                 }
@@ -327,7 +327,7 @@ internal class SidebarBadgeDecorator(
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     downY = event.y
-                    SidebarPressScale.press(icon, item)
+                    SidebarPressScale.press(icon)
                 }
                 MotionEvent.ACTION_UP -> {
                     SidebarPressScale.release()

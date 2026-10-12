@@ -27,33 +27,33 @@ internal object SidebarPressScale {
 
     private var iconId = 0
     private var pressedIcon: View? = null
-    private var highlighted: View? = null
-    private var savedBackground: Drawable? = null
+    private var savedForeground: Drawable? = null
     private var warnedIcon = false
     private var layoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
 
-    /** Squeezes [icon] and lights up [container]. Swallows failures: this runs in input dispatch. */
-    fun press(icon: View?, container: View? = null) {
+    /** Squeezes [icon] and lights it up. Swallows failures: this runs in input dispatch. */
+    fun press(icon: View?) {
         runCatching {
             release()
             pressedIcon = icon
-            icon?.animate()?.scaleX(SCALE)?.scaleY(SCALE)?.setDuration(DURATION)?.start()
-            if (container != null) {
-                savedBackground = container.background
-                container.background = highlight(container)
-                highlighted = container
-            }
+            icon ?: return
+            // A foreground covers exactly the icon, so the highlight is the icon's own area
+            // rather than the whole row. A background would sit behind an icon that fills it.
+            savedForeground = icon.foreground
+            icon.foreground = highlight(icon)
+            icon.animate().scaleX(SCALE).scaleY(SCALE).setDuration(DURATION).start()
         }.onFailure { logger?.error("press feedback failed", it) }
     }
 
     /** Undoes [press]. Swallows failures: this runs in input dispatch. */
     fun release() {
         runCatching {
-            pressedIcon?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(DURATION)?.start()
+            pressedIcon?.let { icon ->
+                icon.foreground = savedForeground
+                icon.animate().scaleX(1f).scaleY(1f).setDuration(DURATION).start()
+            }
             pressedIcon = null
-            highlighted?.background = savedBackground
-            highlighted = null
-            savedBackground = null
+            savedForeground = null
         }.onFailure { logger?.error("release feedback failed", it) }
     }
 
@@ -95,7 +95,7 @@ internal object SidebarPressScale {
             item.setOnTouchListener { _, event ->
                 runCatching {
                     when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN -> press(iconOf(item, hostPackage), item)
+                        MotionEvent.ACTION_DOWN -> press(iconOf(item, hostPackage))
                         MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> release()
                     }
                 }.onFailure { logger?.error("press listener failed", it) }

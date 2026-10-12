@@ -290,7 +290,7 @@ class SidebarDrawerHook : AppHookModule() {
                 if (position < 0 || position == drawerAdapter.actionPosition()) return
                 val row = listView.getChildAt(position - listView.firstVisiblePosition) ?: return
                 if (row === footViewField?.get(context)) return
-                SidebarPressScale.press(SidebarPressScale.iconOf(row, hostPackage), row)
+                SidebarPressScale.press(SidebarPressScale.iconOf(row, hostPackage))
             }
             android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL ->
                 SidebarPressScale.release()
