@@ -44,6 +44,7 @@ class SidebarDrawerHook : AppHookModule() {
     private var dragReorder: SidebarDragReorder? = null
     private var memberCount: Int = 0
     private var footStyled = false
+    private var paddingBalanced = false
     private var drawerWidth: Int = 0
     private var footViewField: Field? = null
     private var popupWindowField: Field? = null
@@ -245,6 +246,7 @@ class SidebarDrawerHook : AppHookModule() {
             return
         }
         SidebarPressScale.logger = logger
+        balanceListPadding(listView)
         // The host restores its own views when the popup goes away, so a drawer reopened while
         // editing would come back in the edit layout with no panel to edit in.
         if (adapter?.isEditMode() == true) {
@@ -280,6 +282,18 @@ class SidebarDrawerHook : AppHookModule() {
         ).also { dragReorder = it }
         drag.attach(listView)
         refreshDrawer(context)
+    }
+
+    /**
+     * Moves the list's top padding to its bottom. The host pads only the top, which pushes every
+     * row down and leaves the footer with no matching gap, so the column sits off-centre.
+     */
+    private fun balanceListPadding(listView: ListView) {
+        if (paddingBalanced) return
+        val top = listView.paddingTop
+        if (top <= 0) return
+        listView.setPadding(listView.paddingLeft, 0, listView.paddingRight, top)
+        paddingBalanced = true
     }
 
     /**
@@ -319,7 +333,6 @@ class SidebarDrawerHook : AppHookModule() {
                 }
                 if (!appRow) return
                 val row = listView.getChildAt(position - listView.firstVisiblePosition) ?: return
-                if (row === footViewField?.get(context)) return
                 SidebarPressScale.press(SidebarPressScale.iconOf(row, hostPackage))
             }
             android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL ->

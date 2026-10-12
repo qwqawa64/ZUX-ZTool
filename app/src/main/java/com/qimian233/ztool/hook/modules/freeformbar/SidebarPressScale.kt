@@ -6,6 +6,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.widget.ImageView
 import com.qimian233.ztool.hook.base.ModuleLog
 
 /**
@@ -57,16 +58,21 @@ internal object SidebarPressScale {
         }.onFailure { logger?.error("release feedback failed", it) }
     }
 
-    /** The icon inside a host row, falling back to the row itself. */
+    /** The icon inside a row, falling back to the row itself. */
     fun iconOf(row: View, hostPackage: String): View {
         if (iconId == 0) iconId = row.resources.getIdentifier("appicon_iv", "id", hostPackage)
         // The type argument is required: inferring it from a nullable branch casts to Void.
         val found: View? = if (iconId != 0) row.findViewById<View>(iconId) else null
-        if (found == null && !warnedIcon) {
+        if (found != null) return found
+        // The host's "more" footer is a wrapper around a single icon and names nothing.
+        if (row is ViewGroup && row.childCount == 1) {
+            (row.getChildAt(0) as? ImageView)?.let { return it }
+        }
+        if (!warnedIcon) {
             warnedIcon = true
             logger?.warn("press: no appicon_iv in " + row.javaClass.simpleName + ", id=" + iconId)
         }
-        return found ?: row
+        return row
     }
 
     /**
