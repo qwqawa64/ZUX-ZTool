@@ -475,10 +475,12 @@ class SidebarDrawerHook : AppHookModule() {
             // Gravity.UNSPECIFIED_GRAVITY is @hide; -1 is its value and restores the XML default.
             panelParams.gravity = -1
             drawerParams.gravity = -1
-            // Entering edit mode ran the host's all-apps path, which hid the drawer; leaving it
-            // has to put the drawer back, or the panel would stay on screen.
+            // Mirrors the host's own drawer-open path, which also un-hides its "more" footer:
+            // entering edit mode ran showAllAppWindow, and that hides the footer.
             panel.visibility = android.view.View.GONE
             drawer.visibility = android.view.View.VISIBLE
+            (footViewField?.get(context) as? android.view.View)?.visibility =
+                android.view.View.VISIBLE
         }
         panel.layoutParams = panelParams
         drawer.layoutParams = drawerParams
