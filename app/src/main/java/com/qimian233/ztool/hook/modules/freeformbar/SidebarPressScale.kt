@@ -6,6 +6,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import com.qimian233.ztool.hook.base.ModuleLog
 
 /**
  * Squeeze feedback for app icons.
@@ -23,10 +24,17 @@ internal object SidebarPressScale {
     private var iconId = 0
     private var pressed: View? = null
     private var watching = false
+    private var warnedIcon = false
+
+    /** Set once by the hook so the press path can be traced. */
+    var logger: ModuleLog? = null
 
     fun press(view: View?) {
         if (view == null) return
         pressed = view
+        logger?.trace(
+            "press on " + view.javaClass.simpleName + " isIcon=" + (view is ImageView)
+        )
         // An icon has no room for a tile behind it, so it brightens instead; the action button
         // is a plain view with its own pressed tile and only scales.
         (view as? ImageView)?.colorFilter = HIGHLIGHT
@@ -45,7 +53,14 @@ internal object SidebarPressScale {
     /** The icon inside a host row, falling back to the row itself. */
     fun iconOf(row: View, hostPackage: String): View {
         if (iconId == 0) iconId = row.resources.getIdentifier("appicon_iv", "id", hostPackage)
-        return if (iconId != 0) row.findViewById(iconId) ?: row else row
+        val found = if (iconId != 0) row.findViewById(iconId) else null
+        if (found == null && !warnedIcon) {
+            warnedIcon = true
+            logger?.warn(
+                "press: no appicon_iv in " + row.javaClass.simpleName + ", id=" + iconId
+            )
+        }
+        return found ?: row
     }
 
     /**

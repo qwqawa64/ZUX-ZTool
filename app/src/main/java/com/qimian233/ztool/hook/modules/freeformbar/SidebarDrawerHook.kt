@@ -243,6 +243,7 @@ class SidebarDrawerHook : AppHookModule() {
             logger.warn("drawer ListView not found, leaving the host adapter in place")
             return
         }
+        SidebarPressScale.logger = logger
         // The host restores its own views when the popup goes away, so a drawer reopened while
         // editing would come back in the edit layout with no panel to edit in.
         if (adapter?.isEditMode() == true) {

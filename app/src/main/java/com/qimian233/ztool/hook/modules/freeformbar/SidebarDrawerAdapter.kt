@@ -263,6 +263,16 @@ internal class SidebarDrawerAdapter(
                             size, size, Gravity.TOP or Gravity.END
                         )
                         setOnClickListener { callbacks.onRemove(app) }
+                        // The disc is clickable, so it consumes the gesture and can squeeze the
+                        // icon it belongs to.
+                        setOnTouchListener { _, event ->
+                            when (event.actionMasked) {
+                                MotionEvent.ACTION_DOWN -> SidebarPressScale.press(icon)
+                                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                                    SidebarPressScale.release(icon)
+                            }
+                            false
+                        }
                     }
             )
         }

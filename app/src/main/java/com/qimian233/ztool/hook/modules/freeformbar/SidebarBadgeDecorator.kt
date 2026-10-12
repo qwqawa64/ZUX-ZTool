@@ -40,6 +40,7 @@ internal class SidebarBadgeDecorator(
     private var warnedDivergence = false
     private var reported = false
     private var tracePass = false
+    private var active = false
     private var lastPosition = -1
     private var lastSource = "none"
 
@@ -63,6 +64,7 @@ internal class SidebarBadgeDecorator(
     ) {
         val container = gridView as? ViewGroup ?: return
         grid = container
+        active = true
         apps = appList
         isMember = member
         onToggle = toggle
@@ -84,6 +86,7 @@ internal class SidebarBadgeDecorator(
 
     /** Removes the badges and restores normal item taps, e.g. when leaving edit mode. */
     fun clear() {
+        active = false
         val container = grid ?: return
         for (index in 0 until container.childCount) {
             val item = container.getChildAt(index) as? ViewGroup ?: continue
@@ -94,6 +97,9 @@ internal class SidebarBadgeDecorator(
     }
 
     private fun redraw() {
+        // The scroll and layout listeners outlive edit mode; without this they would keep
+        // re-attaching consuming listeners and badges to the panel the host shows on its own.
+        if (!active) return
         val container = grid ?: return
         val service = apps()
         val adapter = adapterList(container)
@@ -183,6 +189,16 @@ internal class SidebarBadgeDecorator(
                     null
                 }
             )
+            // The badge is clickable, so it consumes the gesture and can squeeze the icon too.
+            badge.setOnTouchListener { _, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN ->
+                        SidebarPressScale.press(item.findViewById<View>(iconId(container)))
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                        SidebarPressScale.releasePressed()
+                }
+                false
+            }
         }
         if (decorated > 0 && !reported) {
             reported = true
