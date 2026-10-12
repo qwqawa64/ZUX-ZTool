@@ -3,7 +3,9 @@ package com.qimian233.ztool.hook.modules.freeformbar
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -121,10 +123,10 @@ internal class SidebarBadgeDecorator(
             // also block our badge and our touch listener; while picking apps the row must stay
             // interactive, and its own click is swallowed below anyway.
             item.isEnabled = true
-            item.setOnTouchListener { _, _ -> true }
             val app = appFor(container, item, adapter, service)
             if (app == null) {
                 unresolved++
+                item.setOnTouchListener { _, _ -> true }
                 // Leave no trace of the host's own dimming for apps that are merely running.
                 item.findViewById<View>(iconId(container))?.alpha = 1f
                 report(item, tracing, force) {
@@ -135,6 +137,7 @@ internal class SidebarBadgeDecorator(
             }
             val member = isMember(app)
             val key = SidebarReflect.keyOf(app)
+            item.setOnTouchListener(itemTouch(item, app, member))
             // Apps already in the drawer are masked and carry no badge: they are removed from
             // the drawer row's own disc. A full drawer masks everything, because nothing more
             // can be added at all.
@@ -234,6 +237,30 @@ internal class SidebarBadgeDecorator(
         }
         lastSource = "none"
         return service.getOrNull(position)?.also { lastSource = "service" }
+    }
+
+    /**
+     * Squeezes the item's icon and swallows the tap, so the host never launches while editing.
+     * An app that still shows its add badge is also added when its icon itself is tapped.
+     */
+    private fun itemTouch(item: ViewGroup, app: Any, member: Boolean): View.OnTouchListener {
+        val slop = ViewConfiguration.get(item.context).scaledTouchSlop
+        var downY = 0f
+        return View.OnTouchListener { _, event ->
+            val icon = item.findViewById<View>(iconId(item))
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downY = event.y
+                    SidebarPressScale.press(icon)
+                }
+                MotionEvent.ACTION_UP -> {
+                    SidebarPressScale.release(icon)
+                    if (!member && canAdd && kotlin.math.abs(event.y - downY) <= slop) onToggle(app)
+                }
+                MotionEvent.ACTION_CANCEL -> SidebarPressScale.release(icon)
+            }
+            true
+        }
     }
 
     private fun adapterList(container: ViewGroup): List<Any>? {

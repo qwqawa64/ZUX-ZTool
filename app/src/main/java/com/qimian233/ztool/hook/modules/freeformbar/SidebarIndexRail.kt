@@ -104,6 +104,8 @@ internal class SidebarIndexRail(
                 textSize = LETTER_SP
                 gravity = Gravity.CENTER
                 setTextColor(INACTIVE)
+                // Without this the glyph sits low in its box, so a centred disc looks high.
+                includeFontPadding = false
                 layoutParams = LinearLayout.LayoutParams(itemHeight, itemHeight)
             }
             letterViews.add(view)

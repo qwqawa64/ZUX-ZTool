@@ -52,6 +52,7 @@ internal class SidebarDrawerAdapter(
      * vertical row padding clips the icon on both edges.
      */
     private val iconSize = minOf(dimen("top_list_item_width", 72), rowHeight - 2 * padTop)
+    private val iconViewId = context.resources.getIdentifier("appicon_iv", "id", hostPackage)
 
     private val editLabel = SidebarStrings.get(context, SidebarStrings.STRING_EDIT, SidebarStrings.FALLBACK_EDIT)
     private val doneLabel = SidebarStrings.get(context, SidebarStrings.STRING_DONE, SidebarStrings.FALLBACK_DONE)
@@ -176,6 +177,14 @@ internal class SidebarDrawerAdapter(
             isClickable = true
             contentDescription = label
             setOnClickListener { callbacks.onToggleEditMode() }
+            setOnTouchListener { view, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> SidebarPressScale.press(view)
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                        SidebarPressScale.release(view)
+                }
+                false
+            }
             layoutParams = LinearLayout.LayoutParams(size, size)
             addView(ImageView(context).apply {
                 setImageDrawable(icon)
@@ -214,6 +223,8 @@ internal class SidebarDrawerAdapter(
             row.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
         }
         val icon = ImageView(context).apply {
+            // Carries the host's icon id so press feedback can find the icon, not the whole row.
+            if (iconViewId != 0) id = iconViewId
             setImageDrawable(SidebarReflect.iconOf(app))
             contentDescription = SidebarReflect.labelOf(app)
             alpha = if (alreadyVisible && !editMode) 0.3f else 1.0f

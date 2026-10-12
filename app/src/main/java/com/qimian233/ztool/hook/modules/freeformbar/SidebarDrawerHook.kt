@@ -270,15 +270,34 @@ class SidebarDrawerHook : AppHookModule() {
                 adapter?.let {
                     if (index < 0) it.setDraggingIndex(-1) else it.setDraggingIndexSilently(index)
                 }
-            }
+            },
+            // The rows are not clickable, so only this listener sees the whole gesture.
+            onTouchObserved = { event -> observeDrawerPress(context, listView, event) }
         ).also { dragReorder = it }
         drag.attach(listView)
         refreshDrawer(context)
     }
 
+    /** Squeezes the icon of the touched drawer row; only outside edit mode, where taps launch. */
+    private fun observeDrawerPress(context: Context, listView: ListView, event: android.view.MotionEvent) {
+        val drawerAdapter = adapter ?: return
+        if (drawerAdapter.isEditMode()) return
+        when (event.actionMasked) {
+            android.view.MotionEvent.ACTION_DOWN -> {
+                val position = listView.pointToPosition(event.x.toInt(), event.y.toInt())
+                // The action row and the host's "more" footer are not app rows.
+                if (position < 0 || position == drawerAdapter.actionPosition()) return
+                val row = listView.getChildAt(position - listView.firstVisiblePosition) ?: return
+                if (row === footViewField?.get(context)) return
+                SidebarPressScale.press(SidebarPressScale.iconOf(row, hostPackage))
+            }
+            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL ->
+                SidebarPressScale.releasePressed()
+        }
+    }
+
     /** Adapter position to member index, or -1 when that position is not a draggable app row. */
-    private fun memberIndexAt(position: Int): Int {
-        val drawerAdapter = adapter ?: return -1
+    private fun memberIndexAt(position: Int): Int {        val drawerAdapter = adapter ?: return -1
         if (!drawerAdapter.isEditMode()) return -1
         val index = position - 1
         return if (index in 0 until memberCount) index else -1
@@ -310,13 +329,12 @@ class SidebarDrawerHook : AppHookModule() {
         if (drawerAdapter.isEditMode()) {
             applyEditLayout(context, true)
             refreshBadges(context)
-            // While editing, taps are swallowed per item and nothing should squeeze.
-            grid.setOnTouchListener(null)
             return
         }
         // The host's own "..." path shows this panel outside edit mode; its icons get the same
-        // squeeze feedback as the drawer rows.
-        SidebarPressScale.attach(grid, hostPackage)
+        // squeeze feedback as the drawer rows. Only the items are clickable, so a listener on the
+        // grid itself would never see a tap that a child consumed.
+        SidebarPressScale.attachItems(grid, hostPackage) { adapter?.isEditMode() != true }
     }
 
     /** Builds the A–Z rail for the all-apps panel and hides the host's crashing one. */

@@ -21,7 +21,8 @@ internal class SidebarDragReorder(
     private val logger: ModuleLog,
     private val isDraggable: (position: Int) -> Boolean,
     private val onSwap: (fromPosition: Int, toPosition: Int) -> Unit,
-    private val onDragging: (position: Int) -> Unit
+    private val onDragging: (position: Int) -> Unit,
+    private val onTouchObserved: (MotionEvent) -> Unit = {}
 ) {
 
     private var listView: ListView? = null
@@ -47,6 +48,7 @@ internal class SidebarDragReorder(
 
     private fun handle(event: MotionEvent): Boolean {
         val view = listView ?: return false
+        runCatching { onTouchObserved(event) }
         return when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> onDown(view, event)
             MotionEvent.ACTION_MOVE -> onMove(view, event)

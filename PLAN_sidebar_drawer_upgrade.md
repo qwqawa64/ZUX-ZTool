@@ -545,9 +545,20 @@ mask's radius cannot be read from the drawable, so a share is the practical way 
 looking like the icons beside them.
 
 Press feedback is a squeeze: the drawer rows scale their icon, and the all-apps panel scales the
-icon of the row under the finger through a listener on the grid itself. Both observers return
-false so the host's own click still fires, and neither is installed while editing, where taps are
-swallowed per item.
+icon of the row under the finger. Both observers return false so the host's own click still fires,
+and neither is installed while editing, where taps are swallowed per item.
+
+Which listener can drive that is decided by Android's dispatch order. A `ViewGroup` consults its
+own `OnTouchListener` only when no child consumed the event, and a view receives the rest of a
+gesture only if it or a descendant consumed the down. So:
+
+* the all-apps items are clickable (the host sets a click listener), so a listener on each item
+  sees the whole gesture, while a listener on the grid itself would never fire at all;
+* the drawer rows are not clickable, so only the ListView's own listener, already installed for
+  dragging, sees the whole gesture — a per-row listener gets the down and nothing else, which is
+  why the first attempt left icons stuck at their pressed size.
+
+The action row's tile is clickable, so it both scales and shows its own pressed fill.
 
 ### Capacity range
 
