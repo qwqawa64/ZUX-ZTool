@@ -2,6 +2,9 @@ package com.qimian233.ztool.hook.modules.freeformbar
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.InsetDrawable
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -42,6 +45,7 @@ internal class SidebarIndexRail(
     private var positions: List<Int> = emptyList()
     private var itemHeight: Int = 0
     private var focused: Int = -1
+    private val letterViews = ArrayList<TextView>()
 
     /** Builds or refreshes the rail for [apps] in grid order, anchored where the host bar sits. */
     fun attach(panel: ViewGroup, grid: View, apps: List<Any>) {
@@ -80,6 +84,8 @@ internal class SidebarIndexRail(
         LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
+            val inset = (RAIL_INSET_DP * context.resources.displayMetrics.density).toInt()
+            setPadding(inset, inset, inset, inset)
             layoutParams = hostParams ?: FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -91,17 +97,46 @@ internal class SidebarIndexRail(
     private fun render() {
         val container = rail ?: return
         container.removeAllViews()
+        letterViews.clear()
         letters.forEachIndexed { index, letter ->
-            container.addView(TextView(container.context).apply {
+            val view = TextView(container.context).apply {
                 text = letter
-                textSize = 11f
+                textSize = LETTER_SP
                 gravity = Gravity.CENTER
-                setTextColor(if (index == focused) Color.WHITE else INACTIVE)
-                layoutParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, itemHeight
-                )
-            })
+                setTextColor(INACTIVE)
+                layoutParams = LinearLayout.LayoutParams(itemHeight, itemHeight)
+            }
+            letterViews.add(view)
+            container.addView(view)
+            if (index == focused) style(view, true, false)
         }
+    }
+
+    /** Focus moves without rebuilding, so the highlight can animate instead of being recreated. */
+    private fun applyFocus(previous: Int, current: Int) {
+        letterViews.getOrNull(previous)?.let { style(it, false, true) }
+        letterViews.getOrNull(current)?.let { style(it, true, true) }
+    }
+
+    private fun style(view: TextView, active: Boolean, animate: Boolean) {
+        view.setTextColor(if (active) Color.WHITE else INACTIVE)
+        view.background = if (active) focusBubble(view.context) else null
+        val scale = if (active) FOCUSED_SCALE else 1f
+        if (animate) {
+            view.animate().scaleX(scale).scaleY(scale).setDuration(FOCUS_ANIM_MS).start()
+        } else {
+            view.scaleX = scale
+            view.scaleY = scale
+        }
+    }
+
+    private fun focusBubble(context: Context): Drawable {
+        val inset = (BUBBLE_INSET_DP * context.resources.displayMetrics.density).toInt()
+        val disc = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(FOCUS_FILL)
+        }
+        return InsetDrawable(disc, inset, inset, inset, inset)
     }
 
     private fun onTouch(view: View, event: MotionEvent): Boolean {
@@ -116,8 +151,9 @@ internal class SidebarIndexRail(
 
     private fun focus(index: Int) {
         if (index != focused) {
+            val previous = focused
             focused = index
-            render()
+            applyFocus(previous, index)
         }
         val target = grid ?: return
         val position = positions.getOrNull(index) ?: return
@@ -154,8 +190,14 @@ internal class SidebarIndexRail(
 
     private companion object {
         const val OTHER = "#"
-        const val ITEM_DP = 14
-        const val MIN_ITEM_DP = 8
+        const val ITEM_DP = 17
+        const val MIN_ITEM_DP = 9
+        const val RAIL_INSET_DP = 6
+        const val BUBBLE_INSET_DP = 2
+        const val LETTER_SP = 13f
+        const val FOCUSED_SCALE = 1.25f
+        const val FOCUS_ANIM_MS = 90L
         const val INACTIVE = 0x99FFFFFF.toInt()
+        const val FOCUS_FILL = 0x59FFFFFF
     }
 }

@@ -306,9 +306,17 @@ class SidebarDrawerHook : AppHookModule() {
     /** The host hides one panel or the other whenever it opens them, so put the edit layout back. */
     private fun reapplyEditChrome(context: Context) {
         val drawerAdapter = adapter ?: return
-        if (!drawerAdapter.isEditMode()) return
-        applyEditLayout(context, true)
-        refreshBadges(context)
+        val grid = appIconGvField?.get(context) as? android.view.ViewGroup ?: return
+        if (drawerAdapter.isEditMode()) {
+            applyEditLayout(context, true)
+            refreshBadges(context)
+            // While editing, taps are swallowed per item and nothing should squeeze.
+            grid.setOnTouchListener(null)
+            return
+        }
+        // The host's own "..." path shows this panel outside edit mode; its icons get the same
+        // squeeze feedback as the drawer rows.
+        SidebarPressScale.attach(grid, hostPackage)
     }
 
     /** Builds the A–Z rail for the all-apps panel and hides the host's crashing one. */

@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsListView
@@ -142,7 +143,7 @@ internal class SidebarDrawerAdapter(
             setPadding(0, padTop, 0, padTop)
         }
         row.addView(View(context).apply {
-            background = tile(SLOT_FILL)
+            background = tile(SLOT_FILL, iconSize)
             layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
         })
         return row
@@ -168,36 +169,32 @@ internal class SidebarDrawerAdapter(
             })
             return row
         }
-        val size = (ACTION_BUTTON_DP * context.resources.displayMetrics.density).toInt()
+        val size = iconSize
         // Clickable so it owns its pressed state; the host's item click then never fires for it.
         row.addView(FrameLayout(context).apply {
-            background = buttonBackground()
+            background = buttonBackground(size)
             isClickable = true
             contentDescription = label
             setOnClickListener { callbacks.onToggleEditMode() }
             layoutParams = LinearLayout.LayoutParams(size, size)
             addView(ImageView(context).apply {
                 setImageDrawable(icon)
-                layoutParams = FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
-                ).apply {
-                    val inset = (ACTION_ICON_INSET_DP * context.resources.displayMetrics.density).toInt()
-                    setMargins(inset, inset, inset, inset)
-                }
+                val glyph = (size * ACTION_ICON_RATIO).toInt()
+                layoutParams = FrameLayout.LayoutParams(glyph, glyph, Gravity.CENTER)
             })
         })
         return row
     }
 
-    /** The placeholder's tile without its border, darkened, plus a pressed state. */
-    private fun buttonBackground(): StateListDrawable = StateListDrawable().apply {
-        addState(intArrayOf(android.R.attr.state_pressed), tile(BUTTON_FILL_PRESSED))
-        addState(intArrayOf(), tile(BUTTON_FILL))
+    /** The slot tile's shape, darkened, plus a pressed state. */
+    private fun buttonBackground(size: Int): StateListDrawable = StateListDrawable().apply {
+        addState(intArrayOf(android.R.attr.state_pressed), tile(BUTTON_FILL_PRESSED, size))
+        addState(intArrayOf(), tile(BUTTON_FILL, size))
     }
 
-    private fun tile(color: Int): GradientDrawable = GradientDrawable().apply {
+    private fun tile(color: Int, size: Int): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
-        cornerRadius = TILE_CORNER_DP * context.resources.displayMetrics.density
+        cornerRadius = size * TILE_CORNER_RATIO
         setColor(color)
     }
 
@@ -227,6 +224,15 @@ internal class SidebarDrawerAdapter(
             row.addView(iconWithRemoveBadge(icon, app))
         } else {
             row.addView(icon, LinearLayout.LayoutParams(iconSize, iconSize))
+            // Squeeze feedback on press; returning false keeps the host's item click working.
+            row.setOnTouchListener { _, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> SidebarPressScale.press(icon)
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                        SidebarPressScale.release(icon)
+                }
+                false
+            }
         }
         // No row-level click listener: the host's ListView item click drives both
         // launching (normal mode) and ignoring taps on empty row areas (edit mode).
@@ -258,9 +264,10 @@ internal class SidebarDrawerAdapter(
     private companion object {
         const val DRAGGING_ALPHA = 0.5f
         const val SWAP_ANIM_MS = 120L
-        const val ACTION_BUTTON_DP = 46
-        const val ACTION_ICON_INSET_DP = 11
-        const val TILE_CORNER_DP = 12f
+        /** Share of the tile the glyph fills; the rest is the tile's own padding. */
+        const val ACTION_ICON_RATIO = 0.52f
+        /** Corner radius as a share of the tile, matching how launcher icon masks round. */
+        const val TILE_CORNER_RATIO = 0.25f
         const val SLOT_FILL = 0x14FFFFFF
         const val BUTTON_FILL = 0x33FFFFFF
         const val BUTTON_FILL_PRESSED = 0x80FFFFFF.toInt()

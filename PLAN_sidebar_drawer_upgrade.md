@@ -539,6 +539,16 @@ drawables through the host context, falling back to the text label if that looku
 in a clickable tile that reuses the empty slot's shape, so it owns its own pressed state; the
 slot tile itself carries a fill only, with no border.
 
+Both tiles take the same size (`top_list_item_width`, so they line up with the app icons) and the
+same corner radius, expressed as a share of that size rather than a dp value. A launcher icon
+mask's radius cannot be read from the drawable, so a share is the practical way to keep the tiles
+looking like the icons beside them.
+
+Press feedback is a squeeze: the drawer rows scale their icon, and the all-apps panel scales the
+icon of the row under the finger through a listener on the grid itself. Both observers return
+false so the host's own click still fires, and neither is installed while editing, where taps are
+swallowed per item.
+
 ### Capacity range
 
 The drawer's ListView is 1850 px tall with 180 px rows, so exactly **10 rows** are visible.
