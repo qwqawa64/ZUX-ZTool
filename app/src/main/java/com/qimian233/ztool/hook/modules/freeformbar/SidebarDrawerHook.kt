@@ -425,6 +425,8 @@ class SidebarDrawerHook : AppHookModule() {
         val grid = appIconGvField?.get(context) as? android.view.View ?: return
         val apps = appAllListField?.get(context) as? List<Any> ?: return
         if (apps.isEmpty()) return
+        // Explicit: some ZUI builds turn the platform's stretch overscroll off by default.
+        grid.overScrollMode = android.view.View.OVER_SCROLL_ALWAYS
         rail.attach(panel, grid, apps)
     }
 
