@@ -2,7 +2,6 @@ package com.qimian233.ztool.hook.modules.freeformbar
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.view.Gravity
 import android.view.MotionEvent
@@ -47,9 +46,10 @@ internal class SidebarDrawerAdapter(
 
     /**
      * The host's `top_list_item_width` equals the row height, so using it verbatim after adding
-     * vertical row padding clips the icon on both edges.
+     * vertical row padding clips the icon on both edges. Shared with the host's "more" footer so
+     * its tile lines up with the slots.
      */
-    private val iconSize = minOf(dimen("top_list_item_width", 72), rowHeight - 2 * padTop)
+    val iconSize = minOf(dimen("top_list_item_width", 72), rowHeight - 2 * padTop)
     private val iconViewId = context.resources.getIdentifier("appicon_iv", "id", hostPackage)
 
     private val editLabel = SidebarStrings.get(context, SidebarStrings.STRING_EDIT, SidebarStrings.FALLBACK_EDIT)
@@ -129,7 +129,7 @@ internal class SidebarDrawerAdapter(
             setPadding(0, padTop, 0, padTop)
         }
         row.addView(View(context).apply {
-            background = tile(SLOT_FILL, iconSize)
+            background = SidebarTiles.tile(SidebarTiles.SLOT_FILL, iconSize)
             layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
         })
         return row
@@ -182,14 +182,11 @@ internal class SidebarDrawerAdapter(
 
     /** The slot tile's shape, darkened, plus a pressed state. */
     private fun buttonBackground(size: Int): StateListDrawable = StateListDrawable().apply {
-        addState(intArrayOf(android.R.attr.state_pressed), tile(BUTTON_FILL_PRESSED, size))
-        addState(intArrayOf(), tile(BUTTON_FILL, size))
-    }
-
-    private fun tile(color: Int, size: Int): GradientDrawable = GradientDrawable().apply {
-        shape = GradientDrawable.RECTANGLE
-        cornerRadius = size * TILE_CORNER_RATIO
-        setColor(color)
+        addState(
+            intArrayOf(android.R.attr.state_pressed),
+            SidebarTiles.tile(SidebarTiles.BUTTON_FILL_PRESSED, size)
+        )
+        addState(intArrayOf(), SidebarTiles.tile(SidebarTiles.BUTTON_FILL, size))
     }
 
     private fun appRow(app: Any, alreadyVisible: Boolean, index: Int): View {
@@ -259,10 +256,5 @@ internal class SidebarDrawerAdapter(
         const val DRAGGING_ALPHA = 0.5f
         /** Share of the tile the glyph fills; the rest is the tile's own padding. */
         const val ACTION_ICON_RATIO = 0.52f
-        /** Corner radius as a share of the tile, matching how launcher icon masks round. */
-        const val TILE_CORNER_RATIO = 0.25f
-        const val SLOT_FILL = 0x14FFFFFF
-        const val BUTTON_FILL = 0x33FFFFFF
-        const val BUTTON_FILL_PRESSED = 0x80FFFFFF.toInt()
     }
 }

@@ -43,6 +43,7 @@ class SidebarDrawerHook : AppHookModule() {
     private var badgeDecorator: SidebarBadgeDecorator? = null
     private var dragReorder: SidebarDragReorder? = null
     private var memberCount: Int = 0
+    private var footStyled = false
     private var drawerWidth: Int = 0
     private var footViewField: Field? = null
     private var popupWindowField: Field? = null
@@ -253,6 +254,7 @@ class SidebarDrawerHook : AppHookModule() {
         val drawerAdapter = adapter
             ?: SidebarDrawerAdapter(context, hostPackage, editable(context), callbacks(context), logger)
                 .also { adapter = it }
+        styleFootView(context)
         // The host re-attaches its own capped adapter and listener every time the drawer opens,
         // so both are re-asserted rather than only pushing data into the existing instance.
         if (currentAdapter(listView) !== drawerAdapter) {
@@ -278,6 +280,28 @@ class SidebarDrawerHook : AppHookModule() {
         ).also { dragReorder = it }
         drag.attach(listView)
         refreshDrawer(context)
+    }
+
+    /**
+     * Gives the host's "more" footer the same rounded tile the empty slots use, inset to the same
+     * size so the two line up exactly.
+     */
+    private fun styleFootView(context: Context) {
+        if (footStyled) return
+        val footer = footViewField?.get(context) as? android.view.ViewGroup ?: return
+        val tile = adapter?.iconSize ?: return
+        for (index in 0 until footer.childCount) {
+            val icon = footer.getChildAt(index) as? android.widget.ImageView ?: continue
+            val size = icon.layoutParams?.width?.takeIf { it > 0 } ?: tile
+            val inset = ((size - tile) / 2).coerceAtLeast(0)
+            val disc = SidebarTiles.tile(SidebarTiles.SLOT_FILL, tile)
+            icon.background = if (inset > 0) {
+                android.graphics.drawable.InsetDrawable(disc, inset, inset, inset, inset)
+            } else {
+                disc
+            }
+            footStyled = true
+        }
     }
 
     /** Squeezes the icon of the touched drawer row; a long press then hands over to the drag. */
