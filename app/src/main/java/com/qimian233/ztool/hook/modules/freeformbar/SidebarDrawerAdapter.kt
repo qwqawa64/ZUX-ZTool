@@ -41,7 +41,6 @@ internal class SidebarDrawerAdapter(
     private var editMode: Boolean = false
     private var emptySlots: Int = 0
     private var draggingIndex: Int = -1
-    private val pendingOffsets = HashMap<Int, Float>()
 
     /** Uniform row height; the swap animation measures row offsets with it. */
     val rowHeight = dimen("top_list_item_height", 72)
@@ -77,19 +76,6 @@ internal class SidebarDrawerAdapter(
     }
 
     fun isEditMode(): Boolean = editMode
-
-    /**
-     * Starts the two rows of a swap at the offset they came from, so the exchange slides instead
-     * of jumping. Applied when the row is built: a posted runnable can beat the list's layout.
-     */
-    fun animateSwap(fromIndex: Int, toIndex: Int, rowHeight: Int) {
-        val distance = (toIndex - fromIndex) * rowHeight
-        if (distance == 0) return
-        logger.trace("swap animation queued from=" + fromIndex + " to=" + toIndex +
-            " distance=" + distance)
-        pendingOffsets[toIndex] = -distance.toFloat()
-        pendingOffsets[fromIndex] = distance.toFloat()
-    }
 
     /** Marks the row being dragged, or -1 when no drag is running. */
     fun setDraggingIndex(index: Int) {
@@ -217,15 +203,6 @@ internal class SidebarDrawerAdapter(
             setPadding(0, padTop, 0, padTop)
             alpha = if (index == draggingIndex) DRAGGING_ALPHA else 1f
         }
-        pendingOffsets.remove(index)?.let { offset ->
-            // Posted, not applied here: a row is built before it is attached, and an animator
-            // started on a detached view is dropped, which left the offset stuck in place.
-            row.post {
-                logger.trace("swap animation applied to row " + index + " offset=" + offset)
-                row.translationY = offset
-                row.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
-            }
-        }
         val icon = ImageView(context).apply {
             // Carries the host's icon id so press feedback can find the icon, not the whole row.
             if (iconViewId != 0) id = iconViewId
@@ -281,7 +258,6 @@ internal class SidebarDrawerAdapter(
 
     private companion object {
         const val DRAGGING_ALPHA = 0.5f
-        const val SWAP_ANIM_MS = 120L
         /** Share of the tile the glyph fills; the rest is the tile's own padding. */
         const val ACTION_ICON_RATIO = 0.52f
         /** Corner radius as a share of the tile, matching how launcher icon masks round. */

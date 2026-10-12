@@ -266,7 +266,8 @@ class SidebarDrawerHook : AppHookModule() {
             onSwap = { from, to -> swapMembers(context, memberIndexAt(from), memberIndexAt(to)) },
             onDragging = { position ->
                 // A crossing is followed by the swap's own submit, so only the drag's end needs
-                // a rebuild of its own.
+                // a rebuild of its own. The press squeeze ends here, where the drag takes over.
+                SidebarPressScale.release()
                 val index = if (position < 0) -1 else memberIndexAt(position)
                 adapter?.let {
                     if (index < 0) it.setDraggingIndex(-1) else it.setDraggingIndexSilently(index)
@@ -279,15 +280,20 @@ class SidebarDrawerHook : AppHookModule() {
         refreshDrawer(context)
     }
 
-    /** Squeezes the icon of the touched drawer row; only outside edit mode, where taps launch. */
+    /** Squeezes the icon of the touched drawer row; a long press then hands over to the drag. */
     private fun observeDrawerPress(context: Context, listView: ListView, event: android.view.MotionEvent) {
         val drawerAdapter = adapter ?: return
-        if (drawerAdapter.isEditMode()) return
         when (event.actionMasked) {
             android.view.MotionEvent.ACTION_DOWN -> {
                 val position = listView.pointToPosition(event.x.toInt(), event.y.toInt())
-                // The action row and the host's "more" footer are not app rows.
-                if (position < 0 || position == drawerAdapter.actionPosition()) return
+                if (position < 0) return
+                // App rows only: the action row, the host's "more" footer and the empty slots.
+                val appRow = if (drawerAdapter.isEditMode()) {
+                    memberIndexAt(position) >= 0
+                } else {
+                    position != drawerAdapter.actionPosition()
+                }
+                if (!appRow) return
                 val row = listView.getChildAt(position - listView.firstVisiblePosition) ?: return
                 if (row === footViewField?.get(context)) return
                 SidebarPressScale.press(SidebarPressScale.iconOf(row, hostPackage))
@@ -316,11 +322,41 @@ class SidebarDrawerHook : AppHookModule() {
         SidebarDrawerStore.setCustomized(context, true)
         // Membership is unchanged by a reorder, so the all-apps badges need no refresh here.
         adapter?.let { drawerAdapter ->
-            if (drawerAdapter.isEditMode()) {
-                drawerAdapter.animateSwap(from, to, drawerAdapter.rowHeight)
-            }
             submitDrawer(context, drawerAdapter, drawerAdapter.isEditMode(), members)
+            if (drawerAdapter.isEditMode()) animateSwap(context, from, to)
         }
+    }
+
+    /**
+     * Slides the two rows of a swap in from where they were. Applied on the next pre-draw, which
+     * is the first moment the rows exist at their new positions: the list defers its own layout
+     * and an animator started on a view that is not attached is silently dropped.
+     */
+    private fun animateSwap(context: Context, from: Int, to: Int) {
+        val listView = appIconLvField?.get(context) as? ListView ?: return
+        val distance = (to - from) * (adapter?.rowHeight ?: return)
+        if (distance == 0) return
+        logger.trace("swap animation queued from=" + from + " to=" + to + " distance=" + distance)
+        val observer = listView.viewTreeObserver
+        observer.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                runCatching { observer.removeOnPreDrawListener(this) }
+                runCatching {
+                    val first = listView.firstVisiblePosition
+                    // Adapter positions: the action row occupies index 0 while editing.
+                    slide(listView.getChildAt(to + 1 - first), -distance)
+                    slide(listView.getChildAt(from + 1 - first), distance)
+                }.onFailure { logger.error("swap animation failed", it) }
+                return true
+            }
+        })
+    }
+
+    private fun slide(view: android.view.View?, offset: Int) {
+        if (view == null || offset == 0) return
+        logger.trace("swap animation applied to " + view.javaClass.simpleName + " offset=" + offset)
+        view.translationY = offset.toFloat()
+        view.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
     }
 
     /** The host hides one panel or the other whenever it opens them, so put the edit layout back. */
@@ -591,5 +627,6 @@ class SidebarDrawerHook : AppHookModule() {
     private companion object {
         /** The drawer fits 10 rows, two of which are the action row and the host's "more" row. */
         const val MAX_SLOTS = 8
+        const val SWAP_ANIM_MS = 120L
     }
 }

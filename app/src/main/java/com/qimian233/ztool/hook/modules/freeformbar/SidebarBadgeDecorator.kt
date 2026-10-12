@@ -331,7 +331,11 @@ internal class SidebarBadgeDecorator(
                 }
                 MotionEvent.ACTION_UP -> {
                     SidebarPressScale.release()
-                    if (!member && canAdd && kotlin.math.abs(event.y - downY) <= slop) onToggle(app)
+                    val tap = kotlin.math.abs(event.y - downY) <= slop
+                    logger.trace(
+                        "icon tap: member=" + member + " canAdd=" + canAdd + " tap=" + tap
+                    )
+                    if (!member && canAdd && tap) onToggle(app)
                 }
                 MotionEvent.ACTION_CANCEL -> SidebarPressScale.release()
             }
