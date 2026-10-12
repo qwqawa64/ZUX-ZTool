@@ -80,7 +80,9 @@ internal class SidebarDragReorder(
             return false
         }
         val target = view.pointToPosition(view.width / 2, event.y.toInt())
-        if (target >= 0 && target != dragging && isDraggable(target)) {
+        if (target >= 0 && target != dragging && isDraggable(target) &&
+            pastCentre(view, target, dragging, event.y)
+        ) {
             // Highlight first: the swap rebuilds the list, and a rebuild after it would replace
             // the rows that are mid-animation.
             onDragging(target)
@@ -88,6 +90,16 @@ internal class SidebarDragReorder(
             dragging = target
         }
         return true
+    }
+
+    /**
+     * Whether the finger has passed the middle of the row it is entering. Without this the target
+     * flaps between two rows while the finger rests on their boundary, swapping back and forth.
+     */
+    private fun pastCentre(view: ListView, target: Int, current: Int, y: Float): Boolean {
+        val child = view.getChildAt(target - view.firstVisiblePosition) ?: return false
+        val centre = (child.top + child.bottom) / 2f
+        return if (target > current) y > centre else y < centre
     }
 
     private fun onUp(): Boolean {

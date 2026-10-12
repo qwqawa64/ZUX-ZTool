@@ -323,32 +323,18 @@ class SidebarDrawerHook : AppHookModule() {
         // Membership is unchanged by a reorder, so the all-apps badges need no refresh here.
         adapter?.let { drawerAdapter ->
             val editing = drawerAdapter.isEditMode()
-            // Captured before the change, so each row can be animated from where it visually was
-            // rather than from a whole row away, which is what made a drag twitch.
-            val before = if (editing) visualTops(context) else emptyMap()
             submitDrawer(context, drawerAdapter, editing, members)
-            if (editing) animateSwap(context, from, to, before)
+            if (editing) animateSwap(context, from, to)
         }
-    }
-
-    /** Visual top of every attached drawer row, keyed by adapter position. */
-    private fun visualTops(context: Context): Map<Int, Int> {
-        val listView = appIconLvField?.get(context) as? ListView ?: return emptyMap()
-        val tops = HashMap<Int, Int>()
-        val first = listView.firstVisiblePosition
-        for (index in 0 until listView.childCount) {
-            val child = listView.getChildAt(index) ?: continue
-            tops[first + index] = (child.top + child.translationY).toInt()
-        }
-        return tops
     }
 
     /**
-     * Slides the two swapped rows from their previous visual position to their new one. Applied on
-     * the next pre-draw, the first moment the rows exist at their new positions: the list defers
-     * its own layout, and an animator started on a view that is not attached is dropped.
+     * Slides the two swapped rows in from the row they exchanged with. A ListView keeps its rows
+     * where they are and only re-binds their contents, so the distance is a whole row, not a
+     * measured move. Applied on the next pre-draw: the list defers its own layout, and an animator
+     * started on a view that is not attached is dropped.
      */
-    private fun animateSwap(context: Context, from: Int, to: Int, before: Map<Int, Int>) {
+    private fun animateSwap(context: Context, from: Int, to: Int) {
         val listView = appIconLvField?.get(context) as? ListView ?: return
         logger.trace("swap animation queued from=" + from + " to=" + to)
         val observer = listView.viewTreeObserver
@@ -358,19 +344,20 @@ class SidebarDrawerHook : AppHookModule() {
                 runCatching {
                     val first = listView.firstVisiblePosition
                     // Adapter positions: the action row occupies index 0 while editing.
-                    for (position in intArrayOf(from + 1, to + 1)) {
-                        val child = listView.getChildAt(position - first) ?: continue
-                        val previous = before[position] ?: continue
-                        slide(child, previous - child.top)
-                    }
+                    val dragged = listView.getChildAt(to + 1 - first)
+                    val displaced = listView.getChildAt(from + 1 - first)
+                    val distance = dragged?.height ?: displaced?.height ?: return true
+                    // The dragged row came from the other slot, and vice versa.
+                    slide(dragged, (from - to) * distance)
+                    slide(displaced, (to - from) * distance)
                 }.onFailure { logger.error("swap animation failed", it) }
                 return true
             }
         })
     }
 
-    private fun slide(view: android.view.View, offset: Int) {
-        if (offset == 0) return
+    private fun slide(view: android.view.View?, offset: Int) {
+        if (view == null || offset == 0) return
         logger.trace("swap animation applied offset=" + offset)
         view.translationY = offset.toFloat()
         view.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
