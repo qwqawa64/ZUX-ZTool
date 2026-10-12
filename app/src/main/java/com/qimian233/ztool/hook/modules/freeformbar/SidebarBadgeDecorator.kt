@@ -46,6 +46,8 @@ internal class SidebarBadgeDecorator(
     private var active = false
     private var lastPosition = -1
     private var lastSource = "none"
+    private var touchDownY = 0f
+    private var touchSlop = 0
 
     private var apps: () -> List<Any> = { emptyList() }
     private var isMember: (Any) -> Boolean = { false }
@@ -318,20 +320,22 @@ internal class SidebarBadgeDecorator(
     /**
      * Squeezes the item's icon and swallows the tap, so the host never launches while editing.
      * An app that still shows its add badge is also added when its icon itself is tapped.
+     *
+     * The down position lives on the decorator, not in this closure: redraw replaces the listener
+     * mid-gesture, and a fresh closure would compare the up against a zeroed origin.
      */
     private fun itemTouch(item: ViewGroup, app: Any, member: Boolean): View.OnTouchListener {
-        val slop = ViewConfiguration.get(item.context).scaledTouchSlop
-        var downY = 0f
+        touchSlop = ViewConfiguration.get(item.context).scaledTouchSlop
         return View.OnTouchListener { _, event ->
             val icon = item.findViewById<View>(iconId(item))
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    downY = event.y
+                    touchDownY = event.y
                     SidebarPressScale.press(icon)
                 }
                 MotionEvent.ACTION_UP -> {
                     SidebarPressScale.release()
-                    val tap = kotlin.math.abs(event.y - downY) <= slop
+                    val tap = kotlin.math.abs(event.y - touchDownY) <= touchSlop
                     logger.trace(
                         "icon tap: member=" + member + " canAdd=" + canAdd + " tap=" + tap
                     )

@@ -322,21 +322,35 @@ class SidebarDrawerHook : AppHookModule() {
         SidebarDrawerStore.setCustomized(context, true)
         // Membership is unchanged by a reorder, so the all-apps badges need no refresh here.
         adapter?.let { drawerAdapter ->
-            submitDrawer(context, drawerAdapter, drawerAdapter.isEditMode(), members)
-            if (drawerAdapter.isEditMode()) animateSwap(context, from, to)
+            val editing = drawerAdapter.isEditMode()
+            // Captured before the change, so each row can be animated from where it visually was
+            // rather than from a whole row away, which is what made a drag twitch.
+            val before = if (editing) visualTops(context) else emptyMap()
+            submitDrawer(context, drawerAdapter, editing, members)
+            if (editing) animateSwap(context, from, to, before)
         }
     }
 
+    /** Visual top of every attached drawer row, keyed by adapter position. */
+    private fun visualTops(context: Context): Map<Int, Int> {
+        val listView = appIconLvField?.get(context) as? ListView ?: return emptyMap()
+        val tops = HashMap<Int, Int>()
+        val first = listView.firstVisiblePosition
+        for (index in 0 until listView.childCount) {
+            val child = listView.getChildAt(index) ?: continue
+            tops[first + index] = (child.top + child.translationY).toInt()
+        }
+        return tops
+    }
+
     /**
-     * Slides the two rows of a swap in from where they were. Applied on the next pre-draw, which
-     * is the first moment the rows exist at their new positions: the list defers its own layout
-     * and an animator started on a view that is not attached is silently dropped.
+     * Slides the two swapped rows from their previous visual position to their new one. Applied on
+     * the next pre-draw, the first moment the rows exist at their new positions: the list defers
+     * its own layout, and an animator started on a view that is not attached is dropped.
      */
-    private fun animateSwap(context: Context, from: Int, to: Int) {
+    private fun animateSwap(context: Context, from: Int, to: Int, before: Map<Int, Int>) {
         val listView = appIconLvField?.get(context) as? ListView ?: return
-        val distance = (to - from) * (adapter?.rowHeight ?: return)
-        if (distance == 0) return
-        logger.trace("swap animation queued from=" + from + " to=" + to + " distance=" + distance)
+        logger.trace("swap animation queued from=" + from + " to=" + to)
         val observer = listView.viewTreeObserver
         observer.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
             override fun onPreDraw(): Boolean {
@@ -344,17 +358,20 @@ class SidebarDrawerHook : AppHookModule() {
                 runCatching {
                     val first = listView.firstVisiblePosition
                     // Adapter positions: the action row occupies index 0 while editing.
-                    slide(listView.getChildAt(to + 1 - first), -distance)
-                    slide(listView.getChildAt(from + 1 - first), distance)
+                    for (position in intArrayOf(from + 1, to + 1)) {
+                        val child = listView.getChildAt(position - first) ?: continue
+                        val previous = before[position] ?: continue
+                        slide(child, previous - child.top)
+                    }
                 }.onFailure { logger.error("swap animation failed", it) }
                 return true
             }
         })
     }
 
-    private fun slide(view: android.view.View?, offset: Int) {
-        if (view == null || offset == 0) return
-        logger.trace("swap animation applied to " + view.javaClass.simpleName + " offset=" + offset)
+    private fun slide(view: android.view.View, offset: Int) {
+        if (offset == 0) return
+        logger.trace("swap animation applied offset=" + offset)
         view.translationY = offset.toFloat()
         view.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
     }

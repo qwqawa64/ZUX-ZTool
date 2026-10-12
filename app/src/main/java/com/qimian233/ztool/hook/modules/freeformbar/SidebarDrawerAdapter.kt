@@ -42,8 +42,7 @@ internal class SidebarDrawerAdapter(
     private var emptySlots: Int = 0
     private var draggingIndex: Int = -1
 
-    /** Uniform row height; the swap animation measures row offsets with it. */
-    val rowHeight = dimen("top_list_item_height", 72)
+    private val rowHeight = dimen("top_list_item_height", 72)
     private val padTop = dimen("top_list_item_padding_top", 8)
 
     /**
