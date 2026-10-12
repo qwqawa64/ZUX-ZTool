@@ -19,12 +19,13 @@ internal object SidebarPressScale {
 
     private const val SCALE = 0.88f
     private const val DURATION = 90L
-    private val HIGHLIGHT = PorterDuffColorFilter(0x59FFFFFF, PorterDuff.Mode.SRC_ATOP)
+    private val HIGHLIGHT = PorterDuffColorFilter(0x80FFFFFF.toInt(), PorterDuff.Mode.SRC_ATOP)
 
     private var iconId = 0
     private var pressed: View? = null
     private var watching = false
     private var warnedIcon = false
+    private var warnedNotIcon = false
 
     /** Set once by the hook so the press path can be traced. */
     var logger: ModuleLog? = null
@@ -40,6 +41,10 @@ internal object SidebarPressScale {
             // An icon has no room for a tile behind it, so it brightens instead; the action
             // button is a plain view with its own pressed tile and only scales.
             (view as? ImageView)?.colorFilter = HIGHLIGHT
+            if (view !is ImageView && !warnedNotIcon) {
+                warnedNotIcon = true
+                logger?.warn("press: " + view.javaClass.simpleName + " is not an icon to brighten")
+            }
             view.animate().scaleX(SCALE).scaleY(SCALE).setDuration(DURATION).start()
         }.onFailure { logger?.error("press feedback failed", it) }
     }

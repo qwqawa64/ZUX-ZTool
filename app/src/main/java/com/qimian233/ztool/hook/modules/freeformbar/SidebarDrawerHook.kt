@@ -335,9 +335,10 @@ class SidebarDrawerHook : AppHookModule() {
         // The host's own "..." path shows this panel outside edit mode; its icons get the same
         // squeeze feedback as the drawer rows. Only the items are clickable, so a listener on the
         // grid itself would never see a tap that a child consumed.
-        SidebarPressScale.attachItems(grid, hostPackage) { adapter?.isEditMode() != true }
+        SidebarPressScale.attachItems(grid, hostPackage) {
+            adapter?.isEditMode() != true && badgeDecorator?.isActive() != true
+        }
     }
-
     /** Builds the A–Z rail for the all-apps panel and hides the host's crashing one. */
     private fun attachIndexRail(context: Context) {
         val rail = indexRail ?: return
@@ -450,6 +451,9 @@ class SidebarDrawerHook : AppHookModule() {
             SidebarDrawerStore.writeMembers(context, memberKeys(context))
             SidebarDrawerStore.setCustomized(context, true)
         }
+        // Mark edit mode before the host runs its all-apps path: that path calls back into
+        // reapplyEditChrome, which decides what to do from this very flag.
+        submitDrawer(context, drawerAdapter, true)
         // The host only builds the grid adapter inside showAllAppWindow, so the panel would
         // stay empty if the edit layout merely made it visible.
         runCatching { showAllAppWindow?.invoke(context) }

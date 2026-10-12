@@ -78,11 +78,35 @@ internal class SidebarBadgeDecorator(
             container.viewTreeObserver.addOnGlobalLayoutListener {
                 runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
             }
+            // A recycled item is re-bound in place, but a newly added one appears without any
+            // layout or scroll we could rely on, so decorate it the moment it is attached.
+            container.setOnHierarchyChangeListener(object : ViewGroup.OnHierarchyChangeListener {
+                override fun onChildViewAdded(parent: View?, child: View?) {
+                    if (!active) return
+                    val item = child as? ViewGroup ?: return
+                    runCatching {
+                        decorateItem(
+                            item,
+                            container.indexOfChild(item),
+                            container,
+                            adapterList(container),
+                            apps(),
+                            ModuleLog.shouldLog(LogLevel.TRACE),
+                            false
+                        )
+                    }.onFailure { logger.error("badge attach failed", it) }
+                }
+
+                override fun onChildViewRemoved(parent: View?, child: View?) = Unit
+            })
             watching = true
         }
         tracePass = true
         runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
     }
+
+    /** Whether this decorator currently owns the panel's item listeners. */
+    fun isActive(): Boolean = active
 
     /** Removes the badges and restores normal item taps, e.g. when leaving edit mode. */
     fun clear() {
@@ -125,81 +149,9 @@ internal class SidebarBadgeDecorator(
         var unresolved = 0
         for (index in 0 until container.childCount) {
             val item = container.getChildAt(index) as? ViewGroup ?: continue
-            // The host disables the row for apps already open in a small window, which would
-            // also block our badge and our touch listener; while picking apps the row must stay
-            // interactive, and its own click is swallowed below anyway.
-            item.isEnabled = true
-            val app = appFor(container, item, adapter, service)
-            if (app == null) {
-                unresolved++
-                item.setOnTouchListener { _, _ -> true }
-                // Leave no trace of the host's own dimming for apps that are merely running.
-                item.findViewById<View>(iconId(container))?.alpha = 1f
-                report(item, tracing, force) {
-                    "#" + index + " pos=" + lastPosition + " src=" + lastSource +
-                        " label=" + labelOf(item) + " UNRESOLVED alpha=1.0 badge=none"
-                }
-                continue
-            }
-            val member = isMember(app)
-            val key = SidebarReflect.keyOf(app)
-            item.setOnTouchListener(itemTouch(item, app, member))
-            // Apps already in the drawer are masked and carry no badge: they are removed from
-            // the drawer row's own disc. A full drawer masks everything, because nothing more
-            // can be added at all.
-            val masked = member || !canAdd
-            item.findViewById<View>(iconId(container))?.alpha = if (masked) MASKED_ALPHA else 1f
-            val existing = item.findViewById<View>(badgeId) as? TextView
-            if (member) {
-                existing?.visibility = View.GONE
-                report(item, tracing, force) {
-                    "#" + index + " pos=" + lastPosition + " src=" + lastSource +
-                        " label=" + labelOf(item) + " key=" + key + " member=true alpha=" +
-                        (if (masked) MASKED_ALPHA else 1f) + " badge=hidden"
-                }
-                continue
-            }
-            val badge = existing ?: addBadge(item) ?: continue
-            decorated++
-            val enabled = canAdd
-            (badge as? TextView)?.let { view ->
-                if (view.visibility != View.VISIBLE || view.isEnabled != enabled) {
-                    view.visibility = View.VISIBLE
-                    view.isEnabled = enabled
-                    view.alpha = if (enabled) 1f else DISABLED_ALPHA
-                    view.background = SidebarBadgeStyle.disc(
-                        if (enabled) SidebarBadgeStyle.ADD_COLOR else SidebarBadgeStyle.MUTED_COLOR
-                    )
-                }
-            }
-            report(item, tracing, force) {
-                "#" + index + " pos=" + lastPosition + " src=" + lastSource +
-                    " label=" + labelOf(item) + " key=" + key + " member=false alpha=" +
-                    (if (masked) MASKED_ALPHA else 1f) + " badge=" +
-                    (if (enabled) "add" else "add-disabled")
-            }
-            badge.setOnClickListener(
-                if (enabled) {
-                    // Resolve the app when the tap happens: the item view can be rebound to a
-                    // different app between a redraw and the tap, so a captured app goes stale.
-                    View.OnClickListener {
-                        appFor(container, item, adapterList(container), apps())?.let(onToggle)
-                    }
-                } else {
-                    null
-                }
-            )
-            // The badge is clickable, so it consumes the gesture and can squeeze the icon too.
-            badge.setOnTouchListener { _, event ->
-                runCatching {
-                    when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN ->
-                            SidebarPressScale.press(item.findViewById<View>(iconId(container)))
-                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
-                            SidebarPressScale.releasePressed()
-                    }
-                }.onFailure { logger.error("badge press failed", it) }
-                false
+            when (decorateItem(item, index, container, adapter, service, tracing, force)) {
+                DECORATED -> decorated++
+                UNRESOLVED -> unresolved++
             }
         }
         if (decorated > 0 && !reported) {
@@ -210,6 +162,93 @@ internal class SidebarBadgeDecorator(
             warnedUnresolved = true
             logger.warn("badges: " + unresolved + " item views could not be matched to an app")
         }
+    }
+
+    /** Decorates one grid item; returns [DECORATED], [HIDDEN] or [UNRESOLVED]. */
+    private fun decorateItem(
+        item: ViewGroup,
+        index: Int,
+        container: ViewGroup,
+        adapter: List<Any>?,
+        service: List<Any>,
+        tracing: Boolean,
+        force: Boolean
+    ): Int {
+        // The host disables the row for apps already open in a small window, which would also
+        // block our badge and our touch listener; while picking apps the row must stay
+        // interactive, and its own click is swallowed below anyway.
+        item.isEnabled = true
+        val app = appFor(container, item, adapter, service)
+        if (app == null) {
+            item.setOnTouchListener { _, _ -> true }
+            // Leave no trace of the host's own dimming for apps that are merely running.
+            item.findViewById<View>(iconId(container))?.alpha = 1f
+            report(item, tracing, force) {
+                "#" + index + " pos=" + lastPosition + " src=" + lastSource +
+                    " label=" + labelOf(item) + " UNRESOLVED alpha=1.0 badge=none"
+            }
+            return UNRESOLVED
+        }
+        val member = isMember(app)
+        val key = SidebarReflect.keyOf(app)
+        item.setOnTouchListener(itemTouch(item, app, member))
+        // Apps already in the drawer are masked and carry no badge: they are removed from the
+        // drawer row's own disc. A full drawer masks everything, because nothing more can be
+        // added at all.
+        val masked = member || !canAdd
+        item.findViewById<View>(iconId(container))?.alpha = if (masked) MASKED_ALPHA else 1f
+        val existing = item.findViewById<View>(badgeId) as? TextView
+        if (member) {
+            existing?.visibility = View.GONE
+            report(item, tracing, force) {
+                "#" + index + " pos=" + lastPosition + " src=" + lastSource +
+                    " label=" + labelOf(item) + " key=" + key + " member=true alpha=" +
+                    (if (masked) MASKED_ALPHA else 1f) + " badge=hidden"
+            }
+            return HIDDEN
+        }
+        val badge = existing ?: addBadge(item) ?: return HIDDEN
+        val enabled = canAdd
+        (badge as? TextView)?.let { view ->
+            if (view.visibility != View.VISIBLE || view.isEnabled != enabled) {
+                view.visibility = View.VISIBLE
+                view.isEnabled = enabled
+                view.alpha = if (enabled) 1f else DISABLED_ALPHA
+                view.background = SidebarBadgeStyle.disc(
+                    if (enabled) SidebarBadgeStyle.ADD_COLOR else SidebarBadgeStyle.MUTED_COLOR
+                )
+            }
+        }
+        report(item, tracing, force) {
+            "#" + index + " pos=" + lastPosition + " src=" + lastSource +
+                " label=" + labelOf(item) + " key=" + key + " member=false alpha=" +
+                (if (masked) MASKED_ALPHA else 1f) + " badge=" +
+                (if (enabled) "add" else "add-disabled")
+        }
+        badge.setOnClickListener(
+            if (enabled) {
+                // Resolve the app when the tap happens: the item view can be rebound to a
+                // different app between a redraw and the tap, so a captured app goes stale.
+                View.OnClickListener {
+                    appFor(container, item, adapterList(container), apps())?.let(onToggle)
+                }
+            } else {
+                null
+            }
+        )
+        // The badge is clickable, so it consumes the gesture and can squeeze the icon too.
+        badge.setOnTouchListener { _, event ->
+            runCatching {
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN ->
+                        SidebarPressScale.press(item.findViewById<View>(iconId(container)))
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                        SidebarPressScale.releasePressed()
+                }
+            }.onFailure { logger.error("badge press failed", it) }
+            false
+        }
+        return DECORATED
     }
 
     /** Last reported decision per item view; weak so recycled views cannot be kept alive. */
@@ -374,5 +413,8 @@ internal class SidebarBadgeDecorator(
     private companion object {
         const val DISABLED_ALPHA = 0.35f
         const val MASKED_ALPHA = 0.35f
+        const val DECORATED = 1
+        const val HIDDEN = 0
+        const val UNRESOLVED = -1
     }
 }
