@@ -285,14 +285,16 @@ class SidebarDrawerHook : AppHookModule() {
     }
 
     /**
-     * Moves the list's top padding to its bottom. The host pads only the top, which pushes every
-     * row down and leaves the footer with no matching gap, so the column sits off-centre.
+     * Splits the list's top padding between its top and bottom. The host pads only the top, which
+     * pushes every row down and leaves the footer with no matching gap, so the column sits off
+     * centre; halving keeps the total height and centres it.
      */
     private fun balanceListPadding(listView: ListView) {
         if (paddingBalanced) return
         val top = listView.paddingTop
         if (top <= 0) return
-        listView.setPadding(listView.paddingLeft, 0, listView.paddingRight, top)
+        val half = top / 2
+        listView.setPadding(listView.paddingLeft, half, listView.paddingRight, top - half)
         paddingBalanced = true
     }
 
