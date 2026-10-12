@@ -181,7 +181,7 @@ internal class SidebarDrawerAdapter(
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> SidebarPressScale.press(view)
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
-                        SidebarPressScale.release(view)
+                        SidebarPressScale.release()
                 }
                 false
             }
@@ -235,15 +235,8 @@ internal class SidebarDrawerAdapter(
             row.addView(iconWithRemoveBadge(icon, app))
         } else {
             row.addView(icon, LinearLayout.LayoutParams(iconSize, iconSize))
-            // Squeeze feedback on press; returning false keeps the host's item click working.
-            row.setOnTouchListener { _, event ->
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> SidebarPressScale.press(icon)
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
-                        SidebarPressScale.release(icon)
-                }
-                false
-            }
+            // No row-level press listener: the row does not consume, so it would never see the
+            // up. The drawer's ListView listener drives that feedback instead.
         }
         // No row-level click listener: the host's ListView item click drives both
         // launching (normal mode) and ignoring taps on empty row areas (edit mode).
@@ -269,7 +262,7 @@ internal class SidebarDrawerAdapter(
                             when (event.actionMasked) {
                                 MotionEvent.ACTION_DOWN -> SidebarPressScale.press(icon)
                                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
-                                    SidebarPressScale.release(icon)
+                                    SidebarPressScale.release()
                             }
                             false
                         }

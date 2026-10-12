@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.RelativeLayout
 import android.widget.TextView
 import com.qimian233.ztool.data.keys.LogLevel
@@ -39,6 +40,8 @@ internal class SidebarBadgeDecorator(
     private var warnedUnresolved = false
     private var warnedDivergence = false
     private var reported = false
+    private var scrollListener: ViewTreeObserver.OnScrollChangedListener? = null
+    private var layoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
     private var tracePass = false
     private var active = false
     private var lastPosition = -1
@@ -70,14 +73,6 @@ internal class SidebarBadgeDecorator(
         onToggle = toggle
         canAdd = addAllowed
         if (!watching) {
-            // A throw here would run inside the host's layout pass and kill its process.
-            container.viewTreeObserver.addOnScrollChangedListener {
-                runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
-            }
-            // Item views only exist after the grid lays out, and scrolling may never happen.
-            container.viewTreeObserver.addOnGlobalLayoutListener {
-                runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
-            }
             // A recycled item is re-bound in place, but a newly added one appears without any
             // layout or scroll we could rely on, so decorate it the moment it is attached.
             container.setOnHierarchyChangeListener(object : ViewGroup.OnHierarchyChangeListener {
@@ -101,12 +96,36 @@ internal class SidebarBadgeDecorator(
             })
             watching = true
         }
+        // The popup's view tree is rebuilt between shows, which leaves a listener registered on
+        // the previous observer dead, so re-register on the tree the grid is attached to now.
+        watchObserver(container)
         tracePass = true
         runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
     }
 
     /** Whether this decorator currently owns the panel's item listeners. */
     fun isActive(): Boolean = active
+
+    /** Re-registers the redraw triggers on the observer the grid is attached to now. */
+    private fun watchObserver(container: ViewGroup) {
+        scrollListener?.let { stale ->
+            runCatching { container.viewTreeObserver.removeOnScrollChangedListener(stale) }
+        }
+        layoutListener?.let { stale ->
+            runCatching { container.viewTreeObserver.removeOnGlobalLayoutListener(stale) }
+        }
+        // A throw in either would run inside the host's own traversal and kill its process.
+        val scroll = ViewTreeObserver.OnScrollChangedListener {
+            runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
+        }
+        val layout = ViewTreeObserver.OnGlobalLayoutListener {
+            runCatching { redraw() }.onFailure { logger.error("badge redraw failed", it) }
+        }
+        scrollListener = scroll
+        layoutListener = layout
+        container.viewTreeObserver.addOnScrollChangedListener(scroll)
+        container.viewTreeObserver.addOnGlobalLayoutListener(layout)
+    }
 
     /** Removes the badges and restores normal item taps, e.g. when leaving edit mode. */
     fun clear() {
@@ -241,9 +260,9 @@ internal class SidebarBadgeDecorator(
             runCatching {
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN ->
-                        SidebarPressScale.press(item.findViewById<View>(iconId(container)))
+                        SidebarPressScale.press(item.findViewById<View>(iconId(container)), item)
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
-                        SidebarPressScale.releasePressed()
+                        SidebarPressScale.release()
                 }
             }.onFailure { logger.error("badge press failed", it) }
             false
@@ -308,13 +327,13 @@ internal class SidebarBadgeDecorator(
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     downY = event.y
-                    SidebarPressScale.press(icon)
+                    SidebarPressScale.press(icon, item)
                 }
                 MotionEvent.ACTION_UP -> {
-                    SidebarPressScale.release(icon)
+                    SidebarPressScale.release()
                     if (!member && canAdd && kotlin.math.abs(event.y - downY) <= slop) onToggle(app)
                 }
-                MotionEvent.ACTION_CANCEL -> SidebarPressScale.release(icon)
+                MotionEvent.ACTION_CANCEL -> SidebarPressScale.release()
             }
             true
         }

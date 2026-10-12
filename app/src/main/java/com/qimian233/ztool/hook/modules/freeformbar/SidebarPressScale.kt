@@ -1,15 +1,15 @@
 package com.qimian233.ztool.hook.modules.freeformbar
 
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
+import android.view.ViewTreeObserver
 import com.qimian233.ztool.hook.base.ModuleLog
 
 /**
- * Squeeze feedback for app icons.
+ * Press feedback: the icon squeezes and the row behind it lights up.
  *
  * A view only receives the rest of a gesture if it, or a descendant, consumed the down. Grid items
  * are clickable, so a listener on them sees the whole gesture; the drawer's rows are not, so their
@@ -19,47 +19,43 @@ internal object SidebarPressScale {
 
     private const val SCALE = 0.88f
     private const val DURATION = 90L
-    private val HIGHLIGHT = PorterDuffColorFilter(0x80FFFFFF.toInt(), PorterDuff.Mode.SRC_ATOP)
-
-    private var iconId = 0
-    private var pressed: View? = null
-    private var watching = false
-    private var warnedIcon = false
-    private var warnedNotIcon = false
+    private const val HIGHLIGHT_COLOR = 0x33FFFFFF
+    private const val HIGHLIGHT_CORNER_DP = 12f
 
     /** Set once by the hook so the press path can be traced. */
     var logger: ModuleLog? = null
 
-    /** Squeezes [view]. Swallows failures: this runs inside the host's input dispatch. */
-    fun press(view: View?) {
-        if (view == null) return
+    private var iconId = 0
+    private var pressedIcon: View? = null
+    private var highlighted: View? = null
+    private var savedBackground: Drawable? = null
+    private var warnedIcon = false
+    private var layoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
+
+    /** Squeezes [icon] and lights up [container]. Swallows failures: this runs in input dispatch. */
+    fun press(icon: View?, container: View? = null) {
         runCatching {
-            pressed = view
-            logger?.trace(
-                "press on " + view.javaClass.simpleName + " isIcon=" + (view is ImageView)
-            )
-            // An icon has no room for a tile behind it, so it brightens instead; the action
-            // button is a plain view with its own pressed tile and only scales.
-            (view as? ImageView)?.colorFilter = HIGHLIGHT
-            if (view !is ImageView && !warnedNotIcon) {
-                warnedNotIcon = true
-                logger?.warn("press: " + view.javaClass.simpleName + " is not an icon to brighten")
+            release()
+            pressedIcon = icon
+            icon?.animate()?.scaleX(SCALE)?.scaleY(SCALE)?.setDuration(DURATION)?.start()
+            if (container != null) {
+                savedBackground = container.background
+                container.background = highlight(container)
+                highlighted = container
             }
-            view.animate().scaleX(SCALE).scaleY(SCALE).setDuration(DURATION).start()
         }.onFailure { logger?.error("press feedback failed", it) }
     }
 
-    /** Restores [view]. Swallows failures: this runs inside the host's input dispatch. */
-    fun release(view: View?) {
-        if (view == null) return
+    /** Undoes [press]. Swallows failures: this runs in input dispatch. */
+    fun release() {
         runCatching {
-            if (pressed === view) pressed = null
-            (view as? ImageView)?.colorFilter = null
-            view.animate().scaleX(1f).scaleY(1f).setDuration(DURATION).start()
+            pressedIcon?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(DURATION)?.start()
+            pressedIcon = null
+            highlighted?.background = savedBackground
+            highlighted = null
+            savedBackground = null
         }.onFailure { logger?.error("release feedback failed", it) }
     }
-
-    fun releasePressed() = release(pressed)
 
     /** The icon inside a host row, falling back to the row itself. */
     fun iconOf(row: View, hostPackage: String): View {
@@ -68,25 +64,28 @@ internal object SidebarPressScale {
         val found: View? = if (iconId != 0) row.findViewById<View>(iconId) else null
         if (found == null && !warnedIcon) {
             warnedIcon = true
-            logger?.warn(
-                "press: no appicon_iv in " + row.javaClass.simpleName + ", id=" + iconId
-            )
+            logger?.warn("press: no appicon_iv in " + row.javaClass.simpleName + ", id=" + iconId)
         }
         return found ?: row
     }
 
     /**
-     * Squeezes each item of [container] while it is touched. The listener returns false, so the
-     * host's own click still fires. Re-applied on every layout because the grid recycles items,
-     * and skipped entirely while [enabled] is false, where editing owns the item listeners.
+     * Squeezes each item of [container] while it is touched, and lights it up. The listener
+     * returns false, so the host's own click still fires. Skipped while [enabled] is false, where
+     * editing owns the item listeners.
      */
     fun attachItems(container: ViewGroup, hostPackage: String, enabled: () -> Boolean) {
         applyItems(container, hostPackage, enabled)
-        if (watching) return
-        watching = true
-        container.viewTreeObserver.addOnGlobalLayoutListener {
+        // The popup's view tree is rebuilt between shows, which leaves a listener registered on
+        // the previous observer dead, so re-register on the tree the grid is attached to now.
+        layoutListener?.let { stale ->
+            runCatching { container.viewTreeObserver.removeOnGlobalLayoutListener(stale) }
+        }
+        val listener = ViewTreeObserver.OnGlobalLayoutListener {
             runCatching { applyItems(container, hostPackage, enabled) }
         }
+        layoutListener = listener
+        container.viewTreeObserver.addOnGlobalLayoutListener(listener)
     }
 
     private fun applyItems(container: ViewGroup, hostPackage: String, enabled: () -> Boolean) {
@@ -96,12 +95,18 @@ internal object SidebarPressScale {
             item.setOnTouchListener { _, event ->
                 runCatching {
                     when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN -> press(iconOf(item, hostPackage))
-                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> releasePressed()
+                        MotionEvent.ACTION_DOWN -> press(iconOf(item, hostPackage), item)
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> release()
                     }
                 }.onFailure { logger?.error("press listener failed", it) }
                 false
             }
         }
+    }
+
+    private fun highlight(container: View): GradientDrawable = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        cornerRadius = HIGHLIGHT_CORNER_DP * container.resources.displayMetrics.density
+        setColor(HIGHLIGHT_COLOR)
     }
 }
