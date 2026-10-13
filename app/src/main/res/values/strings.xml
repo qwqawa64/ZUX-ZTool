@@ -759,6 +759,10 @@
     <string name="freeform_sidebar_drawer_recent_slots_title">最近使用槽位</string>
     <string name="freeform_sidebar_drawer_recent_slots_summary">抽屉开头的槽位由最近使用过的小窗应用填充，其余槽位按自定义顺序排列</string>
     <string name="freeform_sidebar_drawer_usage_summary">开启后抽屉可容纳更多应用。点击抽屉底部的“编辑”，拖动应用即可调整顺序，点应用图标右上角的 − 将其移出抽屉，在左侧全部应用面板点 + 加入应用，完成后点击“完成”。</string>
+    <string name="freeform_sidebar_allapps_sections_title">全部应用按首字母分节</string>
+    <string name="freeform_sidebar_allapps_sections_summary">全部应用面板按应用名的拼音首字母分组，每组另起一行并显示字母标题；数字与符号开头的应用归入 # 组</string>
+    <string name="freeform_sidebar_allapps_search_title">全部应用面板支持搜索</string>
+    <string name="freeform_sidebar_allapps_search_summary">在全部应用面板顶部显示搜索框，可按应用名、拼音全拼或拼音首字母筛选</string>
 
     <string name="ui_components_app_name">用户界面组件</string>
     <string name="ui_components_app_description">统一调整系统内 ZUI 对话框的外观</string>
@@ -1198,4 +1202,6 @@
     <string name="ztool_sidebar_drawer_glyph_drop" translatable="false" tools:ignore="UnusedResources">−</string>
     <string name="ztool_sidebar_drawer_add" tools:ignore="UnusedResources">加入抽屉</string>
     <string name="ztool_sidebar_drawer_drop" tools:ignore="UnusedResources">移出抽屉</string>
+    <string name="ztool_sidebar_allapps_search_hint" tools:ignore="UnusedResources">搜索应用</string>
+    <string name="ztool_sidebar_allapps_empty_message" tools:ignore="UnusedResources">没有匹配的应用</string>
 </resources>

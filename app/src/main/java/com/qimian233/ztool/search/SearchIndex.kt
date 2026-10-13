@@ -1518,6 +1518,22 @@ object SearchIndex {
             parentTitleRes = R.string.freeform_sidebar_drawer_enhance_title,
             parentKey = "sidebar_drawer_enhance"
         ),
+        freeformBar.item(
+            id = "sidebar_allapps_sections",
+            titleRes = R.string.freeform_sidebar_allapps_sections_title,
+            summaryRes = R.string.freeform_sidebar_allapps_sections_summary,
+            parentTitleRes = R.string.freeform_sidebar_drawer_enhance_title,
+            parentKey = "sidebar_drawer_enhance",
+            parentMode = SearchParentMode.REQUIRE_ON
+        ),
+        freeformBar.item(
+            id = "sidebar_allapps_search",
+            titleRes = R.string.freeform_sidebar_allapps_search_title,
+            summaryRes = R.string.freeform_sidebar_allapps_search_summary,
+            parentTitleRes = R.string.freeform_sidebar_drawer_enhance_title,
+            parentKey = "sidebar_drawer_enhance",
+            parentMode = SearchParentMode.REQUIRE_ON
+        ),
 
         appSettings.item(
             id = "app_settings_backup_config",

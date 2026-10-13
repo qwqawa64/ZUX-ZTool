@@ -98,6 +98,9 @@ internal object SidebarPressScale {
         if (!enabled()) return
         for (index in 0 until container.childCount) {
             val item = container.getChildAt(index) as? ViewGroup ?: continue
+            // The panel's letter headings carry no click listener; squeezing one would look like
+            // a button that does nothing.
+            if (!item.isClickable) continue
             item.setOnTouchListener { _, event ->
                 runCatching {
                     when (event.actionMasked) {

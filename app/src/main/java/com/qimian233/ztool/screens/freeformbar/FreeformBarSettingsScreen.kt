@@ -86,6 +86,8 @@ fun FreeformBarSettingsRoute(
             onEditableChanged = viewModel::setEditable,
             onDrawerSlotsChanged = viewModel::setDrawerSlots,
             onRecentSlotsChanged = viewModel::setRecentSlots,
+            onAllAppsSectionsChanged = viewModel::setAllAppsSections,
+            onAllAppsSearchChanged = viewModel::setAllAppsSearch,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -151,6 +153,8 @@ private fun FreeformBarSettingsScreen(
     onEditableChanged: (Boolean) -> Unit,
     onDrawerSlotsChanged: (Int) -> Unit,
     onRecentSlotsChanged: (Int) -> Unit,
+    onAllAppsSectionsChanged: (Boolean) -> Unit,
+    onAllAppsSearchChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -193,7 +197,9 @@ private fun FreeformBarSettingsScreen(
                         onEnhanceChanged = onEnhanceChanged,
                         onEditableChanged = onEditableChanged,
                         onDrawerSlotsChanged = onDrawerSlotsChanged,
-                        onRecentSlotsChanged = onRecentSlotsChanged
+                        onRecentSlotsChanged = onRecentSlotsChanged,
+                        onAllAppsSectionsChanged = onAllAppsSectionsChanged,
+                        onAllAppsSearchChanged = onAllAppsSearchChanged
                     ),
                     bottomPadding = 88.dp,
                     highlightRegistry = highlightRegistry
@@ -209,7 +215,9 @@ private fun freeformBarSettingsSections(
     onEnhanceChanged: (Boolean) -> Unit,
     onEditableChanged: (Boolean) -> Unit,
     onDrawerSlotsChanged: (Int) -> Unit,
-    onRecentSlotsChanged: (Int) -> Unit
+    onRecentSlotsChanged: (Int) -> Unit,
+    onAllAppsSectionsChanged: (Boolean) -> Unit,
+    onAllAppsSearchChanged: (Boolean) -> Unit
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -225,6 +233,24 @@ private fun freeformBarSettingsSections(
                     )
                 )
                 if (state.enhanceEnabled) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.freeform_sidebar_allapps_sections_title),
+                            summary = stringResource(R.string.freeform_sidebar_allapps_sections_summary),
+                            checked = state.allAppsSections,
+                            onCheckedChange = onAllAppsSectionsChanged,
+                            key = "sidebar_allapps_sections"
+                        )
+                    )
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.freeform_sidebar_allapps_search_title),
+                            summary = stringResource(R.string.freeform_sidebar_allapps_search_summary),
+                            checked = state.allAppsSearch,
+                            onCheckedChange = onAllAppsSearchChanged,
+                            key = "sidebar_allapps_search"
+                        )
+                    )
                     add(
                         SettingItem.Switch(
                             title = stringResource(R.string.freeform_sidebar_drawer_editable_title),

@@ -43,6 +43,9 @@ object PreferenceKeys {
     // SidebarDrawerHook.
     val SIDEBAR_DRAWER_ENHANCE = BoolKey("sidebar_drawer_enhance", false)
     val SIDEBAR_DRAWER_EDITABLE = BoolKey("sidebar_drawer_editable", true)
+    // All-apps panel: group the grid by pinyin initial, and filter it from a search field
+    val SIDEBAR_ALLAPPS_SECTIONS = BoolKey("sidebar_allapps_sections", true)
+    val SIDEBAR_ALLAPPS_SEARCH = BoolKey("sidebar_allapps_search", true)
     val DISABLE_HBM_THERMAL_LIMIT = BoolKey("disable_hbm_thermal_limit", false)
     // Raise media stream volume steps to 150 (Xiaomi fine volume alignment)
     val FINE_VOLUME_STEPS = BoolKey("fine_volume_steps", false)
@@ -341,6 +344,8 @@ object PreferenceKeys {
         FREEFORM_KEEP_ALIVE_ENABLED,
         SIDEBAR_DRAWER_ENHANCE,
         SIDEBAR_DRAWER_EDITABLE,
+        SIDEBAR_ALLAPPS_SECTIONS,
+        SIDEBAR_ALLAPPS_SEARCH,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
         PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,

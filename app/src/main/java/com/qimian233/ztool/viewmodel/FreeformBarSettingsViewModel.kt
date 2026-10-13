@@ -31,6 +31,16 @@ class FreeformBarSettingsViewModel(
         repository.saveEditable(enabled)
     }
 
+    fun setAllAppsSections(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(allAppsSections = enabled)
+        repository.saveAllAppsSections(enabled)
+    }
+
+    fun setAllAppsSearch(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(allAppsSearch = enabled)
+        repository.saveAllAppsSearch(enabled)
+    }
+
     fun setDrawerSlots(count: Int) {
         val slots = count.coerceIn(
             FreeformBarSettingsRepository.SLOTS_MIN,
@@ -75,6 +85,8 @@ data class FreeformBarSettingsUiState(
     val editable: Boolean = PreferenceKeys.SIDEBAR_DRAWER_EDITABLE.default,
     val drawerSlots: Int = PreferenceKeys.SIDEBAR_DRAWER_SLOTS.default,
     val recentSlots: Int = PreferenceKeys.SIDEBAR_DRAWER_RECENT_SLOTS.default,
+    val allAppsSections: Boolean = PreferenceKeys.SIDEBAR_ALLAPPS_SECTIONS.default,
+    val allAppsSearch: Boolean = PreferenceKeys.SIDEBAR_ALLAPPS_SEARCH.default,
     val showRestartDialog: Boolean = false
 )
 

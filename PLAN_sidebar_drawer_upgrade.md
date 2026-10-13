@@ -568,13 +568,11 @@ capacity at **8**. The slider range is therefore 6–8: anything larger pushes �
 row below the fold, inside a hover-driven popup that dismisses itself — the opposite of the
 "one tap away" requirement. Both the frontend and the hook clamp to this range.
 
-### Not started
+### Follow-up work
 
-* §4.5 A–Z rail / grouping (requirement 3).
-* §4.6 search box (requirement 4) — unblocked by §9, not yet written.
-* Frontend settings page (feature card, switch, two sliders, strings, search index) — in
-  progress; the hook is already driven by `PreferenceKeys.SIDEBAR_DRAWER_ENHANCE`,
-  `SIDEBAR_DRAWER_SLOTS` and `SIDEBAR_DRAWER_RECENT_SLOTS`.
+All four requirements of this plan are implemented, including the frontend settings page
+(`FreeformBarSettingsScreen`, driven by `PreferenceKeys.SIDEBAR_DRAWER_*`). The all-apps letter
+sections and the search field are described in `PLAN_sidebar_allapps_sections_search.md`.
 
 ### Note on testing
 

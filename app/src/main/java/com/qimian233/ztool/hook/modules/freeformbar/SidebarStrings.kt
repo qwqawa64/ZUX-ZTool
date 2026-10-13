@@ -18,6 +18,8 @@ internal object SidebarStrings {
     const val STRING_GLYPH_DROP = "ztool_sidebar_drawer_glyph_drop"
     const val STRING_ADD = "ztool_sidebar_drawer_add"
     const val STRING_DROP = "ztool_sidebar_drawer_drop"
+    const val STRING_SEARCH_HINT = "ztool_sidebar_allapps_search_hint"
+    const val STRING_EMPTY = "ztool_sidebar_allapps_empty_message"
 
     const val FALLBACK_EDIT = "编辑"
     const val FALLBACK_DONE = "完成"
@@ -25,6 +27,8 @@ internal object SidebarStrings {
     const val FALLBACK_GLYPH_DROP = "−"
     const val FALLBACK_ADD = "加入抽屉"
     const val FALLBACK_DROP = "移出抽屉"
+    const val FALLBACK_SEARCH_HINT = "搜索应用"
+    const val FALLBACK_EMPTY = "没有匹配的应用"
 
     fun get(hostContext: Context, resourceName: String, fallback: String): String = try {
         val moduleContext = hostContext.createPackageContext(

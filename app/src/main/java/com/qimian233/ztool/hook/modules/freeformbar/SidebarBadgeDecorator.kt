@@ -1,8 +1,5 @@
 package com.qimian233.ztool.hook.modules.freeformbar
 
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
-import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -32,24 +29,21 @@ internal class SidebarBadgeDecorator(
     private var grid: ViewGroup? = null
     private var positionMethod: java.lang.reflect.Method? = null
     private var adapterMethod: java.lang.reflect.Method? = null
-    private var listField: java.lang.reflect.Field? = null
     private var iconViewId = 0
     private var labelViewId = 0
     private var watching = false
     private var warnedNoAnchor = false
     private var warnedUnresolved = false
-    private var warnedDivergence = false
     private var reported = false
     private var scrollListener: ViewTreeObserver.OnScrollChangedListener? = null
     private var layoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
     private var tracePass = false
     private var active = false
     private var lastPosition = -1
-    private var lastSource = "none"
     private var touchDownY = 0f
     private var touchSlop = 0
 
-    private var apps: () -> List<Any> = { emptyList() }
+    private var appAt: (Int) -> Any? = { null }
     private var isMember: (Any) -> Boolean = { false }
     private var onToggle: (Any) -> Unit = {}
     private var canAdd: Boolean = true
@@ -57,12 +51,13 @@ internal class SidebarBadgeDecorator(
     /**
      * Shows or refreshes the badges; call again whenever the panel is re-shown.
      *
-     * [appList] is a provider rather than a list because the host swaps its own all-apps list
-     * out, and a captured copy would then index the wrong app.
+     * [appAt] maps an adapter position to the app it shows, and returns null for the panel's own
+     * letter headings. It is a provider rather than a list because the grid rebuilds its rows on
+     * every filter change, and a captured copy would then index the wrong app.
      */
     fun refresh(
         gridView: View,
-        appList: () -> List<Any>,
+        appAt: (Int) -> Any?,
         member: (Any) -> Boolean,
         toggle: (Any) -> Unit,
         addAllowed: Boolean
@@ -70,7 +65,7 @@ internal class SidebarBadgeDecorator(
         val container = gridView as? ViewGroup ?: return
         grid = container
         active = true
-        apps = appList
+        this.appAt = appAt
         isMember = member
         onToggle = toggle
         canAdd = addAllowed
@@ -86,8 +81,6 @@ internal class SidebarBadgeDecorator(
                             item,
                             container.indexOfChild(item),
                             container,
-                            adapterList(container),
-                            apps(),
                             ModuleLog.shouldLog(LogLevel.TRACE),
                             false
                         )
@@ -146,31 +139,16 @@ internal class SidebarBadgeDecorator(
         // re-attaching consuming listeners and badges to the panel the host shows on its own.
         if (!active) return
         val container = grid ?: return
-        val service = apps()
-        val adapter = adapterList(container)
         // Building the trace strings costs reflective calls per item, so skip it entirely
         // unless the level actually asks for them.
         val tracing = ModuleLog.shouldLog(LogLevel.TRACE)
         val force = tracePass
         tracePass = false
-        if (adapter != null && adapter !== service && !warnedDivergence) {
-            warnedDivergence = true
-            logger.warn("grid adapter list differs from the service list; resolving by adapter")
-        }
-        if (tracing && force) {
-            logger.trace(
-                "badge pass: children=" + container.childCount +
-                    " adapter=" + (adapter?.size ?: -1) +
-                    " service=" + service.size +
-                    " sameList=" + (adapter === service) +
-                    " canAdd=" + canAdd
-            )
-        }
         var decorated = 0
         var unresolved = 0
         for (index in 0 until container.childCount) {
             val item = container.getChildAt(index) as? ViewGroup ?: continue
-            when (decorateItem(item, index, container, adapter, service, tracing, force)) {
+            when (decorateItem(item, index, container, tracing, force)) {
                 DECORATED -> decorated++
                 UNRESOLVED -> unresolved++
             }
@@ -190,8 +168,6 @@ internal class SidebarBadgeDecorator(
         item: ViewGroup,
         index: Int,
         container: ViewGroup,
-        adapter: List<Any>?,
-        service: List<Any>,
         tracing: Boolean,
         force: Boolean
     ): Int {
@@ -199,14 +175,15 @@ internal class SidebarBadgeDecorator(
         // block our badge and our touch listener; while picking apps the row must stay
         // interactive, and its own click is swallowed below anyway.
         item.isEnabled = true
-        val app = appFor(container, item, adapter, service)
+        lastPosition = adapterPosition(container, item)
+        val app = appAt(lastPosition)
         if (app == null) {
             item.setOnTouchListener { _, _ -> true }
             // Leave no trace of the host's own dimming for apps that are merely running.
             item.findViewById<View>(iconId(container))?.alpha = 1f
             report(item, tracing, force) {
-                "#" + index + " pos=" + lastPosition + " src=" + lastSource +
-                    " label=" + labelOf(item) + " UNRESOLVED alpha=1.0 badge=none"
+                "#" + index + " pos=" + lastPosition + " label=" + labelOf(item) +
+                    " UNRESOLVED alpha=1.0 badge=none"
             }
             return UNRESOLVED
         }
@@ -222,8 +199,8 @@ internal class SidebarBadgeDecorator(
         if (member) {
             existing?.visibility = View.GONE
             report(item, tracing, force) {
-                "#" + index + " pos=" + lastPosition + " src=" + lastSource +
-                    " label=" + labelOf(item) + " key=" + key + " member=true alpha=" +
+                "#" + index + " pos=" + lastPosition + " label=" + labelOf(item) +
+                    " key=" + key + " member=true alpha=" +
                     (if (masked) MASKED_ALPHA else 1f) + " badge=hidden"
             }
             return HIDDEN
@@ -241,9 +218,8 @@ internal class SidebarBadgeDecorator(
             }
         }
         report(item, tracing, force) {
-            "#" + index + " pos=" + lastPosition + " src=" + lastSource +
-                " label=" + labelOf(item) + " key=" + key + " member=false alpha=" +
-                (if (masked) MASKED_ALPHA else 1f) + " badge=" +
+            "#" + index + " pos=" + lastPosition + " label=" + labelOf(item) + " key=" + key +
+                " member=false alpha=" + (if (masked) MASKED_ALPHA else 1f) + " badge=" +
                 (if (enabled) "add" else "add-disabled")
         }
         badge.setOnClickListener(
@@ -251,7 +227,7 @@ internal class SidebarBadgeDecorator(
                 // Resolve the app when the tap happens: the item view can be rebound to a
                 // different app between a redraw and the tap, so a captured app goes stale.
                 View.OnClickListener {
-                    appFor(container, item, adapterList(container), apps())?.let(onToggle)
+                    appAt(adapterPosition(container, item))?.let(onToggle)
                 }
             } else {
                 null
@@ -285,39 +261,6 @@ internal class SidebarBadgeDecorator(
     }
 
     /**
-     * The app a grid item currently shows.
-     *
-     * The grid's own adapter list is authoritative: the host's package and locale receivers
-     * reassign the service's all-apps list without rebinding the grid, so indexing that list by
-     * adapter position yields a different app. The shown label is the second source, and the
-     * caller's list the last.
-     */
-    private fun appFor(
-        container: ViewGroup,
-        item: View,
-        adapter: List<Any>?,
-        service: List<Any>
-    ): Any? {
-        val position = adapterPosition(container, item)
-        lastPosition = position
-        adapter?.getOrNull(position)?.let { lastSource = "adapter"; return it }
-        val label = labelOf(item) ?: run {
-            lastSource = "none"
-            return service.getOrNull(position)?.also { lastSource = "service" }
-        }
-        adapter?.firstOrNull { SidebarReflect.labelOf(it) == label }?.let {
-            lastSource = "adapter-label"
-            return it
-        }
-        service.firstOrNull { SidebarReflect.labelOf(it) == label }?.let {
-            lastSource = "service-label"
-            return it
-        }
-        lastSource = "none"
-        return service.getOrNull(position)?.also { lastSource = "service" }
-    }
-
-    /**
      * Squeezes the item's icon and swallows the tap, so the host never launches while editing.
      * An app that still shows its add badge is also added when its icon itself is tapped.
      *
@@ -347,34 +290,11 @@ internal class SidebarBadgeDecorator(
         }
     }
 
-    private fun adapterList(container: ViewGroup): List<Any>? {
-        val adapter = adapterOf(container) ?: return null
-        val field = listField ?: listFieldOf(adapter)?.also { listField = it } ?: return null
-        return runCatching { field.get(adapter) as? List<Any> }.getOrNull()
-    }
-
     private fun adapterOf(container: ViewGroup): Any? {
         val method = adapterMethod ?: runCatching {
             container.javaClass.getMethod("getAdapter")
         }.getOrNull()?.also { adapterMethod = it } ?: return null
         return runCatching { method.invoke(container) }.getOrNull()
-    }
-
-    /** The adapter's item list, found by name first and by item count otherwise. */
-    private fun listFieldOf(adapter: Any): java.lang.reflect.Field? {
-        val count = runCatching {
-            adapter.javaClass.getMethod("getItemCount").invoke(adapter) as Int
-        }.getOrDefault(-1)
-        val candidates = adapter.javaClass.declaredFields.filter {
-            List::class.java.isAssignableFrom(it.type)
-        }
-        return candidates.firstOrNull { it.name == "mAppInfoList" }
-            ?: candidates.firstOrNull { field ->
-                runCatching {
-                    field.isAccessible = true
-                    (field.get(adapter) as? List<*>)?.size == count
-                }.getOrDefault(false)
-            }
     }
 
     private fun labelOf(item: View): String? {

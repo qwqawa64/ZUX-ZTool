@@ -216,6 +216,38 @@ Note the **pinyin inconsistency**: the list *order* comes from
 but the index-bar letter comes from the raw `appName.charAt(0)`, so Chinese names are not
 indexed by their pinyin initial.
 
+### 4.2.1 All-apps panel: layouts and interception points
+
+The panel's three layout variants are compiled to `res/OS.xml` (default), `res/9T.xml` and
+`res/sA.xml` (the `sw400dp`/landscape variants), and the grid item to `res/q8.xml` /
+`res/bH.xml`. Resource *names* survive in `resources.arsc` even though the file names are
+obfuscated, so `getIdentifier("appgriditem", "layout", …)` and
+`getIdentifier("appicon_iv", "id", …)` both work from a hook.
+
+| View | Attributes that matter when reusing or replacing it |
+|---|---|
+| `allapp_rl` (RelativeLayout) | `paddingTop 21dp`, `paddingBottom 24dp`, size `all_grid_window_width` × `all_grid_window_height`; children are the grid and a `match_parent` FrameLayout holding `index_bar` |
+| `appicon_gv` (RecyclerView) | `match_parent` × `match_parent`, `paddingStart/End` `all_grid_padding_*`, `overScrollMode="never"` |
+| `index_bar` (`zui.widget.AlphabeticIndexBar`) | `visibility="gone"`, `layout_gravity="end|center_vertical"`, inside that FrameLayout — which is why a replacement rail is added to the FrameLayout, not to the panel |
+| `appgriditem` (`AppIconItemView`, RelativeLayout) | `wrap_content`; `appicon_iv` = `all_grid_item_width` × `all_grid_item_height`, `marginTop 18dp`, `layout_centerHorizontal`; `appname_tv` = `match_parent`, `marginTop 4.5dp`, `layout_below` the icon, `gravity="center_horizontal"`, `textSize 14dp` |
+
+Interception points found while adding the letter sections:
+
+* `AppIconRecyclerAdapter.onCreateViewHolder` **ignores** its `viewType` and always inflates
+  `appgriditem`, so a heading row can reuse the host's own item view and its `ViewHolder`.
+* `onBindViewHolder(ViewHolder, int)` is the only bind override; the payload overload is not
+  overridden, and the host reads `mAppInfoList.get(position)` inside it, so a row model that
+  inserts headings has to translate the position and hand it back through `Chain#proceed`.
+* `onBindViewHolder` calls `getItemViewType(i)` on `this` with the index it was given, so a
+  `getItemViewType` hook cannot tell the host's internal call from RecyclerView's by position
+  alone; the hook uses a re-entrancy flag instead.
+* `GridLayoutManager.getSpanSizeLookup()` is public API, and the default lookup is instantiated
+  per manager. Hooking `getSpanSize` on that instance's class is therefore the supported way to
+  make one row span the whole grid without linking `androidx.recyclerview` in the module.
+* `RecyclerView$ViewHolder.itemView` is a public field, reachable by `getField` on the class the
+  host's classloader holds.
+
+
 ### 4.3 The app list
 
 `SidebarAppUtils.loadAppsWithLauncher()` enumerates

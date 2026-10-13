@@ -42,12 +42,16 @@ class SidebarDrawerHook : AppHookModule() {
     private var indexRail: SidebarIndexRail? = null
     private var badgeDecorator: SidebarBadgeDecorator? = null
     private var dragReorder: SidebarDragReorder? = null
+    private var allAppsGrid: SidebarAllAppsGrid? = null
+    private var allAppsSearch: SidebarAllAppsSearch? = null
+    private var spanHookInstalled = false
     private var memberCount: Int = 0
     private var footStyled = false
     private var paddingBalanced = false
     private var drawerWidth: Int = 0
     private var footViewField: Field? = null
     private var popupWindowField: Field? = null
+    private var floatFrameField: Field? = null
 
     private var adapter: SidebarDrawerAdapter? = null
     private var hostPackage: String = ScopeKeys.FREEFORM_SIDEBAR.packageName
@@ -85,8 +89,12 @@ class SidebarDrawerHook : AppHookModule() {
         appAllListField = findField(floatServiceClass, "mAppAllList")
         footViewField = findField(floatServiceClass, "mFootView")
         popupWindowField = findField(floatServiceClass, "popupWindow")
+        floatFrameField = findField(floatServiceClass, "mFloatFrameLayoutView")
         indexRail = SidebarIndexRail(classLoader, logger)
         badgeDecorator = SidebarBadgeDecorator(hostPackage, logger)
+        allAppsGrid = SidebarAllAppsGrid(hostPackage, classLoader, logger)
+        allAppsSearch = SidebarAllAppsSearch(logger)
+        installAllAppsHooks(classLoader)
 
         hookWithId(generateTop5App, "sidebar_drawer_top5") { chain ->
             val context = chain.args[0] as? Context
@@ -123,14 +131,15 @@ class SidebarDrawerHook : AppHookModule() {
             result
         }
 
-        // The all-apps panel is rebuilt on every show, so the rail is re-attached there.
+        // The all-apps panel is rebuilt on every show, so the grid, the search field and the rail
+        // are all re-attached there.
         val allApps = showAllAppWindow
         if (allApps != null) {
             hookWithId(allApps, "sidebar_drawer_allapps") { chain ->
                 val result = chain.proceed()
                 val context = chain.thisObject as Context
-                runCatching { attachIndexRail(context) }
-                    .onFailure { logger.error("failed to attach the index rail", it) }
+                runCatching { installAllAppsPanel(context) }
+                    .onFailure { logger.error("failed to set up the all-apps panel", it) }
                 runCatching { reapplyEditChrome(context) }
                     .onFailure { logger.error("failed to restore the edit layout", it) }
                 result
@@ -161,11 +170,87 @@ class SidebarDrawerHook : AppHookModule() {
             if (context != null) {
                 runCatching { installDrawer(context) }
                     .onFailure { logger.error("failed to refresh drawer after package change", it) }
+                runCatching { refreshAllApps(context) }
+                    .onFailure { logger.error("failed to refresh the all-apps grid", it) }
             }
             result
         }
 
         logger.info("sidebar drawer hook installed")
+    }
+
+    /**
+     * Intercepts the host's own grid adapter: its row count, its view types and its bind are all
+     * translated through the section model, which is what puts a letter heading in front of every
+     * group.
+     */
+    private fun installAllAppsHooks(classLoader: ClassLoader) {
+        val grid = allAppsGrid ?: return
+        runCatching {
+            val adapterClass =
+                classLoader.loadClass("com.zui.freeform.sidebar.ui.AppIconRecyclerAdapter")
+            val itemCount = findMethod(adapterClass, "getItemCount")
+            val viewType = findMethod(adapterClass, "getItemViewType", Int::class.javaPrimitiveType)
+            // The holder type is a RecyclerView class this module must not link, so the overload
+            // is matched by name and arity instead of by signature.
+            val bind = adapterClass.declaredMethods
+                .firstOrNull { it.name == "onBindViewHolder" && it.parameterCount == 2 }
+                ?.also { it.isAccessible = true }
+                ?: throw NoSuchMethodException("onBindViewHolder in " + adapterClass.name)
+            hookWithId(itemCount, "sidebar_allapps_count") { chain ->
+                if (grid.owns(chain.thisObject)) grid.itemCount() else chain.proceed()
+            }
+            hookWithId(viewType, "sidebar_allapps_type") { chain ->
+                if (!grid.owns(chain.thisObject) || grid.isBinding()) {
+                    return@hookWithId chain.proceed()
+                }
+                val position = chain.args[0] as Int
+                grid.headerType(position)?.let { return@hookWithId it }
+                // A stale position from a data-set change has no app behind it; answering with the
+                // host's plain item type keeps its own lookup from indexing past the list.
+                val hostIndex = grid.hostIndexOf(position)
+                if (hostIndex < 0) return@hookWithId PLAIN_TYPE
+                grid.beginBinding()
+                try {
+                    chain.proceed(arrayOf<Any?>(hostIndex))
+                } finally {
+                    grid.endBinding()
+                }
+            }
+            hookWithId(bind, "sidebar_allapps_bind") { chain ->
+                if (!grid.owns(chain.thisObject) || grid.isBinding()) {
+                    return@hookWithId chain.proceed()
+                }
+                val holder = chain.args[0]
+                val position = chain.args[1] as Int
+                if (grid.bindHeader(holder, position)) return@hookWithId null
+                val hostIndex = grid.hostIndexOf(position)
+                if (hostIndex < 0) return@hookWithId null
+                grid.beginBinding()
+                try {
+                    chain.proceed(arrayOf<Any?>(holder, hostIndex))
+                } finally {
+                    grid.endBinding()
+                }
+            }
+        }.onFailure { logger.warn("could not intercept the all-apps grid: " + it.message) }
+    }
+
+    /** Gives a heading its own row by spanning the grid, once per panel view tree. */
+    private fun installSpanHook(context: Context) {
+        if (spanHookInstalled) return
+        val grid = appIconGvField?.get(context) ?: return
+        runCatching {
+            val manager = grid.javaClass.getMethod("getLayoutManager").invoke(grid) ?: return
+            val spanCount = manager.javaClass.getMethod("getSpanCount").invoke(manager) as Int
+            val lookup = manager.javaClass.getMethod("getSpanSizeLookup").invoke(manager) ?: return
+            val getSpanSize = findMethod(lookup.javaClass, "getSpanSize", Int::class.javaPrimitiveType)
+            hookWithId(getSpanSize, "sidebar_allapps_span") { chain ->
+                val position = chain.args[0] as Int
+                if (allAppsGrid?.isHeader(position) == true) spanCount else chain.proceed()
+            }
+            spanHookInstalled = true
+        }.onFailure { logger.warn("could not span the letter headings: " + it.message) }
     }
 
     /** The drawer-open path is an R8 lambda, so match it by prefix instead of by name. */
@@ -183,6 +268,18 @@ class SidebarDrawerHook : AppHookModule() {
     /** Whether the drawer exposes the 编辑 / 完成 row and the ▲ ▼ ✕ affordances. */
     private fun editable(context: Context): Boolean =
         remotePreferences.getBoolean(PreferenceKeys.SIDEBAR_DRAWER_EDITABLE.name, true)
+
+    /** Whether the all-apps grid is grouped behind letter headings. */
+    private fun sections(context: Context): Boolean = remotePreferences.getBoolean(
+        PreferenceKeys.SIDEBAR_ALLAPPS_SECTIONS.name,
+        PreferenceKeys.SIDEBAR_ALLAPPS_SECTIONS.default
+    )
+
+    /** Whether the all-apps panel carries a search field. */
+    private fun searchEnabled(context: Context): Boolean = remotePreferences.getBoolean(
+        PreferenceKeys.SIDEBAR_ALLAPPS_SEARCH.name,
+        PreferenceKeys.SIDEBAR_ALLAPPS_SEARCH.default
+    )
 
     @Suppress("UNCHECKED_CAST")
     private fun appMap(): Map<String, Any> =
@@ -418,16 +515,81 @@ class SidebarDrawerHook : AppHookModule() {
             adapter?.isEditMode() != true && badgeDecorator?.isActive() != true
         }
     }
-    /** Builds the A–Z rail for the all-apps panel and hides the host's crashing one. */
-    private fun attachIndexRail(context: Context) {
+
+    /**
+     * Sets the all-apps panel up for the list the host just built: the section model behind the
+     * grid, the search field, and the A–Z rail.
+     */
+    private fun installAllAppsPanel(context: Context) {
+        val panel = allAppLayoutField?.get(context) as? android.view.ViewGroup ?: return
+        val grid = appIconGvField?.get(context) as? android.view.View ?: return
+        val apps = appAllListField?.get(context) as? List<Any> ?: emptyList()
+        val gridImpl = allAppsGrid
+        val adapter = runCatching { grid.javaClass.getMethod("getAdapter").invoke(grid) }.getOrNull()
+        if (gridImpl != null && adapter != null && apps.isNotEmpty()) {
+            val sections = sections(context) && gridImpl.canRenderHeaders
+            gridImpl.adopt(context, adapter, apps, sections)
+            if (sections) installSpanHook(context)
+        } else {
+            gridImpl?.release()
+        }
+        installSearch(context, panel)
+        refreshRail(context)
+        updateEmptyHint()
+    }
+
+    private fun installSearch(context: Context, panel: android.view.ViewGroup) {
+        val search = allAppsSearch ?: return
+        if (!searchEnabled(context)) {
+            search.detach()
+            return
+        }
+        search.attach(panel) { query ->
+            runCatching {
+                allAppsGrid?.filter(query)
+                updateEmptyHint()
+                refreshRail(context)
+                // The badges are not refreshed here: their membership set costs a full pinyin sort
+                // of every installed app, and the decorator's own layout listener re-derives each
+                // badge from the new positions anyway.
+            }.onFailure { logger.error("failed to filter the all-apps grid", it) }
+        }
+        // Hovering the field must not count as leaving the panel, or it would auto-dismiss.
+        val frame = floatFrameField?.get(context) ?: return
+        val searchView = search.view ?: return
+        runCatching {
+            frame.javaClass.getMethod("addNotInterceptView", android.view.View::class.java)
+                .invoke(frame, searchView)
+        }.onFailure { logger.warn("could not exempt the search field from hover: " + it.message) }
+    }
+
+    private fun updateEmptyHint() {
+        allAppsSearch?.setEmpty(allAppsGrid?.isEmpty == true)
+    }
+
+    /** Builds the A–Z rail from the panel's current sections and hides the host's crashing one. */
+    private fun refreshRail(context: Context) {
         val rail = indexRail ?: return
         val panel = allAppLayoutField?.get(context) as? android.view.ViewGroup ?: return
         val grid = appIconGvField?.get(context) as? android.view.View ?: return
-        val apps = appAllListField?.get(context) as? List<Any> ?: return
-        if (apps.isEmpty()) return
+        val source = allAppsGrid ?: return
+        if (source.groups().isEmpty()) {
+            rail.hide()
+            return
+        }
         // Explicit: some ZUI builds turn the platform's stretch overscroll off by default.
         grid.overScrollMode = android.view.View.OVER_SCROLL_ALWAYS
-        rail.attach(panel, grid, apps)
+        rail.attach(panel, grid, source)
+    }
+
+    /** Re-reads the host's all-apps list, e.g. after a package was installed or removed. */
+    private fun refreshAllApps(context: Context) {
+        val grid = allAppsGrid ?: return
+        if (!grid.isAdopted()) return
+        val apps = appAllListField?.get(context) as? List<Any> ?: return
+        grid.refresh(apps)
+        updateEmptyHint()
+        refreshRail(context)
     }
 
     /**
@@ -626,11 +788,10 @@ class SidebarDrawerHook : AppHookModule() {
         val decorator = badgeDecorator ?: return
         val grid = appIconGvField?.get(context) as? android.view.View ?: return
         // The host replaces its own all-apps list, so hand over a provider rather than a snapshot.
-        val list: () -> List<Any> = {
-            appAllListField?.get(context) as? List<Any> ?: emptyList()
-        }
+        val source = allAppsGrid
+        val appAt: (Int) -> Any? = { position -> source?.appAt(position) }
         val gridChildren = (grid as? android.view.ViewGroup)?.childCount ?: 0
-        if (list().isEmpty() && gridChildren == 0) return
+        if (source?.isAdopted() != true && gridChildren == 0) return
         // The membership set is built once: this runs from a layout listener, and rebuilding the
         // launcher app list per icon would stall the main thread.
         val members = memberKeys(context).toHashSet()
@@ -639,16 +800,16 @@ class SidebarDrawerHook : AppHookModule() {
         val canAdd = members.size < memberSlots(context)
         logger.trace(
             "badge refresh: children=" + gridChildren +
-                " service=" + list().size +
+                " adopted=" + (source?.isAdopted() == true) +
                 " members=" + members.size +
                 " memberSlots=" + memberSlots(context) +
                 " canAdd=" + canAdd
         )
-        decorator.refresh(grid, list, member, toggle, canAdd)
+        decorator.refresh(grid, appAt, member, toggle, canAdd)
         // The grid may not have created its item views yet, so retry once now and once after the
         // next layout settles; the scroll and layout listeners cover the rest.
-        grid.post { runCatching { decorator.refresh(grid, list, member, toggle, canAdd) } }
-        grid.postDelayed({ runCatching { decorator.refresh(grid, list, member, toggle, canAdd) } }, 300L)
+        grid.post { runCatching { decorator.refresh(grid, appAt, member, toggle, canAdd) } }
+        grid.postDelayed({ runCatching { decorator.refresh(grid, appAt, member, toggle, canAdd) } }, 300L)
     }
 
     private fun callbacks(context: Context) = object : SidebarDrawerAdapter.DrawerCallbacks {
@@ -673,5 +834,8 @@ class SidebarDrawerHook : AppHookModule() {
         /** The drawer fits 10 rows, two of which are the action row and the host's "more" row. */
         const val MAX_SLOTS = 8
         const val SWAP_ANIM_MS = 120L
+
+        /** The host's view type for an ordinary app row; used when a position has no row. */
+        const val PLAIN_TYPE = 1
     }
 }

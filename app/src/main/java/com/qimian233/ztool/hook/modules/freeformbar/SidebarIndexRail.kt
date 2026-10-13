@@ -12,7 +12,16 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.qimian233.ztool.hook.base.ModuleLog
-import java.lang.reflect.Method
+
+/** Where the rail gets its letters and their grid rows from. */
+internal interface SidebarLetterSource {
+
+    /** Letter to the grid row its heading occupies, in grid order. */
+    fun groups(): List<Pair<String, Int>>
+
+    /** The letter of the group the grid row [position] belongs to. */
+    fun letterAt(position: Int): String?
+}
 
 /**
  * A–Z rail for the all-apps panel, occupying the slot the host reserved for its own
@@ -22,8 +31,8 @@ import java.lang.reflect.Method
  * with `BadTokenException` because the drawer's PopupWindow token is no longer valid, killing the
  * process. This rail only scrolls the grid, so it cannot fail that way.
  *
- * Letters come from `PinYinUtils.toPinYin(appName)`, the helper the host sorts the grid with, so
- * each letter maps to that group's first grid position.
+ * Letters and their grid rows come from the panel's own row model, so the rail keeps matching the
+ * sections once the grid grew letter headings.
  */
 internal class SidebarIndexRail(
     classLoader: ClassLoader,
@@ -33,13 +42,9 @@ internal class SidebarIndexRail(
     private val hostBarClass: Class<*>? =
         runCatching { classLoader.loadClass("zui.widget.AlphabeticIndexBar") }.getOrNull()
 
-    private val toPinYin: Method? = runCatching {
-        classLoader.loadClass("com.zui.freeform.sidebar.utils.PinYinUtils")
-            .getMethod("toPinYin", String::class.java)
-    }.getOrNull()
-
     private var rail: LinearLayout? = null
     private var grid: View? = null
+    private var source: SidebarLetterSource? = null
     private var letters: List<String> = emptyList()
     private var positions: List<Int> = emptyList()
     private var itemHeight: Int = 0
@@ -47,10 +52,13 @@ internal class SidebarIndexRail(
     private val letterViews = ArrayList<TextView>()
     private var scrollListener: ViewTreeObserver.OnScrollChangedListener? = null
 
-    /** Builds or refreshes the rail for [apps] in grid order, anchored where the host bar sits. */
-    fun attach(panel: ViewGroup, grid: View, apps: List<Any>) {
+    /** Builds or refreshes the rail for the panel's current sections. */
+    fun attach(panel: ViewGroup, grid: View, source: SidebarLetterSource) {
         this.grid = grid
-        computeGroups(apps)
+        this.source = source
+        val groups = source.groups()
+        letters = groups.map { it.first }
+        positions = groups.map { it.second }
         if (letters.isEmpty()) return
         val hostBar = findHostBar(panel)
         hostBar?.visibility = View.GONE
@@ -62,9 +70,16 @@ internal class SidebarIndexRail(
         } else if (existing.parent == null) {
             host.addView(existing)
         }
+        focused = -1
+        rail?.visibility = View.VISIBLE
         render()
         watchScroll(grid)
         logger.info("index rail attached with " + letters.size + " letters")
+    }
+
+    /** Hides the rail while the panel has no sections to jump to. */
+    fun hide() {
+        rail?.visibility = View.GONE
     }
 
     /** Keeps the highlight on the group at the top of the grid while the user scrolls it. */
@@ -79,7 +94,8 @@ internal class SidebarIndexRail(
 
     private fun syncToScroll() {
         val position = firstVisiblePosition() ?: return
-        val index = positions.indexOfLast { it <= position }
+        val letter = source?.letterAt(position) ?: return
+        val index = letters.indexOf(letter)
         if (index < 0 || index == focused) return
         val previous = focused
         focused = index
@@ -95,20 +111,6 @@ internal class SidebarIndexRail(
             .invoke(manager) as Int
         position.takeIf { it >= 0 }
     }.getOrNull()
-
-    private fun computeGroups(apps: List<Any>) {
-        val newLetters = ArrayList<String>()
-        val newPositions = ArrayList<Int>()
-        apps.forEachIndexed { index, app ->
-            val letter = letterOf(app)
-            if (newLetters.lastOrNull() != letter) {
-                newLetters.add(letter)
-                newPositions.add(index)
-            }
-        }
-        letters = newLetters
-        positions = newPositions
-    }
 
     private fun buildRail(context: Context, hostParams: ViewGroup.LayoutParams?): LinearLayout =
         LinearLayout(context).apply {
@@ -209,15 +211,7 @@ internal class SidebarIndexRail(
         return (available / letters.size).coerceIn((MIN_ITEM_DP * density).toInt(), preferred)
     }
 
-    private fun letterOf(app: Any): String {
-        val name = SidebarReflect.labelOf(app) ?: return OTHER
-        val pinyin = runCatching { toPinYin?.invoke(null, name) as? String }.getOrNull() ?: name
-        val first = pinyin.firstOrNull()?.uppercaseChar() ?: return OTHER
-        return if (first in 'A'..'Z') first.toString() else OTHER
-    }
-
     private companion object {
-        const val OTHER = "#"
         const val ITEM_DP = 17
         const val MIN_ITEM_DP = 9
         const val RAIL_INSET_DP = 6

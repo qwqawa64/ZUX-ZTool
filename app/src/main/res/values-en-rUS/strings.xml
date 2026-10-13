@@ -677,6 +677,10 @@
     <string name="freeform_sidebar_drawer_recent_slots_title">Recent-app slots</string>
     <string name="freeform_sidebar_drawer_recent_slots_summary">Leading drawer slots filled with recently used freeform apps; the remaining slots follow your own order</string>
     <string name="freeform_sidebar_drawer_usage_summary">While enabled the drawer holds more apps. Tap 编辑 at the bottom of the drawer, drag an app to reorder it, tap the − on an icon to drop it from the drawer, and tap + in the panel on the left to add one, then tap 完成.</string>
+    <string name="freeform_sidebar_allapps_sections_title">Group all apps by initial</string>
+    <string name="freeform_sidebar_allapps_sections_summary">Groups the all-apps panel by the pinyin initial of each app name; every group starts on a new row behind a letter heading, and names starting with a digit or symbol go into the # group</string>
+    <string name="freeform_sidebar_allapps_search_title">Search in the all-apps panel</string>
+    <string name="freeform_sidebar_allapps_search_summary">Shows a search field at the top of the all-apps panel, filtering by app name, full pinyin or pinyin initials</string>
 
     <string name="ui_components_app_name">UI components</string>
     <string name="ui_components_app_description">Restyle ZUI dialogs across system apps</string>
@@ -1145,4 +1149,6 @@
     <string name="ztool_sidebar_drawer_glyph_drop" translatable="false" tools:ignore="UnusedResources">−</string>
     <string name="ztool_sidebar_drawer_add" tools:ignore="UnusedResources">Add to drawer</string>
     <string name="ztool_sidebar_drawer_drop" tools:ignore="UnusedResources">Remove from drawer</string>
+    <string name="ztool_sidebar_allapps_search_hint" tools:ignore="UnusedResources">Search apps</string>
+    <string name="ztool_sidebar_allapps_empty_message" tools:ignore="UnusedResources">No matching apps</string>
 </resources>
