@@ -19,6 +19,7 @@ internal class SidebarAllAppsModel(private val toPinYin: Method?) {
     private val cache = HashMap<String, Meta>()
     private var rows: List<Row> = emptyList()
     private var letterByRow: IntArray = IntArray(0)
+    private var columnByRow: IntArray = IntArray(0)
 
     /** Letter to the row index of its heading, in grid order. */
     var groups: List<Pair<String, Int>> = emptyList()
@@ -38,7 +39,9 @@ internal class SidebarAllAppsModel(private val toPinYin: Method?) {
         val built = ArrayList<Row>(apps.size + 8)
         val letters = ArrayList<Pair<String, Int>>()
         val rowLetters = ArrayList<Int>(apps.size + 8)
+        val rowColumns = ArrayList<Int>(apps.size + 8)
         var lastLetter: String? = null
+        var column = 0
         apps.forEachIndexed { index, app ->
             if (needle.isNotEmpty() && !matches(app, needle)) return@forEachIndexed
             val meta = metaOf(app)
@@ -46,15 +49,21 @@ internal class SidebarAllAppsModel(private val toPinYin: Method?) {
                 lastLetter = meta.letter
                 letters.add(meta.letter to built.size)
                 if (sections) {
+                    // A heading ends the previous row, so the group starts at the first column.
+                    column = 0
                     rowLetters.add(letters.size - 1)
+                    rowColumns.add(0)
                     built.add(Row(meta.letter, null, -1))
                 }
             }
             rowLetters.add(letters.size - 1)
+            rowColumns.add(column)
+            column++
             built.add(Row(null, app, index))
         }
         rows = built
         letterByRow = rowLetters.toIntArray()
+        columnByRow = rowColumns.toIntArray()
         groups = letters
     }
 
@@ -67,6 +76,16 @@ internal class SidebarAllAppsModel(private val toPinYin: Method?) {
     fun isHeader(position: Int): Boolean = rows.getOrNull(position)?.letter != null
 
     fun headerAt(position: Int): String? = rows.getOrNull(position)?.letter
+
+    /**
+     * The column [position] starts at, which is what the grid's span lookup needs once headings
+     * span whole rows; -1 for a position that is not in the model.
+     */
+    fun spanIndex(position: Int, spanCount: Int): Int {
+        if (rows.getOrNull(position) == null || spanCount <= 0) return -1
+        val column = columnByRow.getOrNull(position) ?: return -1
+        return column % spanCount
+    }
 
     /** The letter of the group [position] belongs to, for the rail's scroll highlight. */
     fun letterAt(position: Int): String? {

@@ -244,6 +244,12 @@ Interception points found while adding the letter sections:
 * `GridLayoutManager.getSpanSizeLookup()` is public API, and the default lookup is instantiated
   per manager. Hooking `getSpanSize` on that instance's class is therefore the supported way to
   make one row span the whole grid without linking `androidx.recyclerview` in the module.
+* **Both** span questions have to be answered, not just the size: `DefaultSpanSizeLookup`
+  overrides `getSpanIndex(int, int)` with `position % spanCount`, a fast path that is only
+  correct while every item is one column wide. With headings spanning whole rows the column has
+  to come from the row model as well (`GridLayoutManager.getSpanIndex` → `SpanSizeLookup`
+  `getCachedSpanIndex` → `getSpanIndex`). `assignSpans` computes its own span index from the span
+  sizes, so it needs no help.
 * `RecyclerView$ViewHolder.itemView` is a public field, reachable by `getField` on the class the
   host's classloader holds.
 

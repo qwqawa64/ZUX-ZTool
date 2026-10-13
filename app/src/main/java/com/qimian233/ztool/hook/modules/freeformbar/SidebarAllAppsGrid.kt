@@ -129,6 +129,14 @@ internal class SidebarAllAppsGrid(
     /** The host list index behind an adapter position, or -1 when the row is a heading. */
     fun hostIndexOf(position: Int): Int = model.hostIndexOf(position)
 
+    /**
+     * The column [position] starts at, or -1 to let the host's lookup decide.
+     *
+     * The host's default lookup answers `position % spanCount`, which is only correct while every
+     * item spans one column; with headings in the list it has to come from the row model.
+     */
+    fun spanIndex(position: Int, spanCount: Int): Int = model.spanIndex(position, spanCount)
+
     /** Renders [position]'s heading into the item view behind [holder]; false for app rows. */
     fun bindHeader(holder: Any, position: Int): Boolean {
         val letter = model.headerAt(position) ?: return false

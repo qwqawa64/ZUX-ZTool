@@ -60,7 +60,7 @@ current panel installed:
 | `AppIconRecyclerAdapter.getItemCount()` | model size |
 | `AppIconRecyclerAdapter.getItemViewType(int)` | `HEADER_TYPE` for a header row; otherwise the original, called with the translated host index |
 | `AppIconRecyclerAdapter.onBindViewHolder(VH, int)` | for a header: reconfigure the bound item view into a heading and stop; otherwise `proceed` with the translated host index |
-| the `SpanSizeLookup` instance's `getSpanSize(int)` | `spanCount` for a header row, otherwise the original |
+| the `SpanSizeLookup` instance's `getSpanSize(int)` and `getSpanIndex(int, int)` | `spanCount` / the row's own column for a header row; otherwise the original. The default lookup answers the column with a flat `position % spanCount`, which breaks as soon as one item spans the grid |
 
 The host calls `getItemViewType` **from inside its own `onBindViewHolder`** with the index we
 pass, so the two are disambiguated with a thread-local "binding" flag rather than by position

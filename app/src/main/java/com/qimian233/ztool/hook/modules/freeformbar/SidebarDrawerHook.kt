@@ -236,7 +236,13 @@ class SidebarDrawerHook : AppHookModule() {
         }.onFailure { logger.warn("could not intercept the all-apps grid: " + it.message) }
     }
 
-    /** Gives a heading its own row by spanning the grid, once per panel view tree. */
+    /**
+     * Gives a heading its own row by spanning the grid, once per panel view tree.
+     *
+     * The host's default lookup answers both span questions with a flat `position % spanCount`,
+     * which only holds while every item is one column wide, so the column has to be answered from
+     * the row model too.
+     */
     private fun installSpanHook(context: Context) {
         if (spanHookInstalled) return
         val grid = appIconGvField?.get(context) ?: return
@@ -245,9 +251,18 @@ class SidebarDrawerHook : AppHookModule() {
             val spanCount = manager.javaClass.getMethod("getSpanCount").invoke(manager) as Int
             val lookup = manager.javaClass.getMethod("getSpanSizeLookup").invoke(manager) ?: return
             val getSpanSize = findMethod(lookup.javaClass, "getSpanSize", Int::class.javaPrimitiveType)
+            val getSpanIndex = findMethod(
+                lookup.javaClass, "getSpanIndex",
+                Int::class.javaPrimitiveType, Int::class.javaPrimitiveType
+            )
             hookWithId(getSpanSize, "sidebar_allapps_span") { chain ->
                 val position = chain.args[0] as Int
                 if (allAppsGrid?.isHeader(position) == true) spanCount else chain.proceed()
+            }
+            hookWithId(getSpanIndex, "sidebar_allapps_column") { chain ->
+                val position = chain.args[0] as Int
+                val index = allAppsGrid?.spanIndex(position, spanCount) ?: -1
+                if (index >= 0) index else chain.proceed()
             }
             spanHookInstalled = true
         }.onFailure { logger.warn("could not span the letter headings: " + it.message) }
