@@ -194,74 +194,106 @@ Conclusions:
    `/sys/devices/system/cpu/` is allowed; the only failure mode is a hot-unplugged top-numbered
    CPU, whose directory disappears and triggers the fallback.
 
-## 7. TB375FC (`PERIDOT`, MediaTek) — open issue, hypotheses only
+## 7. TB375FC (`PERIDOT`, MediaTek) — measured
 
-User report: on TB375FC the floating island shows neither temperature nor GPU; temperature matters
-most (bypass charging monitoring). Nothing below is verified — it is a ranked hypothesis list plus
-the exact data needed to confirm.
+Device: `TB375FC` / project `peridot` / model `NP03J` / MediaTek Dimensity 8300 / `ro.config.lgsi.device.type=pad`
+/ ZUXOS 1.5.10.123. Reporter's symptom set: **CPU frequency works, GPU frequency missing, temperature missing.**
 
-Two independent mechanisms can blank those two fields:
+### 7.1 HAL measurements
 
-**(A) The temperature value is invalid.** `getTemp()` maps the model to a thermal type and TB375FC
-matches none of the special cases (`DeviceUtils.PERIDOT = "TB375FC"` is only referenced for the
-game-list selection in `FeaturesBaseOnRomKt`, never for telemetry), so it falls through to type `6`
-— the same type that returns `0` on TB710FU. Additionally, TB375FC is **not** in
-`HWDataInterface`'s AIDL model list (`isInception || isKirbyPrc || isKirbyRow || isEldenPrc ||
-isEldenRow || isTenet || isTopaz`), so the app takes the **HIDL** `V1_0.IPerformance` branch there.
-If that HIDL service is absent on the MediaTek ROM, `mHIDL_PerfService` and `mAIDL_PerfService` are
-both null and every getter returns `-1` → temperature `0.0℃`, CPU `0.00`, GPU `0`.
+`service list` shows the Lenovo AIDL service is present:
 
-**(B) Nothing polls the value.** `mCpu` / `mGpu` / `mTemperature` LiveData are written *only* by
-`StateLiveData.updateXpuTemp()`. The only periodic caller is `CpuGpuTemperatureFpsReader`, whose
-`handleXpuTemperature()` and `handleFps()` both early-return when `Settings.isPad()` is true.
-TB375FC is a pad (`ro.config.lgsi.device.type=pad`), so the 2 s loop is disabled and CPU/GPU are
-only ever posted by the one-shot `updateXpuTemp(false)` calls in the overclock-mode switch — which
-do **not** refresh temperature. The island's temperature ring is the exception: it is fed by
-`IslandManager.temperatureFlow`, a separate 5 s loop that calls `HWDataInterface.getTemp()` directly
-and is *not* gated by `isPad()`.
-
-Note (A) and (B) predict different symptoms for CPU. If CPU *does* display on TB375FC, the periodic
-reader is running there and only the value sources are broken; if CPU is also blank, mechanism (B)
-is active. This discriminates the two and is the first thing to confirm.
-
-`Settings.isPad()` is referenced by 17 classes, so a blanket hook is unsafe; scope any fix to the
-reader (caller check) or drive `StateLiveData.updateXpuTemp(true)` from ZTool's own timer.
-
-### Candidate hook points
-
-| Goal | Hook point | Notes |
-| --- | --- | --- |
-| Temperature only (user priority) | `HWDataInterface.getTemp()` | Already hooked by `SocTemperatureFix`. Replacing the hardcoded `thermal_zone9` with a **runtime probe over `getThermalTemp(0..N)`** (accept the first plausible milli-°C value) would be device-agnostic and needs no zone knowledge |
-| Temperature, HAL unusable | sysfs thermal zone | Requires the TB375FC zone name; `thermal_zone9` is TB710FU-specific |
-| CPU/GPU refresh | `Settings.isPad()` scoped to `CpuGpuTemperatureFpsReader`, or self-driven `updateXpuTemp(true)` | Re-enables the app's own 2 s loop; affects FPS too |
-| GPU value | `HWDataInterface.getGpuCurFreq()` / `getGpuMaxFreq()` | Only needed if the HAL returns `-1`; the sysfs route is impossible (kgsl nodes are denied to app domains) |
-
-### Data requested to close this out
-
-1. TB375FC ROM dump — most valuable first:
-   * the ROM's Game Assistant APK (`com.zui.game.service`) to diff `HWDataInterface`,
-     `DeviceUtils`, `Settings` and `CpuGpuTemperatureFpsReader` against the TB710FU build;
-   * the Lenovo performance HAL binary (`/vendor/bin/hw/vendor.lenovo.hardware.performance*`) —
-     decompiling it yields the authoritative `getThemalTemp(type)` → thermal-zone mapping and which
-     types are implemented;
-   * `/vendor/etc/vintf/manifest.xml` to see whether the HAL is AIDL, HIDL, or both;
-   * MediaTek thermal configs (`/vendor/etc/thermal*.conf`, `/vendor/etc/.tp/`) for zone names;
-   * `build.prop` / vendor props for `ro.config.lgsi.device.type`, `ro.config.lgsi.project`,
-     `ro.product.model`.
-2. From the device (root is available since LSPosed is installed):
-
-```bash
-adb shell su -c 'service list | grep -i performance'
-adb shell su -c 'lshal | grep -i lenovo'                 # HIDL presence
-S=vendor.lenovo.hardware.performance.IPerformance/default
-for t in 0 1 2 3 4 5 6 7 8; do echo -n "type $t: "; adb shell su -c "service call $S 6 i32 $t"; done
-adb shell su -c "service call $S 3 i32 7"                # getCpuCurFreq(7)
-adb shell su -c "service call $S 4"                      # getGpuCurFreq
-adb shell su -c 'cat /sys/class/thermal/thermal_zone*/type'
-adb shell getprop | grep -iE 'lgsi|product.model'
-adb shell setprop log.tag.ZuiGameHelper DEBUG
-adb shell logcat -c; adb shell logcat -s ZuiGameHelper:V   # while the island is visible in a game
 ```
+304 vendor.lenovo.hardware.performance.IPerformance/default: [vendor.lenovo.hardware.performance.IPerformance]
+```
+
+| Call | Result | Reading |
+| --- | --- | --- |
+| `getCpuCurFreq(7)` (tid 3) | `0x00331df0` | **3,350,000 kHz** — valid |
+| `getGpuCurFreq()` (tid 4) | `0xfffffffe` | **-2** — not implemented by the vendor HAL |
+
+Two conclusions follow:
+
+* **CPU frequency is fine on TB375FC because the SoC has 8 cores.** The app's hardcoded index `7` is
+  in range here, so `getCpuCurFreq(7)` returns a real value. The same hardcoded `7` is what breaks
+  TB710FU (6 cores → `-2`). `CpuFrequencyFix` is therefore unnecessary on TB375FC, and the TB710FU
+  summary string in the UI should not be read as "the app is generally broken".
+* **GPU frequency is a vendor HAL gap, not an app bug.** `getGpuCurFreq()` returns `-2`, so
+  `Gpu.cur()` becomes `-2 / 1e6` and the UI prints `0`. ZTool cannot fix this through the HAL; it
+  would need a MediaTek-specific sysfs fallback (Dimensity 8300 uses Mali-G615, so the Qualcomm
+  `kgsl` nodes do not apply). The reporter rates GPU as unimportant.
+
+### 7.2 Thermal zone inventory
+
+`cat /sys/class/thermal/thermal_zone*/type` and `.../temp` (68 zones). **The shell expands the glob
+lexicographically, not numerically** — `thermal_zone9` is the *last* entry, not the tenth. This is
+confirmed on TB710FU, where `thermal_zone9/type` reads back as `aoss-0` and `aoss-0` is the final
+element of the expanded list (numeric order would put `cpu-2-1-1` at index 9). Decoded for TB375FC:
+
+| zone | type | temp (milli-°C) |
+| --- | --- | --- |
+| 22 | `cpu-big-core7-1` | 78726 |
+| 23 | `cpu-big-core7-2` | 81686 |
+| 26–29 | `soc-top1..4` | 47663 / 47586 / 47788 / 48417 |
+| 30–33 | `soc-bot1..4` | 47984 / 49725 / 51836 / 53349 |
+| 36 / 37 | `gpu1` / `gpu2` | 46315 / 45445 |
+| 50 | `ap_ntc` | 38633 |
+| 55 | `main_board_ntc` | 30932 |
+| 58–64 | `vtskin-max`, `vtskin1..6` | `-274000` (unavailable sentinel) |
+| 66 | `battery_mm8013` | 33000 |
+| 67 | `battery` | 30500 |
+| **9** | **`soc_max`** | **68026** |
+
+**`thermal_zone9` is `soc_max` on TB375FC** — i.e. exactly the node ZTool's `SocTemperatureFix`
+already reads. The hardcoded path is therefore *correct on this device too*, which makes the fix a
+configuration problem rather than a porting problem.
+
+Note also that TB375FC exposes **none** of the zone names the app's `RomFeatures.temperatureText`
+(`TemperatureType`) refers to — `user_temp`, `front_temp`, `user_front_temp`,
+`skin-msm-therm-usr` are all Qualcomm/ZUI-specific and absent here. Those names are not used by the
+island (the island reads `HWDataInterface.getTemp()`), so this only matters if a future fix wants to
+reuse `TemperatureType`.
+
+### 7.3 Why the app still shows nothing
+
+The island temperature is `String.format("%.1f℃", HWDataInterface.getTemp() / 1000)`, and
+`getTemp()` selects the thermal type by model. TB375FC matches none of the special cases
+(`DeviceUtils.PERIDOT = "TB375FC"` is referenced only for the game-list selection in
+`FeaturesBaseOnRomKt`, never for telemetry), so it falls through to type `6`. The values
+`getThemalTemp(0..8)` actually return on TB375FC are **still unmeasured** — the probe loop failed
+because the reporter's Termux `adb` binary cannot link (`CANNOT LINK EXECUTABLE "adb"`), so only the
+two commands that ran without `adb shell` produced output.
+
+Independently, `mCpu` / `mGpu` / `mTemperature` are written *only* by
+`StateLiveData.updateXpuTemp()`, whose only periodic caller (`CpuGpuTemperatureFpsReader`) early-returns
+when `Settings.isPad()` is true. `Settings.isPad()` is referenced by 17 classes, so a blanket hook is
+unsafe; scope any change to the reader or drive `updateXpuTemp(true)` from ZTool's own timer.
+
+### 7.4 What to verify next
+
+1. Have the reporter enable **修复 SoC 温度显示** (`Fix_SocTemp`, default **off**) and confirm whether
+   the island then shows ~68 ℃. Since `thermal_zone9` is `soc_max`, this is expected to work as-is.
+2. If it does not, capture `logcat -s ZToolXposedModule` (ZTool's hook logger tag) — it prints either
+   `Hook executed successfully.` or `Failed to hook ZUI game service!`, which separates "toggle off"
+   from "hook failed on this build".
+3. Re-run the HAL probe without `adb`, on-device:
+   `su -c 'for t in 0 1 2 3 4 5 6 7 8; do echo -n "type $t: "; service call vendor.lenovo.hardware.performance.IPerformance/default 6 i32 $t; done'`
+
+### 7.5 Recommended changes
+
+| Goal | Action |
+| --- | --- |
+| Temperature on TB375FC | Probably no code change: `SocTemperatureFix` already reads `thermal_zone9`, which is `soc_max` there. Confirm the toggle is on first, then widen `game_tool_fix_soc_temp_summary` (currently claims TB710FU-only testing) |
+| Robustness across devices | Replace the hardcoded `thermal_zone9` with a name-based lookup over `/sys/class/thermal/thermal_zone*/type`, preferring `soc_max`, then `skin-msm-therm-usr` / `user_temp` / `back_temp` / `front_temp`, then a numeric fallback. Keeps TB710FU working and drops the per-device hardcoding |
+| GPU frequency | Not fixable through the HAL on TB375FC (`getGpuCurFreq()` = `-2`). Needs a MediaTek Mali-G615 sysfs fallback; the reporter rates it unimportant, so leaving it is reasonable |
+| CPU frequency | Do **not** re-map the hardcoded index globally. Index `7` is invalid on TB710FU (6 cores) but valid on TB375FC (8 cores); the existing "read the last core" replacement is the right generalisation |
+
+### 7.6 Still open
+
+`getThemalTemp(0..8)` values on TB375FC, and a `logcat -s ZToolXposedModule` capture taken while the
+island is visible with `Fix_SocTemp` enabled. A TB375FC ROM dump is still useful for diffing
+`HWDataInterface` / `DeviceUtils` / `Settings` / `CpuGpuTemperatureFpsReader`, but the thermal-zone
+data already collected makes it non-blocking.
 
 ## Reproduction
 
@@ -282,3 +314,18 @@ adb shell su -Z u:r:platform_app:s0:c512,c768 -c 'cat /sys/class/thermal/thermal
 # Thermal zone inventory
 adb shell su -c 'cat /sys/class/thermal/thermal_zone*/type'
 ```
+
+Caveat: the glob is expanded **lexicographically**, so `thermal_zone9` is the last element of
+`thermal_zone*` and `thermal_zone10` comes second. Do not index the output numerically — always read
+`thermal_zone<N>/type` directly when a specific zone matters.
+
+On-device probe without `adb` (Termux `adb` may be unusable):
+
+```bash
+su -c 'for t in 0 1 2 3 4 5 6 7 8; do echo -n "type $t: "; \
+  service call vendor.lenovo.hardware.performance.IPerformance/default 6 i32 $t; done'
+su -c 'cat /sys/class/thermal/thermal_zone9/type; cat /sys/class/thermal/thermal_zone9/temp'
+```
+
+ZTool's hook logger tag is `ZToolXposedModule` (`ModuleLog.TAG`), so hook install failures are
+visible with `logcat -s ZToolXposedModule`.
