@@ -256,35 +256,55 @@ reuse `TemperatureType`.
 
 ### 7.3 Why the app still shows nothing
 
-The island temperature is `String.format("%.1f℃", HWDataInterface.getTemp() / 1000)`, and
-`getTemp()` selects the thermal type by model. TB375FC matches none of the special cases
-(`DeviceUtils.PERIDOT = "TB375FC"` is referenced only for the game-list selection in
-`FeaturesBaseOnRomKt`, never for telemetry), so it falls through to type `6`. The values
-`getThemalTemp(0..8)` actually return on TB375FC are **still unmeasured** — the probe loop failed
-because the reporter's Termux `adb` binary cannot link (`CANNOT LINK EXECUTABLE "adb"`), so only the
-two commands that ran without `adb shell` produced output.
+The island renders the value as `String.format("%.1f", value / 1000.0f)` and always calls
+`setText` — there is no range or visibility guard, and `IslandManager.temperatureFlow` polls
+`HWDataInterface.getTemp()` every 5 s independently of the `isPad()` gate. (The integer-division
+defect that pins the tenths digit to `.0` is in `StateLiveData.updateXpuTemp`, i.e. the small
+floating window, *not* the island.) So a working hook would visibly change the island readout.
 
-Independently, `mCpu` / `mGpu` / `mTemperature` are written *only* by
-`StateLiveData.updateXpuTemp()`, whose only periodic caller (`CpuGpuTemperatureFpsReader`) early-returns
-when `Settings.isPad()` is true. `Settings.isPad()` is referenced by 17 classes, so a blanket hook is
-unsafe; scope any change to the reader or drive `updateXpuTemp(true)` from ZTool's own timer.
+The reporter then enabled **修复 SoC 温度显示** and still got no reading. Because zone 9 *is*
+`soc_max` on this device, resolving the zone by name lands on the same file — the name-based change
+cannot by itself explain or fix this symptom. Three failure modes remain:
 
-### 7.4 What to verify next
+1. **LSPosed scope not enabled for `com.zui.game.service`** (most likely). CPU frequency looks
+   correct *natively* on TB375FC because core index 7 is valid there, so it proves nothing about
+   whether hooks are running. With the scope off, every ZTool hook in that process is a no-op,
+   including `SocTemperatureFix` — and no ZTool log line will appear for that package at all.
+2. **Hook install failed on this ROM's build** — `HWDataInterface` may have been renamed or
+   refactored; the log then shows `Failed to hook ZUI game service!`.
+3. **The read is denied** for `platform_app` on this ROM. On TB710FU every `sysfs_thermal` file was
+   readable by both `platform_app` and `untrusted_app`, but MediaTek may label zones differently.
 
-1. Have the reporter enable **修复 SoC 温度显示** (`Fix_SocTemp`, default **off**) and confirm whether
-   the island then shows ~68 ℃. Since `thermal_zone9` is `soc_max`, this is expected to work as-is.
-2. If it does not, capture `logcat -s ZToolXposedModule` (ZTool's hook logger tag) — it prints either
-   `Hook executed successfully.` or `Failed to hook ZUI game service!`, which separates "toggle off"
-   from "hook failed on this build".
-3. Re-run the HAL probe without `adb`, on-device:
-   `su -c 'for t in 0 1 2 3 4 5 6 7 8; do echo -n "type $t: "; service call vendor.lenovo.hardware.performance.IPerformance/default 6 i32 $t; done'`
+A single `logcat -s ZToolXposedModule` capture taken while the island is visible separates all
+three: no output at all for the package ⇒ scope; `Failed to hook` ⇒ build mismatch;
+`Hook executed successfully.` plus `Thermal candidate ... = unreadable` ⇒ denial. The new
+implementation logs every candidate zone name with its raw value (or `unreadable`) at DEBUG, and the
+selected zone at INFO, so one capture is enough.
 
-### 7.5 Recommended changes
+### 7.4 Implemented: name-based zone resolution
+
+`SocTemperatureFix` now delegates to `ThermalZoneSource`, which scans `/sys/class/thermal/thermal_zone*`
+and picks the first zone with a plausible value (5–150 °C, which rejects the `-274000` / `-40000`
+sentinels, `0`, and non-temperature zones such as `vbat` at 4235 mV) in this order:
+
+1. preferred zone names — `soc_max`, `user_temp`, `skin-msm-therm-usr`, `skin-msm-therm`,
+   `back_temp`, `user_back_temp`, `front_temp`, `user_front_temp`, `soc_therm`, `mtktscpu`,
+   `ap_therm`;
+2. the previous hardcoded paths (`thermal_zone9`, zones 0/1/2, the virtual zone 9, hwmon);
+3. any remaining zone whose name contains `soc`, `cpu`, `skin` or `ap_`.
+
+`user_temp` is ranked second because it is the zone name the app's own `RomFeatures.temperatureText`
+(`TemperatureType.UserTemp`) prefers for most models. On TB710FU this resolves to
+`skin-msm-therm`/`user_temp` (~31 °C) instead of `aoss-0` (32.4 °C) — a ~1 °C shift that is more
+semantically correct, and the reason the hardcoded paths are kept only as tier 2. The resolved path
+is cached and re-resolved (throttled to once per 30 s) when a read fails.
+
+### 7.5 Remaining recommendations
 
 | Goal | Action |
 | --- | --- |
-| Temperature on TB375FC | Probably no code change: `SocTemperatureFix` already reads `thermal_zone9`, which is `soc_max` there. Confirm the toggle is on first, then widen `game_tool_fix_soc_temp_summary` (currently claims TB710FU-only testing) |
-| Robustness across devices | Replace the hardcoded `thermal_zone9` with a name-based lookup over `/sys/class/thermal/thermal_zone*/type`, preferring `soc_max`, then `skin-msm-therm-usr` / `user_temp` / `back_temp` / `front_temp`, then a numeric fallback. Keeps TB710FU working and drops the per-device hardcoding |
+| Confirm the TB375FC failure mode | One `logcat -s ZToolXposedModule` capture; see 7.3 |
+| Temperature on TB375FC | Likely no further code change — the same file is already targeted. If 7.3 case 3 is confirmed, tier 3 of the resolver should already find an alternative zone; check the candidate log for one that is readable |
 | GPU frequency | Not fixable through the HAL on TB375FC (`getGpuCurFreq()` = `-2`). Needs a MediaTek Mali-G615 sysfs fallback; the reporter rates it unimportant, so leaving it is reasonable |
 | CPU frequency | Do **not** re-map the hardcoded index globally. Index `7` is invalid on TB710FU (6 cores) but valid on TB375FC (8 cores); the existing "read the last core" replacement is the right generalisation |
 

@@ -240,7 +240,7 @@
     <string name="game_tool_f_ix_cpu_frequency">Fix CPU frequency display</string>
     <string name="game_tool_f_ix_cpu_frequency_summary">Tested only on TB710FU. Fixes frequency always showing 0 after using Y700 4th Gen Game Assistant.</string>
     <string name="game_tool_fix_soc_temp">Fix SoC temperature display</string>
-    <string name="game_tool_fix_soc_temp_summary">Tested only on TB710FU. Fixes temperature always showing 0 after using Y700 4th Gen Game Assistant.</string>
+    <string name="game_tool_fix_soc_temp_summary">Matches the sensor by thermal-zone name, fixing a temperature readout stuck at 0. Tested on TB710FU.</string>
     <string name="system_update_firmware_download_link">Download link: </string>
     <string name="system_update_firmware_extract_password">Extract password: </string>
     <string name="system_update_firmware_platform_and_method">Platform/flashing method: </string>
