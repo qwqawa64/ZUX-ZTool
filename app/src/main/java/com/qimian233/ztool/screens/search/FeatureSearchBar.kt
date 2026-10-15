@@ -159,6 +159,10 @@ private fun Material3FeatureSearchBar(
     androidx.compose.material3.DockedSearchBar(
         inputField = {
             androidx.compose.material3.SearchBarDefaults.InputField(
+                // Required: the field's own sizeIn(minWidth = 360.dp) is the only width driver,
+                // while the bar around it is stretched by the caller's fillMaxWidth. Without this
+                // the tap/focus target stops at 360.dp even though the bar looks full width.
+                modifier = Modifier.fillMaxWidth(),
                 query = uiState.query,
                 onQueryChange = onQueryChanged,
                 onSearch = { onExpandedChange(false) },
