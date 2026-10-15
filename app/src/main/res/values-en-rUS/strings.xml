@@ -887,6 +887,8 @@
     <string name="settings_about_device_info_rom_label">ROM info</string>
     <string name="settings_about_device_info_rom_title">Modify ROM info</string>
     <string name="system_framework_allow_untrusted_touch">Allow untrusted touch</string>
+    <string name="system_framework_allow_all_restricted_settings_title">Allow all restricted settings</string>
+    <string name="system_framework_allow_all_restricted_settings_summary">Lifts the restricted-settings limit (usage access, display over other apps, notification access, accessibility, ...) for every app, so granting “Allow restricted settings” in app details is no longer needed</string>
     <string name="page_firstrun_splash_welcome_text">Welcome to ZTool</string>
     <string name="page_firstrun_splash_tap_hint">Tap anywhere to start setup</string>
     <string name="page_home_non_zuxos_warn">Non-ZUXOS/ZUI device detected, hooks may not function normally!</string>

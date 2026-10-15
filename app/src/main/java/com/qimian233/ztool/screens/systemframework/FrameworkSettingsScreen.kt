@@ -107,6 +107,7 @@ fun FrameworkSettingsRoute(
             onAiInputSignsChanged = viewModel::setAiInputSigns,
             onShowAiInputInfo = viewModel::showAiInputInfoDialog,
             onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
+            onAllowAllRestrictedSettingsChanged = viewModel::setAllowAllRestrictedSettings,
             onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
             onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
             onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit,
@@ -172,6 +173,7 @@ private fun FrameworkSettingsScreen(
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
     onAllowUntrustedTouch: (Boolean) -> Unit,
+    onAllowAllRestrictedSettingsChanged: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
@@ -240,6 +242,7 @@ private fun FrameworkSettingsScreen(
                         onAiInputSignsChanged = onAiInputSignsChanged,
                         onShowAiInputInfo = onShowAiInputInfo,
                         onAllowUntrustedTouch = onAllowUntrustedTouch,
+                        onAllowAllRestrictedSettingsChanged = onAllowAllRestrictedSettingsChanged,
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
                         onForceRelativeAppFreeformChanged = onForceRelativeAppFreeformChanged,
                         onDisableHbmThermalLimitChanged = onDisableHbmThermalLimitChanged,
@@ -272,6 +275,7 @@ private fun frameworkSettingsSections(
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
     onAllowUntrustedTouch: (Boolean) -> Unit,
+    onAllowAllRestrictedSettingsChanged: (Boolean) -> Unit,
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
@@ -358,6 +362,13 @@ private fun frameworkSettingsSections(
                     checked = state.allowUntrustedTouch,
                     onCheckedChange = onAllowUntrustedTouch,
                     key = "framework_allow_untrusted_touch"
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_framework_allow_all_restricted_settings_title),
+                    summary = stringResource(R.string.system_framework_allow_all_restricted_settings_summary),
+                    checked = state.allowAllRestrictedSettings,
+                    onCheckedChange = onAllowAllRestrictedSettingsChanged,
+                    key = "framework_allow_all_restricted_settings"
                 ),
             )
         ),

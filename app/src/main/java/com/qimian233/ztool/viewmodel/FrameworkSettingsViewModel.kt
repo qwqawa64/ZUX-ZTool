@@ -82,6 +82,11 @@ class FrameworkSettingsViewModel(
         repository.saveAllowUntrustedTouch(enabled)
     }
 
+    fun setAllowAllRestrictedSettings(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(allowAllRestrictedSettings = enabled)
+        repository.saveAllowAllRestrictedSettings(enabled)
+    }
+
     fun setAllowRelativeAppLaunch(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(allowRelativeAppLaunch = enabled)
         repository.saveAllowRelativeAppLaunch(enabled)
@@ -202,6 +207,7 @@ data class FrameworkSettingsUiState(
     val forceOnOffAnimation: Boolean = false,
     val forceOnOffAnimationDuration: Int = 400,
     val allowUntrustedTouch: Boolean = false,
+    val allowAllRestrictedSettings: Boolean = false,
     val allowRelativeAppLaunch: Boolean = false,
     val forceRelativeAppFreeform: Boolean = false,
     val disableHbmThermalLimit: Boolean = false,

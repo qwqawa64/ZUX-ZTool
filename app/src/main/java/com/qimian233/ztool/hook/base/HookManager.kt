@@ -68,6 +68,7 @@ import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory as SettingS
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook
 import com.qimian233.ztool.hook.modules.sogouime.HalfWidthPunctHook
 import com.qimian233.ztool.hook.modules.systemframework.AiInputExpand
+import com.qimian233.ztool.hook.modules.systemframework.AllowAllRestrictedSettings
 import com.qimian233.ztool.hook.modules.systemframework.AllowGetPackages
 import com.qimian233.ztool.hook.modules.systemframework.AllowRelativeAppLaunch
 import com.qimian233.ztool.hook.modules.systemframework.AllowUntrustedTouch
@@ -167,6 +168,7 @@ object HookManager {
     private fun registerAllModules(xposed: XposedInterface) {
         registerHookModule(DisableFlagSecure())
         registerHookModule(AllowGetPackages())
+        registerHookModule(AllowAllRestrictedSettings())
         registerHookModule(AllowUntrustedTouch())
         registerHookModule(ForceScreenOnOffAnimation())
         registerHookModule(DisableVolumeWarnDialog())

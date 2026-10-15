@@ -28,6 +28,7 @@ object PreferenceKeys {
     val DISABLE_FLAG_SECURE = BoolKey("disable_flag_secure", false)
     val ALLOW_GET_PACKAGES = BoolKey("allow_get_packages", false)
     val ALLOW_UNTRUSTED_TOUCH = BoolKey("allow_untrusted_touch", false)
+    val ALLOW_ALL_RESTRICTED_SETTINGS = BoolKey("allow_all_restricted_settings", false)
     val FORCE_SCREEN_ON_OFF_ANIMATION = BoolKey("force_screen_on_off_animation", false)
     val AI_INPUT_EXPAND = BoolKey("ai_input_expand", false)
     val KEEP_ROTATION = BoolKey("keep_rotation", false)
@@ -341,7 +342,8 @@ object PreferenceKeys {
 
     val booleanKeys: List<BoolKey> = listOf(
         DISABLE_FLAG_SECURE, ALLOW_GET_PACKAGES,
-        ALLOW_UNTRUSTED_TOUCH, FORCE_SCREEN_ON_OFF_ANIMATION, AI_INPUT_EXPAND,
+        ALLOW_UNTRUSTED_TOUCH, ALLOW_ALL_RESTRICTED_SETTINGS,
+        FORCE_SCREEN_ON_OFF_ANIMATION, AI_INPUT_EXPAND,
         KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH, FORCE_RELATIVE_APP_FREEFORM,
         LAUNCHER_FORCE_FREEFORM_ENTRY, FREEFORM_EDGE_BUBBLE,
         FREEFORM_KEEP_ALIVE_ENABLED,

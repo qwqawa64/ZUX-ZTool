@@ -26,6 +26,7 @@ class FrameworkSettingsRepository(
                 prefsUtils.loadIntegerSetting(KEY_SCREEN_ON_OFF_ANIMATION_DURATION, 400)
             ),
             allowUntrustedTouch = prefsUtils.loadBooleanSetting(ALLOW_UNTRUSTED_TOUCH, false),
+            allowAllRestrictedSettings = prefsUtils.loadBooleanSetting(KEY_ALLOW_ALL_RESTRICTED_SETTINGS, false),
             allowRelativeAppLaunch = prefsUtils.loadBooleanSetting(ALLOW_RELATIVE_APP_LAUNCH, false),
             forceRelativeAppFreeform = prefsUtils.loadBooleanSetting(FORCE_RELATIVE_APP_FREEFORM, false),
             disableHbmThermalLimit = prefsUtils.loadBooleanSetting(KEY_DISABLE_HBM_THERMAL_LIMIT, false),
@@ -79,6 +80,10 @@ class FrameworkSettingsRepository(
 
     fun saveAllowUntrustedTouch(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(ALLOW_UNTRUSTED_TOUCH, enabled)
+    }
+
+    fun saveAllowAllRestrictedSettings(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_ALLOW_ALL_RESTRICTED_SETTINGS, enabled)
     }
 
     fun saveAllowRelativeAppLaunch(enabled: Boolean) {
@@ -219,6 +224,7 @@ class FrameworkSettingsRepository(
         private const val SCREEN_ON_OFF_ANIMATION_MAX_MS = 1000
         private const val SCREEN_ON_OFF_ANIMATION_STEP_MS = 50
         private val ALLOW_UNTRUSTED_TOUCH = PreferenceKeys.ALLOW_UNTRUSTED_TOUCH.name
+        private val KEY_ALLOW_ALL_RESTRICTED_SETTINGS = PreferenceKeys.ALLOW_ALL_RESTRICTED_SETTINGS.name
         private val ALLOW_RELATIVE_APP_LAUNCH = PreferenceKeys.ALLOW_RELATIVE_APP_LAUNCH.name
         private val FORCE_RELATIVE_APP_FREEFORM = PreferenceKeys.FORCE_RELATIVE_APP_FREEFORM.name
         private val KEY_DISABLE_HBM_THERMAL_LIMIT = PreferenceKeys.DISABLE_HBM_THERMAL_LIMIT.name

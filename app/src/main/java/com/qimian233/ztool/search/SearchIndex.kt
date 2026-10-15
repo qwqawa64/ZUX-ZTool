@@ -839,6 +839,11 @@ object SearchIndex {
             titleRes = R.string.system_framework_allow_untrusted_touch
         ),
         framework.item(
+            id = "framework_allow_all_restricted_settings",
+            titleRes = R.string.system_framework_allow_all_restricted_settings_title,
+            summaryRes = R.string.system_framework_allow_all_restricted_settings_summary
+        ),
+        framework.item(
             id = "framework_disable_volume_warn",
             titleRes = R.string.system_framework_disable_volume_warn_title
         ),

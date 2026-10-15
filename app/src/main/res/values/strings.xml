@@ -963,6 +963,8 @@
     <string name="system_ui_control_center_notification_center_blur_strength_title">模糊强度</string>
     <string name="system_ui_control_center_percent_unit">%d%%</string>
     <string name="system_framework_allow_untrusted_touch">允许不受信任的触摸</string>
+    <string name="system_framework_allow_all_restricted_settings_title">允许全部受限设置</string>
+    <string name="system_framework_allow_all_restricted_settings_summary">自动解除所有应用的使用情况访问、悬浮窗、通知使用权、无障碍等受限设置限制，无需再到应用详情页单独授权“允许受限设置”</string>
     <string name="page_settings_auto_check_update_title">自动检查更新</string>
     <string name="common_splash_logo_description" translatable="false">ZTool Logo</string>
     <string name="common_splash_slogan" translatable="false">\"Make ZUXOS Great, Not \'Again\'.\"</string>
