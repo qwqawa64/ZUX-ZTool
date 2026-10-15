@@ -870,6 +870,17 @@
     <string name="system_ui_control_center_notification_center_blur_title">Control notification center blur</string>
     <string name="system_ui_control_center_notification_center_blur_strength_title">Blur strength</string>
     <string name="system_ui_control_center_percent_unit">%d%%</string>
+    <string name="system_ui_control_center_preview_title">Control center preview</string>
+    <string name="system_ui_control_center_preview_landscape_label">Landscape</string>
+    <string name="system_ui_control_center_preview_portrait_label">Portrait</string>
+    <string name="system_ui_control_center_preview_date_label">Date %1$s</string>
+    <string name="system_ui_control_center_preview_tile_radius_label">Tile radius %1$d px</string>
+    <string name="system_ui_control_center_preview_head_up_radius_label">Head-up radius %1$d px</string>
+    <string name="system_ui_control_center_preview_brightness_label">Brightness %1$d%%</string>
+    <string name="system_ui_control_center_preview_volume_label">Volume %1$d%%</string>
+    <string name="system_ui_control_center_preview_panel_width_label">Panel width %1$d%%</string>
+    <string name="system_ui_control_center_preview_tile_columns_label">Tile columns %1$d</string>
+    <string name="system_ui_control_center_preview_inactive_note">Dimmed values apply only after their switch is on</string>
     <string name="settings_about_device_info_model_label">Device model</string>
     <string name="settings_about_device_info_cpu_label">CPU Info</string>
     <string name="settings_about_device_info_model_title">Modify device model string</string>

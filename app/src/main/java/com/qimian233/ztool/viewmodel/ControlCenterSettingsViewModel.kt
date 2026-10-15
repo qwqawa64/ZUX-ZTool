@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.systemui.ControlCenterSettingsRepository
+import com.qimian233.ztool.hook.modules.systemui.misc.CustomDateFormatter
 import com.qimian233.ztool.ui.components.normalizeArgbColorTextOrNull
 import com.qimian233.ztool.ui.components.sanitizeArgbColorText
+import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -404,4 +406,40 @@ data class ControlCenterSettingsUiState(
     val sliderStyleForcedByQsPanel: Boolean = false,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
+) {
+    /** Rendering model of the control-center preview, derived from the fields above. */
+    val previewConfig: ControlCenterPreviewConfig
+        get() = ControlCenterPreviewConfig(
+            tileCornerRadiusPx = qsTileRoundCornerRadius,
+            headUpCornerRadiusPx = qsHeadUpRoundCornerRadius,
+            cornerRadiusEnabled = qsRoundCorner,
+            dateSample = formatDateSample(dateFormat),
+            customDate = customDate,
+            brightnessPercentVisible = brightnessSliderPercentageEnabled,
+            volumePercentVisible = volumeSliderPercentageEnabled,
+            portraitWidthPercent = qsPanelWidthPercent,
+            portraitTileColumns = qsTileColumns,
+            portraitLayoutEnabled = expandQsPanelPortrait
+        )
+}
+
+/**
+ * Everything the control-center preview draws. Radii stay in device px because the hook writes
+ * them straight into the tile background drawables.
+ */
+data class ControlCenterPreviewConfig(
+    val tileCornerRadiusPx: Int,
+    val headUpCornerRadiusPx: Int,
+    val cornerRadiusEnabled: Boolean,
+    val dateSample: String,
+    val customDate: Boolean,
+    val brightnessPercentVisible: Boolean,
+    val volumePercentVisible: Boolean,
+    val portraitWidthPercent: Int,
+    val portraitTileColumns: Int,
+    val portraitLayoutEnabled: Boolean
 )
+
+/** Formats [format] against the current time; an invalid pattern falls back to the raw text. */
+private fun formatDateSample(format: String): String =
+    runCatching { CustomDateFormatter.format(format, Date()) }.getOrDefault(format)

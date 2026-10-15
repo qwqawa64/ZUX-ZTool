@@ -316,6 +316,10 @@ private fun ControlCenterSettingsScreen(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
+                ControlCenterPreviewCard(
+                    config = state.previewConfig,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
                 ZToolSettingsList(
                     sections = controlCenterSettingsSections(
                         state = state,
