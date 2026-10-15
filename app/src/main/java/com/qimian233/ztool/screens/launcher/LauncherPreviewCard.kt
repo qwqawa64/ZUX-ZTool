@@ -217,7 +217,8 @@ fun LauncherScreenPreview(config: LauncherPreviewConfig, modifier: Modifier = Mo
                         colors = colors,
                         iconSize = grid.iconSize,
                         frameWidth = frameWidth,
-                        dockIconCount = config.dockIconCount
+                        dockIconCount = config.dockIconCount,
+                        backgroundVisible = config.dockBackgroundVisible
                     )
                 }
                 Spacer(modifier = Modifier.height(dockBottomGap))
@@ -417,23 +418,32 @@ private fun PreviewAppIcon(
     }
 }
 
-/** Centered, content-hugging dock pill, matching the launcher's own dock layout. */
+/**
+ * Centered, content-hugging dock row, matching the launcher's own dock layout.
+ * [backgroundVisible] paints the plate and divider; both stay in the layout when hidden,
+ * because the host draws them behind the icons and the icons must not move.
+ */
 @Composable
 private fun DockRow(
     colors: ColorScheme,
     iconSize: Dp,
     frameWidth: Dp,
-    dockIconCount: Int
+    dockIconCount: Int,
+    backgroundVisible: Boolean
 ) {
     val gap = iconSize * DockGapToIconFraction
     val fittingIconSize = minOf(
         iconSize,
         frameWidth / (dockIconCount * (1f + DockGapToIconFraction) + DockGapToIconFraction)
     )
+    val plateColor =
+        if (backgroundVisible) colors.onSurfaceVariant.copy(alpha = 0.22f) else Color.Transparent
+    val dividerColor =
+        if (backgroundVisible) colors.onSurfaceVariant.copy(alpha = 0.5f) else Color.Transparent
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(fittingIconSize * 0.9f))
-            .background(colors.onSurfaceVariant.copy(alpha = 0.22f))
+            .background(plateColor)
             .padding(horizontal = gap, vertical = gap * 0.6f),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(gap)
@@ -444,7 +454,7 @@ private fun DockRow(
                     modifier = Modifier
                         .width(1.dp)
                         .height(fittingIconSize * 0.8f)
-                        .background(colors.onSurfaceVariant.copy(alpha = 0.5f))
+                        .background(dividerColor)
                 )
             }
             Box(

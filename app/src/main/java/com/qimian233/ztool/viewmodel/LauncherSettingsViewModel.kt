@@ -379,6 +379,8 @@ data class LauncherSettingsUiState(
             noLabel = noLabelMode,
             bluePointVisible = !hideBluePoint,
             dockVisible = !disableDockBar,
+            // The background hook leaves dock geometry alone, so only the plate changes.
+            dockBackgroundVisible = !disableDockBackground,
             // Dock expansion forces 20 hotseat columns; 8 slots is the on-device dock.
             dockIconCount = if (moreBigDock) 8 else 5,
             bigFolderHooked = bigFolderAlign,
@@ -409,6 +411,8 @@ data class LauncherPreviewConfig(
     val noLabel: Boolean,
     val bluePointVisible: Boolean,
     val dockVisible: Boolean,
+    /** False while the dock-background hook is on: icons stay, plate and divider go. */
+    val dockBackgroundVisible: Boolean,
     val dockIconCount: Int,
     val bigFolderTune: BigFolderTune,
     /** True while the big-folder alignment hook is on, which rewrites the child grid. */
