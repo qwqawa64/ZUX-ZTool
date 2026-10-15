@@ -70,8 +70,8 @@ private const val HeadUpHeightLandscape = 0.37f
 private const val PortraitTileRows = 2
 private const val LandscapeTileRows = 3
 
-/** Share of the frame the landscape control center occupies, i.e. the shade's right half. */
-private const val LandscapePanelWidthFraction = 0.48f
+/** Share of the frame the landscape control center occupies: 1200/3200 measured on the tablet. */
+private const val LandscapePanelWidthFraction = 0.375f
 
 /** Portrait width before the widening hook runs: the panel is centred on half the screen. */
 private const val NativePortraitWidthPercent = 50
