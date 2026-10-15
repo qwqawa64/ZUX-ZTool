@@ -419,7 +419,10 @@ data class ControlCenterSettingsUiState(
             volumePercentVisible = volumeSliderPercentageEnabled,
             portraitWidthPercent = qsPanelWidthPercent,
             portraitTileColumns = qsTileColumns,
-            portraitLayoutEnabled = expandQsPanelPortrait
+            portraitLayoutEnabled = expandQsPanelPortrait,
+            sliderStyleEnabled = customizeSliderStyle,
+            sliderStyleVertical = sliderStyleIsVertical,
+            detailIndicatorHidden = hideDetailIndicatorEnabled
         )
 }
 
@@ -437,7 +440,10 @@ data class ControlCenterPreviewConfig(
     val volumePercentVisible: Boolean,
     val portraitWidthPercent: Int,
     val portraitTileColumns: Int,
-    val portraitLayoutEnabled: Boolean
+    val portraitLayoutEnabled: Boolean,
+    val sliderStyleEnabled: Boolean,
+    val sliderStyleVertical: Boolean,
+    val detailIndicatorHidden: Boolean
 )
 
 /** Formats [format] against the current time; an invalid pattern falls back to the raw text. */

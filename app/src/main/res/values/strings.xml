@@ -968,10 +968,12 @@
     <string name="system_ui_control_center_preview_date_label">日期 %1$s</string>
     <string name="system_ui_control_center_preview_tile_radius_label">磁贴圆角 %1$d px</string>
     <string name="system_ui_control_center_preview_head_up_radius_label">大磁贴圆角 %1$d px</string>
-    <string name="system_ui_control_center_preview_brightness_label">亮度 %1$d%%</string>
-    <string name="system_ui_control_center_preview_volume_label">音量 %1$d%%</string>
+    <string name="system_ui_control_center_preview_brightness_label">亮度百分比</string>
+    <string name="system_ui_control_center_preview_volume_label">音量百分比</string>
     <string name="system_ui_control_center_preview_panel_width_label">面板宽度 %1$d%%</string>
     <string name="system_ui_control_center_preview_tile_columns_label">磁贴列数 %1$d</string>
+    <string name="system_ui_control_center_preview_slider_style_label">滑动条 %1$s</string>
+    <string name="system_ui_control_center_preview_detail_indicator_label">详情指示器</string>
     <string name="system_ui_control_center_preview_inactive_note">灰色数值仅在开启对应开关后生效</string>
     <string name="system_framework_allow_untrusted_touch">允许不受信任的触摸</string>
     <string name="system_framework_allow_all_restricted_settings_title">允许全部受限设置</string>

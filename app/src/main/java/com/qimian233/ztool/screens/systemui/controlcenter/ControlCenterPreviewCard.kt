@@ -5,14 +5,17 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,7 +36,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.qimian233.ztool.R
@@ -67,13 +69,28 @@ private const val HeadUpHeightLandscape = 0.37f
 private const val PortraitTileRows = 2
 private const val LandscapeTileRows = 3
 
-/** Landscape columns have no setting of their own, so the mock keeps the measured value. */
-private const val LandscapeTileColumns = 5
-
 /** Share of the frame the landscape control center occupies, i.e. the shade's right half. */
 private const val LandscapePanelWidthFraction = 0.48f
 
-/** Schematic slider levels; the module only decides whether the number is drawn at all. */
+/** Portrait width before the widening hook runs: the panel is centred on half the screen. */
+private const val NativePortraitWidthPercent = 50
+
+/**
+ * SystemUI's own small/large-screen split, `sw720dp` (roughly a 10-inch tablet): it picks both
+ * the tile count and the slider orientation forced below it.
+ */
+private const val LargeScreenShortEdgeDp = 720
+private const val LargeScreenTileColumns = 5
+private const val SmallScreenTileColumns = 4
+
+/** Centre of the head-up glyph block, as a share of the tile width from its left edge. */
+private const val HeadUpGlyphCenterFraction = 0.25f
+
+/** Vertical slider bar: width against the tile, and its height against the tile. */
+private const val VerticalSliderWidthFraction = 0.34f
+private const val VerticalSliderHeightFraction = 0.72f
+
+/** Schematic slider levels; the module only decides whether a label is drawn at all. */
 private const val BrightnessSamplePercent = 32
 private const val VolumeSamplePercent = 0
 
@@ -89,8 +106,6 @@ private const val HeaderGlyphCount = 4
 
 /** Legibility floors: a proportional label would be a few sp wide at this mock scale. */
 private val DateTextSize = 9.sp
-private val PercentTextSizeRange = 6.dp..10.dp
-private val PercentTextSizeFallback = 6.sp
 
 /**
  * Top card of the control-center settings page: a schematic of the shade in both
@@ -101,6 +116,11 @@ fun ControlCenterPreviewCard(config: ControlCenterPreviewConfig, modifier: Modif
     val colors = LocalZToolColorScheme.current
     val pagerState = rememberPagerState(pageCount = { PreviewPageCount })
     val scope = rememberCoroutineScope()
+    val configuration = LocalConfiguration.current
+    val layout = mockLayout(
+        config = config,
+        shortEdgeDp = minOf(configuration.screenWidthDp, configuration.screenHeightDp)
+    )
 
     ZToolCard(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -122,6 +142,7 @@ fun ControlCenterPreviewCard(config: ControlCenterPreviewConfig, modifier: Modif
             ) { page ->
                 ControlCenterScreenMock(
                     config = config,
+                    layout = layout,
                     portrait = page == PortraitPage,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -132,9 +153,43 @@ fun ControlCenterPreviewCard(config: ControlCenterPreviewConfig, modifier: Modif
                 onSelect = { page -> scope.launch { pagerState.animateScrollToPage(page) } }
             )
             Spacer(modifier = Modifier.height(10.dp))
-            PreviewAnnotations(config = config, portrait = pagerState.currentPage == PortraitPage)
+            PreviewAnnotations(
+                config = config,
+                layout = layout,
+                portrait = pagerState.currentPage == PortraitPage
+            )
         }
     }
+}
+
+/** Effective layout the mock draws: the hook's value while its switch is on, the host's otherwise. */
+private class MockLayout(
+    val portraitWidthPercent: Int,
+    val portraitColumns: Int,
+    val landscapeColumns: Int,
+    val verticalSlider: Boolean,
+    val detailIndicatorVisible: Boolean
+)
+
+private fun mockLayout(config: ControlCenterPreviewConfig, shortEdgeDp: Int): MockLayout {
+    val largeScreen = shortEdgeDp >= LargeScreenShortEdgeDp
+    val nativeColumns = if (largeScreen) LargeScreenTileColumns else SmallScreenTileColumns
+    return MockLayout(
+        portraitWidthPercent = if (config.portraitLayoutEnabled) {
+            config.portraitWidthPercent
+        } else {
+            NativePortraitWidthPercent
+        },
+        portraitColumns = if (config.portraitLayoutEnabled) {
+            config.portraitTileColumns
+        } else {
+            nativeColumns
+        },
+        landscapeColumns = nativeColumns,
+        // SystemUI forces the vertical slider on every screen narrower than sw720dp.
+        verticalSlider = if (config.sliderStyleEnabled) config.sliderStyleVertical else !largeScreen,
+        detailIndicatorVisible = !config.detailIndicatorHidden
+    )
 }
 
 @Composable
@@ -169,8 +224,19 @@ private fun PreviewPageSelector(selectedPage: Int, onSelect: (Int) -> Unit) {
  * because the hook does not apply that value yet.
  */
 @Composable
-private fun PreviewAnnotations(config: ControlCenterPreviewConfig, portrait: Boolean) {
+private fun PreviewAnnotations(
+    config: ControlCenterPreviewConfig,
+    layout: MockLayout,
+    portrait: Boolean
+) {
     val colors = LocalZToolColorScheme.current
+    val sliderDirection = stringResource(
+        if (layout.verticalSlider) {
+            R.string.system_ui_control_center_slider_style_vertical
+        } else {
+            R.string.system_ui_control_center_slider_style_horizontal
+        }
+    )
     val chips = buildList {
         add(
             stringResource(
@@ -194,29 +260,35 @@ private fun PreviewAnnotations(config: ControlCenterPreviewConfig, portrait: Boo
             add(
                 stringResource(
                     R.string.system_ui_control_center_preview_panel_width_label,
-                    config.portraitWidthPercent
+                    layout.portraitWidthPercent
                 ) to config.portraitLayoutEnabled
             )
             add(
                 stringResource(
                     R.string.system_ui_control_center_preview_tile_columns_label,
-                    config.portraitTileColumns
+                    layout.portraitColumns
                 ) to config.portraitLayoutEnabled
             )
         } else {
             add(
-                stringResource(
-                    R.string.system_ui_control_center_preview_brightness_label,
-                    BrightnessSamplePercent
-                ) to config.brightnessPercentVisible
+                stringResource(R.string.system_ui_control_center_preview_brightness_label) to
+                    config.brightnessPercentVisible
             )
             add(
-                stringResource(
-                    R.string.system_ui_control_center_preview_volume_label,
-                    VolumeSamplePercent
-                ) to config.volumePercentVisible
+                stringResource(R.string.system_ui_control_center_preview_volume_label) to
+                    config.volumePercentVisible
             )
         }
+        add(
+            stringResource(
+                R.string.system_ui_control_center_preview_slider_style_label,
+                sliderDirection
+            ) to config.sliderStyleEnabled
+        )
+        add(
+            stringResource(R.string.system_ui_control_center_preview_detail_indicator_label) to
+                config.detailIndicatorHidden
+        )
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -293,6 +365,7 @@ private fun mockPanel(
 @Composable
 private fun ControlCenterScreenMock(
     config: ControlCenterPreviewConfig,
+    layout: MockLayout,
     portrait: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -309,13 +382,13 @@ private fun ControlCenterScreenMock(
         val frameHeight = minOf(maxHeight, maxWidth / aspect)
         val frameWidth = frameHeight * aspect
         val columns = if (portrait) {
-            config.portraitTileColumns.coerceIn(1, 10)
+            layout.portraitColumns.coerceIn(1, 10)
         } else {
-            LandscapeTileColumns
+            layout.landscapeColumns
         }
         val rows = if (portrait) PortraitTileRows else LandscapeTileRows
         val panelWidth = if (portrait) {
-            frameWidth * config.portraitWidthPercent.coerceIn(10, 100) / 100f
+            frameWidth * layout.portraitWidthPercent.coerceIn(10, 100) / 100f
         } else {
             frameWidth * LandscapePanelWidthFraction
         }
@@ -341,7 +414,7 @@ private fun ControlCenterScreenMock(
             StatusRow(
                 config = config,
                 frameWidth = frameWidth,
-                height = statusHeight,
+                minHeight = statusHeight,
                 colors = colors
             )
             Box(
@@ -369,6 +442,7 @@ private fun ControlCenterScreenMock(
                 )
                 PanelBody(
                     config = config,
+                    layout = layout,
                     panel = panel,
                     columns = columns,
                     rows = rows,
@@ -391,13 +465,13 @@ private fun ControlCenterScreenMock(
 private fun StatusRow(
     config: ControlCenterPreviewConfig,
     frameWidth: Dp,
-    height: Dp,
+    minHeight: Dp,
     colors: ColorScheme
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(height)
+            .heightIn(min = minHeight)
             .padding(horizontal = frameWidth * 0.04f),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -451,6 +525,7 @@ private fun NotificationPlaceholders(
 @Composable
 private fun PanelBody(
     config: ControlCenterPreviewConfig,
+    layout: MockLayout,
     panel: MockPanel,
     columns: Int,
     rows: Int,
@@ -471,6 +546,7 @@ private fun PanelBody(
         HeaderGlyphRow(panel = panel, colors = colors)
         HeadUpBlock(
             config = config,
+            layout = layout,
             panel = panel,
             shape = headUpShape,
             colors = colors
@@ -505,38 +581,49 @@ private fun HeaderGlyphRow(panel: MockPanel, colors: ColorScheme) {
     }
 }
 
-/** The 2x2 head-up block: two plain tiles and the two sliders carrying the percentages. */
+/** The 2x2 head-up block: two plain tiles and the two sliders that carry the labels. */
 @Composable
 private fun HeadUpBlock(
     config: ControlCenterPreviewConfig,
+    layout: MockLayout,
     panel: MockPanel,
     shape: RoundedCornerShape,
     colors: ColorScheme
 ) {
-    val percentSize = with(LocalDensity.current) {
-        (panel.headUpHeight * 0.34f).coerceIn(PercentTextSizeRange).toSp()
-    }
     Column(verticalArrangement = Arrangement.spacedBy(panel.gap)) {
         Row(horizontalArrangement = Arrangement.spacedBy(panel.gap)) {
-            HeadUpTile(panel, shape, active = true, colors = colors)
             HeadUpTile(
                 panel = panel,
                 shape = shape,
+                layout = layout,
+                active = true,
+                colors = colors
+            )
+            HeadUpTile(
+                panel = panel,
+                shape = shape,
+                layout = layout,
                 active = false,
                 colors = colors,
-                percent = if (config.volumePercentVisible) VolumeSamplePercent else null,
-                percentSize = percentSize
+                showLabel = config.volumePercentVisible,
+                fillPercent = VolumeSamplePercent
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(panel.gap)) {
-            HeadUpTile(panel, shape, active = true, colors = colors)
             HeadUpTile(
                 panel = panel,
                 shape = shape,
+                layout = layout,
+                active = true,
+                colors = colors
+            )
+            HeadUpTile(
+                panel = panel,
+                shape = shape,
+                layout = layout,
                 active = false,
                 colors = colors,
-                percent = if (config.brightnessPercentVisible) BrightnessSamplePercent else null,
-                percentSize = percentSize,
+                showLabel = config.brightnessPercentVisible,
                 fillPercent = BrightnessSamplePercent
             )
         }
@@ -544,17 +631,18 @@ private fun HeadUpBlock(
 }
 
 /**
- * One head-up tile. [fillPercent] paints the level bar behind the glyph, as the brightness
- * tile does on the host; [percent] is the label the percentage hook adds under the glyph.
+ * One head-up tile: the level bar ([fillPercent]) plus the glyph block, which sits at a quarter
+ * of the tile width from the left on a horizontal slider and centred on a vertical one.
+ * [showLabel] stands for the percentage text the module adds, drawn as a placeholder bar.
  */
 @Composable
 private fun HeadUpTile(
     panel: MockPanel,
     shape: RoundedCornerShape,
+    layout: MockLayout,
     active: Boolean,
     colors: ColorScheme,
-    percent: Int? = null,
-    percentSize: TextUnit = PercentTextSizeFallback,
+    showLabel: Boolean = false,
     fillPercent: Int = 0
 ) {
     Box(
@@ -569,7 +657,13 @@ private fun HeadUpTile(
                 }
             )
     ) {
-        if (fillPercent > 0) {
+        if (layout.verticalSlider) {
+            VerticalSliderBar(
+                panel = panel,
+                fillPercent = fillPercent,
+                colors = colors
+            )
+        } else if (fillPercent > 0) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(fillPercent / 100f)
@@ -577,8 +671,58 @@ private fun HeadUpTile(
                     .background(colors.onSurfaceVariant.copy(alpha = 0.35f))
             )
         }
+        HeadUpGlyph(
+            panel = panel,
+            showLabel = showLabel,
+            centeredOnSlider = layout.verticalSlider,
+            colors = colors
+        )
+        if (layout.detailIndicatorVisible) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(panel.headUpHeight * 0.14f)
+                    .size((panel.headUpHeight * 0.16f).coerceAtLeast(2.dp))
+                    .clip(CircleShape)
+                    .background(colors.onSurfaceVariant.copy(alpha = 0.6f))
+            )
+        }
+    }
+}
+
+/** Vertical slider track with its filled part growing from the bottom edge. */
+@Composable
+private fun BoxScope.VerticalSliderBar(panel: MockPanel, fillPercent: Int, colors: ColorScheme) {
+    Box(
+        modifier = Modifier
+            .align(Alignment.Center)
+            .width(panel.headUpWidth * VerticalSliderWidthFraction)
+            .fillMaxHeight(VerticalSliderHeightFraction)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(colors.onSurfaceVariant.copy(alpha = 0.25f))
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .fillMaxHeight(fillPercent / 100f)
+                .background(colors.primary.copy(alpha = 0.85f))
+        )
+    }
+}
+
+@Composable
+private fun HeadUpGlyph(
+    panel: MockPanel,
+    showLabel: Boolean,
+    centeredOnSlider: Boolean,
+    colors: ColorScheme
+) {
+    Row(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(if (centeredOnSlider) 1f else HeadUpGlyphCenterFraction * 2f),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -588,13 +732,14 @@ private fun HeadUpTile(
                     .clip(RoundedCornerShape(panel.headUpHeight * 0.12f))
                     .background(colors.onSurfaceVariant.copy(alpha = 0.7f))
             )
-            if (percent != null) {
-                Spacer(modifier = Modifier.height(panel.headUpHeight * 0.06f))
-                Text(
-                    text = stringResource(R.string.system_ui_control_center_percent_unit, percent),
-                    fontSize = percentSize,
-                    color = colors.onSurfaceVariant,
-                    maxLines = 1
+            if (showLabel) {
+                Spacer(modifier = Modifier.height(panel.headUpHeight * 0.08f))
+                Box(
+                    modifier = Modifier
+                        .width(panel.headUpWidth * 0.16f)
+                        .height((panel.headUpHeight * 0.12f).coerceAtLeast(2.dp))
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(colors.onSurfaceVariant.copy(alpha = 0.6f))
                 )
             }
         }
