@@ -1,11 +1,11 @@
 package com.qimian233.ztool.screens.systemui.controlcenter
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -31,6 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -86,9 +87,15 @@ private const val SmallScreenTileColumns = 4
 /** Centre of the head-up glyph block, as a share of the tile width from its left edge. */
 private const val HeadUpGlyphCenterFraction = 0.25f
 
-/** Vertical slider bar: width against the tile, and its height against the tile. */
-private const val VerticalSliderWidthFraction = 0.34f
-private const val VerticalSliderHeightFraction = 0.72f
+/**
+ * Phone-class head-up block: the two slider pills against the content width, and the stacked
+ * plain tiles beside them, measured off a ZUI phone screenshot (433x215 block, 92x215 pills).
+ */
+private const val VerticalSliderPillWidthFraction = 0.21f
+private const val VerticalHeadUpTileRatio = 0.5f
+
+/** Indicator triangle against the tile height, and the tile height against its tile width. */
+private const val DetailIndicatorFraction = 0.18f
 
 /** Schematic slider levels; the module only decides whether a label is drawn at all. */
 private const val BrightnessSamplePercent = 32
@@ -581,7 +588,10 @@ private fun HeaderGlyphRow(panel: MockPanel, colors: ColorScheme) {
     }
 }
 
-/** The 2x2 head-up block: two plain tiles and the two sliders that carry the labels. */
+/**
+ * Head-up block. On a large screen it is the host's 2x2 grid of wide tiles; on a small screen
+ * the two sliders become full-height pills beside the stacked plain tiles.
+ */
 @Composable
 private fun HeadUpBlock(
     config: ControlCenterPreviewConfig,
@@ -590,39 +600,70 @@ private fun HeadUpBlock(
     shape: RoundedCornerShape,
     colors: ColorScheme
 ) {
+    if (layout.verticalSlider) {
+        VerticalHeadUpBlock(
+            config = config,
+            panel = panel,
+            shape = shape,
+            colors = colors,
+            showIndicator = layout.detailIndicatorVisible
+        )
+    } else {
+        HorizontalHeadUpBlock(
+            config = config,
+            panel = panel,
+            shape = shape,
+            colors = colors,
+            showIndicator = layout.detailIndicatorVisible
+        )
+    }
+}
+
+@Composable
+private fun HorizontalHeadUpBlock(
+    config: ControlCenterPreviewConfig,
+    panel: MockPanel,
+    shape: RoundedCornerShape,
+    colors: ColorScheme,
+    showIndicator: Boolean
+) {
     Column(verticalArrangement = Arrangement.spacedBy(panel.gap)) {
         Row(horizontalArrangement = Arrangement.spacedBy(panel.gap)) {
             HeadUpTile(
-                panel = panel,
+                tileWidth = panel.headUpWidth,
+                tileHeight = panel.headUpHeight,
                 shape = shape,
-                layout = layout,
                 active = true,
-                colors = colors
+                colors = colors,
+                showIndicator = showIndicator
             )
             HeadUpTile(
-                panel = panel,
+                tileWidth = panel.headUpWidth,
+                tileHeight = panel.headUpHeight,
                 shape = shape,
-                layout = layout,
                 active = false,
                 colors = colors,
+                showIndicator = showIndicator,
                 showLabel = config.volumePercentVisible,
                 fillPercent = VolumeSamplePercent
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(panel.gap)) {
             HeadUpTile(
-                panel = panel,
+                tileWidth = panel.headUpWidth,
+                tileHeight = panel.headUpHeight,
                 shape = shape,
-                layout = layout,
                 active = true,
-                colors = colors
+                colors = colors,
+                showIndicator = showIndicator
             )
             HeadUpTile(
-                panel = panel,
+                tileWidth = panel.headUpWidth,
+                tileHeight = panel.headUpHeight,
                 shape = shape,
-                layout = layout,
                 active = false,
                 colors = colors,
+                showIndicator = showIndicator,
                 showLabel = config.brightnessPercentVisible,
                 fillPercent = BrightnessSamplePercent
             )
@@ -630,24 +671,87 @@ private fun HeadUpBlock(
     }
 }
 
+@Composable
+private fun VerticalHeadUpBlock(
+    config: ControlCenterPreviewConfig,
+    panel: MockPanel,
+    shape: RoundedCornerShape,
+    colors: ColorScheme,
+    showIndicator: Boolean
+) {
+    val contentWidth = (panel.width - panel.padding * 2).coerceAtLeast(1.dp)
+    val pillWidth = contentWidth * VerticalSliderPillWidthFraction
+    val tileWidth = (contentWidth - pillWidth * 2 - panel.gap * 2).coerceAtLeast(1.dp)
+    val tileHeight = (tileWidth * VerticalHeadUpTileRatio).coerceAtLeast(1.dp)
+    val blockHeight = tileHeight * 2 + panel.gap
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(blockHeight),
+        horizontalArrangement = Arrangement.spacedBy(panel.gap)
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.spacedBy(panel.gap)
+        ) {
+            HeadUpTile(
+                tileWidth = tileWidth,
+                tileHeight = tileHeight,
+                shape = shape,
+                active = true,
+                colors = colors,
+                showIndicator = showIndicator
+            )
+            HeadUpTile(
+                tileWidth = tileWidth,
+                tileHeight = tileHeight,
+                shape = shape,
+                active = false,
+                colors = colors,
+                showIndicator = showIndicator
+            )
+        }
+        VerticalSliderPill(
+            pillWidth = pillWidth,
+            pillHeight = blockHeight,
+            showLabel = config.volumePercentVisible,
+            fillPercent = VolumeSamplePercent,
+            showIndicator = showIndicator,
+            colors = colors
+        )
+        VerticalSliderPill(
+            pillWidth = pillWidth,
+            pillHeight = blockHeight,
+            showLabel = config.brightnessPercentVisible,
+            fillPercent = BrightnessSamplePercent,
+            showIndicator = showIndicator,
+            colors = colors
+        )
+    }
+}
+
 /**
- * One head-up tile: the level bar ([fillPercent]) plus the glyph block, which sits at a quarter
- * of the tile width from the left on a horizontal slider and centred on a vertical one.
- * [showLabel] stands for the percentage text the module adds, drawn as a placeholder bar.
+ * One wide head-up tile: the glyph block at [HeadUpGlyphCenterFraction] of its width, the level
+ * bar of a horizontal slider ([fillPercent]) growing behind it. [showLabel] stands for the
+ * percentage text the module adds, drawn as a placeholder bar.
  */
 @Composable
 private fun HeadUpTile(
-    panel: MockPanel,
+    tileWidth: Dp,
+    tileHeight: Dp,
     shape: RoundedCornerShape,
-    layout: MockLayout,
     active: Boolean,
     colors: ColorScheme,
+    showIndicator: Boolean,
     showLabel: Boolean = false,
     fillPercent: Int = 0
 ) {
     Box(
         modifier = Modifier
-            .size(panel.headUpWidth, panel.headUpHeight)
+            .size(tileWidth, tileHeight)
             .clip(shape)
             .background(
                 if (active) {
@@ -657,91 +761,128 @@ private fun HeadUpTile(
                 }
             )
     ) {
-        if (layout.verticalSlider) {
-            VerticalSliderBar(
-                panel = panel,
-                fillPercent = fillPercent,
-                colors = colors
-            )
-        } else if (fillPercent > 0) {
+        if (fillPercent > 0) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(fillPercent / 100f)
-                    .height(panel.headUpHeight)
+                    .height(tileHeight)
                     .background(colors.onSurfaceVariant.copy(alpha = 0.35f))
             )
         }
         HeadUpGlyph(
-            panel = panel,
+            glyphSize = tileHeight * 0.42f,
+            labelWidth = tileWidth * 0.16f,
             showLabel = showLabel,
-            centeredOnSlider = layout.verticalSlider,
-            colors = colors
+            colors = colors,
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(HeadUpGlyphCenterFraction * 2f)
         )
-        if (layout.detailIndicatorVisible) {
-            Box(
+        if (showIndicator) {
+            DetailIndicator(
+                indicatorSize = (tileHeight * DetailIndicatorFraction).coerceAtLeast(3.dp),
+                colors = colors,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(panel.headUpHeight * 0.14f)
-                    .size((panel.headUpHeight * 0.16f).coerceAtLeast(2.dp))
-                    .clip(CircleShape)
-                    .background(colors.onSurfaceVariant.copy(alpha = 0.6f))
+                    .padding(tileHeight * 0.1f)
             )
         }
     }
 }
 
-/** Vertical slider track with its filled part growing from the bottom edge. */
+/**
+ * Small-screen slider: a full-height pill whose filled part grows from the bottom edge, with the
+ * glyph block sitting in the lower part of the pill.
+ */
 @Composable
-private fun BoxScope.VerticalSliderBar(panel: MockPanel, fillPercent: Int, colors: ColorScheme) {
+private fun VerticalSliderPill(
+    pillWidth: Dp,
+    pillHeight: Dp,
+    showLabel: Boolean,
+    fillPercent: Int,
+    showIndicator: Boolean,
+    colors: ColorScheme
+) {
     Box(
         modifier = Modifier
-            .align(Alignment.Center)
-            .width(panel.headUpWidth * VerticalSliderWidthFraction)
-            .fillMaxHeight(VerticalSliderHeightFraction)
+            .size(pillWidth, pillHeight)
             .clip(RoundedCornerShape(percent = 50))
-            .background(colors.onSurfaceVariant.copy(alpha = 0.25f))
+            .background(colors.onSurfaceVariant.copy(alpha = 0.22f))
     ) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .fillMaxHeight(fillPercent / 100f)
-                .background(colors.primary.copy(alpha = 0.85f))
+                .background(colors.onSurface.copy(alpha = 0.8f))
         )
+        HeadUpGlyph(
+            glyphSize = pillWidth * 0.5f,
+            labelWidth = pillWidth * 0.55f,
+            showLabel = showLabel,
+            colors = colors,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = pillHeight * 0.08f)
+        )
+        if (showIndicator) {
+            DetailIndicator(
+                indicatorSize = (pillHeight * 0.05f).coerceAtLeast(3.dp),
+                colors = colors,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(pillWidth * 0.12f)
+            )
+        }
+    }
+}
+
+/** The host's side-view indicator: a right triangle tucked into the bottom-right corner. */
+@Composable
+private fun DetailIndicator(
+    indicatorSize: Dp,
+    colors: ColorScheme,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier.size(indicatorSize)) {
+        val path = Path().apply {
+            moveTo(size.width, 0f)
+            lineTo(size.width, size.height)
+            lineTo(0f, size.height)
+            close()
+        }
+        drawPath(path, colors.onSurfaceVariant.copy(alpha = 0.7f))
     }
 }
 
 @Composable
 private fun HeadUpGlyph(
-    panel: MockPanel,
+    glyphSize: Dp,
+    labelWidth: Dp,
     showLabel: Boolean,
-    centeredOnSlider: Boolean,
-    colors: ColorScheme
+    colors: ColorScheme,
+    modifier: Modifier = Modifier
 ) {
-    Row(modifier = Modifier.fillMaxSize()) {
-        Column(
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(if (centeredOnSlider) 1f else HeadUpGlyphCenterFraction * 2f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+                .size(glyphSize.coerceAtLeast(3.dp))
+                .clip(RoundedCornerShape(glyphSize * 0.28f))
+                .background(colors.onSurfaceVariant.copy(alpha = 0.7f))
+        )
+        if (showLabel) {
+            Spacer(modifier = Modifier.height(glyphSize * 0.2f))
             Box(
                 modifier = Modifier
-                    .size((panel.headUpHeight * 0.42f).coerceAtLeast(3.dp))
-                    .clip(RoundedCornerShape(panel.headUpHeight * 0.12f))
-                    .background(colors.onSurfaceVariant.copy(alpha = 0.7f))
+                    .width(labelWidth)
+                    .height((glyphSize * 0.28f).coerceAtLeast(2.dp))
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(colors.onSurfaceVariant.copy(alpha = 0.6f))
             )
-            if (showLabel) {
-                Spacer(modifier = Modifier.height(panel.headUpHeight * 0.08f))
-                Box(
-                    modifier = Modifier
-                        .width(panel.headUpWidth * 0.16f)
-                        .height((panel.headUpHeight * 0.12f).coerceAtLeast(2.dp))
-                        .clip(RoundedCornerShape(percent = 50))
-                        .background(colors.onSurfaceVariant.copy(alpha = 0.6f))
-                )
-            }
         }
     }
 }
