@@ -19,11 +19,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,6 +52,9 @@ import com.qimian233.ztool.screens.home.EnvironmentStateListener
 import com.qimian233.ztool.service.LogServiceManager
 import com.qimian233.ztool.ui.components.FloatingBottomBar
 import com.qimian233.ztool.ui.components.FloatingBottomBarItem
+import com.qimian233.ztool.ui.components.LocalSearchOverlayState
+import com.qimian233.ztool.ui.components.SearchOverlayState
+import com.qimian233.ztool.ui.components.SearchScrim
 import com.qimian233.ztool.ui.components.ZToolNavigationBar
 import com.qimian233.ztool.ui.components.ZToolNavigationBarItem
 import com.qimian233.ztool.ui.components.ZToolNavigationRail
@@ -133,29 +138,34 @@ class MainActivity : ComponentActivity(),
                         null
                     }
                 ) {
-                    // The main shell stays composed at all times; the Firstrun
-                    // flow overlays it instead of replacing it, so the NavHost
-                    // and its back stack survive OOBE replay and the user lands
-                    // back on whatever screen they came from (e.g. the advanced
-                    // settings route when opened from the developer entry).
-                    MainTabletShell(
-                        environmentReady = isEnvironmentReady,
-                        selectedRoute = currentRoute,
-                        themeSettings = themeSettings,
-                        onDestinationSelected = ::navigateFromRail,
-                        onEnvironmentStateChanged = ::onEnvironmentStateChanged,
-                        onRouteChanged = ::setCurrentRouteFromHost
-                    )
-                    firstrunDisplayMode?.let { currentFirstrunMode ->
-                        FirstrunAgreementRoute(
-                            agreementDisplayMode = currentFirstrunMode,
-                            playIntroReveal = firstrunIntroRevealPending,
-                            onIntroRevealPlayed = { firstrunIntroRevealPending = false },
-                            onAgreementAccepted = {
-                                firstrunDisplayMode = null
-                            },
-                            onAgreementDeclined = { finishAffinity() }
+                    // Owned by the app shell: MainTabletShell draws the dim layer above the
+                    // navigation chrome, and the screens below publish into this instance.
+                    val searchOverlay = remember { SearchOverlayState() }
+                    CompositionLocalProvider(LocalSearchOverlayState provides searchOverlay) {
+                        // The main shell stays composed at all times; the Firstrun
+                        // flow overlays it instead of replacing it, so the NavHost
+                        // and its back stack survive OOBE replay and the user lands
+                        // back on whatever screen they came from (e.g. the advanced
+                        // settings route when opened from the developer entry).
+                        MainTabletShell(
+                            environmentReady = isEnvironmentReady,
+                            selectedRoute = currentRoute,
+                            themeSettings = themeSettings,
+                            onDestinationSelected = ::navigateFromRail,
+                            onEnvironmentStateChanged = ::onEnvironmentStateChanged,
+                            onRouteChanged = ::setCurrentRouteFromHost
                         )
+                        firstrunDisplayMode?.let { currentFirstrunMode ->
+                            FirstrunAgreementRoute(
+                                agreementDisplayMode = currentFirstrunMode,
+                                playIntroReveal = firstrunIntroRevealPending,
+                                onIntroRevealPlayed = { firstrunIntroRevealPending = false },
+                                onAgreementAccepted = {
+                                    firstrunDisplayMode = null
+                                },
+                                onAgreementDeclined = { finishAffinity() }
+                            )
+                        }
                     }
                 }
             }
@@ -409,6 +419,9 @@ private fun MainTabletShell(
             null
         }
 
+    // Drawn above the navigation chrome so the docked search's dim layer also covers the
+    // rail and the bottom bar; screens publish their search state through it.
+    val searchOverlay = LocalSearchOverlayState.current
     if (useNavigationRail) {
         // === Rail layout (landscape) ===
         val navigationRailState = rememberZToolNavigationRailState()
@@ -438,6 +451,7 @@ private fun MainTabletShell(
                     )
                 }
             }
+            SearchScrim(state = searchOverlay, modifier = Modifier.fillMaxSize())
         }
     } else {
         // === Bottom bar layout (portrait) ===
@@ -480,6 +494,7 @@ private fun MainTabletShell(
                         )
                     }
                 }
+                SearchScrim(state = searchOverlay, modifier = Modifier.fillMaxSize())
             }
         } else {
             // Standard mode: Scaffold with built-in bottomBar slot
@@ -495,33 +510,36 @@ private fun MainTabletShell(
 
             val contentModifier = Modifier.fillMaxSize()
 
-            when (ztoolThemeSpec.style) {
-                FrontendStyle.Miuix -> {
-                    top.yukonga.miuix.kmp.basic.Scaffold(
-                        bottomBar = bottomBar,
-                        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
-                    ) { innerPadding ->
-                        MainRouteNavHost(useHorizontalAnimation = true,
-                            modifier = contentModifier.padding(innerPadding),
-                            navController = navController,
-                            predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
-                            onEnvironmentStateChanged = onEnvironmentStateChanged
-                        )
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (ztoolThemeSpec.style) {
+                    FrontendStyle.Miuix -> {
+                        top.yukonga.miuix.kmp.basic.Scaffold(
+                            bottomBar = bottomBar,
+                            contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
+                        ) { innerPadding ->
+                            MainRouteNavHost(useHorizontalAnimation = true,
+                                modifier = contentModifier.padding(innerPadding),
+                                navController = navController,
+                                predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+                                onEnvironmentStateChanged = onEnvironmentStateChanged
+                            )
+                        }
+                    }
+                    FrontendStyle.Material3Expressive -> {
+                        Scaffold(
+                            bottomBar = bottomBar,
+                            contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
+                        ) { innerPadding ->
+                            MainRouteNavHost(useHorizontalAnimation = true,
+                                modifier = contentModifier.padding(innerPadding),
+                                navController = navController,
+                                predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
+                                onEnvironmentStateChanged = onEnvironmentStateChanged
+                            )
+                        }
                     }
                 }
-                FrontendStyle.Material3Expressive -> {
-                    Scaffold(
-                        bottomBar = bottomBar,
-                        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
-                    ) { innerPadding ->
-                        MainRouteNavHost(useHorizontalAnimation = true,
-                            modifier = contentModifier.padding(innerPadding),
-                            navController = navController,
-                            predictiveBackGestureEnabled = themeSettings.predictiveBackGestureEnabled,
-                            onEnvironmentStateChanged = onEnvironmentStateChanged
-                        )
-                    }
-                }
+                SearchScrim(state = searchOverlay, modifier = Modifier.fillMaxSize())
             }
         }
 }

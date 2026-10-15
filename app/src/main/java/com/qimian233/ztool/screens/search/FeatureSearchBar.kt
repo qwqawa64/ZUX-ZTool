@@ -7,12 +7,10 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -33,7 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +45,7 @@ import com.qimian233.ztool.search.SearchEntry
 import com.qimian233.ztool.search.SearchParentMode
 import com.qimian233.ztool.search.SearchUiState
 import com.qimian233.ztool.search.SearchViewModel
+import com.qimian233.ztool.ui.components.LocalSearchOverlayState
 import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
@@ -55,9 +55,9 @@ import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
  * frontend styles render their own search bar (material3 DockedSearchBar vs Miuix
  * SearchBar) above the same grouped result list, backed by one [SearchViewModel].
  *
- * The whole control is absent until [visible], then animates in and grabs input
- * focus; when collapsed again it animates out. The host top-bar search icon toggles
- * visibility, and a scrim dims the page while the search is up.
+ * The whole control is absent until [visible], then animates in; when collapsed it
+ * animates out. It publishes its bounds to the shell's search overlay so the dim layer
+ * can cut it out.
  */
 @Composable
 fun FeatureSearchBar(
@@ -68,6 +68,7 @@ fun FeatureSearchBar(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val overlayState = LocalSearchOverlayState.current
     val owner = LocalViewModelStoreOwner.current
         ?: error("FeatureSearchBar requires a ViewModelStoreOwner")
     val viewModel: SearchViewModel = remember(owner) {
@@ -94,6 +95,9 @@ fun FeatureSearchBar(
         Column(
             modifier = modifier
                 .fillMaxWidth()
+                .onGloballyPositioned { coordinates ->
+                    overlayState.bounds = coordinates.boundsInRoot()
+                }
         ) {
             when (LocalZToolThemeSpec.current.style) {
                 FrontendStyle.Miuix -> MiuixFeatureSearchBar(
@@ -114,35 +118,6 @@ fun FeatureSearchBar(
                 )
             }
         }
-    }
-}
-
-/**
- * Full-page scrim shown while the docked search is up: dims everything behind the
- * search controls and collapses the search on tap. Place it in a Box overlay that
- * covers the whole screen, UNDER the search bar's own layer.
- */
-@Composable
-fun SearchScrim(
-    visible: Boolean,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-                ) { onDismiss() }
-        )
     }
 }
 

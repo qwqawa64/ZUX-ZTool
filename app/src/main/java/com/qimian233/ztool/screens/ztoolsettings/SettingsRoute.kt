@@ -34,7 +34,6 @@ import androidx.compose.material.icons.rounded.HideSource
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestorePage
 import androidx.compose.material.icons.rounded.Save
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SettingsBackupRestore
 import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -42,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,8 +61,10 @@ import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.keys.LogLevel
 import com.qimian233.ztool.data.settings.SettingsRepository
+import com.qimian233.ztool.screens.search.FeatureSearchBar
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
+import com.qimian233.ztool.ui.components.LocalSearchOverlayState
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolDialog
@@ -337,66 +339,72 @@ private fun SettingsRoute(
     onSearchExpandedChange: (Boolean) -> Unit,
     onOpenEntry: (com.qimian233.ztool.search.SearchEntry) -> Unit
 ) {
+    // The dim layer lives in the app shell so it can cover the bottom bar too; this
+    // screen only publishes where the search bar is and how to dismiss it.
+    val searchOverlay = LocalSearchOverlayState.current
+    SideEffect {
+        searchOverlay.visible = searchExpanded
+        searchOverlay.onDismiss = { onSearchExpandedChange(false) }
+    }
+    DisposableEffect(searchOverlay) {
+        onDispose { searchOverlay.visible = false }
+    }
+
     androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
-        com.qimian233.ztool.screens.search.SearchScrim(
-            visible = searchExpanded,
-            onDismiss = { onSearchExpandedChange(false) },
-            modifier = Modifier.fillMaxSize()
-        )
-        ZToolScaffold (
+        ZToolScaffold(
             topBar = {
                 ZToolTopAppBar(
                     title = stringResource(R.string.page_settings_title),
-                addNavIcon = false
-            )
-        }
-    ) { innerPadding ->
-        ZToolPageSurface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .widthIn(max = 960.dp)
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = 24.dp, vertical = 24.dp)
-            ) {
-                com.qimian233.ztool.screens.search.FeatureSearchBar(
-                    visible = true,
-                    expanded = searchExpanded,
-                    onExpandedChange = onSearchExpandedChange,
-                    onOpenEntry = onOpenEntry,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                ZToolSettingsList(
-                    highlightRegistry = highlightRegistry,
-                    sections = settingsSections(
-                        state = state,
-                        onBackup = onBackup,
-                        onRestore = onRestore,
-                        onRestoreDefault = onRestoreDefault,
-                        onOpenThemeSettings = onOpenThemeSettings,
-                        onOpenLanguageSettings = onOpenLanguageSettings,
-                        onEntryDisplayChanged = onEntryDisplayChanged,
-                        onShowAllAppsChanged = onShowAllAppsChanged,
-                        onHideFromRecentsChanged = onHideFromRecentsChanged,
-                        onHideLauncherIconChanged = onHideLauncherIconChanged,
-                        onLogLevelChanged = onLogLevelChanged,
-                        onAbout = onAbout,
-                        onExportLogs = onExportLogs,
-                        onDeleteAllLogs = onDeleteAllLogs,
-                        onOpenAdvanced = onOpenAdvanced,
-                        onOpenMisc = onOpenMisc,
-                        onAutoCheckUpdateChanged = onAutoCheckUpdateChanged,
-                    ),
-                    bottomPadding = 32.dp
+                    addNavIcon = false
                 )
             }
+        ) { innerPadding ->
+            ZToolPageSurface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .widthIn(max = 960.dp)
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 24.dp, vertical = 24.dp)
+                ) {
+                    FeatureSearchBar(
+                        visible = true,
+                        expanded = searchExpanded,
+                        onExpandedChange = onSearchExpandedChange,
+                        onOpenEntry = onOpenEntry,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ZToolSettingsList(
+                        highlightRegistry = highlightRegistry,
+                        sections = settingsSections(
+                            state = state,
+                            onBackup = onBackup,
+                            onRestore = onRestore,
+                            onRestoreDefault = onRestoreDefault,
+                            onOpenThemeSettings = onOpenThemeSettings,
+                            onOpenLanguageSettings = onOpenLanguageSettings,
+                            onEntryDisplayChanged = onEntryDisplayChanged,
+                            onShowAllAppsChanged = onShowAllAppsChanged,
+                            onHideFromRecentsChanged = onHideFromRecentsChanged,
+                            onHideLauncherIconChanged = onHideLauncherIconChanged,
+                            onLogLevelChanged = onLogLevelChanged,
+                            onAbout = onAbout,
+                            onExportLogs = onExportLogs,
+                            onDeleteAllLogs = onDeleteAllLogs,
+                            onOpenAdvanced = onOpenAdvanced,
+                            onOpenMisc = onOpenMisc,
+                            onAutoCheckUpdateChanged = onAutoCheckUpdateChanged,
+                        ),
+                        bottomPadding = 32.dp
+                    )
+                }
+            }
         }
-    }
     }
 }
 

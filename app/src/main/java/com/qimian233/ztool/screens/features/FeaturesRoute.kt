@@ -26,12 +26,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +49,8 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.XposedServiceBridge
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.settings.SettingsRepository
+import com.qimian233.ztool.screens.search.FeatureSearchBar
+import com.qimian233.ztool.ui.components.LocalSearchOverlayState
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolPageSurface
@@ -385,64 +388,70 @@ private fun FeaturesRoute(
     onSearchExpandedChange: (Boolean) -> Unit,
     onOpenEntry: (com.qimian233.ztool.search.SearchEntry) -> Unit
 ) {
+    // The dim layer lives in the app shell so it can cover the navigation rail too;
+    // this screen only publishes where the search bar is and how to dismiss it.
+    val searchOverlay = LocalSearchOverlayState.current
+    SideEffect {
+        searchOverlay.visible = searchExpanded
+        searchOverlay.onDismiss = { onSearchExpandedChange(false) }
+    }
+    DisposableEffect(searchOverlay) {
+        onDispose { searchOverlay.visible = false }
+    }
+
     androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
-        com.qimian233.ztool.screens.search.SearchScrim(
-            visible = searchExpanded,
-            onDismiss = { onSearchExpandedChange(false) },
-            modifier = Modifier.fillMaxSize()
-        )
         ZToolScaffold(
             topBar = {
                 ZToolTopAppBar(
                     title = stringResource(R.string.page_features_title),
-                addNavIcon = false
-            )
-        }
-    ) { innerPadding ->
-        ZToolPageSurface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth()
-                    .widthIn(max = 1280.dp)
-                    .padding(horizontal = 32.dp, vertical = 32.dp)
-            ) {
-                com.qimian233.ztool.screens.search.FeatureSearchBar(
-                    visible = true,
-                    expanded = searchExpanded,
-                    onExpandedChange = onSearchExpandedChange,
-                    onOpenEntry = onOpenEntry,
-                    modifier = Modifier.fillMaxWidth()
+                    addNavIcon = false
                 )
-                Spacer(modifier = Modifier.height(24.dp))
-                if (warningMessageRes != null) {
-                    FeatureWarningCard(message = stringResource(warningMessageRes))
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                if (items.isNotEmpty()) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 320.dp),
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 32.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(items = items, key = { it.packageName }) { item ->
-                            FeatureCard(
-                                item = item,
-                                onClick = { onFeatureClick(item) }
-                            )
+            }
+        ) { innerPadding ->
+            ZToolPageSurface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth()
+                        .widthIn(max = 1280.dp)
+                        .padding(horizontal = 32.dp, vertical = 32.dp)
+                ) {
+                    FeatureSearchBar(
+                        visible = true,
+                        expanded = searchExpanded,
+                        onExpandedChange = onSearchExpandedChange,
+                        onOpenEntry = onOpenEntry,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    if (warningMessageRes != null) {
+                        FeatureWarningCard(message = stringResource(warningMessageRes))
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    if (items.isNotEmpty()) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Adaptive(minSize = 320.dp),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = 32.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(items = items, key = { it.packageName }) { item ->
+                                FeatureCard(
+                                    item = item,
+                                    onClick = { onFeatureClick(item) }
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-    }
     }
 }
 
