@@ -717,6 +717,7 @@ private fun VerticalHeadUpBlock(
         VerticalSliderPill(
             pillWidth = pillWidth,
             pillHeight = blockHeight,
+            shape = shape,
             showLabel = config.volumePercentVisible,
             fillPercent = VolumeSamplePercent,
             showIndicator = showIndicator,
@@ -725,6 +726,7 @@ private fun VerticalHeadUpBlock(
         VerticalSliderPill(
             pillWidth = pillWidth,
             pillHeight = blockHeight,
+            shape = shape,
             showLabel = config.brightnessPercentVisible,
             fillPercent = BrightnessSamplePercent,
             showIndicator = showIndicator,
@@ -791,13 +793,14 @@ private fun HeadUpTile(
 }
 
 /**
- * Small-screen slider: a full-height pill whose filled part grows from the bottom edge, with the
- * glyph block sitting in the lower part of the pill.
+ * Small-screen slider: a tall rounded rectangle sharing the head-up tile radius, its filled part
+ * growing from the bottom edge, with the glyph block sitting in the lower part of it.
  */
 @Composable
 private fun VerticalSliderPill(
     pillWidth: Dp,
     pillHeight: Dp,
+    shape: RoundedCornerShape,
     showLabel: Boolean,
     fillPercent: Int,
     showIndicator: Boolean,
@@ -806,7 +809,7 @@ private fun VerticalSliderPill(
     Box(
         modifier = Modifier
             .size(pillWidth, pillHeight)
-            .clip(RoundedCornerShape(percent = 50))
+            .clip(shape)
             .background(colors.onSurfaceVariant.copy(alpha = 0.22f))
     ) {
         Box(
