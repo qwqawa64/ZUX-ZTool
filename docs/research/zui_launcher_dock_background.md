@@ -218,6 +218,14 @@ DexKit has no dataflow analysis, so a static query alone cannot do better: all f
 are read from `dispatchDraw` alongside the same integer fields, so `{l0, k0}` cannot be
 separated from `{C0, B0}` statically. Static proposes, runtime disposes.
 
+**Index staleness.** `DexIndexManager.needsReindex` rebuilds only on a
+`DexIndexConstants.SCHEMA_VERSION` bump or a target apk fingerprint change. Adding an
+output key to an existing indexer therefore requires a schema bump — otherwise the key
+never reaches the hook, `hints` is empty, and the resolver silently degrades to the
+superset. That is exactly what happened when this query was first added against a v2
+index: the hook logged `ambiguous paint set, clearing all 5 fields` and still looked
+correct on screen, because `C0`/`B0` are dead code (section 3.3).
+
 ### 3.3 Why degrading to a superset is safe here
 
 `E0` gates the `C0`/`B0` empty-cell branch. `get_xrefs_to_field(ZuiHotseat, E0)` returns

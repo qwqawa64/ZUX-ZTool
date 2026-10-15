@@ -10,6 +10,7 @@ import com.qimian233.ztool.dexindex.base.DexIndexConstants
 import com.qimian233.ztool.hook.base.AppHookModule
 import com.qimian233.ztool.hook.base.DexIndexStore
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
+import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
@@ -117,15 +118,32 @@ class DisableDockBackground : AppHookModule() {
         val resolved = listOfNotNull(fill, border, splitLine)
             .takeIf { it.size == 3 && it.map { (f, _) -> f.name }.toSet().size == 3 }
 
-        val chosen = resolved ?: paints
-        if (resolved == null) {
-            logger.warn("DisableDockBackground: ambiguous paint set, clearing all ${paints.size} fields")
+        if (resolved != null) {
+            logger.debug(
+                "DisableDockBackground: resolved fill=${fill?.first?.name} " +
+                    "border=${border?.first?.name} splitLine=${splitLine?.first?.name}"
+            )
+        } else {
+            logger.warn(
+                "DisableDockBackground: ambiguous paint set, clearing all ${paints.size} fields " +
+                    "(hints=$hints border=${border?.first?.name} splitLine=${splitLine?.first?.name} " +
+                    "fill=${fill?.first?.name} fillCandidates=${fills.map { it.first.name }})"
+            )
+            for ((field, paint) in paints) {
+                logger.warn("DisableDockBackground: candidate ${describe(field, paint, hints)}")
+            }
         }
-        for ((field, paint) in chosen) {
+
+        for ((field, paint) in (resolved ?: paints)) {
             paint.alpha = 0
             logger.debug("DisableDockBackground: cleared ${field.name}")
         }
     }
+
+    /** One candidate Paint field, rendered for the ambiguity diagnostic. */
+    private fun describe(field: Field, paint: Paint, hints: Set<String>): String =
+        "${field.name} style=${paint.style} strokeWidth=${paint.strokeWidth} " +
+            "color=#${Integer.toHexString(paint.color)} hinted=${field.name in hints}"
 
     /** Prefers the host's own method name; falls back to the single matching signature. */
     @Throws(NoSuchMethodException::class)
@@ -150,10 +168,21 @@ class DisableDockBackground : AppHookModule() {
                 DexIndexConstants.ModuleKeys.DISABLE_DOCK_BACKGROUND,
                 DexIndexConstants.Keys.DOCK_PAINT_FIELDS
             )
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            logger.warn("DisableDockBackground: offline index read failed: $t")
             null
-        } ?: return emptySet()
-        return raw.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        }
+        if (raw == null) {
+            logger.warn(
+                "DisableDockBackground: offline index has no " +
+                    "'${DexIndexConstants.Keys.DOCK_PAINT_FIELDS}' entry (missing or stale); " +
+                    "structural resolution only"
+            )
+            return emptySet()
+        }
+        val hints = raw.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        logger.debug("DisableDockBackground: index hints = $hints (raw='$raw')")
+        return hints
     }
 
     private companion object {

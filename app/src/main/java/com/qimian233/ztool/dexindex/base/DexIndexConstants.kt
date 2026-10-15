@@ -12,16 +12,14 @@ import com.qimian233.ztool.data.keys.PreferenceKeys
 object DexIndexConstants {
 
     /**
-     * Index files live directly at the module filesDir root: the Remote Files
-     * root is filesDir itself, and file names do not support subdirectories or
-     * path separators; the file name is `<scopePackage>.json`.
+     * Index files live at the module filesDir root: Remote Files does not support
+     * subdirectories, so the name is `<scopePackage>.json`.
      *
-     * v2: indexer output reverted to a plain modules map (v1 had a doubly
-     * nested modules map, and storing null in the v1 reader's
-     * ConcurrentHashMap would NPE); needsReindex checks this value to rebuild
-     * legacy files automatically.
+     * v3: added the DisableDockBackground field query; v2: plain modules map (v1 nested it,
+     * and the v1 reader NPE'd on a null value). `needsReindex` only rebuilds on a bump or an
+     * apk fingerprint change, so adding an output key to an existing indexer requires one.
      */
-    const val SCHEMA_VERSION = 2
+    const val SCHEMA_VERSION = 3
 
     const val JSON_SCHEMA_VERSION = "schemaVersion"
     const val JSON_GENERATED_AT = "generatedAt"
