@@ -27,6 +27,10 @@ class LauncherDexIndexer : DexIndexer {
         modules.add(DexIndexConstants.ModuleKeys.CLEAN_GLOBAL_SEARCH, indexCleanGlobalSearch(bridge))
         modules.add(DexIndexConstants.ModuleKeys.DISABLE_FORCE_STOP, indexDisableForceStop(bridge))
         modules.add(DexIndexConstants.ModuleKeys.ZUI_LAUNCHER_HOTSEAT, indexZuiLauncherHotseat(bridge))
+        modules.add(
+            DexIndexConstants.ModuleKeys.DISABLE_DOCK_BACKGROUND,
+            indexDisableDockBackground(bridge)
+        )
         return modules
     }
 
@@ -123,6 +127,33 @@ class LauncherDexIndexer : DexIndexer {
             }
         } catch (t: Throwable) {
             Log.w(TAG, "ZuiLauncherHotseatHook: LoaderCursor query failed", t)
+        }
+        return out
+    }
+
+    /**
+     * Paint fields of ZuiHotseat that more than one method reads: the dock's own paints are
+     * touched by both dispatchDraw and setWallpaperColor, while the edit-mode empty-cell pair
+     * is read from dispatchDraw only. Emitted comma-separated because DexIndexStore exposes
+     * string values only; see docs/research/zui_launcher_dock_background.md.
+     */
+    private fun indexDisableDockBackground(bridge: DexKitBridge): JsonObject {
+        val out = JsonObject()
+        try {
+            val names = bridge.findField {
+                searchPackages(scopePackage)
+                matcher {
+                    declaredClass("com.zui.launcher.uiextend.ZuiHotseat")
+                    type("android.graphics.Paint")
+                    readMethods { countMin(2) }
+                }
+            }.map { it.name }
+            if (names.isNotEmpty()) {
+                out.addProperty(DexIndexConstants.Keys.DOCK_PAINT_FIELDS, names.joinToString(","))
+                Log.i(TAG, "DisableDockBackground: dock paint fields = $names")
+            }
+        } catch (t: Throwable) {
+            Log.w(TAG, "DisableDockBackground: dock paint field query failed", t)
         }
         return out
     }

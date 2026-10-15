@@ -169,6 +169,9 @@ object PreferenceKeys {
     val CUSTOM_GRID_SIZE = BoolKey("CustomGridSize", false)
     val CLEAN_GLOBAL_SEARCH = BoolKey("clean_global_search", false)
     val DISABLE_DOCK_BAR = BoolKey("disable_dock_bar", false)
+    // Removes only the dock background (plate, border and split line), keeping the icons.
+    // See docs/research/zui_launcher_dock_background.md.
+    val DISABLE_DOCK_BACKGROUND = BoolKey("disable_dock_background", false)
     val LAUNCHER_RECENT_TASK_MEMORY_VIEW = BoolKey("launcher_recent_task_memory_view", false)
     val LAUNCHER_NO_LABEL_MODE = BoolKey("launcher_no_label_mode", false)
     val LAUNCHER_DRAWER_NO_LABEL_MODE = BoolKey("launcher_drawer_no_label_mode", false)
@@ -385,7 +388,7 @@ object PreferenceKeys {
         DISABLE_INSTALLER_AD, PACKAGE_INSTALLER_STYLE_HOOK,
         PACKAGE_INSTALLER_DISABLE_DELETE,
         DISABLE_FORCE_STOP, ZUI_LAUNCHER_HOTSEAT, CUSTOM_GRID_SIZE,
-        CLEAN_GLOBAL_SEARCH, DISABLE_DOCK_BAR,
+        CLEAN_GLOBAL_SEARCH, DISABLE_DOCK_BAR, DISABLE_DOCK_BACKGROUND,
         LAUNCHER_RECENT_TASK_MEMORY_VIEW, LAUNCHER_NO_LABEL_MODE,
         LAUNCHER_DRAWER_NO_LABEL_MODE, LAUNCHER_BIG_FOLDER_ALIGN,
         LAUNCHER_HIDE_BLUE_POINT, DISMISS_CLOUD_FOLDER_CONFIRMATION,

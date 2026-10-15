@@ -1399,6 +1399,14 @@ object SearchIndex {
             summaryRes = R.string.launcher_disable_dock_bar_summary
         ),
         launcher.item(
+            id = "launcher_disable_dock_background",
+            titleRes = R.string.launcher_disable_dock_background_title,
+            summaryRes = R.string.launcher_disable_dock_background_summary,
+            parentTitleRes = R.string.launcher_disable_dock_bar_title,
+            parentKey = "launcher_disable_dock_bar",
+            parentMode = SearchParentMode.REQUIRE_OFF
+        ),
+        launcher.item(
             id = "launcher_force_stop_mode",
             titleRes = R.string.launcher_disable_force_stop_enable_title,
             summaryRes = R.string.launcher_disable_force_stop_enable_summary

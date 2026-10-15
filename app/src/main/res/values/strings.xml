@@ -1025,6 +1025,8 @@
     <string name="mobile_desktop_skip_nearby_exposure_warn_summary">跳过反人类的警告弹窗，让联想互传磁贴恢复点按开启</string>
     <string name="launcher_disable_dock_bar_title">关闭 Dock 栏</string>
     <string name="launcher_disable_dock_bar_summary">并无法换取更充裕的桌面网格空间，和 Dock 栏扩容冲突</string>
+    <string name="launcher_disable_dock_background_title">关闭 Dock 栏背景</string>
+    <string name="launcher_disable_dock_background_summary">仅移除 Dock 栏的底板、描边与分割线，图标与拖拽不受影响</string>
     <string name="launcher_disable_dock_warning_title">重要警告</string>
     <string name="launcher_disable_dock_warning_message">必须把所有固定在 Dock 栏的应用全部挪出来再重启作用域。如果不这么做，这些应用会被“吞掉”，假如本模块恰好位列其中的话......</string>
     <string name="mobile_desktop_auto_accept_file_transfer">自动接受互传请求</string>

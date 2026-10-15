@@ -10,6 +10,7 @@ import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix
 import com.qimian233.ztool.hook.modules.launcher.LauncherFreeformEntryHook
 import com.qimian233.ztool.hook.modules.launcher.FreeformKeepAliveLauncherHook
 import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableDockBar
+import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableDockBackground
 import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableRecentAppsDisplay
 import com.qimian233.ztool.hook.modules.launcher.dockbar.ZuiLauncherHotseatHook
 import com.qimian233.ztool.hook.modules.launcher.grid.BluePointRemovalHook
@@ -261,6 +262,7 @@ object HookManager {
         registerHookModule(CustomGridSize())
         registerHookModule(CleanGlobalSearch())
         registerHookModule(DisableDockBar())
+        registerHookModule(DisableDockBackground())
         registerHookModule(RecentTaskMemoryViewHook())
         registerHookModule(LauncherNoLabelMode())
         registerHookModule(LauncherDrawerNoLabelMode())

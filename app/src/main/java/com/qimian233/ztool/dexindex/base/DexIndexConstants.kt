@@ -42,6 +42,7 @@ object DexIndexConstants {
         val CLEAN_GLOBAL_SEARCH = PreferenceKeys.CLEAN_GLOBAL_SEARCH.name
         val DISABLE_FORCE_STOP = PreferenceKeys.DISABLE_FORCE_STOP.name
         val ZUI_LAUNCHER_HOTSEAT = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT.name
+        val DISABLE_DOCK_BACKGROUND = PreferenceKeys.DISABLE_DOCK_BACKGROUND.name
         val NO_CHARGE_ANIMATION = PreferenceKeys.NO_CHARGE_ANIMATION.name
         val SYSTEMUI_NETWORK_SPEED_DOUBLELAYER = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER.name
         val BYPASS_SHARE_WARNING = PreferenceKeys.BYPASS_SHARE_WARNING.name
@@ -58,6 +59,13 @@ object DexIndexConstants {
         const val FORCE_STOP_METHOD = "forceStopMethod"
         // ZuiLauncherHotseatHook
         const val LOADER_CURSOR_B_METHOD = "loaderCursorBMethod"
+        /**
+         * DisableDockBackground: comma-separated `ZuiHotseat` Paint field names read by more
+         * than one method. Separates the dock's own paints from the edit-mode empty-cell pair,
+         * which no object-local predicate can do; see
+         * docs/research/zui_launcher_dock_background.md.
+         */
+        const val DOCK_PAINT_FIELDS = "dockPaintFields"
         // NoChargeAnimation
         const val HANDLER_FIELD_NAME = "handlerFieldName"
         // SystemUINetworkSpeeddoublelayerHook

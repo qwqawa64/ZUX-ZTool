@@ -44,6 +44,7 @@ class LauncherSettingsRepository(
             showRamInfo = prefsUtils.loadBooleanSetting(KEY_SHOW_RAM_INFO, false),
             beautifyRamInfo = prefsUtils.loadBooleanSetting(KEY_BEAUTIFY_RAM_INFO, false),
             disableDockBar = prefsUtils.loadBooleanSetting(KEY_DISABLE_DOCK_BAR, false),
+            disableDockBackground = prefsUtils.loadBooleanSetting(KEY_DISABLE_DOCK_BACKGROUND, false),
             noLabelMode = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_NO_LABEL_MODE, false),
             drawerNoLabelMode = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_DRAWER_NO_LABEL_MODE, false),
             hideBluePoint = prefsUtils.loadBooleanSetting(KEY_LAUNCHER_HIDE_BLUE_POINT, false),
@@ -270,6 +271,10 @@ class LauncherSettingsRepository(
         prefsUtils.saveBooleanSetting(KEY_DISABLE_DOCK_WARNING_CONFIRMED, true)
     }
 
+    fun saveDisableDockBackground(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_DISABLE_DOCK_BACKGROUND, enabled)
+    }
+
     fun loadUserInstalledPackageNames(): List<String> {
         val packageManager = context.packageManager
         return packageManager.getInstalledPackages(0)
@@ -346,6 +351,7 @@ class LauncherSettingsRepository(
         private val KEY_SHOW_RAM_INFO = PreferenceKeys.LAUNCHER_RECENT_TASK_MEMORY_VIEW.name
         private val KEY_BEAUTIFY_RAM_INFO = PreferenceKeys.BEAUTIFY_RAM_INFO.name
         private val KEY_DISABLE_DOCK_BAR = PreferenceKeys.DISABLE_DOCK_BAR.name
+        private val KEY_DISABLE_DOCK_BACKGROUND = PreferenceKeys.DISABLE_DOCK_BACKGROUND.name
         private val KEY_DISABLE_DOCK_WARNING_CONFIRMED = PreferenceKeys.DISABLE_DOCK_WARNING_CONFIRMED.name
         private val KEY_LAUNCHER_NO_LABEL_MODE = PreferenceKeys.LAUNCHER_NO_LABEL_MODE.name
         private val KEY_LAUNCHER_DRAWER_NO_LABEL_MODE = PreferenceKeys.LAUNCHER_DRAWER_NO_LABEL_MODE.name

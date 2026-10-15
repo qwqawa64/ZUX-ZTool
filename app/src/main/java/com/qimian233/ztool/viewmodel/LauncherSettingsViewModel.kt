@@ -262,6 +262,11 @@ class LauncherSettingsViewModel(
         }
     }
 
+    fun setDisableDockBackground(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(disableDockBackground = enabled)
+        repository.saveDisableDockBackground(enabled)
+    }
+
     fun dismissDisableDockWarningDialog() {
         _uiState.value = _uiState.value.copy(showDisableDockWarningDialog = false)
     }
@@ -327,6 +332,7 @@ data class LauncherSettingsUiState(
     val showRamInfo : Boolean = false,
     val beautifyRamInfo : Boolean = false,
     val disableDockBar: Boolean = false,
+    val disableDockBackground: Boolean = false,
     val showDisableDockWarningDialog: Boolean = false,
     val noLabelMode: Boolean = false,
     val drawerNoLabelMode: Boolean = false,

@@ -127,6 +127,7 @@ fun LauncherSettingsRoute(
             onShowRamInfoChanged = viewModel::setShowRamInfo,
             onBeautifyRamInfoChanged = viewModel::setBeautifyRamInfo,
             onDisableDockBarChanged = viewModel::setDisableDockBar,
+            onDisableDockBackgroundChanged = viewModel::setDisableDockBackground,
             onLauncherNoLabelModeChanged = viewModel::setLauncherNoLabelMode,
             onLauncherDrawerNoLabelModeChanged = viewModel::setLauncherDrawerNoLabelMode,
             onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint,
@@ -233,6 +234,7 @@ private fun LauncherSettingsScreen(
     onShowRamInfoChanged: (Boolean) -> Unit,
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
+    onDisableDockBackgroundChanged: (Boolean) -> Unit,
     onLauncherNoLabelModeChanged: (Boolean) -> Unit,
     onLauncherDrawerNoLabelModeChanged: (Boolean) -> Unit,
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
@@ -309,6 +311,7 @@ private fun LauncherSettingsScreen(
                         onShowRamInfoChanged = onShowRamInfoChanged,
                         onBeautifyRamInfoChanged = onBeautifyRamInfoChanged,
                         onDisableDockBarChanged = onDisableDockBarChanged,
+                        onDisableDockBackgroundChanged = onDisableDockBackgroundChanged,
                         onLauncherNoLabelModeChanged = onLauncherNoLabelModeChanged,
                         onLauncherDrawerNoLabelModeChanged = onLauncherDrawerNoLabelModeChanged,
                         onLauncherHideBluePointChanged = onLauncherHideBluePointChanged,
@@ -353,6 +356,7 @@ private fun launcherSettingsSections(
     onShowRamInfoChanged: (Boolean) -> Unit,
     onBeautifyRamInfoChanged: (Boolean) -> Unit,
     onDisableDockBarChanged: (Boolean) -> Unit,
+    onDisableDockBackgroundChanged: (Boolean) -> Unit,
     onLauncherNoLabelModeChanged: (Boolean) -> Unit,
     onLauncherDrawerNoLabelModeChanged: (Boolean) -> Unit,
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
@@ -688,6 +692,17 @@ private fun launcherSettingsSections(
                 key = "launcher_disable_dock_bar"
             )
         )
+        if (!state.disableDockBar) {
+            add(
+                SettingItem.Switch(
+                    title = stringResource(R.string.launcher_disable_dock_background_title),
+                    summary = stringResource(R.string.launcher_disable_dock_background_summary),
+                    checked = state.disableDockBackground,
+                    onCheckedChange = onDisableDockBackgroundChanged,
+                    key = "launcher_disable_dock_background"
+                )
+            )
+        }
     }
 
     val launcherMiscItems = buildList {
