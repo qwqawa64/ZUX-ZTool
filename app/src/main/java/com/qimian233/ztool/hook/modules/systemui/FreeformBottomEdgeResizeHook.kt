@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.res.Resources
 import android.graphics.Rect
+import android.os.Handler
+import android.os.Looper
 import android.view.MotionEvent
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -236,13 +238,13 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                     abs(velocity) >= closeVelocity
                 ) {
                     commitBounds(positioner, taskInfo, bounds, positionerOrganizer)
-                    resetResizeVeil(positioner)
                     if (velocity > 0f) {
                         if (fullscreenTask(positioner, taskInfo, taskDragSource)) {
                             logger.info(
                                 "Freeform bottom edge fast drag fullscreens task: " +
                                     "taskId=${taskInfo.taskId}, velocity=${velocity.toInt()}px/s"
                             )
+                            hideVeilAfter(positioner, 250L)
                             return@hookWithId bounds ?: Rect()
                         }
                     } else if (closeTask(
@@ -256,6 +258,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                             "Freeform bottom edge fast drag closes task: " +
                                 "taskId=${taskInfo.taskId}, velocity=${velocity.toInt()}px/s"
                         )
+                        resetResizeVeil(positioner)
                         return@hookWithId bounds ?: Rect()
                     }
                 }
@@ -274,6 +277,13 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
             logger.warn("Failed to read reposition bounds: ${t.message}")
             null
         }
+
+    private fun hideVeilAfter(positioner: Any, delayMs: Long) {
+        Handler(Looper.getMainLooper()).postDelayed(
+            { resetResizeVeil(positioner) },
+            delayMs
+        )
+    }
 
     private fun resetResizeVeil(positioner: Any) {
         try {
