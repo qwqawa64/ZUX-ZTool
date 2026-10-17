@@ -258,7 +258,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                             "Freeform bottom edge fast drag closes task: " +
                                 "taskId=${taskInfo.taskId}, velocity=${velocity.toInt()}px/s"
                         )
-                        resetResizeVeil(positioner)
+                        hideVeilAfter(positioner, 250L)
                         return@hookWithId bounds ?: Rect()
                     }
                 }
