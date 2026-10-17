@@ -3,6 +3,7 @@ package com.qimian233.ztool.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.data.sogouime.SogouEnterKeyMode
 import com.qimian233.ztool.data.sogouime.SogouImeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,16 @@ class SogouImeSettingsViewModel(
         repository.saveHalfWidthPunctSigns(compact)
     }
 
+    fun setEnterKeyEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(enterKeyEnabled = enabled)
+        repository.saveEnterKeyEnabled(enabled)
+    }
+
+    fun setEnterKeyMode(mode: SogouEnterKeyMode) {
+        _uiState.value = _uiState.value.copy(enterKeyMode = mode)
+        repository.saveEnterKeyMode(mode)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }
@@ -58,6 +69,8 @@ class SogouImeSettingsViewModel(
 data class SogouImeSettingsUiState(
     val halfWidthPunct: Boolean = false,
     val halfWidthPunctSigns: String = PreferenceKeys.HALF_WIDTH_PUNCT_SIGNS.default,
+    val enterKeyEnabled: Boolean = false,
+    val enterKeyMode: SogouEnterKeyMode = SogouEnterKeyMode.EnterSend,
     val showRestartDialog: Boolean = false
 )
 

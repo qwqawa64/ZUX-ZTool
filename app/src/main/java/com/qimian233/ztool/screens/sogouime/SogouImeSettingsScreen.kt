@@ -29,6 +29,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.sogouime.SogouEnterKeyMode
 import com.qimian233.ztool.data.sogouime.SogouImeSettingsRepository
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
@@ -80,6 +81,8 @@ fun SogouImeSettingsRoute(
             onBack = onBack,
             onHalfWidthPunctChanged = viewModel::setHalfWidthPunct,
             onHalfWidthPunctSignsChanged = viewModel::setHalfWidthPunctSigns,
+            onEnterKeyEnabledChanged = viewModel::setEnterKeyEnabled,
+            onEnterKeyModeChanged = viewModel::setEnterKeyMode,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -143,6 +146,8 @@ private fun SogouImeSettingsScreen(
     onBack: () -> Unit,
     onHalfWidthPunctChanged: (Boolean) -> Unit,
     onHalfWidthPunctSignsChanged: (String) -> Unit,
+    onEnterKeyEnabledChanged: (Boolean) -> Unit,
+    onEnterKeyModeChanged: (SogouEnterKeyMode) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -183,7 +188,9 @@ private fun SogouImeSettingsScreen(
                     sections = sogouImeSettingsSections(
                         state = state,
                         onHalfWidthPunctChanged = onHalfWidthPunctChanged,
-                        onHalfWidthPunctSignsChanged = onHalfWidthPunctSignsChanged
+                        onHalfWidthPunctSignsChanged = onHalfWidthPunctSignsChanged,
+                        onEnterKeyEnabledChanged = onEnterKeyEnabledChanged,
+                        onEnterKeyModeChanged = onEnterKeyModeChanged
                     ),
                     bottomPadding = 88.dp,
                     highlightRegistry = highlightRegistry
@@ -197,8 +204,14 @@ private fun SogouImeSettingsScreen(
 private fun sogouImeSettingsSections(
     state: com.qimian233.ztool.viewmodel.SogouImeSettingsUiState,
     onHalfWidthPunctChanged: (Boolean) -> Unit,
-    onHalfWidthPunctSignsChanged: (String) -> Unit
+    onHalfWidthPunctSignsChanged: (String) -> Unit,
+    onEnterKeyEnabledChanged: (Boolean) -> Unit,
+    onEnterKeyModeChanged: (SogouEnterKeyMode) -> Unit
 ): List<SettingSection> {
+    val modeLabels = mapOf(
+        SogouEnterKeyMode.EnterSend to stringResource(R.string.sogou_ime_enter_key_mode_send),
+        SogouEnterKeyMode.EnterNewline to stringResource(R.string.sogou_ime_enter_key_mode_newline)
+    )
     return listOf(
         com.qimian233.ztool.ui.components.SettingSection(
             title = stringResource(R.string.sogou_ime_punct_section_title),
@@ -214,6 +227,33 @@ private fun sogouImeSettingsSections(
                     key = "sogou_ime_half_width_punct"
                 )
             )
+        ),
+        com.qimian233.ztool.ui.components.SettingSection(
+            title = stringResource(R.string.sogou_ime_enter_key_section_title),
+            items = buildList {
+                add(
+                    com.qimian233.ztool.ui.components.SettingItem.Switch(
+                        title = stringResource(R.string.sogou_ime_enter_key_title),
+                        summary = stringResource(R.string.sogou_ime_enter_key_summary),
+                        checked = state.enterKeyEnabled,
+                        onCheckedChange = onEnterKeyEnabledChanged,
+                        key = "sogou_ime_enter_key"
+                    )
+                )
+                if (state.enterKeyEnabled) {
+                    add(
+                        com.qimian233.ztool.ui.components.SettingItem.Dropdown(
+                            label = stringResource(R.string.sogou_ime_enter_key_mode_title),
+                            value = modeLabels.getValue(state.enterKeyMode),
+                            options = SogouEnterKeyMode.entries,
+                            optionLabel = { modeLabels.getValue(it) },
+                            onOptionSelected = onEnterKeyModeChanged,
+                            summary = stringResource(R.string.sogou_ime_enter_key_mode_summary),
+                            key = "sogou_ime_enter_key_mode"
+                        )
+                    )
+                }
+            }
         )
     )
 }

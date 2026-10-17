@@ -67,6 +67,7 @@ import com.qimian233.ztool.hook.modules.setting.SettingsAppIconUnmaskHook
 import com.qimian233.ztool.hook.modules.setting.SplitScreenMandatory as SettingSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.setting.ZToolSettingsEntryHook
 import com.qimian233.ztool.hook.modules.sogouime.HalfWidthPunctHook
+import com.qimian233.ztool.hook.modules.sogouime.SogouEnterKeyHook
 import com.qimian233.ztool.hook.modules.systemframework.AiInputExpand
 import com.qimian233.ztool.hook.modules.systemframework.AllowAllRestrictedSettings
 import com.qimian233.ztool.hook.modules.systemframework.AllowGetPackages
@@ -174,6 +175,7 @@ object HookManager {
         registerHookModule(DisableVolumeWarnDialog())
         registerHookModule(AiInputExpand())
         registerHookModule(HalfWidthPunctHook())
+        registerHookModule(SogouEnterKeyHook())
         registerHookModule(KeepRotation())
         registerHookModule(AllowRelativeAppLaunch())
         registerHookModule(ForceRelativeAppFreeform())

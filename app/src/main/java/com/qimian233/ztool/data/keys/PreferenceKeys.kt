@@ -250,6 +250,7 @@ object PreferenceKeys {
     val DISABLE_NEARBY_SHARE_COUNTDOWN = BoolKey("disable_nearby_share_countdown", false)
 
     val HALF_WIDTH_PUNCT = BoolKey("half_width_punct", false)
+    val SOGOU_ENTER_KEY = BoolKey("sogou_enter_key", false)
     val AUTO_CHECK_UPDATE = BoolKey("auto_check_update", true)
     // App-local behavior: exclude ZTool's own tasks from the recents overview
     val HIDE_FROM_RECENTS = BoolKey("hide_from_recents", false)
@@ -328,6 +329,7 @@ object PreferenceKeys {
     // Forced half-width punctuation list; canonical ASCII forms, parsed with
     // fullwidth/halfwidth normalization and auto pairing on the hook side
     val HALF_WIDTH_PUNCT_SIGNS = StringKey("half_width_punct_signs", "#*-+=")
+    val SOGOU_ENTER_KEY_MODE = StringKey("sogou_enter_key_mode", "enter_send")
     val CUSTOM_CONTROL_CENTER_DATE_FORMAT = StringKey("Custom_ControlCenterDateFormat", "yyyy年MM月dd日 EEEE")
     // Default lock-screen quote fetches the xygeng quote API; regex extracts the "content" field from the response
     val API_URL = StringKey("API_URL", "https://api.xygeng.cn/one")
@@ -418,7 +420,7 @@ object PreferenceKeys {
         DISABLE_NEARBY_SHARE_COUNTDOWN,
         AUTO_CHECK_UPDATE, HIDE_FROM_RECENTS,
         YIYAN, IS_SYSTEMUI_PERMISSION_CONFIRMED, IS_CONFIG_UPGRADED,
-        HALF_WIDTH_PUNCT,
+        HALF_WIDTH_PUNCT, SOGOU_ENTER_KEY,
         SYSTEMUI_REALWATTS_SHOW_VOLTAGE, SYSTEMUI_REALWATTS_SHOW_CURRENT,
         SYSTEMUI_REALWATTS_SHOW_POWER, SYSTEMUI_REALWATTS_SHOW_TEMPERATURE,
         SYSTEMUI_REALWATTS_SHOW_INDICATOR, SYSTEMUI_REALWATTS_CUSTOM_FORMAT_ENABLED,
@@ -459,7 +461,7 @@ object PreferenceKeys {
         ABOUT_DEVICE_INFO_RAM, ABOUT_DEVICE_INFO_ROM,
         ABOUT_DEVICE_INFO_SOFTWARE,
         AI_INPUT_EXPAND_SIGNS,
-        HALF_WIDTH_PUNCT_SIGNS,
+        HALF_WIDTH_PUNCT_SIGNS, SOGOU_ENTER_KEY_MODE,
         CUSTOM_CONTROL_CENTER_DATE_FORMAT,
         API_URL, REGULAR,
         CUSTOM_STATUSBAR_CLOCK_FORMAT,

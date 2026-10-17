@@ -1503,6 +1503,19 @@ object SearchIndex {
             titleRes = R.string.system_framework_half_width_punct_title,
             summaryRes = R.string.system_framework_half_width_punct_summary
         ),
+        sogouIme.item(
+            id = "sogou_ime_enter_key",
+            titleRes = R.string.sogou_ime_enter_key_title,
+            summaryRes = R.string.sogou_ime_enter_key_summary
+        ),
+        sogouIme.item(
+            id = "sogou_ime_enter_key_mode",
+            titleRes = R.string.sogou_ime_enter_key_mode_title,
+            summaryRes = R.string.sogou_ime_enter_key_mode_summary,
+            parentTitleRes = R.string.sogou_ime_enter_key_title,
+            parentKey = "sogou_ime_enter_key",
+            parentMode = SearchParentMode.REQUIRE_ON
+        ),
 
         freeformBar.item(
             id = "sidebar_drawer_enhance",

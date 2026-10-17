@@ -663,6 +663,13 @@
     <string name="system_framework_half_width_punct_title">Force half-width symbol output</string>
     <string name="sogou_ime_app_name">Sogou IME (Lenovo OEM)</string>
     <string name="sogou_ime_app_description">IME enhancements: forced half-width symbol output, punctuation intervention, etc.</string>
+    <string name="sogou_ime_enter_key_section_title">Enter key behavior</string>
+    <string name="sogou_ime_enter_key_title">Remap Enter and modifiers</string>
+    <string name="sogou_ime_enter_key_summary">Takes over hardware Enter, Shift+Enter and Ctrl+Enter in fields the IME treats as send fields. The mode below decides whether each sends or inserts a newline.</string>
+    <string name="sogou_ime_enter_key_mode_title">Enter key action</string>
+    <string name="sogou_ime_enter_key_mode_summary">Choose whether Enter or Shift/Ctrl+Enter sends or inserts a newline.</string>
+    <string name="sogou_ime_enter_key_mode_send">Enter sends; Shift/Ctrl+Enter inserts a newline</string>
+    <string name="sogou_ime_enter_key_mode_newline">Enter inserts a newline; Shift/Ctrl+Enter sends</string>
 
     <string name="device_service_app_name">Device Service</string>
     <string name="device_service_app_description">Curb push keep-alive, silent installs and installed-app list reporting</string>

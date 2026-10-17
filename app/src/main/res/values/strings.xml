@@ -745,6 +745,13 @@
     <string name="system_framework_half_width_punct_title">强制半角符号输出</string>
     <string name="sogou_ime_app_name">搜狗输入法（联想OEM）</string>
     <string name="sogou_ime_app_description">输入法增强：强制半角符号输出、标点干预等</string>
+    <string name="sogou_ime_enter_key_section_title">回车键行为</string>
+    <string name="sogou_ime_enter_key_title">调整 Enter 与组合键</string>
+    <string name="sogou_ime_enter_key_summary">在输入法判定为发送场景的输入框中接管外接键盘的 Enter、Shift+Enter 与 Ctrl+Enter。开启后按下方模式执行发送或换行。</string>
+    <string name="sogou_ime_enter_key_mode_title">Enter 键行为</string>
+    <string name="sogou_ime_enter_key_mode_summary">选择 Enter 与 Shift/Ctrl+Enter 分别执行发送还是换行。</string>
+    <string name="sogou_ime_enter_key_mode_send">Enter 发送，Shift/Ctrl+Enter 换行</string>
+    <string name="sogou_ime_enter_key_mode_newline">Enter 换行，Shift/Ctrl+Enter 发送</string>
 
     <string name="device_service_app_name">设备服务</string>
     <string name="device_service_app_description">遏制推送保活、静默安装与已装应用清单上报</string>
