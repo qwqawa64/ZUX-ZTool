@@ -45,7 +45,7 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
         val positionerClass = loadClass(loader, POSITIONER_CLASS) ?: return
         val decorationClass = loadClass(loader, DECORATION_CLASS) ?: return
 
-        val layoutField = field(injectorClass, "t") ?: return
+        val layoutField = field(injectorClass, "mBorderView") ?: return
         val positionerCtrl = field(positionerClass, "mCtrlType") ?: return
         val positionerDecoration = field(positionerClass, "mDesktopWindowDecoration") ?: return
         val decorationTaskInfo = field(decorationClass, "mTaskInfo") ?: return
@@ -177,8 +177,9 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
     }
 
     private fun injectorLayout(injector: Any): View? {
-        val field = injector.javaClass.declaredFields.firstOrNull { it.name == "t" }
-            ?: return null
+        val field = injector.javaClass.declaredFields.firstOrNull {
+            it.name == "mBorderView" || it.name == "t"
+        } ?: return null
         field.isAccessible = true
         return field.get(injector) as? View
     }
