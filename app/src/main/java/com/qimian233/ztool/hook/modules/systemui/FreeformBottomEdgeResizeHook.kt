@@ -10,7 +10,6 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Field
-import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
@@ -123,6 +122,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         val positionerCtrl = field(positionerClass, "mCtrlType") ?: return
         val positionerDecoration = field(positionerClass, "mDesktopWindowDecoration") ?: return
         val positionerTransitions = field(positionerClass, "mTransitions") ?: return
+        val positionerOrganizer = field(positionerClass, "mTaskOrganizer")
         val positionerBounds = field(positionerClass, "mRepositionTaskBounds") ?: return
         val decorationTaskInfo = field(decorationClass, "mTaskInfo") ?: return
 
@@ -170,8 +170,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
 
         hookWithId(injectorMethod, "freeform_bottom_velocity_track") { chain ->
             try {
-                val injector = chain.thisObject
-                if (injector == null) return@hookWithId chain.proceed()
+                val injector = chain.thisObject ?: return@hookWithId chain.proceed()
                 val ctrlType: Int = injectorCtrl.getInt(injector)
                 if ((ctrlType and CTRL_TYPE_PROPORTIONAL_FLAG) == 0) {
                     return@hookWithId chain.proceed()
@@ -220,8 +219,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
 
         hookWithId(endMethod, "freeform_bottom_velocity_close") { chain ->
             try {
-                val positioner = chain.thisObject
-                if (positioner == null) return@hookWithId chain.proceed()
+                val positioner = chain.thisObject ?: return@hookWithId chain.proceed()
                 val ctrlType: Int = positionerCtrl.getInt(positioner)
                 val decoration = positionerDecoration.get(positioner)
                 val taskInfo = decoration?.let { decorationTaskInfo.get(it) }
@@ -237,6 +235,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                     taskInfo != null &&
                     abs(velocity) >= closeVelocity
                 ) {
+                    commitBounds(positioner, taskInfo, bounds, positionerOrganizer)
                     resetResizeVeil(positioner)
                     if (velocity > 0f) {
                         if (fullscreenTask(positioner, taskInfo, taskDragSource)) {
@@ -329,6 +328,34 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
             true
         } catch (t: Throwable) {
             logger.error("Failed to fullscreen freeform task ${taskInfo.taskId}", t)
+            false
+        }
+    }
+
+    private fun commitBounds(
+        positioner: Any,
+        taskInfo: ActivityManager.RunningTaskInfo,
+        bounds: Rect?,
+        organizerField: Field?
+    ): Boolean {
+        return bounds != null && try {
+            val transactionClass = Class.forName("android.window.WindowContainerTransaction")
+            val tokenClass = Class.forName("android.window.WindowContainerToken")
+            val token = taskToken(taskInfo) ?: return false
+            val transaction = transactionClass.getConstructor().newInstance()
+            transactionClass
+                .getMethod("setBounds", tokenClass, Rect::class.java)
+                .invoke(transaction, token, Rect(bounds))
+            val organizer = organizerField?.get(positioner) ?: return false
+            val apply = organizer.javaClass.methods.firstOrNull {
+                it.name == "applyTransaction" && it.parameterTypes.size == 1
+            } ?: return false
+            apply.isAccessible = true
+            apply.invoke(organizer, transaction)
+            logger.info("Committed freeform bounds before fast action: $bounds")
+            true
+        } catch (t: Throwable) {
+            logger.warn("Failed to commit freeform bounds before fast action: ${t.message}")
             false
         }
     }
@@ -450,6 +477,6 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         const val CTRL_TYPE_PROPORTIONAL_FLAG = 16
         const val REMOVE_TRANSITION = 2
         // Original freeform quick-swipe threshold.
-        const val CLOSE_SPEED_DP_PER_SECOND = 100f
+        const val CLOSE_SPEED_DP_PER_SECOND = 500f
     }
 }
