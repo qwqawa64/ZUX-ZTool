@@ -17,6 +17,7 @@ import java.lang.reflect.Field
  * The host checks the window area (phone) or fixed width/height ratios (tablet) inside
  * `OvfDpcUtility`; this hook triggers fullscreen as soon as either the configured
  * display-width or display-height percentage is reached, whichever comes first.
+ * A 100% dimension is disabled; both at 100% keeps the window out of fullscreen.
  */
 @SuppressLint("PrivateApi")
 class FreeformFullscreenThresholdHook : AppHookModule() {
@@ -49,6 +50,8 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         ).coerceIn(MIN_PERCENT, MAX_PERCENT)
         val widthRatio = widthPercent / 100f
         val heightRatio = heightPercent / 100f
+        val widthEnabled = widthPercent < MAX_PERCENT
+        val heightEnabled = heightPercent < MAX_PERCENT
 
         val displayLayoutClass = runCatching {
             loader.loadClass("com.android.wm.shell.common.DisplayLayout")
@@ -76,16 +79,29 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
             hookWithId(method, "freeform_fullscreen_check_${method.name}_$index") { chain ->
                 val rect = chain.args[1] as? Rect
                 val ctrlType = (chain.args[2] as? Number)?.toInt() ?: 0
-                if (rect == null || ctrlType == 0) {
+                if (rect == null) {
                     return@hookWithId chain.proceed()
                 }
+                if (ctrlType == 0) {
+                    return@hookWithId false
+                }
+                if (!widthEnabled && !heightEnabled) {
+                    return@hookWithId false
+                }
                 val metrics = Resources.getSystem().displayMetrics
-                rect.width() >= metrics.widthPixels * widthRatio ||
-                    rect.height() >= metrics.heightPixels * heightRatio
+                (widthEnabled && rect.width() >= metrics.widthPixels * widthRatio) ||
+                    (heightEnabled && rect.height() >= metrics.heightPixels * heightRatio)
             }
         }
 
-        installMaxSizeOverride(loader, utilityClass, widthRatio, heightRatio)
+        installMaxSizeOverride(
+            loader,
+            utilityClass,
+            widthRatio,
+            heightRatio,
+            widthEnabled,
+            heightEnabled
+        )
         logger.info(
             "Freeform fullscreen threshold installed: " +
                 "width=$widthPercent%, height=$heightPercent%"
@@ -97,7 +113,9 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         loader: ClassLoader,
         utilityClass: Class<*>,
         widthRatio: Float,
-        heightRatio: Float
+        heightRatio: Float,
+        widthEnabled: Boolean,
+        heightEnabled: Boolean
     ) {
         val infoField: Field = utilityClass.declaredFields.firstOrNull {
             it.type.name == "com.android.internal.ov.OvfDragLayoutInfo"
@@ -136,8 +154,14 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
             if (max != null) {
                 val metrics = Resources.getSystem().displayMetrics
                 val min = minField?.get(info) as? Point
-                max.x = maxOf((metrics.widthPixels * widthRatio).toInt(), min?.x ?: 0)
-                max.y = maxOf((metrics.heightPixels * heightRatio).toInt(), min?.y ?: 0)
+                val targetWidth =
+                    if (widthEnabled) (metrics.widthPixels * widthRatio).toInt()
+                    else metrics.widthPixels
+                val targetHeight =
+                    if (heightEnabled) (metrics.heightPixels * heightRatio).toInt()
+                    else metrics.heightPixels
+                max.x = maxOf(targetWidth, min?.x ?: 0)
+                max.y = maxOf(targetHeight, min?.y ?: 0)
             }
             chain.proceed()
         }
@@ -152,6 +176,6 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
     private companion object {
         const val UTILITY_CLASS = "com.android.wm.shell.windowdecor.OvfDpcUtility"
         const val MIN_PERCENT = 50
-        const val MAX_PERCENT = 90
+        const val MAX_PERCENT = 100
     }
 }

@@ -357,8 +357,9 @@ class LauncherSettingsRepository(
         private const val WIDE_GRID_INSET_DEFAULT = 0
 
         // Freeform fullscreen thresholds are percentages of the current display.
+        // 100 % disables that dimension; both at 100 % keeps the window out of fullscreen.
         const val FREEFORM_FULLSCREEN_PERCENT_MIN = 50
-        const val FREEFORM_FULLSCREEN_PERCENT_MAX = 90
+        const val FREEFORM_FULLSCREEN_PERCENT_MAX = 100
         private const val FREEFORM_FULLSCREEN_PERCENT_DEFAULT = 85
         private const val FREEFORM_FULLSCREEN_PERCENT_STEP = 5
 
