@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /** Dim strength of [SearchScrim], as an opaque fraction of black. Tune here. */
-private const val ScrimAlpha = 0.45f
+private const val ScrimAlpha = 0.60f
 
 private val ScrimColor = Color.Black.copy(alpha = ScrimAlpha)
 
