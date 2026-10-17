@@ -39,6 +39,10 @@ object PreferenceKeys {
     // Shared switch of the freeform keep-alive pair (system OomAdjuster pin + launcher
     // recents-cleaner bypass); module name of both hook classes
     val FREEFORM_KEEP_ALIVE_ENABLED = BoolKey("freeform_keep_alive_enabled", false)
+    // Launcher-side fullscreen trigger for the freeform corner resize; replaces the
+    // host's screen-area/width/height rules with the user's percentages
+    val LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD =
+        BoolKey("launcher_freeform_fullscreen_threshold", false)
     // Sidebar (com.zui.freeform.sidebar) drawer: lifts the host's hard-coded 5-slot
     // limit and switches the drawer to a user-editable order. Module name of
     // SidebarDrawerHook.
@@ -291,6 +295,12 @@ object PreferenceKeys {
     // the user arranges in the drawer's edit mode.
     val SIDEBAR_DRAWER_SLOTS = IntKey("sidebar_drawer_slots", 8)
     val SIDEBAR_DRAWER_RECENT_SLOTS = IntKey("sidebar_drawer_recent_slots", 2)
+    // Percent of the current display width/height at which a resized freeform window
+    // switches to fullscreen; whichever dimension is reached first wins
+    val LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT =
+        IntKey("launcher_freeform_fullscreen_width_percent", 85)
+    val LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT =
+        IntKey("launcher_freeform_fullscreen_height_percent", 85)
 
     // ═══════════════════════════════════════════════════════════
     // Float keys
@@ -349,6 +359,7 @@ object PreferenceKeys {
         KEEP_ROTATION, ALLOW_RELATIVE_APP_LAUNCH, FORCE_RELATIVE_APP_FREEFORM,
         LAUNCHER_FORCE_FREEFORM_ENTRY, FREEFORM_EDGE_BUBBLE,
         FREEFORM_KEEP_ALIVE_ENABLED,
+        LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD,
         SIDEBAR_DRAWER_ENHANCE,
         SIDEBAR_DRAWER_EDITABLE,
         SIDEBAR_ALLAPPS_SECTIONS,
@@ -442,7 +453,8 @@ object PreferenceKeys {
         SIDEBAR_DRAWER_SLOTS, SIDEBAR_DRAWER_RECENT_SLOTS,
         LAUNCHER_BIG_FOLDER_TUNE_GAP_H, LAUNCHER_BIG_FOLDER_TUNE_GAP_V,
         LAUNCHER_BIG_FOLDER_TUNE_BG_X, LAUNCHER_BIG_FOLDER_TUNE_BG_Y,
-        LAUNCHER_BIG_FOLDER_TUNE_SHIFT_X, LAUNCHER_BIG_FOLDER_TUNE_SHIFT_Y
+        LAUNCHER_BIG_FOLDER_TUNE_SHIFT_X, LAUNCHER_BIG_FOLDER_TUNE_SHIFT_Y,
+        LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT, LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT
     )
 
     val floatKeys: List<FloatKey> = listOf(

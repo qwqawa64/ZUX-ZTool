@@ -135,6 +135,9 @@ fun LauncherSettingsRoute(
             onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
             onForceFreeformEntryChanged = viewModel::setForceFreeformEntry,
             onFreeformKeepAliveEnabledChanged = viewModel::setFreeformKeepAliveEnabled,
+            onFreeformFullscreenThresholdChanged = viewModel::setFreeformFullscreenThreshold,
+            onFreeformFullscreenWidthPercentChanged = viewModel::setFreeformFullscreenWidthPercent,
+            onFreeformFullscreenHeightPercentChanged = viewModel::setFreeformFullscreenHeightPercent,
             onSelectKeepAlivePackages = {
                 val activity = context as? android.app.Activity
                 if (activity != null) {
@@ -242,6 +245,9 @@ private fun LauncherSettingsScreen(
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onForceFreeformEntryChanged: (Boolean) -> Unit,
     onFreeformKeepAliveEnabledChanged: (Boolean) -> Unit,
+    onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
+    onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
+    onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
     onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
@@ -319,6 +325,9 @@ private fun LauncherSettingsScreen(
                         onDisableRecentAppDisplayChanged = onDisableRecentAppDisplayChanged,
                         onForceFreeformEntryChanged = onForceFreeformEntryChanged,
                         onFreeformKeepAliveEnabledChanged = onFreeformKeepAliveEnabledChanged,
+                        onFreeformFullscreenThresholdChanged = onFreeformFullscreenThresholdChanged,
+                        onFreeformFullscreenWidthPercentChanged = onFreeformFullscreenWidthPercentChanged,
+                        onFreeformFullscreenHeightPercentChanged = onFreeformFullscreenHeightPercentChanged,
                         onSelectKeepAlivePackages = onSelectKeepAlivePackages,
                         onLauncherBatchUninstallChanged = onLauncherBatchUninstallChanged,
                         onBigFolderAlignChanged = onBigFolderAlignChanged,
@@ -364,6 +373,9 @@ private fun launcherSettingsSections(
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onForceFreeformEntryChanged: (Boolean) -> Unit,
     onFreeformKeepAliveEnabledChanged: (Boolean) -> Unit,
+    onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
+    onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
+    onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
     onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
@@ -759,6 +771,49 @@ private fun launcherSettingsSections(
                             labelRes = R.string.launcher_freeform_keep_alive_apps_summary
                         )
                     }
+                )
+            )
+        }
+        add(
+            SettingItem.Switch(
+                title = stringResource(R.string.launcher_freeform_fullscreen_threshold_title),
+                summary = stringResource(R.string.launcher_freeform_fullscreen_threshold_summary),
+                checked = state.freeformFullscreenThreshold,
+                onCheckedChange = onFreeformFullscreenThresholdChanged,
+                key = "launcher_freeform_fullscreen_threshold"
+            )
+        )
+        if (state.freeformFullscreenThreshold) {
+            add(
+                SettingItem.Slider(
+                    title = stringResource(R.string.launcher_freeform_fullscreen_width_title),
+                    summary = stringResource(R.string.launcher_freeform_fullscreen_width_summary),
+                    value = state.freeformFullscreenWidthPercent.toFloat(),
+                    valueText = stringResource(
+                        R.string.launcher_freeform_fullscreen_percent_label,
+                        state.freeformFullscreenWidthPercent
+                    ),
+                    valueRange = LauncherSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MIN.toFloat()..
+                        LauncherSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MAX.toFloat(),
+                    steps = 7,
+                    onValueChange = { onFreeformFullscreenWidthPercentChanged(it.toInt()) },
+                    key = "launcher_freeform_fullscreen_width"
+                )
+            )
+            add(
+                SettingItem.Slider(
+                    title = stringResource(R.string.launcher_freeform_fullscreen_height_title),
+                    summary = stringResource(R.string.launcher_freeform_fullscreen_height_summary),
+                    value = state.freeformFullscreenHeightPercent.toFloat(),
+                    valueText = stringResource(
+                        R.string.launcher_freeform_fullscreen_percent_label,
+                        state.freeformFullscreenHeightPercent
+                    ),
+                    valueRange = LauncherSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MIN.toFloat()..
+                        LauncherSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MAX.toFloat(),
+                    steps = 7,
+                    onValueChange = { onFreeformFullscreenHeightPercentChanged(it.toInt()) },
+                    key = "launcher_freeform_fullscreen_height"
                 )
             )
         }

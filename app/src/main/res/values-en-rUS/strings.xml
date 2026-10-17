@@ -1127,6 +1127,13 @@
     <string name="launcher_freeform_keep_alive_title">Keep freeform apps alive</string>
     <string name="launcher_freeform_keep_alive_summary">After a small window is minimized or Recents is opened, whitelisted app processes are no longer demoted, cleaned up or frozen, and keep running; takes effect after restarting the system and launcher</string>
     <string name="launcher_freeform_keep_alive_apps_summary">%d apps kept alive</string>
+    <string name="launcher_freeform_fullscreen_threshold_title">Custom small-window fullscreen threshold</string>
+    <string name="launcher_freeform_fullscreen_threshold_summary">Switch a small window to fullscreen when its width or height reaches the configured percentage, whichever comes first; tablets only, applies after restarting the launcher</string>
+    <string name="launcher_freeform_fullscreen_width_title">Width threshold</string>
+    <string name="launcher_freeform_fullscreen_width_summary">Fullscreen when the small window reaches this percentage of the screen width</string>
+    <string name="launcher_freeform_fullscreen_height_title">Height threshold</string>
+    <string name="launcher_freeform_fullscreen_height_summary">Fullscreen when the small window reaches this percentage of the screen height</string>
+    <string name="launcher_freeform_fullscreen_percent_label">%1$d%%</string>
 
     <!--Desktop live wallpaper resources-->
     <string name="system_ui_animation_desktop_live_wallpaper_title">Desktop Live Wallpaper</string>

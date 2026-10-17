@@ -1392,6 +1392,25 @@ object SearchIndex {
             parentKey = "freeform_keep_alive_enabled"
         ),
         launcher.item(
+            id = "launcher_freeform_fullscreen_threshold",
+            titleRes = R.string.launcher_freeform_fullscreen_threshold_title,
+            summaryRes = R.string.launcher_freeform_fullscreen_threshold_summary
+        ),
+        launcher.item(
+            id = "launcher_freeform_fullscreen_width",
+            titleRes = R.string.launcher_freeform_fullscreen_width_title,
+            summaryRes = R.string.launcher_freeform_fullscreen_width_summary,
+            parentTitleRes = R.string.launcher_freeform_fullscreen_threshold_title,
+            parentKey = "launcher_freeform_fullscreen_threshold"
+        ),
+        launcher.item(
+            id = "launcher_freeform_fullscreen_height",
+            titleRes = R.string.launcher_freeform_fullscreen_height_title,
+            summaryRes = R.string.launcher_freeform_fullscreen_height_summary,
+            parentTitleRes = R.string.launcher_freeform_fullscreen_threshold_title,
+            parentKey = "launcher_freeform_fullscreen_threshold"
+        ),
+        launcher.item(
             id = "launcher_larger_dock",
             titleRes = R.string.launcher_larger_dock_title,
             parentTitleRes = R.string.launcher_disable_dock_bar_title,

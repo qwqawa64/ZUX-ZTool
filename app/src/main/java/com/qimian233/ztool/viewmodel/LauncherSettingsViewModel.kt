@@ -104,6 +104,23 @@ class LauncherSettingsViewModel(
         repository.saveFreeformKeepAlivePackages(packageNames)
     }
 
+    fun setFreeformFullscreenThreshold(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(freeformFullscreenThreshold = enabled)
+        repository.saveFreeformFullscreenThreshold(enabled)
+    }
+
+    fun setFreeformFullscreenWidthPercent(percent: Int) {
+        val value = LauncherSettingsRepository.normalizeFreeformFullscreenPercent(percent)
+        _uiState.value = _uiState.value.copy(freeformFullscreenWidthPercent = value)
+        repository.saveFreeformFullscreenWidthPercent(value)
+    }
+
+    fun setFreeformFullscreenHeightPercent(percent: Int) {
+        val value = LauncherSettingsRepository.normalizeFreeformFullscreenPercent(percent)
+        _uiState.value = _uiState.value.copy(freeformFullscreenHeightPercent = value)
+        repository.saveFreeformFullscreenHeightPercent(value)
+    }
+
     fun setCustomGridSize(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(customGridSize = enabled)
         repository.saveCustomGridSize(enabled)
@@ -322,6 +339,9 @@ data class LauncherSettingsUiState(
     val forceFreeformEntry: Boolean = false,
     val freeformKeepAliveEnabled: Boolean = false,
     val freeformKeepAlivePackages: List<String> = emptyList(),
+    val freeformFullscreenThreshold: Boolean = false,
+    val freeformFullscreenWidthPercent: Int = 85,
+    val freeformFullscreenHeightPercent: Int = 85,
     val customGridSize: Boolean = false,
     val customGridRow: Int = 4,
     val customGridColumn: Int = 6,
