@@ -100,8 +100,10 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
                     logger.info("Corner handle layout captured: task=$taskId")
                     val left = findView(view, "ovc_wdb_bottom_gesture_left")
                     if (left?.visibility != View.GONE) {
-                        show(taskId)
-                        scheduleHide(taskId)
+                        whenAttached(view) {
+                            show(taskId)
+                            scheduleHide(taskId)
+                        }
                     }
                 }
             }
@@ -159,6 +161,21 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
 
     private fun hide(taskId: Int) {
         setVisibility(taskId, View.GONE)
+    }
+
+    private fun whenAttached(view: View, action: () -> Unit) {
+        if (view.isAttachedToWindow && view.handler != null) {
+            action()
+            return
+        }
+        view.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {
+                v.removeOnAttachStateChangeListener(this)
+                action()
+            }
+
+            override fun onViewDetachedFromWindow(v: View) = Unit
+        })
     }
 
     private fun setVisibility(taskId: Int, visibility: Int) {
