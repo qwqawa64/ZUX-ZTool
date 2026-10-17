@@ -98,15 +98,25 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
             val injector = chain.thisObject
             val result = chain.proceed()
             val taskInfo = chain.args.getOrNull(2) as? ActivityManager.RunningTaskInfo
-            if (injector != null && taskInfo != null && seenTasks.add(taskInfo.taskId)) {
-                logger.info(
-                    "Corner handle first update: taskId=${taskInfo.taskId}, " +
-                        "resizeable=${isResizeable(taskInfo)}"
-                )
-                if (isResizeable(taskInfo)) {
-                    injectors[taskInfo.taskId] = injector
-                    show(taskInfo.taskId)
-                    scheduleHide(taskInfo.taskId)
+            if (injector != null && taskInfo != null &&
+                !seenTasks.contains(taskInfo.taskId)
+            ) {
+                val layout = injectorLayout(injector)
+                if (layout == null) {
+                    logger.debug(
+                        "Corner handle layout not ready for task ${taskInfo.taskId}; retrying"
+                    )
+                } else {
+                    seenTasks.add(taskInfo.taskId)
+                    logger.info(
+                        "Corner handle first update: taskId=${taskInfo.taskId}, " +
+                            "resizeable=${isResizeable(taskInfo)}"
+                    )
+                    if (isResizeable(taskInfo)) {
+                        injectors[taskInfo.taskId] = injector
+                        show(taskInfo.taskId)
+                        scheduleHide(taskInfo.taskId)
+                    }
                 }
             }
             result
