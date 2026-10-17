@@ -2,7 +2,6 @@ package com.qimian233.ztool.hook.modules.systemui
 
 import android.app.ActivityManager
 import android.os.Handler
-import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -16,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @Suppress("PrivateApi")
 class FreeformCornerHandleIndicatorHook : AppHookModule() {
-    private val handler = Handler(Looper.getMainLooper())
     private val injectors = ConcurrentHashMap<Int, Any>()
     private val hideTokens = ConcurrentHashMap<Int, Long>()
     private val resizing = ConcurrentHashMap<Int, Boolean>()
@@ -193,8 +191,14 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
             logger.warn("Corner handle layout missing for task $taskId")
             return
         }
-        findView(layout, "ovc_wdb_bottom_gesture_left")?.visibility = visibility
-        findView(layout, "ovc_wdb_bottom_gesture_right")?.visibility = visibility
+        findView(layout, "ovc_wdb_bottom_gesture_left")?.let { left ->
+            val right = findView(layout, "ovc_wdb_bottom_gesture_right")
+            val handler = left.handler ?: layout.handler ?: return
+            handler.post {
+                left.visibility = visibility
+                right?.visibility = visibility
+            }
+        }
         logger.info("Corner handle visibility=$visibility task=$taskId")
     }
 
@@ -225,6 +229,10 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
         val token = SystemClock.uptimeMillis()
         hideTokens[taskId] = token
         logger.info("Corner handle hide scheduled: task=$taskId token=$token")
+        val injector = injectors[taskId] ?: return
+        val layout = injectorLayout(injector) ?: return
+        val view = findView(layout, "ovc_wdb_bottom_gesture_left") ?: return
+        val handler: Handler = view.handler ?: layout.handler ?: return
         handler.postDelayed({
             logger.info("Corner handle hide fired: task=$taskId token=$token")
             if (hideTokens[taskId] == token && resizing[taskId] != true) {
