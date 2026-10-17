@@ -15,8 +15,8 @@ import java.lang.reflect.Field
  * Replaces the SystemUI freeform corner-resize fullscreen trigger with user percentages.
  *
  * SystemUI 17.5.27 hosts `OvfDpcUtility` and the live `changeBounds` logic in
- * `DragPositioningCallbackUtility`; this hook raises the max bounds to the configured
- * width/height and rewrites the trigger result, whichever dimension comes first.
+ * `DragPositioningCallbackUtility`; this hook raises the max bounds and replaces the
+ * stable/safe-margin rect with the full display, then rewrites the trigger result.
  */
 @SuppressLint("PrivateApi")
 class FreeformFullscreenThresholdHook : AppHookModule() {
@@ -110,6 +110,7 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         val utilityField = field(decorClass, "ovfDpcUtility") ?: return
         val hideVeil = method(decorClass, "ovfHideFullBlackVeil")
         val maxField = field(layoutInfoClass, "maxWinSizeWhEdge") ?: return
+        val safeMarginField = field(layoutInfoClass, "safeMargin")
 
         hookWithId(changeBounds, "freeform_fullscreen_systemui") { chain ->
             try {
@@ -149,7 +150,15 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
                     logger.warn("OvfDpcUtility.maxWinSizeWhEdge value is null")
                 }
 
-                val result = chain.proceed()
+                // The host clamps to the stable rect minus safeMargin; replace both with the
+                // full display so the window can actually cover the whole screen.
+                safeMarginField?.setInt(layoutInfo, 0)
+                val fullBounds = Rect(0, 0, metrics.widthPixels, metrics.heightPixels)
+                val args = chain.args.toMutableList()
+                if (args.size > 3) {
+                    args[3] = fullBounds
+                }
+                val result = chain.proceed(args.toTypedArray())
 
                 val ctrlType = (chain.args.getOrNull(0) as? Number)?.toInt() ?: 0
                 val widthHit = ctrlType != 0 && widthEnabled &&
