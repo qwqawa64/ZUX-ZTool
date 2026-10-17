@@ -59,6 +59,17 @@
     <string name="page_firstrun_autostart_title">Auto-start</string>
     <string name="page_firstrun_autostart_summary">Tap to open Lenovo Security Center and allow ZTool to auto-start. Feature services (e.g. the freeform edge bubble) then revive after reboot without opening the app.</string>
     <string name="page_firstrun_autostart_open_failed">Could not open Lenovo Security Center; enable auto-start inside it manually</string>
+    <string name="page_firstrun_usage_restricted_button">Cannot enable usage access? See the fix</string>
+    <string name="page_firstrun_usage_restricted_title">Unlock restricted settings</string>
+    <string name="page_firstrun_usage_restricted_summary">If the Usage Access switch cannot be turned on and is marked as controlled by restricted settings, the system is blocking this permission. Follow these steps:</string>
+    <string name="page_firstrun_usage_restricted_step1_title">1. The switch is blocked</string>
+    <string name="page_firstrun_usage_restricted_step1_summary">The switch on the Usage Access page cannot be turned on and is marked as controlled by restricted settings.</string>
+    <string name="page_firstrun_usage_restricted_step2_title">2. Dismiss the system prompt</string>
+    <string name="page_firstrun_usage_restricted_step2_summary">Tapping the switch tells you that the system refuses to grant this app access. Tap Close.</string>
+    <string name="page_firstrun_usage_restricted_step3_title">3. Allow restricted settings</string>
+    <string name="page_firstrun_usage_restricted_step3_summary">Long press the ZTool icon on that page to open App info, tap the three-dot menu at the top right and choose Allow restricted settings. The switch works once you return.</string>
+    <string name="page_firstrun_usage_restricted_refresh_hint">The permission state refreshes automatically when you come back to this page.</string>
+    <string name="page_firstrun_usage_restricted_confirm_button">Got it</string>
     <string name="page_home_soft_reboot">Soft reboot</string>
     <string name="page_home_reboot">Reboot</string>
     <string name="page_home_bootloader">Reboot to Bootloader</string>

@@ -142,6 +142,7 @@ fun FirstrunAgreementRoute(
     val currentPageState = rememberSaveable { mutableStateOf(FirstrunPage.Splash) }
     // Hoisted so the user's input survives page switches within the first-run flow.
     val sourceVerifyInput = rememberSaveable { mutableStateOf("") }
+    val showUsageRestrictedHelp = rememberSaveable { mutableStateOf(false) }
     // True while a page change is driven by a reveal — the pages swap instantly
     // under the snapshot so the expanding circle fully owns the transition.
     var revealNavigation by remember { mutableStateOf(false) }
@@ -318,12 +319,17 @@ fun FirstrunAgreementRoute(
                                 }
                             }
                         },
+                        onOpenUsageRestrictedHelp = { showUsageRestrictedHelp.value = true },
                         onAgree = { tapAnchor -> navigateForward(tapAnchor, null) },
                         onBack = navigateBack
                     )
                 }
             }
         }
+    }
+
+    if (showUsageRestrictedHelp.value) {
+        FirstrunUsageRestrictedDialog(onDismiss = { showUsageRestrictedHelp.value = false })
     }
 }
 
@@ -556,6 +562,7 @@ private fun PermissionPage(
     onRequestUsage: () -> Unit,
     onRequestOverlay: () -> Unit,
     onRequestAutoStart: () -> Unit,
+    onOpenUsageRestrictedHelp: () -> Unit,
     onAgree: (Offset) -> Unit,
     onBack: (Offset) -> Unit
 ) {
@@ -638,6 +645,17 @@ private fun PermissionPage(
                     )
                 )
             )
+
+            // Only relevant while Usage Access is missing: some ROMs block it behind
+            // restricted settings (GitHub issue #24).
+            if (!state.hasUsageStats) {
+                ZToolTextButton(
+                    text = stringResource(R.string.page_firstrun_usage_restricted_button),
+                    onClick = onOpenUsageRestrictedHelp,
+                    modifier = Modifier.fillMaxWidth(),
+                    isPrimary = false
+                )
+            }
 
             StatusBanner(
                 text = if (requiredGranted) {

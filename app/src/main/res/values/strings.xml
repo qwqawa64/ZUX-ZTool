@@ -60,6 +60,17 @@
     <string name="page_firstrun_autostart_title">自启动</string>
     <string name="page_firstrun_autostart_summary">点击跳转联想安全中心，允许 ZTool 自启动。重启后功能服务（如小窗气泡）即可自动恢复，无需手动打开应用。</string>
     <string name="page_firstrun_autostart_open_failed">未能打开联想安全中心，请手动进入安全中心的自启动管理开启</string>
+    <string name="page_firstrun_usage_restricted_button">使用状态权限无法开启？查看解决方法</string>
+    <string name="page_firstrun_usage_restricted_title">解除“受限制的设置”</string>
+    <string name="page_firstrun_usage_restricted_summary">打开使用状态授权页后，如果开关无法打开并标注“由受限设置控制”，说明系统限制了这项权限。请按以下步骤解除限制：</string>
+    <string name="page_firstrun_usage_restricted_step1_title">1. 开关被系统限制</string>
+    <string name="page_firstrun_usage_restricted_step1_summary">授权页面中的开关无法打开，下方标注“由受限设置控制”。</string>
+    <string name="page_firstrun_usage_restricted_step2_title">2. 关闭系统提示</string>
+    <string name="page_firstrun_usage_restricted_step2_summary">点击开关后系统会提示“系统已拒绝向此应用授予访问权限”，点击“关闭”。</string>
+    <string name="page_firstrun_usage_restricted_step3_title">3. 允许受限制的设置</string>
+    <string name="page_firstrun_usage_restricted_step3_summary">长按授权页面中的 ZTool 图标进入应用信息，点击右上角的三点菜单并选择“允许受限制的设置”，返回后即可正常打开开关。</string>
+    <string name="page_firstrun_usage_restricted_refresh_hint">解除限制并返回本页后，授权状态会自动刷新。</string>
+    <string name="page_firstrun_usage_restricted_confirm_button">知道了</string>
     <!--重启菜单资源值-->
     <string name="page_home_soft_reboot">软重启</string>
     <string name="page_home_reboot">重启</string>
