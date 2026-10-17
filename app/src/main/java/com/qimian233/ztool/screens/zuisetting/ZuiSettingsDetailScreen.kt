@@ -1,35 +1,24 @@
 package com.qimian233.ztool.screens.zuisetting
 
-import android.app.AppOpsManager
 import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
@@ -41,7 +30,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,9 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -61,13 +47,10 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoRepository
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.screens.safecenter.RestartConfirmDialog
-import com.qimian233.ztool.screens.zuisetting.floatingwindow.FloatingWindow
-import com.qimian233.ztool.ui.components.DIALOG_BUTTON_VERTICAL_ARRANGEMENT
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
-import com.qimian233.ztool.ui.components.ZToolCheckbox
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
@@ -76,18 +59,9 @@ import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTextInputRow
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.components.showPlatformComposeDialog
-import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
-import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
-import com.qimian233.ztool.utils.AppChooserDialog
-import com.qimian233.ztool.utils.EmbeddingConfigManager
-import com.qimian233.ztool.utils.OvCommonConfigManager
-import com.qimian233.ztool.viewmodel.SettingsDetailConfigFlashResult
 import com.qimian233.ztool.viewmodel.SettingsDetailFontInstallResult
 import com.qimian233.ztool.viewmodel.SettingsDetailFontPreparationResult
-import com.qimian233.ztool.viewmodel.SettingsDetailModuleResult
-import com.qimian233.ztool.viewmodel.SettingsDetailOvConfigSelectionResult
-import com.qimian233.ztool.viewmodel.SettingsDetailRestoreResult
 import com.qimian233.ztool.viewmodel.SettingsDetailUiState
 import com.qimian233.ztool.viewmodel.SettingsDetailViewModel
 
@@ -96,7 +70,6 @@ fun SettingsDetailRoute(
     title: String,
     packageName: String,
     onBack: () -> Unit,
-    onOpenStrategySearch: () -> Unit,
     targetId: String? = null
 ) {
     val context = LocalContext.current
@@ -113,21 +86,10 @@ fun SettingsDetailRoute(
         )[SettingsDetailViewModel::class.java]
     }
     val gotItButtonText = stringResource(R.string.settings_got_it_button)
-    val savingConfigText = stringResource(R.string.settings_saving_config)
     val saveSuccessTitleText = stringResource(R.string.settings_success_title)
     val saveSuccessMessageText = stringResource(R.string.settings_save_success_message)
     val errorTitleText = stringResource(R.string.common_error_title)
     val errorPrefixText = stringResource(R.string.common_error_prefix)
-    val configSuffixText = stringResource(R.string.settings_config_suffix)
-    val tipTitleText = stringResource(R.string.settings_tip_title)
-    val installModuleFirstText = stringResource(R.string.settings_install_module_first)
-    val flashingConfigText = stringResource(R.string.settings_flashing_config)
-    val confirmRestoreTitleText = stringResource(R.string.settings_confirm_restore_title)
-    val confirmRestoreMessageText = stringResource(R.string.settings_confirm_restore_message)
-    val confirmButtonText = stringResource(R.string.settings_confirm_button)
-    val restartNoText = stringResource(R.string.common_restart_no)
-    val restoringModuleText = stringResource(R.string.settings_restoring_module)
-    val restoreSuccessMessageText = stringResource(R.string.settings_restore_success_message)
     val importingFontText = stringResource(R.string.settings_importing_font)
     val importSuccessTitleText = stringResource(R.string.settings_import_success_title)
     val importSuccessMessageText = stringResource(R.string.settings_import_success_message)
@@ -135,16 +97,8 @@ fun SettingsDetailRoute(
     val preparingFontFileText = stringResource(R.string.settings_preparing_font_file)
     val unknownFontFilenameText = stringResource(R.string.settings_unknown_font_filename)
     val selectTtfFileText = stringResource(R.string.settings_select_ttf_file)
-    val zuiForceSplitTitleText = stringResource(R.string.settings_zui_force_split_title)
-    val zuiForceFreeformTitleText = stringResource(R.string.settings_zui_force_freeform_title)
-    val zuiForceFixedTitleText = stringResource(R.string.settings_zui_force_fixed_title)
-    val installingModuleText = stringResource(R.string.settings_installing_module)
-    val removingModuleText = stringResource(R.string.settings_removing_module)
-    val installSuccessText = stringResource(R.string.settings_install_success_message)
-    val removeSuccessText = stringResource(R.string.settings_remove_success_message)
     val aboutDeviceInfoImageSavedText = stringResource(R.string.settings_about_device_info_image_saved)
     val aboutDeviceInfoImageSaveFailedText = stringResource(R.string.settings_about_device_info_image_save_failed)
-    var floatingWindow by remember { mutableStateOf<FloatingWindow?>(null) }
     var loadingDialog by remember { mutableStateOf<LoadingDialog?>(null) }
     val aboutDeviceInfoImageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -174,285 +128,10 @@ fun SettingsDetailRoute(
         }
     }
 
-    fun showConfirmDialog(
-        dialogTitle: String,
-        message: String,
-        confirmText: String,
-        dismissText: String,
-        onConfirm: () -> Unit
-    ) {
-        if (activity == null) return
-        showPlatformComposeDialog(activity, width = ViewGroup.LayoutParams.WRAP_CONTENT) { dialog ->
-            SimpleSettingsDetailDialogContent(
-                title = dialogTitle,
-                message = message,
-                confirmText = confirmText,
-                dismissText = dismissText,
-                onConfirm = {
-                    dialog.dismiss()
-                    onConfirm()
-                },
-                onDismiss = { dialog.dismiss() }
-            )
-        }
-    }
-
     fun showComposeDialog(content: @Composable () -> Unit): Dialog? {
         return activity?.let {
             showPlatformComposeDialog(it, width = ViewGroup.LayoutParams.WRAP_CONTENT) {
                 content()
-            }
-        }
-    }
-
-    fun hideFloatingWindow() {
-        floatingWindow?.hide()
-        if (floatingWindow != null) {
-            floatingWindow = null
-            Toast.makeText(context, R.string.settings_floating_window_closed, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun showFloatingWindow() {
-        val hostActivity = activity as? androidx.activity.ComponentActivity ?: return
-        if (floatingWindow != null) {
-            hideFloatingWindow()
-            return
-        }
-        floatingWindow = FloatingWindow.create(hostActivity)
-        Toast.makeText(context, R.string.settings_floating_window_started, Toast.LENGTH_SHORT).show()
-    }
-
-    fun hasUsageStatsPermission(): Boolean {
-        val appOps = context.getSystemService(android.content.Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            android.os.Process.myUid(),
-            context.packageName
-        )
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
-
-    lateinit var requestOverlayPermission: () -> Unit
-    fun startFloatingWindow() {
-        if (!Settings.canDrawOverlays(context)) {
-            requestOverlayPermission()
-            return
-        }
-        if (!hasUsageStatsPermission()) {
-            Toast.makeText(context, R.string.settings_request_usage_stats_permission, Toast.LENGTH_LONG).show()
-            context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-            return
-        }
-        showFloatingWindow()
-    }
-
-    val overlayPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (Settings.canDrawOverlays(context)) {
-            startFloatingWindow()
-        } else {
-            Toast.makeText(context, R.string.settings_overlay_permission_denied, Toast.LENGTH_SHORT).show()
-        }
-    }
-    requestOverlayPermission = {
-        overlayPermissionLauncher.launch(
-            Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                "package:${context.packageName}".toUri()
-            )
-        )
-    }
-
-    fun saveOvConfig(
-        configMap: MutableMap<String, OvCommonConfigManager.AppConfig>,
-        selectedApps: List<AppChooserDialog.AppInfo>,
-        mode: Int
-    ) {
-        loadingDialog = LoadingDialog(context).also {
-            it.show(savingConfigText)
-        }
-        viewModel.saveOvConfig(
-            configMap = configMap,
-            selectedPackages = selectedApps.map { it.packageName },
-            mode = mode
-        ) { result ->
-            activity?.runOnUiThread {
-                loadingDialog?.dismiss()
-                if (result == "success") {
-                    showMessageDialog(
-                        dialogTitle = saveSuccessTitleText,
-                        message = saveSuccessMessageText
-                    )
-                } else {
-                    showMessageDialog(
-                        dialogTitle = errorTitleText,
-                        message = errorPrefixText + result
-                    )
-                }
-            }
-        }
-    }
-
-    fun showConfigSelectionDialog(configs: List<EmbeddingConfigManager.ConfigFileInfo>) {
-        if (activity == null) return
-        if (configs.isEmpty()) {
-            Toast.makeText(context, R.string.settings_no_config_files_prompt, Toast.LENGTH_SHORT).show()
-            return
-        }
-        val flashedConfigs = viewModel.loadFlashedConfigs()
-        lateinit var dialog: Dialog
-        val shownDialog = showComposeDialog {
-            ConfigSelectionDialogContent(
-                configs = configs,
-                flashedConfigs = flashedConfigs,
-                configLabel = { config ->
-                    config.timestamp + " " + config.appName + configSuffixText
-                },
-                onAlreadyFlashedClick = {
-                    Toast.makeText(context, R.string.settings_config_already_flashed, Toast.LENGTH_SHORT).show()
-                },
-                onDelete = { selectedConfigs ->
-                    val count = viewModel.deleteEmbeddingConfigs(selectedConfigs, flashedConfigs)
-                    Toast.makeText(
-                        context,
-                        context.resources.getString(R.string.settings_delete_success, count),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    dialog.dismiss()
-                    showConfigSelectionDialog(viewModel.loadEmbeddingConfigFiles())
-                },
-                onFlash = { selectedConfigs ->
-                    dialog.dismiss()
-                    if (!viewModel.uiState.value.moduleEnabled) {
-                        showMessageDialog(
-                            dialogTitle = tipTitleText,
-                            message = installModuleFirstText
-                        )
-                        return@ConfigSelectionDialogContent
-                    }
-                    loadingDialog = LoadingDialog(context).also {
-                        it.show(flashingConfigText)
-                    }
-                    viewModel.flashEmbeddingConfigs(selectedConfigs) { result ->
-                        activity.runOnUiThread {
-                            loadingDialog?.dismiss()
-                            when (result) {
-                                SettingsDetailConfigFlashResult.Success -> {
-                                    showMessageDialog(
-                                        dialogTitle = saveSuccessTitleText,
-                                        message = saveSuccessMessageText
-                                    )
-                                }
-                                is SettingsDetailConfigFlashResult.Failure -> {
-                                    showMessageDialog(
-                                        dialogTitle = errorTitleText,
-                                        message = context.resources.getString(R.string.settings_flash_failed_message, result.message)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                },
-                onRestore = {
-                    dialog.dismiss()
-                    showConfirmDialog(
-                        dialogTitle = confirmRestoreTitleText,
-                        message = confirmRestoreMessageText,
-                        confirmText = confirmButtonText,
-                        dismissText = restartNoText
-                    ) {
-                        loadingDialog = LoadingDialog(context).also {
-                            it.show(restoringModuleText)
-                        }
-                        viewModel.restoreOriginalModule { result ->
-                            activity.runOnUiThread {
-                                loadingDialog?.dismiss()
-                                when (result) {
-                                    SettingsDetailRestoreResult.Success -> {
-                                        showMessageDialog(
-                                            dialogTitle = saveSuccessTitleText,
-                                            message = restoreSuccessMessageText
-                                        )
-                                    }
-                                    is SettingsDetailRestoreResult.Failure -> {
-                                        showMessageDialog(
-                                            dialogTitle = errorTitleText,
-                                            message = result.message
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                onCancel = { dialog.dismiss() }
-            )
-        }
-        if (shownDialog != null) {
-            dialog = shownDialog
-        }
-    }
-
-    fun openOvConfigDialog(mode: Int, dialogTitle: String) {
-        if (activity == null) return
-        viewModel.loadOvConfigSelection(mode) { result ->
-            activity.runOnUiThread {
-                when (result) {
-                    is SettingsDetailOvConfigSelectionResult.Success -> {
-                        AppChooserDialog.show(
-                            activity,
-                            result.selection.allPackages,
-                            result.selection.selectedPackages,
-                            dialogTitle,
-                            object : AppChooserDialog.AppSelectionCallback {
-                                override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
-                                    saveOvConfig(result.selection.configMap, selectedApps, mode)
-                                }
-
-                                override fun onCancel() = Unit
-                            }
-                        )
-                    }
-                    is SettingsDetailOvConfigSelectionResult.Failure -> {
-                        showMessageDialog(
-                            dialogTitle = errorTitleText,
-                            message = errorPrefixText + result.message
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    fun handleModuleSwitch(isChecked: Boolean) {
-        if (activity == null) return
-        loadingDialog = LoadingDialog(context).also {
-            it.show(if (isChecked) installingModuleText else removingModuleText)
-        }
-        viewModel.setModuleEnabled(isChecked) { result ->
-            activity.runOnUiThread {
-                loadingDialog?.dismiss()
-                when (result) {
-                    SettingsDetailModuleResult.AlreadyEnabled -> Unit
-                    is SettingsDetailModuleResult.Success -> {
-                        showMessageDialog(
-                            dialogTitle = tipTitleText,
-                            message = if (result.enabled) installSuccessText else removeSuccessText
-                        )
-                    }
-                    is SettingsDetailModuleResult.Failure -> {
-                        showMessageDialog(
-                            dialogTitle = errorTitleText,
-                            message = if (result.requestedEnabled) {
-                                context.resources.getString(R.string.settings_install_failed_message, result.message)
-                            } else {
-                                context.resources.getString(R.string.settings_remove_failed_message, result.message)
-                            }
-                        )
-                    }
-                }
             }
         }
     }
@@ -561,7 +240,6 @@ fun SettingsDetailRoute(
     DisposableEffect(Unit) {
         onDispose {
             loadingDialog?.dismiss()
-            floatingWindow?.hide()
         }
     }
 
@@ -582,35 +260,7 @@ fun SettingsDetailRoute(
             onBack = onBack,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry,
-            onRemoveBlacklistChanged = viewModel::setRemoveBlacklist,
-        onModuleEnabledChanged = ::handleModuleSwitch,
-        onStartFloatingWindow = ::startFloatingWindow,
-        onOpenConfigSelection = {
-            showConfigSelectionDialog(viewModel.loadEmbeddingConfigFiles())
-        },
-        onOpenStrategySearch = onOpenStrategySearch,
-        onZuiForceSplit = {
-            openOvConfigDialog(
-                OvCommonConfigManager.MODE_SPLIT_SCREEN,
-                zuiForceSplitTitleText
-            )
-        },
-        onZuiForceFreeform = {
-            openOvConfigDialog(
-                OvCommonConfigManager.MODE_FREEFORM_FREE,
-                zuiForceFreeformTitleText
-            )
-        },
-        onZuiForceFixed = {
-            openOvConfigDialog(
-                OvCommonConfigManager.MODE_FREEFORM_FIXED,
-                zuiForceFixedTitleText
-            )
-        },
-        onFloatMandatoryChanged = viewModel::setFloatMandatory,
-        onEdgeBubbleChanged = viewModel::setEdgeBubbleEnabled,
-        onSplitScreenMandatoryChanged = viewModel::setSplitScreenMandatory,
-        onImportFont = ::startFontImportProcess,
+            onImportFont = ::startFontImportProcess,
         onAllowNativePermissionControllerChanged = viewModel::setAllowNativePermissionController,
         onAllowDisableDolbyChanged = viewModel::setAllowDisableDolby,
         onAppDetailsChanged = viewModel::setAppDetails,
@@ -693,17 +343,6 @@ private fun SettingsDetailScreen(
     onBack: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry,
-    onRemoveBlacklistChanged: (Boolean) -> Unit,
-    onModuleEnabledChanged: (Boolean) -> Unit,
-    onStartFloatingWindow: () -> Unit,
-    onOpenConfigSelection: () -> Unit,
-    onOpenStrategySearch: () -> Unit,
-    onZuiForceSplit: () -> Unit,
-    onZuiForceFreeform: () -> Unit,
-    onZuiForceFixed: () -> Unit,
-    onFloatMandatoryChanged: (Boolean) -> Unit,
-    onEdgeBubbleChanged: (Boolean) -> Unit,
-    onSplitScreenMandatoryChanged: (Boolean) -> Unit,
     onImportFont: () -> Unit,
     onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
@@ -771,17 +410,6 @@ private fun SettingsDetailScreen(
                     highlightRegistry = highlightRegistry,
                     sections = settingsDetailSections(
                         state = state,
-                        onRemoveBlacklistChanged = onRemoveBlacklistChanged,
-                        onModuleEnabledChanged = onModuleEnabledChanged,
-                        onStartFloatingWindow = onStartFloatingWindow,
-                        onOpenConfigSelection = onOpenConfigSelection,
-                        onOpenStrategySearch = onOpenStrategySearch,
-                        onZuiForceSplit = onZuiForceSplit,
-                        onZuiForceFreeform = onZuiForceFreeform,
-                        onZuiForceFixed = onZuiForceFixed,
-                        onFloatMandatoryChanged = onFloatMandatoryChanged,
-                        onEdgeBubbleChanged = onEdgeBubbleChanged,
-                        onSplitScreenMandatoryChanged = onSplitScreenMandatoryChanged,
                         onImportFont = onImportFont,
                         onAllowNativePermissionControllerChanged = onAllowNativePermissionControllerChanged,
                         onAllowDisableDolbyChanged = onAllowDisableDolbyChanged,
@@ -812,17 +440,6 @@ private fun SettingsDetailScreen(
 @Composable
 private fun settingsDetailSections(
     state: SettingsDetailUiState,
-    onRemoveBlacklistChanged: (Boolean) -> Unit,
-    onModuleEnabledChanged: (Boolean) -> Unit,
-    onStartFloatingWindow: () -> Unit,
-    onOpenConfigSelection: () -> Unit,
-    onOpenStrategySearch: () -> Unit,
-    onZuiForceSplit: () -> Unit,
-    onZuiForceFreeform: () -> Unit,
-    onZuiForceFixed: () -> Unit,
-    onEdgeBubbleChanged: (Boolean) -> Unit,
-    onFloatMandatoryChanged: (Boolean) -> Unit,
-    onSplitScreenMandatoryChanged: (Boolean) -> Unit,
     onImportFont: () -> Unit,
     onAllowNativePermissionControllerChanged: (Boolean) -> Unit,
     onAllowDisableDolbyChanged: (Boolean) -> Unit,
@@ -845,157 +462,6 @@ private fun settingsDetailSections(
     onAboutDeviceInfoHeaderSelected: (Uri) -> Unit,
 ): List<SettingSection> {
     return buildList {
-        add(
-            SettingSection(
-                title = stringResource(R.string.settings_embedding_setting_title),
-                items = listOf(
-                    SettingItem.Switch(
-                        key = "settings_detail_remove_blacklist",
-                        title = stringResource(R.string.settings_embedding_setting_remove_blacklist),
-                        summary = stringResource(R.string.settings_embedding_setting_remove_blacklist_summary),
-                        checked = state.removeBlacklist,
-                        onCheckedChange = onRemoveBlacklistChanged
-                    ),
-                    SettingItem.Switch(
-                        key = "settings_detail_role_module",
-                        title = stringResource(R.string.settings_role_module_title),
-                        summary = stringResource(R.string.settings_role_module_summary),
-                        checked = state.moduleEnabled,
-                        onCheckedChange = onModuleEnabledChanged
-                    ),
-                    settingsDetailActionItem(
-                        key = "settings_detail_custom_landscape_view",
-                        title = stringResource(R.string.settings_custom_landscape_view),
-                        summary = stringResource(R.string.settings_custom_landscape_view_summary),
-                        onClick = onStartFloatingWindow,
-                        icon = {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
-                                contentDescription = null,
-                                tint = LocalZToolColorScheme.current.onSurfaceVariant
-                            )
-                        }
-                    ),
-                    settingsDetailActionItem(
-                        key = "settings_detail_custom_landscape_result",
-                        title = stringResource(R.string.settings_custom_landscape_result_title),
-                        summary = stringResource(R.string.settings_custom_landscape_result_summary),
-                        onClick = onOpenConfigSelection
-                    ),
-                    settingsDetailActionItem(
-                        key = "settings_detail_yi_shi_jie_rules",
-                        title = stringResource(R.string.settings_yi_shi_jie_rules),
-                        summary = stringResource(R.string.settings_yi_shi_jie_rules_summary),
-                        onClick = onOpenStrategySearch
-                    )
-                )
-            )
-        )
-
-        if (state.showZuiForceConfig) {
-            add(
-                SettingSection(
-                    title = stringResource(R.string.settings_zui_force_config_title),
-                    items = listOfNotNull(
-                        SettingItem.Custom(
-                            key = "deco_settings_zui_force_config_summary",
-                            content = {
-                                Text(
-                                    text = stringResource(R.string.settings_zui_force_config_summary),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalZToolColorScheme.current.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                                )
-                            }
-                        ),
-                        if (state.forceFreeformEntryHookEnabled) {
-                            SettingItem.Custom(
-                                key = "deco_settings_zui_force_config_hook_warning",
-                                content = {
-                                    Text(
-                                        text = stringResource(R.string.settings_zui_force_config_hook_warning),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = LocalZToolColorScheme.current.onSurfaceVariant,
-                                        modifier = Modifier.padding(
-                                            horizontal = 24.dp,
-                                            vertical = 8.dp
-                                        )
-                                    )
-                                }
-                            )
-                        } else {
-                            null
-                        },
-                        settingsDetailActionItem(
-                            key = "settings_detail_zui_force_split",
-                            title = stringResource(R.string.settings_zui_force_split_title),
-                            summary = stringResource(R.string.settings_zui_force_split_summary),
-                            onClick = onZuiForceSplit
-                        ),
-                        settingsDetailActionItem(
-                            key = "settings_detail_zui_force_freeform",
-                            title = stringResource(R.string.settings_zui_force_freeform_title),
-                            summary = stringResource(R.string.settings_zui_force_freeform_summary),
-                            onClick = onZuiForceFreeform
-                        ),
-                        settingsDetailActionItem(
-                            key = "settings_detail_zui_force_fixed",
-                            title = stringResource(R.string.settings_zui_force_fixed_title),
-                            summary = stringResource(R.string.settings_zui_force_fixed_summary),
-                            onClick = onZuiForceFixed
-                        ),
-                        SettingItem.Switch(
-                            key = "settings_detail_edge_bubble",
-                            title = stringResource(R.string.settings_edge_bubble_title),
-                            summary = stringResource(R.string.settings_edge_bubble_summary),
-                            checked = state.edgeBubbleEnabled,
-                            onCheckedChange = onEdgeBubbleChanged
-                        ),
-                        if (state.edgeBubbleEnabled) {
-                            SettingItem.Custom(
-                                key = "deco_settings_detail_edge_bubble_hint",
-                                content = {
-                                    Text(
-                                        text = stringResource(R.string.settings_edge_bubble_hint),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = LocalZToolColorScheme.current.onSurfaceVariant,
-                                        modifier = Modifier.padding(
-                                            horizontal = 24.dp,
-                                            vertical = 8.dp
-                                        )
-                                    )
-                                }
-                            )
-                        } else {
-                            null
-                        }
-                    )
-                )
-            )
-        } else {
-            add(
-                SettingSection(
-                    title = stringResource(R.string.settings_embedding_title),
-                    items = listOf(
-                        SettingItem.Switch(
-                            key = "settings_detail_float_app_mandatory",
-                            title = stringResource(R.string.settings_float_app_mandatory),
-                            summary = stringResource(R.string.settings_float_app_mandatory_summary),
-                            checked = state.floatMandatory,
-                            onCheckedChange = onFloatMandatoryChanged
-                        ),
-                        SettingItem.Switch(
-                            key = "settings_detail_split_screen_mandatory",
-                            title = stringResource(R.string.settings_split_screen_mandatory_title),
-                            summary = stringResource(R.string.settings_split_screen_mandatory_summary),
-                            checked = state.splitScreenMandatory,
-                            onCheckedChange = onSplitScreenMandatoryChanged
-                        )
-                    )
-                )
-            )
-        }
-
         add(
             SettingSection(
                 title = stringResource(R.string.settings_font_settings_title),
@@ -1204,161 +670,6 @@ private fun settingsDetailActionItem(
             }
         }
     )
-}
-
-@Composable
-private fun ConfigSelectionDialogContent(
-    configs: List<EmbeddingConfigManager.ConfigFileInfo>,
-    flashedConfigs: Set<String>,
-    configLabel: (EmbeddingConfigManager.ConfigFileInfo) -> String,
-    onAlreadyFlashedClick: () -> Unit,
-    onDelete: (List<EmbeddingConfigManager.ConfigFileInfo>) -> Unit,
-    onFlash: (List<EmbeddingConfigManager.ConfigFileInfo>) -> Unit,
-    onRestore: () -> Unit,
-    onCancel: () -> Unit
-) {
-    val selectedIndexes = remember { mutableStateListOf<Int>() }
-
-    ZToolDialog(
-        buttonArrangement = DIALOG_BUTTON_VERTICAL_ARRANGEMENT,
-        onDismissRequest = onCancel,
-        title = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(R.string.settings_select_config_files),
-                    fontWeight = FontWeight.SemiBold
-                )
-                if (flashedConfigs.isNotEmpty()) {
-                    Text(
-                        text = stringResource(R.string.settings_flashed_configs_count, flashedConfigs.size),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LocalZToolColorScheme.current.primary,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-        },
-        text = {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 360.dp)
-            ) {
-                itemsIndexed(configs) { index, config ->
-                    val configKey = config.timestamp + "_" + config.packageName
-                    val flashed = configKey in flashedConfigs
-                    val selected = index in selectedIndexes
-                    ConfigSelectionRow(
-                        label = configLabel(config),
-                        flashed = flashed,
-                        selected = selected,
-                        onClick = {
-                            if (flashed) {
-                                onAlreadyFlashedClick()
-                            } else if (selected) {
-                                selectedIndexes -= index
-                            } else {
-                                selectedIndexes += index
-                            }
-                        }
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            ZToolTextButton(
-                onClick = {
-                    val selectedConfigs = selectedIndexes.map { configs[it] }
-                    if (selectedConfigs.isNotEmpty()) onFlash(selectedConfigs)
-                },
-                text = stringResource(R.string.settings_flash_added_config)
-            )
-        },
-        dismissButton = {
-            if (LocalZToolThemeSpec.current.style == FrontendStyle.Material3Expressive) {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    ZToolTextButton(
-                        onClick = onCancel,
-                        text = stringResource(R.string.common_cancel),
-                        isPrimary = false
-                    )
-                    ZToolTextButton(
-                        onClick = {
-                            val selectedConfigs = selectedIndexes.map { configs[it] }
-                            if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
-                        },
-                        text = stringResource(R.string.settings_delete),
-                        isPrimary = false
-                    )
-                    if (flashedConfigs.isNotEmpty()) {
-                        ZToolTextButton(
-                            onClick = onRestore,
-                            text = stringResource(R.string.settings_restore_module),
-                            isPrimary = false
-                        )
-                    }
-                }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    ZToolTextButton(
-                        onClick = {
-                            val selectedConfigs = selectedIndexes.map { configs[it] }
-                            if (selectedConfigs.isNotEmpty()) onDelete(selectedConfigs)
-                        },
-                        text = stringResource(R.string.settings_delete),
-                        isPrimary = false
-                    )
-                    if (flashedConfigs.isNotEmpty()) {
-                        ZToolTextButton(
-                            onClick = onRestore,
-                            text = stringResource(R.string.settings_restore_module),
-                            isPrimary = false
-                        )
-                    }
-                    ZToolTextButton(
-                        onClick = onCancel,
-                        text = stringResource(R.string.common_cancel),
-                        isPrimary = false
-                    )
-                }
-            }
-        }
-    )
-}
-
-@Composable
-private fun ConfigSelectionRow(
-    label: String,
-    flashed: Boolean,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        ZToolCheckbox(
-            checked = flashed || selected,
-            onCheckedChange = { onClick() },
-            enabled = !flashed
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (flashed) {
-                LocalZToolColorScheme.current.onSurfaceVariant
-            } else {
-                LocalZToolColorScheme.current.onSurface
-            },
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
-    }
 }
 
 @Composable

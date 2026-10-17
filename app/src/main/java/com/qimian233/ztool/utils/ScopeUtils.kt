@@ -66,6 +66,14 @@ object ScopeUtils {
                 ScopeKeys.TAB_PUSHOUT
             )
             FeatureDestination.FreeformBar -> listOf(ScopeKeys.FREEFORM_SIDEBAR)
+            // Scope-gate union only; the hub applies changes with a system reboot.
+            FeatureDestination.FreeformHub -> listOf(
+                ScopeKeys.SETTINGS,
+                ScopeKeys.SYSTEM_UI,
+                ScopeKeys.LAUNCHER,
+                ScopeKeys.ANDROID_SYSTEM,
+                ScopeKeys.SYSTEM_SERVER
+            )
             // Cross-app feature: the effective set is whatever the user ticked in the
             // LSPosed manager, so there is no fixed scope list to restart.
             FeatureDestination.UiComponents -> emptyList()

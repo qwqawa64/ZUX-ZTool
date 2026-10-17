@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,7 +42,6 @@ import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
-import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolOutlinedTextField
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
@@ -51,14 +49,12 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSliderRow
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
-import com.qimian233.ztool.ui.components.ZToolTextButton
+import com.qimian233.ztool.ui.components.ZToolRestartSystemDialog
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 import com.qimian233.ztool.viewmodel.FrameworkSettingsViewModel
-import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
-import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun FrameworkSettingsRoute(
@@ -109,7 +105,6 @@ fun FrameworkSettingsRoute(
             onAllowUntrustedTouch = viewModel::setAllowUntrustedTouch,
             onAllowAllRestrictedSettingsChanged = viewModel::setAllowAllRestrictedSettings,
             onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
-            onForceRelativeAppFreeformChanged = viewModel::setForceRelativeAppFreeform,
             onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit,
             onDisableVolumeWarnChanged = viewModel::setDisableVolumeWarn,
             onFineVolumeStepsChanged = viewModel::setFineVolumeSteps,
@@ -135,7 +130,9 @@ fun FrameworkSettingsRoute(
     }
     val restartFailPrefix = stringResource(R.string.common_restart_fail_prefix)
     if (uiState.showRestartConfirmDialog) {
-        RestartSystemDialog(
+        ZToolRestartSystemDialog(
+            title = stringResource(R.string.system_framework_restart_system_title),
+            message = stringResource(R.string.system_framework_restart_system_message),
             onConfirm = {
                 viewModel.restartSystem { error ->
                     Toast.makeText(
@@ -177,7 +174,6 @@ private fun FrameworkSettingsScreen(
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
-    onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
     onDisableVolumeWarnChanged: (Boolean) -> Unit,
     onFineVolumeStepsChanged: (Boolean) -> Unit,
@@ -244,7 +240,6 @@ private fun FrameworkSettingsScreen(
                         onAllowUntrustedTouch = onAllowUntrustedTouch,
                         onAllowAllRestrictedSettingsChanged = onAllowAllRestrictedSettingsChanged,
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
-                        onForceRelativeAppFreeformChanged = onForceRelativeAppFreeformChanged,
                         onDisableHbmThermalLimitChanged = onDisableHbmThermalLimitChanged,
                         onDisableVolumeWarnChanged = onDisableVolumeWarnChanged,
                         onFineVolumeStepsChanged = onFineVolumeStepsChanged,
@@ -279,7 +274,6 @@ private fun frameworkSettingsSections(
     onForceOnOffAnimationDurationChanged: (Int) -> Unit,
     onAiInputExpandChanged: (Boolean) -> Unit,
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
-    onForceRelativeAppFreeformChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
     onDisableVolumeWarnChanged: (Boolean) -> Unit,
     onFineVolumeStepsChanged: (Boolean) -> Unit,
@@ -470,12 +464,6 @@ private fun frameworkSettingsSections(
             title = stringResource(R.string.system_framework_misc_title),
             items = listOf(
                 SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_force_relative_app_freeform_title),
-                    checked = state.forceRelativeAppFreeform,
-                    onCheckedChange = onForceRelativeAppFreeformChanged,
-                    key = "framework_force_relative_app_freeform"
-                ),
-                SettingItem.Switch(
                     title = stringResource(R.string.system_framework_disable_volume_warn_title),
                     checked = state.disableSafeVolumeWarn,
                     onCheckedChange = onDisableVolumeWarnChanged,
@@ -634,40 +622,5 @@ private fun AiInputInfoDialog(
         note = stringResource(R.string.system_framework_ai_input_quick_help_note),
         onDismiss = onDismiss,
         confirmButtonText = stringResource(android.R.string.ok)
-    )
-}
-
-@Composable
-private fun RestartSystemDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    var countdown by remember { mutableIntStateOf(3) }
-
-    LaunchedEffect(Unit) {
-        while (countdown > 0) {
-            delay(1000.milliseconds)
-            countdown -= 1
-        }
-    }
-
-    ZToolDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.system_framework_restart_system_title)) },
-        text = { Text(stringResource(R.string.system_framework_restart_system_message)) },
-        confirmButton = {
-            ZToolTextButton(
-                enabled = countdown == 0,
-                onClick = onConfirm,
-                text = if (countdown > 0) {
-                    stringResource(R.string.common_confirm) + " ($countdown)"
-                } else {
-                    stringResource(R.string.common_confirm)
-                }
-            )
-        },
-        dismissButton = {
-            ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
-        }
     )
 }

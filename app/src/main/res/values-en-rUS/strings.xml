@@ -115,7 +115,7 @@
     <string name="page_home_slot_b">Slot B</string>
     <string name="page_features_title">Features Management</string>
     <string name="settings_app_name">Settings</string>
-    <string name="settings_app_description">Magic Window and other useful tweaks.</string>
+    <string name="settings_app_description">Settings app fonts, about-device info and other tweaks.</string>
     <string name="game_tool_app_name">Game Assistant</string>
     <string name="game_tool_app_description">Disable Dolby, disguise model, float display, etc.</string>
     <string name="system_update_app_name">System Update</string>
@@ -699,6 +699,13 @@
     <string name="freeform_sidebar_allapps_sections_summary">Groups the all-apps panel by the pinyin initial of each app name; every group starts on a new row behind a letter heading, and names starting with a digit or symbol go into the # group</string>
     <string name="freeform_sidebar_allapps_search_title">Search in the all-apps panel</string>
     <string name="freeform_sidebar_allapps_search_summary">Shows a search field at the top of the all-apps panel, filtering by app name, full pinyin or pinyin initials</string>
+
+    <string name="freeform_hub_app_name">Freeform</string>
+    <string name="freeform_hub_app_description">One place for One Vision, freeform and split screen, SystemUI freeform behavior and launcher freeform entries</string>
+    <string name="freeform_hub_system_ui_title">SystemUI freeform</string>
+    <string name="freeform_hub_launcher_title">Launcher freeform</string>
+    <string name="freeform_hub_relative_launch_title">Relative launch</string>
+    <string name="freeform_hub_restart_button">Reboot system</string>
 
     <string name="ui_components_app_name">UI components</string>
     <string name="ui_components_app_description">Restyle ZUI dialogs across system apps</string>

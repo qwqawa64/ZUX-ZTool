@@ -126,7 +126,7 @@
     <!--功能管理页资源值-->
     <string name="page_features_title">功能管理</string>
     <string name="settings_app_name">设置</string>
-    <string name="settings_app_description">管理一视界、窗口交互模式及系统个性化设置。</string>
+    <string name="settings_app_description">管理系统应用的字体、关于设备信息及个性化设置。</string>
     <string name="game_tool_app_name">游戏助手</string>
     <string name="game_tool_app_description">音频处理、机型伪装、参数显示修复及自动防误触等配置。</string>
     <string name="system_update_app_name">系统更新</string>
@@ -781,6 +781,13 @@
     <string name="freeform_sidebar_allapps_sections_summary">全部应用面板按应用名的拼音首字母分组，每组另起一行并显示字母标题；数字与符号开头的应用归入 # 组</string>
     <string name="freeform_sidebar_allapps_search_title">全部应用面板支持搜索</string>
     <string name="freeform_sidebar_allapps_search_summary">在全部应用面板顶部显示搜索框，可按应用名、拼音全拼或拼音首字母筛选</string>
+
+    <string name="freeform_hub_app_name">小窗</string>
+    <string name="freeform_hub_app_description">统一管理一视界、小窗与分屏、系统界面小窗行为和桌面小窗入口</string>
+    <string name="freeform_hub_system_ui_title">系统界面小窗</string>
+    <string name="freeform_hub_launcher_title">桌面小窗</string>
+    <string name="freeform_hub_relative_launch_title">关联启动</string>
+    <string name="freeform_hub_restart_button">重启系统</string>
 
     <string name="ui_components_app_name">用户界面组件</string>
     <string name="ui_components_app_description">统一调整系统内 ZUI 对话框的外观</string>

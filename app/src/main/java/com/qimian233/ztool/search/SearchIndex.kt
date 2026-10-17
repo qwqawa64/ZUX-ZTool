@@ -38,7 +38,7 @@ data class SearchEntry(
     val parentMode: SearchParentMode = SearchParentMode.REQUIRE_ON,
     /** Free-form visibility note (e.g. style-gated theme rows). */
     @param:StringRes val conditionNoteRes: Int? = null,
-    /** True for the 11 Features-route cards; they navigate via the Features tab. */
+    /** True for the Features-route cards; they navigate via the Features tab. */
     val isFeatureCard: Boolean = false,
     val featureDestination: FeatureDestination? = null,
     @param:StringRes val groupTitleRes: Int,
@@ -235,6 +235,16 @@ object SearchIndex {
             isFeatureCard = true,
             featureDestination = FeatureDestination.UiComponents,
             groupTitleRes = R.string.search_group_feature_cards
+        ),
+        // Cross-app small-window hub; spans settings, SystemUI, launcher and framework.
+        SearchEntry(
+            id = "feature_card_freeform_hub",
+            route = FeatureDestination.FreeformHub.route,
+            titleRes = R.string.freeform_hub_app_name,
+            summaryRes = R.string.freeform_hub_app_description,
+            isFeatureCard = true,
+            featureDestination = FeatureDestination.FreeformHub,
+            groupTitleRes = R.string.search_group_feature_cards
         )
     )
 
@@ -359,6 +369,11 @@ object SearchIndex {
     private val uiComponents = Screen(
         route = FeatureDestination.UiComponents.route,
         groupTitleRes = R.string.ui_components_app_name
+    )
+
+    private val freeformHub = Screen(
+        route = FeatureDestination.FreeformHub.route,
+        groupTitleRes = R.string.freeform_hub_app_name
     )
 
     private val appSettings = Screen(
@@ -804,36 +819,36 @@ object SearchIndex {
             titleRes = R.string.system_ui_misc_shade_rebound_fix_title,
             summaryRes = R.string.system_ui_misc_shade_rebound_fix_summary
         ),
-        systemUiMisc.item(
+        freeformHub.item(
             id = "system_ui_misc_freeform_fullscreen_threshold",
             titleRes = R.string.system_ui_misc_freeform_fullscreen_threshold_title,
             summaryRes = R.string.system_ui_misc_freeform_fullscreen_threshold_summary
         ),
-        systemUiMisc.item(
+        freeformHub.item(
             id = "system_ui_misc_freeform_bottom_edge_resize",
             titleRes = R.string.system_ui_misc_freeform_bottom_edge_resize_title,
             summaryRes = R.string.system_ui_misc_freeform_bottom_edge_resize_summary,
             parentTitleRes = R.string.system_ui_misc_freeform_fullscreen_threshold_title,
             parentKey = "system_ui_misc_freeform_fullscreen_threshold"
         ),
-        systemUiMisc.item(
+        freeformHub.item(
             id = "system_ui_misc_corner_handle_auto_hide",
             titleRes = R.string.system_ui_misc_corner_handle_auto_hide_title,
             summaryRes = R.string.system_ui_misc_corner_handle_auto_hide_summary
         ),
-        systemUiMisc.item(
+        freeformHub.item(
             id = "system_ui_misc_freeform_no_forehead",
             titleRes = R.string.system_ui_misc_freeform_no_forehead_title,
             summaryRes = R.string.system_ui_misc_freeform_no_forehead_summary
         ),
-        systemUiMisc.item(
+        freeformHub.item(
             id = "system_ui_misc_freeform_fullscreen_width",
             titleRes = R.string.system_ui_misc_freeform_fullscreen_width_title,
             summaryRes = R.string.system_ui_misc_freeform_fullscreen_width_summary,
             parentTitleRes = R.string.system_ui_misc_freeform_fullscreen_threshold_title,
             parentKey = "system_ui_misc_freeform_fullscreen_threshold"
         ),
-        systemUiMisc.item(
+        freeformHub.item(
             id = "system_ui_misc_freeform_fullscreen_height",
             titleRes = R.string.system_ui_misc_freeform_fullscreen_height_title,
             summaryRes = R.string.system_ui_misc_freeform_fullscreen_height_summary,
@@ -940,7 +955,7 @@ object SearchIndex {
             titleRes = R.string.system_framework_pkgmgr_bypass_arsc_title,
             summaryRes = R.string.system_framework_pkgmgr_bypass_arsc_summary
         ),
-        framework.item(
+        freeformHub.item(
             id = "framework_force_relative_app_freeform",
             titleRes = R.string.system_framework_force_relative_app_freeform_title
         ),
@@ -955,57 +970,57 @@ object SearchIndex {
             summaryRes = R.string.system_framework_ai_input_expand_summary
         ),
 
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_remove_blacklist",
             titleRes = R.string.settings_embedding_setting_remove_blacklist,
             summaryRes = R.string.settings_embedding_setting_remove_blacklist_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_role_module",
             titleRes = R.string.settings_role_module_title,
             summaryRes = R.string.settings_role_module_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_custom_landscape_view",
             titleRes = R.string.settings_custom_landscape_view,
             summaryRes = R.string.settings_custom_landscape_view_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_custom_landscape_result",
             titleRes = R.string.settings_custom_landscape_result_title,
             summaryRes = R.string.settings_custom_landscape_result_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_yi_shi_jie_rules",
             titleRes = R.string.settings_yi_shi_jie_rules,
             summaryRes = R.string.settings_yi_shi_jie_rules_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_zui_force_split",
             titleRes = R.string.settings_zui_force_split_title,
             summaryRes = R.string.settings_zui_force_split_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_zui_force_freeform",
             titleRes = R.string.settings_zui_force_freeform_title,
             summaryRes = R.string.settings_zui_force_freeform_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_edge_bubble",
             titleRes = R.string.settings_edge_bubble_title,
             summaryRes = R.string.settings_edge_bubble_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_zui_force_fixed",
             titleRes = R.string.settings_zui_force_fixed_title,
             summaryRes = R.string.settings_zui_force_fixed_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_float_app_mandatory",
             titleRes = R.string.settings_float_app_mandatory,
             summaryRes = R.string.settings_float_app_mandatory_summary
         ),
-        settingsDetail.item(
+        freeformHub.item(
             id = "settings_detail_split_screen_mandatory",
             titleRes = R.string.settings_split_screen_mandatory_title,
             summaryRes = R.string.settings_split_screen_mandatory_summary
@@ -1411,16 +1426,16 @@ object SearchIndex {
             id = "launcher_disable_recent_app_display",
             titleRes = R.string.launcher_disable_recent_app_display
         ),
-        launcher.item(
+        freeformHub.item(
             id = "launcher_force_freeform_entry",
             titleRes = R.string.launcher_force_freeform_entry_title
         ),
-        launcher.item(
+        freeformHub.item(
             id = "freeform_keep_alive_enabled",
             titleRes = R.string.launcher_freeform_keep_alive_title,
             summaryRes = R.string.launcher_freeform_keep_alive_summary
         ),
-        launcher.item(
+        freeformHub.item(
             id = "freeform_keep_alive_packages",
             titleRes = R.string.launcher_freeform_keep_alive_title,
             summaryRes = R.string.launcher_freeform_keep_alive_apps_summary,

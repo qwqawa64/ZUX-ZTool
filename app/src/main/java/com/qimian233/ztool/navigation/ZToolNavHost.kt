@@ -20,6 +20,7 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.screens.features.FeatureDestination
 import com.qimian233.ztool.screens.features.FeaturesMainRoute
+import com.qimian233.ztool.screens.freeform.FreeformHubSettingsRoute
 import com.qimian233.ztool.screens.freeformbar.FreeformBarSettingsRoute
 import com.qimian233.ztool.screens.gametool.GameToolSettingsRoute
 import com.qimian233.ztool.screens.home.HomeCardPreviewRoute
@@ -464,11 +465,6 @@ internal fun MainRouteNavHost(
                         }
                     }
                 },
-                onOpenStrategySearch = {
-                    navController.navigate(HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH) {
-                        launchSingleTop = true
-                    }
-                },
                 targetId = backStackEntry.highlightTarget(),
             )
         }
@@ -787,6 +783,31 @@ internal fun MainRouteNavHost(
             )
         }
         composable(
+            route = routeWithTarget(FeatureDestination.FreeformHub.route),
+            enterTransition = horizontalEnter,
+            exitTransition = horizontalExit,
+            popEnterTransition = horizontalPopEnter,
+            popExitTransition = horizontalPopExit,
+            arguments = highlightTargetArguments
+        ) { backStackEntry ->
+            FreeformHubSettingsRoute(
+                title = stringResource(R.string.freeform_hub_app_name),
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(MainRoute.Features.name) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                onOpenStrategySearch = {
+                    navController.navigate(HiddenRoute.SETTINGS_DETAIL_MAGIC_WINDOW_SEARCH) {
+                        launchSingleTop = true
+                    }
+                },
+                targetId = backStackEntry.highlightTarget(),
+            )
+        }
+        composable(
             route = routeWithTarget(FeatureDestination.SogouIme.route),
             enterTransition = horizontalEnter,
             exitTransition = horizontalExit,
@@ -986,6 +1007,7 @@ private fun navigationRouteIndex(rawRoute: String?): Int {
         FeatureDestination.DeviceService.route -> 2
         FeatureDestination.FreeformBar.route -> 2
         FeatureDestination.UiComponents.route -> 2
+        FeatureDestination.FreeformHub.route -> 2
         MainRoute.Settings.name -> 3
         HiddenRoute.SETTINGS_THEME -> 4
         HiddenRoute.SETTINGS_ABOUT -> 4

@@ -133,27 +133,6 @@ fun LauncherSettingsRoute(
             onLauncherHideBluePointChanged = viewModel::setLauncherHideBluePoint,
             onCloudFolderDismissChanged = viewModel::setCloudFolderAutoDismiss,
             onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
-            onForceFreeformEntryChanged = viewModel::setForceFreeformEntry,
-            onFreeformKeepAliveEnabledChanged = viewModel::setFreeformKeepAliveEnabled,
-            onSelectKeepAlivePackages = {
-                val activity = context as? android.app.Activity
-                if (activity != null) {
-                    AppChooserDialog.show(
-                        activity,
-                        viewModel.loadUserInstalledPackageNames(),
-                        uiState.freeformKeepAlivePackages,
-                        context.getString(R.string.launcher_freeform_keep_alive_title),
-                        object : AppChooserDialog.AppSelectionCallback {
-                            override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
-                                viewModel.setFreeformKeepAlivePackages(
-                                    selectedApps.map { it.packageName })
-                            }
-
-                            override fun onCancel() = Unit
-                        }
-                    )
-                }
-            },
             onLauncherBatchUninstallChanged = viewModel::setLauncherBatchUninstall,
             onBigFolderAlignChanged = viewModel::setBigFolderAlign,
             onBigFolderBlurGuardChanged = viewModel::setBigFolderBlurGuard,
@@ -240,9 +219,6 @@ private fun LauncherSettingsScreen(
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
-    onForceFreeformEntryChanged: (Boolean) -> Unit,
-    onFreeformKeepAliveEnabledChanged: (Boolean) -> Unit,
-    onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
     onBigFolderBlurGuardChanged: (Boolean) -> Unit,
@@ -317,9 +293,6 @@ private fun LauncherSettingsScreen(
                         onLauncherHideBluePointChanged = onLauncherHideBluePointChanged,
                         onCloudFolderDismissChanged = onCloudFolderDismissChanged,
                         onDisableRecentAppDisplayChanged = onDisableRecentAppDisplayChanged,
-                        onForceFreeformEntryChanged = onForceFreeformEntryChanged,
-                        onFreeformKeepAliveEnabledChanged = onFreeformKeepAliveEnabledChanged,
-                        onSelectKeepAlivePackages = onSelectKeepAlivePackages,
                         onLauncherBatchUninstallChanged = onLauncherBatchUninstallChanged,
                         onBigFolderAlignChanged = onBigFolderAlignChanged,
                         onBigFolderBlurGuardChanged = onBigFolderBlurGuardChanged,
@@ -362,9 +335,6 @@ private fun launcherSettingsSections(
     onLauncherHideBluePointChanged: (Boolean) -> Unit,
     onCloudFolderDismissChanged: (Boolean) -> Unit,
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
-    onForceFreeformEntryChanged: (Boolean) -> Unit,
-    onFreeformKeepAliveEnabledChanged: (Boolean) -> Unit,
-    onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
     onBigFolderBlurGuardChanged: (Boolean) -> Unit,
@@ -725,38 +695,6 @@ private fun launcherSettingsSections(
                         WhitelistRow(
                             whitelistCount = state.forceStopWhitelistCount,
                             onClick = onSelectForceStopWhitelist
-                        )
-                    }
-                )
-            )
-        }
-        add(
-            SettingItem.Switch(
-                title = stringResource(R.string.launcher_force_freeform_entry_title),
-                summary = stringResource(R.string.launcher_force_freeform_entry_summary),
-                checked = state.forceFreeformEntry,
-                onCheckedChange = onForceFreeformEntryChanged,
-                key = "launcher_force_freeform_entry"
-            )
-        )
-        add(
-            SettingItem.Switch(
-                title = stringResource(R.string.launcher_freeform_keep_alive_title),
-                summary = stringResource(R.string.launcher_freeform_keep_alive_summary),
-                checked = state.freeformKeepAliveEnabled,
-                onCheckedChange = onFreeformKeepAliveEnabledChanged,
-                key = "freeform_keep_alive_enabled"
-            )
-        )
-        if (state.freeformKeepAliveEnabled) {
-            add(
-                SettingItem.Custom(
-                    key = "freeform_keep_alive_packages",
-                    content = {
-                        WhitelistRow(
-                            whitelistCount = state.freeformKeepAlivePackagesCount,
-                            onClick = onSelectKeepAlivePackages,
-                            labelRes = R.string.launcher_freeform_keep_alive_apps_summary
                         )
                     }
                 )

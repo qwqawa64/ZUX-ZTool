@@ -78,7 +78,8 @@ enum class FeatureDestination(
     SogouIme("feature/sogou-ime"),
     DeviceService("feature/device-service"),
     FreeformBar("feature/freeform-bar"),
-    UiComponents("feature/ui-components")
+    UiComponents("feature/ui-components"),
+    FreeformHub("feature/freeform-hub")
 }
 
 @Composable
@@ -330,6 +331,17 @@ private fun rememberFeatureItems(context: Context): List<FeatureItem> {
                 destination = FeatureDestination.UiComponents,
                 alwaysVisible = true,
                 scopePackages = emptyList()
+            ),
+            // Cross-app small-window hub: the scope is a fixed union, so the card can
+            // request exactly the packages the page's hooks need.
+            featureItem(
+                context = context,
+                nameRes = R.string.freeform_hub_app_name,
+                descriptionRes = R.string.freeform_hub_app_description,
+                packageName = "",
+                destination = FeatureDestination.FreeformHub,
+                alwaysVisible = true,
+                scopePackages = ScopeUtils.getScopePackages(FeatureDestination.FreeformHub)
             )
         )
     }
