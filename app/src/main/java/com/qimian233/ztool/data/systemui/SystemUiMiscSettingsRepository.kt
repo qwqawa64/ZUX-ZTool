@@ -32,6 +32,10 @@ class SystemUiMiscSettingsRepository(context: Context) {
                     FREEFORM_FULLSCREEN_PERCENT_DEFAULT
                 )
             ),
+            freeformBottomEdgeResize = prefsUtils.loadBooleanSetting(
+                KEY_SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE,
+                false
+            ),
         )
     }
 
@@ -59,6 +63,10 @@ class SystemUiMiscSettingsRepository(context: Context) {
         )
     }
 
+    fun saveFreeformBottomEdgeResize(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE, enabled)
+    }
+
     fun forceStopScope(): ShellActionResult {
         val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
         return when (val result = ScopeUtils.restartScope(scopes)) {
@@ -80,6 +88,8 @@ class SystemUiMiscSettingsRepository(context: Context) {
             PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT.name
         private val KEY_LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT =
             PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT.name
+        private val KEY_SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE =
+            PreferenceKeys.SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE.name
 
         // Fullscreen thresholds are percentages of the current display; 100 % disables
         // that direction and both at 100 % keeps the window out of fullscreen.
@@ -105,6 +115,7 @@ data class SystemUiMiscSettingsUiState(
     val freeformFullscreenThreshold: Boolean = false,
     val freeformFullscreenWidthPercent: Int = 85,
     val freeformFullscreenHeightPercent: Int = 85,
+    val freeformBottomEdgeResize: Boolean = false,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )

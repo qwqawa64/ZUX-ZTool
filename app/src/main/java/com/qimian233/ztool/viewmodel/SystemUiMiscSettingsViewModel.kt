@@ -73,6 +73,11 @@ class SystemUiMiscSettingsViewModel(
         repository.saveFreeformFullscreenHeightPercent(value)
     }
 
+    fun setFreeformBottomEdgeResize(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(freeformBottomEdgeResize = enabled)
+        repository.saveFreeformBottomEdgeResize(enabled)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }

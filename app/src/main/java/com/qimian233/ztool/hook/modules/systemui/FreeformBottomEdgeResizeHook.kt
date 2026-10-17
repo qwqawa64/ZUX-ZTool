@@ -19,7 +19,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
     private var transformedLogged = false
 
     override fun getModuleName(): String =
-        PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD.name
+        PreferenceKeys.SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE.name
 
     override fun getTargetPackages(): Array<out String> =
         arrayOf(ScopeKeys.SYSTEM_UI.packageName)
@@ -34,6 +34,15 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
 
     private fun install(param: PackageLoadedParam) {
         val loader = param.defaultClassLoader
+        val prefs = remotePreferences
+        val thresholdEnabled = prefs.getBoolean(
+            PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD.name,
+            PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD.default
+        )
+        if (!thresholdEnabled) {
+            logger.info("Freeform bottom edge resize skipped: fullscreen threshold disabled")
+            return
+        }
         val geometryClass = try {
             loader.loadClass(GEOMETRY_CLASS)
         } catch (t: Throwable) {

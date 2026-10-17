@@ -78,6 +78,10 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         val heightRatio = heightPercent / 100f
         val widthEnabled = widthPercent < MAX_PERCENT
         val heightEnabled = heightPercent < MAX_PERCENT
+        val bottomResizeEnabled = prefs.getBoolean(
+            PreferenceKeys.SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE.name,
+            PreferenceKeys.SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE.default
+        )
         logger.info(
             "Freeform fullscreen threshold installing: " +
                 "width=$widthPercent% (${if (widthEnabled) "on" else "off"}), " +
@@ -167,7 +171,7 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
                 val result = chain.proceed(args.toTypedArray())
 
                 val ctrlType = (chain.args.getOrNull(0) as? Number)?.toInt() ?: 0
-                if ((ctrlType and 16) != 0) {
+                if (bottomResizeEnabled && (ctrlType and 16) != 0) {
                     val start = taskStartField?.get(utility) as? Rect
                     if (start != null && start.height() > 0) {
                         val aspect = start.width().toFloat() / start.height()
@@ -245,7 +249,8 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
 
         logger.info(
             "Freeform fullscreen threshold installed: SystemUI changeBounds, " +
-                "width=$widthPercent%, height=$heightPercent%"
+                "width=$widthPercent%, height=$heightPercent%, " +
+                "bottomResize=$bottomResizeEnabled"
         )
     }
 

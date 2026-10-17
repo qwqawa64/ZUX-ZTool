@@ -810,6 +810,13 @@ object SearchIndex {
             summaryRes = R.string.system_ui_misc_freeform_fullscreen_threshold_summary
         ),
         systemUiMisc.item(
+            id = "system_ui_misc_freeform_bottom_edge_resize",
+            titleRes = R.string.system_ui_misc_freeform_bottom_edge_resize_title,
+            summaryRes = R.string.system_ui_misc_freeform_bottom_edge_resize_summary,
+            parentTitleRes = R.string.system_ui_misc_freeform_fullscreen_threshold_title,
+            parentKey = "system_ui_misc_freeform_fullscreen_threshold"
+        ),
+        systemUiMisc.item(
             id = "system_ui_misc_freeform_fullscreen_width",
             titleRes = R.string.system_ui_misc_freeform_fullscreen_width_title,
             summaryRes = R.string.system_ui_misc_freeform_fullscreen_width_summary,

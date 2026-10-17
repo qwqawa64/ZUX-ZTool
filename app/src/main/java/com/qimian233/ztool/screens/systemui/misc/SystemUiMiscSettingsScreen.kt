@@ -91,6 +91,7 @@ fun SystemUiMiscSettingsRoute(
             onFreeformFullscreenThresholdChanged = viewModel::setFreeformFullscreenThreshold,
             onFreeformFullscreenWidthPercentChanged = viewModel::setFreeformFullscreenWidthPercent,
             onFreeformFullscreenHeightPercentChanged = viewModel::setFreeformFullscreenHeightPercent,
+            onFreeformBottomEdgeResizeChanged = viewModel::setFreeformBottomEdgeResize,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -139,6 +140,7 @@ private fun SystemUiMiscSettingsScreen(
     onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
     onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
     onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
+    onFreeformBottomEdgeResizeChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -189,6 +191,7 @@ private fun SystemUiMiscSettingsScreen(
                         onFreeformFullscreenThresholdChanged = onFreeformFullscreenThresholdChanged,
                         onFreeformFullscreenWidthPercentChanged = onFreeformFullscreenWidthPercentChanged,
                         onFreeformFullscreenHeightPercentChanged = onFreeformFullscreenHeightPercentChanged,
+                        onFreeformBottomEdgeResizeChanged = onFreeformBottomEdgeResizeChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -209,6 +212,7 @@ private fun systemUiMiscSettingsSections(
     onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
     onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
     onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
+    onFreeformBottomEdgeResizeChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -268,6 +272,15 @@ private fun systemUiMiscSettingsSections(
                     )
                 )
                 if (state.freeformFullscreenThreshold) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_misc_freeform_bottom_edge_resize_title),
+                            summary = stringResource(R.string.system_ui_misc_freeform_bottom_edge_resize_summary),
+                            checked = state.freeformBottomEdgeResize,
+                            onCheckedChange = onFreeformBottomEdgeResizeChanged,
+                            key = "system_ui_misc_freeform_bottom_edge_resize"
+                        )
+                    )
                     add(
                         SettingItem.Custom(
                             key = "deco_system_ui_misc_freeform_fullscreen_preview",

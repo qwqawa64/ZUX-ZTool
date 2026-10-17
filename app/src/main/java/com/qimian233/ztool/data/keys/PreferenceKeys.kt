@@ -43,6 +43,10 @@ object PreferenceKeys {
     // host's screen-area/width/height rules with the user's percentages
     val LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD =
         BoolKey("launcher_freeform_fullscreen_threshold", false)
+    // Bottom-edge freeform drag resizes proportionally instead of the quick-swipe gesture;
+    // only meaningful while the fullscreen-threshold feature above is enabled
+    val SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE =
+        BoolKey("system_ui_freeform_bottom_edge_resize", false)
     // Sidebar (com.zui.freeform.sidebar) drawer: lifts the host's hard-coded 5-slot
     // limit and switches the drawer to a user-editable order. Module name of
     // SidebarDrawerHook.
@@ -360,6 +364,7 @@ object PreferenceKeys {
         LAUNCHER_FORCE_FREEFORM_ENTRY, FREEFORM_EDGE_BUBBLE,
         FREEFORM_KEEP_ALIVE_ENABLED,
         LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD,
+        SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE,
         SIDEBAR_DRAWER_ENHANCE,
         SIDEBAR_DRAWER_EDITABLE,
         SIDEBAR_ALLAPPS_SECTIONS,

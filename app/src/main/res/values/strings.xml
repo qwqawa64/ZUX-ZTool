@@ -1180,6 +1180,8 @@
     <string name="launcher_freeform_keep_alive_apps_summary">已保活%d个应用</string>
     <string name="system_ui_misc_freeform_fullscreen_threshold_title">自定义小窗全屏阈值</string>
     <string name="system_ui_misc_freeform_fullscreen_threshold_summary">小窗宽度或高度达到设定比例时自动全屏，先达到者生效；100% 表示该方向不触发，仅平板小窗生效，重启系统界面后生效</string>
+    <string name="system_ui_misc_freeform_bottom_edge_resize_title">底边拖动等比缩放</string>
+    <string name="system_ui_misc_freeform_bottom_edge_resize_summary">在底边控制器上拖动时等比缩放小窗，而不是快速下滑全屏；仍需达到上方阈值才会全屏</string>
     <string name="system_ui_misc_freeform_fullscreen_width_title">宽度阈值</string>
     <string name="system_ui_misc_freeform_fullscreen_width_summary">小窗宽度达到屏幕宽度的该比例时全屏；100% 表示宽度方向不触发</string>
     <string name="system_ui_misc_freeform_fullscreen_height_title">高度阈值</string>

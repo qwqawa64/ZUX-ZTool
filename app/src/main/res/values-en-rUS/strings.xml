@@ -1129,6 +1129,8 @@
     <string name="launcher_freeform_keep_alive_apps_summary">%d apps kept alive</string>
     <string name="system_ui_misc_freeform_fullscreen_threshold_title">Custom small-window fullscreen threshold</string>
     <string name="system_ui_misc_freeform_fullscreen_threshold_summary">Switch a small window to fullscreen when its width or height reaches the configured percentage, whichever comes first; 100% disables that direction; tablets only, applies after restarting SystemUI</string>
+    <string name="system_ui_misc_freeform_bottom_edge_resize_title">Proportional bottom-edge resize</string>
+    <string name="system_ui_misc_freeform_bottom_edge_resize_summary">Drag the bottom controller to resize the small window proportionally instead of quick-swiping it to fullscreen; the threshold above still decides when it goes fullscreen</string>
     <string name="system_ui_misc_freeform_fullscreen_width_title">Width threshold</string>
     <string name="system_ui_misc_freeform_fullscreen_width_summary">Fullscreen when the small window reaches this percentage of the screen width; 100% disables the width direction</string>
     <string name="system_ui_misc_freeform_fullscreen_height_title">Height threshold</string>
