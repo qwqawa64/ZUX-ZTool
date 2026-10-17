@@ -1205,6 +1205,8 @@
     <!-- Hook 侧读取（BatchUninstall 确认框）；经 getIdentifier 按名加载，勿改名勿删 -->
     <string name="ztool_batch_uninstall_dialog_title" tools:ignore="UnusedResources">批量卸载</string>
     <string name="ztool_batch_uninstall_dialog_message" tools:ignore="UnusedResources">将卸载以下 %1$d 个应用：\n\n%2$s</string>
+    <string name="ztool_batch_uninstall_dialog_message_icons" tools:ignore="UnusedResources">将从桌面移除以下 %1$d 个图标：\n\n%2$s</string>
+    <string name="ztool_batch_uninstall_dialog_message_mixed" tools:ignore="UnusedResources">将卸载以下 %1$d 个应用，并从桌面移除 %2$d 个图标：\n\n%3$s</string>
     <string name="ztool_batch_uninstall_dispatch_failed" tools:ignore="UnusedResources">无法打开 ZTool 执行卸载</string>
     <!-- Hook 侧读取（BatchUninstall）；经 getIdentifier 按名加载，勿改名勿删 -->
     <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">卸载应用</string>
@@ -1212,7 +1214,7 @@
     <string name="tile_reduce_bright_colors_label">极暗模式</string>
     <string name="system_ui_media_output_dialog_center_title">媒体输出弹窗居中</string>
     <string name="system_ui_media_output_dialog_center_summary">修正从"媒体输出"磁贴拉起的输出切换弹窗贴屏幕左缘的问题</string>
-    <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">所选中内容没有可卸载的应用</string>
+    <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">所选中内容没有可卸载的应用，也没有可移除的图标</string>
     <string name="system_ui_animation_wallpaper_title_suffix">\ - 动画与壁纸</string>
     <string name="system_ui_animation_wallpaper_setting_title">动画与壁纸</string>
     <string name="system_ui_animation_wallpaper_setting_summary">充电动画与桌面动态壁纸设置</string>

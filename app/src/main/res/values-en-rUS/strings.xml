@@ -1152,6 +1152,8 @@
     <!-- Read by the hook side (BatchUninstall confirm dialog) -->
     <string name="ztool_batch_uninstall_dialog_title" tools:ignore="UnusedResources">Batch Uninstall</string>
     <string name="ztool_batch_uninstall_dialog_message" tools:ignore="UnusedResources">The following %1$d app(s) will be uninstalled:\n\n%2$s</string>
+    <string name="ztool_batch_uninstall_dialog_message_icons" tools:ignore="UnusedResources">The following %1$d icon(s) will be removed from the home screen:\n\n%2$s</string>
+    <string name="ztool_batch_uninstall_dialog_message_mixed" tools:ignore="UnusedResources">The following %1$d app(s) will be uninstalled and %2$d icon(s) will be removed from the home screen:\n\n%3$s</string>
     <string name="ztool_batch_uninstall_dispatch_failed" tools:ignore="UnusedResources">Failed to open ZTool for uninstall</string>
     <!-- Read by the hook side (BatchUninstall) -->
     <string name="ztool_batch_uninstall_button" tools:ignore="UnusedResources">Uninstall</string>
@@ -1159,7 +1161,7 @@
     <string name="tile_reduce_bright_colors_label">Extra dim</string>
     <string name="system_ui_media_output_dialog_center_title">Center media output dialog</string>
     <string name="system_ui_media_output_dialog_center_summary">Fixes the output switcher dialog launched from the Media output tile sticking to the left edge of the screen.</string>
-    <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">No uninstallable apps in the selection</string>
+    <string name="ztool_batch_uninstall_no_apps" tools:ignore="UnusedResources">Nothing in the selection can be uninstalled or removed</string>
     <string name="system_ui_animation_wallpaper_title_suffix">\ - Animation &amp; wallpaper</string>
     <string name="system_ui_animation_wallpaper_setting_title">Animation &amp; wallpaper</string>
     <string name="system_ui_animation_wallpaper_setting_summary">Charging animation and desktop live wallpaper settings</string>

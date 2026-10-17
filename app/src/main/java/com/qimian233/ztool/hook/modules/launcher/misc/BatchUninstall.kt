@@ -30,23 +30,12 @@ import java.lang.reflect.Array as JvmArray
 import java.util.Locale
 
 /**
- * Home screen edit mode (multi-select) batch uninstall.
+ * Home screen edit-mode (multi-select) batch uninstall.
  *
- * After `ZuiEditModePanel.onFinishInflate`, clones and injects an "uninstall apps"
- * button into the bottom bar and adds the button to the array returned by
- * `getEditModeTranslateAnimViews()` so it joins the wallpaper/widgets/settings
- * buttons in the edit mode enter/exit animations.
- *
- * When the button is clicked, selected ItemInfo objects are collected via public
- * APIs (getSelectedViews / View.tag), filtered to main-user, itemType==APP_ITEM,
- * non-system apps (LauncherApps resolution + FLAG_SYSTEM check, matching the
- * launcher's own `Utilities.getUninstallTarget` semantics), deduplicated, and
- * handed to ZTool's BatchUninstallActivity via an explicit Intent for root
- * silent uninstall.
- *
- * All hooked method names are stable unobfuscated names (framework overrides or
- * descriptive getters), so DexIndex is not used; on failure it degrades to no
- * button and logs.
+ * Injects an "uninstall" button into the edit-mode bottom bar; on click the selection
+ * is split into root-uninstallable apps (sent to BatchUninstallActivity) and every
+ * other selected icon (shortcuts, icons of removed apps), which the launcher removes
+ * through its own edit-mode API. See docs/research/launcher_batch_uninstall_selection.md.
  */
 @SuppressLint("PrivateApi", "DiscouragedApi", "UseCompatLoadingForDrawables")
 class BatchUninstall : AppHookModule() {
@@ -443,14 +432,30 @@ class BatchUninstall : AppHookModule() {
         }
     }
 
-    /** An uninstall candidate: app label for display + package name for execution. */
+    /** An app selected for root uninstall: label for display + package name for execution. */
     private data class UninstallCandidate(val label: String, val packageName: String)
+
+    /** A selected desktop item removed from the workspace instead of uninstalled. */
+    private data class RemovableIcon(val label: String, val itemInfo: Any)
+
+    /** What the launcher can do with one selected app icon. */
+    private enum class AppAction { UNINSTALL, REMOVE_ICON, KEEP }
+
+    /** Selected items split by the action each one takes. */
+    private data class SelectionPlan(
+        val uninstallTargets: List<UninstallCandidate>,
+        val keptItems: List<Any>,
+        val removableIcons: List<RemovableIcon>
+    ) {
+        val isEmpty: Boolean
+            get() = uninstallTargets.isEmpty() && removableIcons.isEmpty()
+    }
 
     private fun handleClicked(panel: ViewGroup) {
         try {
             val context = panel.context
-            val candidates = collectUninstallableCandidates(panel, context)
-            if (candidates.isEmpty()) {
+            val plan = collectSelection(panel, context)
+            if (plan.isEmpty) {
                 Toast.makeText(
                     context,
                     moduleString(context, STRING_NO_APPS, FALLBACK_NO_APPS),
@@ -458,38 +463,31 @@ class BatchUninstall : AppHookModule() {
                 ).show()
                 return
             }
-            if (!showConfirmDialog(panel, context, candidates)) {
+            if (!showConfirmDialog(panel, context, plan)) {
                 logger.warn("BatchUninstall: no confirm dialog available, aborted")
-                return
             }
         } catch (t: Throwable) {
             logger.error("BatchUninstall: failed to show confirm dialog", t)
         }
     }
 
-    /**
-     * Show a ZUI-style confirmation dialog; falls back to a standard AlertDialog
-     * when MessageDialog reflection fails, and returns false if both fail
-     * (prefer aborting over uninstalling without confirmation).
-     */
+    /** Show the zui.app.MessageDialog confirm, falling back to AlertDialog; false aborts the action. */
     private fun showConfirmDialog(
         panel: ViewGroup,
         context: Context,
-        candidates: List<UninstallCandidate>
+        plan: SelectionPlan
     ): Boolean {
-        // Show app names; fall back to package names when missing
-        val labelList = candidates.joinToString(separator = "\n") {
-            "- " + it.label.ifBlank { it.packageName }
-        }
-        val message = String.format(
-            Locale.getDefault(),
-            moduleString(context, STRING_DIALOG_MESSAGE, FALLBACK_DIALOG_MESSAGE),
-            candidates.size,
-            labelList
-        )
+        val message = buildConfirmMessage(context, plan)
         val title = moduleString(context, STRING_DIALOG_TITLE, FALLBACK_DIALOG_TITLE)
-        val packages = candidates.map { it.packageName }
-        val onConfirm = Runnable { dispatchBatchUninstall(panel, context, packages) }
+        val packages = plan.uninstallTargets.map { it.packageName }
+        val onConfirm = Runnable {
+            // Icons are removed after the uninstall is dispatched so a failed
+            // dispatch never strips shortcuts the user did not ask to remove
+            val dispatched = packages.isEmpty() || dispatchBatchUninstall(panel, context, packages)
+            if (dispatched) {
+                removeSelectedIcons(panel, plan.keptItems)
+            }
+        }
         if (showZuiConfirmDialog(context, title, message, onConfirm)) {
             logger.debug("BatchUninstall: ZUI MessageDialog shown")
             return true
@@ -499,6 +497,37 @@ class BatchUninstall : AppHookModule() {
             return true
         }
         return false
+    }
+
+    private fun buildConfirmMessage(context: Context, plan: SelectionPlan): CharSequence {
+        val locale = Locale.getDefault()
+        val appList = plan.uninstallTargets.joinToString(separator = "\n") {
+            "- " + it.label.ifBlank { it.packageName }
+        }
+        val iconList = plan.removableIcons.joinToString(separator = "\n") {
+            "- " + it.label.ifBlank { "?" }
+        }
+        return when {
+            plan.uninstallTargets.isEmpty() -> String.format(
+                locale,
+                moduleString(context, STRING_DIALOG_MESSAGE_ICONS, FALLBACK_DIALOG_MESSAGE_ICONS),
+                plan.removableIcons.size,
+                iconList
+            )
+            plan.removableIcons.isEmpty() -> String.format(
+                locale,
+                moduleString(context, STRING_DIALOG_MESSAGE, FALLBACK_DIALOG_MESSAGE),
+                plan.uninstallTargets.size,
+                appList
+            )
+            else -> String.format(
+                locale,
+                moduleString(context, STRING_DIALOG_MESSAGE_MIXED, FALLBACK_DIALOG_MESSAGE_MIXED),
+                plan.uninstallTargets.size,
+                plan.removableIcons.size,
+                appList + "\n" + iconList
+            )
+        }
     }
 
     /**
@@ -622,7 +651,8 @@ class BatchUninstall : AppHookModule() {
         }
     }
 
-    private fun dispatchBatchUninstall(panel: ViewGroup, context: Context, packages: List<String>) {
+    /** Hand the packages to BatchUninstallActivity; returns false when the Intent could not be started. */
+    private fun dispatchBatchUninstall(panel: ViewGroup, context: Context, packages: List<String>): Boolean {
         try {
             val intent = Intent()
             intent.setClassName(MODULE_PACKAGE, ACTIVITY_CLASS)
@@ -649,13 +679,10 @@ class BatchUninstall : AppHookModule() {
                     moduleString(context, STRING_DISPATCH_FAILED, FALLBACK_DISPATCH_FAILED),
                     Toast.LENGTH_SHORT
                 ).show()
-                return
+                return false
             }
             activity.startActivityForResult(intent, DISPATCH_REQUEST_CODE)
-            // Clear the selection after dispatch so the edit mode does not keep stale selected items after uninstall completes
-            runCatching {
-                panel.javaClass.getMethod("clearSelectedItems").invoke(panel)
-            }.onFailure { logger.warn("BatchUninstall: clearSelectedItems failed: " + it.message) }
+            return true
         } catch (t: Throwable) {
             logger.error("BatchUninstall: failed to dispatch batch uninstall", t)
             Toast.makeText(
@@ -663,16 +690,38 @@ class BatchUninstall : AppHookModule() {
                 moduleString(context, STRING_DISPATCH_FAILED, FALLBACK_DISPATCH_FAILED),
                 Toast.LENGTH_SHORT
             ).show()
+            return false
         }
     }
 
     /**
-     * Collect uninstallable candidates from selected views. Keep only:
-     * itemInfo.itemType == 0 (app icon), main user, resolvable by LauncherApps and
-     * non-system; deduplicate by package name; app label from ItemInfo.title,
-     * falling back to the package name when missing.
+     * Remove the remaining selected icons through the launcher's own batch remove.
+     *
+     * Kept items are dropped from the selection first: the launcher's remove API has no
+     * "remove these" overload, only "remove everything selected".
      */
-    private fun collectUninstallableCandidates(panel: View, context: Context): List<UninstallCandidate> {
+    private fun removeSelectedIcons(panel: ViewGroup, keptItems: List<Any>) {
+        try {
+            if (keptItems.isNotEmpty()) {
+                panel.javaClass.getMethod("removeSelectedIcon", List::class.java)
+                    .invoke(panel, ArrayList(keptItems))
+            }
+            panel.javaClass.getMethod("removeAllSelectedIcon").invoke(panel)
+        } catch (t: Throwable) {
+            logger.error("BatchUninstall: failed to remove selected icons", t)
+        } finally {
+            runCatching {
+                panel.javaClass.getMethod("clearSelectedItems").invoke(panel)
+            }.onFailure { logger.warn("BatchUninstall: clearSelectedItems failed: " + it.message) }
+        }
+    }
+
+    /**
+     * Split the selection into root-uninstallable apps, icons to remove and installed
+     * app icons left alone. A selected item becomes removable when it is not an app
+     * icon, or when its package no longer resolves for the item's user.
+     */
+    private fun collectSelection(panel: View, context: Context): SelectionPlan {
         val selectedViews = try {
             val method = panel.javaClass.getMethod("getSelectedViews")
             @Suppress("UNCHECKED_CAST")
@@ -680,15 +729,15 @@ class BatchUninstall : AppHookModule() {
         } catch (t: Throwable) {
             logger.error("BatchUninstall: getSelectedViews failed", t)
             null
-        } ?: return emptyList()
-        if (selectedViews.isEmpty()) return emptyList()
+        } ?: return EMPTY_PLAN
+        if (selectedViews.isEmpty()) return EMPTY_PLAN
 
-        val classLoader = panel.javaClass.classLoader ?: return emptyList()
+        val classLoader = panel.javaClass.classLoader ?: return EMPTY_PLAN
         val itemInfoClass = try {
             Class.forName("com.android.launcher3.model.data.ItemInfo", true, classLoader)
         } catch (t: Throwable) {
             logger.error("BatchUninstall: ItemInfo class not found", t)
-            return emptyList()
+            return EMPTY_PLAN
         }
         val itemTypeField = itemInfoClass.getField("itemType")
         val userField = itemInfoClass.getField("user")
@@ -697,37 +746,71 @@ class BatchUninstall : AppHookModule() {
         val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as? LauncherApps
         val myUser = Process.myUserHandle()
 
-        val candidates = LinkedHashMap<String, UninstallCandidate>()
+        val targets = LinkedHashMap<String, UninstallCandidate>()
+        val keptItems = ArrayList<Any>()
+        val removableIcons = ArrayList<RemovableIcon>()
+        var keptCount = 0
         for (view in selectedViews) {
             try {
                 val info = view.tag ?: continue
                 if (!itemInfoClass.isInstance(info)) continue
-                if (itemTypeField.getInt(info) != ITEM_TYPE_APPLICATION) continue
-                val user = userField.get(info) as? UserHandle ?: continue
-                if (user != myUser) continue
-                val component = targetComponentMethod.invoke(info) as? ComponentName ?: continue
-                val packageName = component.packageName
-                if (packageName.isEmpty()) continue
-                if (!isUninstallable(launcherApps, component, user)) continue
-                if (candidates.containsKey(packageName)) continue
                 val label = (titleField.get(info) as? CharSequence)?.toString().orEmpty()
-                candidates[packageName] = UninstallCandidate(label, packageName)
+                val component = targetComponentMethod.invoke(info) as? ComponentName
+                val packageName = component?.packageName.orEmpty()
+                val user = userField.get(info) as? UserHandle
+                val action = when {
+                    itemTypeField.getInt(info) != ITEM_TYPE_APPLICATION -> AppAction.REMOVE_ICON
+                    user == null || component == null -> AppAction.KEEP
+                    else -> resolveAppAction(launcherApps, component, user)
+                }
+                // Only the main user can be uninstalled from the root shell
+                if (action == AppAction.UNINSTALL && user != myUser) {
+                    keptItems.add(info)
+                    keptCount++
+                    continue
+                }
+                when (action) {
+                    AppAction.UNINSTALL -> {
+                        keptItems.add(info)
+                        if (!targets.containsKey(packageName)) {
+                            targets[packageName] = UninstallCandidate(label, packageName)
+                        }
+                    }
+                    AppAction.REMOVE_ICON -> {
+                        removableIcons.add(RemovableIcon(label.ifBlank { packageName }, info))
+                    }
+                    AppAction.KEEP -> {
+                        keptItems.add(info)
+                        keptCount++
+                    }
+                }
             } catch (t: Throwable) {
                 logger.warn("BatchUninstall: failed to inspect selected view: " + t.message)
             }
         }
-        logger.info("BatchUninstall: ${candidates.size} uninstallable package(s) collected")
-        return candidates.values.toList()
+        logger.info(
+            "BatchUninstall: ${targets.size} uninstallable package(s), " +
+                "${removableIcons.size} icon(s) to remove, $keptCount kept"
+        )
+        return SelectionPlan(targets.values.toList(), keptItems, removableIcons)
     }
 
-    private fun isUninstallable(launcherApps: LauncherApps?, component: ComponentName, user: UserHandle): Boolean {
-        if (launcherApps == null) return true
+    private fun resolveAppAction(
+        launcherApps: LauncherApps?,
+        component: ComponentName,
+        user: UserHandle
+    ): AppAction {
+        if (launcherApps == null) return AppAction.UNINSTALL
         return try {
             val activity = launcherApps.resolveActivity(Intent().setComponent(component), user)
-            val flags = activity?.applicationInfo?.flags ?: return false
-            flags and ApplicationInfo.FLAG_SYSTEM == 0
+                ?: return AppAction.REMOVE_ICON
+            if (activity.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
+                AppAction.UNINSTALL
+            } else {
+                AppAction.KEEP
+            }
         } catch (_: Throwable) {
-            false
+            AppAction.KEEP
         }
     }
 
@@ -765,22 +848,42 @@ class BatchUninstall : AppHookModule() {
         private const val STRING_NO_APPS = "ztool_batch_uninstall_no_apps"
         private const val STRING_DIALOG_TITLE = "ztool_batch_uninstall_dialog_title"
         private const val STRING_DIALOG_MESSAGE = "ztool_batch_uninstall_dialog_message"
+        private const val STRING_DIALOG_MESSAGE_ICONS = "ztool_batch_uninstall_dialog_message_icons"
+        private const val STRING_DIALOG_MESSAGE_MIXED = "ztool_batch_uninstall_dialog_message_mixed"
         private const val STRING_DISPATCH_FAILED = "ztool_batch_uninstall_dispatch_failed"
 
         /** Matches EditModeRemoveDropTarget's confirmation dialog: TYPE_APPLICATION_OVERLAY. */
         private const val DIALOG_WINDOW_TYPE = 2038
 
+        private val EMPTY_PLAN = SelectionPlan(emptyList(), emptyList(), emptyList())
+
         private val FALLBACK_BUTTON: String
             get() = if (Locale.getDefault().language == "zh") "卸载应用" else "Uninstall"
         private val FALLBACK_NO_APPS: String
-            get() = if (Locale.getDefault().language == "zh") "所选中内容没有可卸载的应用" else "No uninstallable apps in the selection"
+            get() = if (Locale.getDefault().language == "zh") {
+                "所选中内容没有可卸载的应用，也没有可移除的图标"
+            } else {
+                "Nothing in the selection can be uninstalled or removed"
+            }
         private val FALLBACK_DIALOG_TITLE: String
             get() = if (Locale.getDefault().language == "zh") "批量卸载" else "Batch Uninstall"
         private val FALLBACK_DIALOG_MESSAGE: String
             get() = if (Locale.getDefault().language == "zh") {
-                $$"将通过 Root 权限静默卸载以下 %1$d 个应用，桌面图标会在卸载后自动移除：\n\n%2$s"
+                $$"将卸载以下 %1$d 个应用：\n\n%2$s"
             } else {
-                $$"The following %1$d app(s) will be silently uninstalled with Root permission. Their home screen icons will be removed automatically:\n\n%2$s"
+                $$"The following %1$d app(s) will be uninstalled:\n\n%2$s"
+            }
+        private val FALLBACK_DIALOG_MESSAGE_ICONS: String
+            get() = if (Locale.getDefault().language == "zh") {
+                $$"将从桌面移除以下 %1$d 个图标：\n\n%2$s"
+            } else {
+                $$"The following %1$d icon(s) will be removed from the home screen:\n\n%2$s"
+            }
+        private val FALLBACK_DIALOG_MESSAGE_MIXED: String
+            get() = if (Locale.getDefault().language == "zh") {
+                $$"将卸载以下 %1$d 个应用，并从桌面移除 %2$d 个图标：\n\n%3$s"
+            } else {
+                $$"The following %1$d app(s) will be uninstalled and %2$d icon(s) will be removed from the home screen:\n\n%3$s"
             }
         private val FALLBACK_DISPATCH_FAILED: String
             get() = if (Locale.getDefault().language == "zh") "无法打开 ZTool 执行卸载" else "Failed to open ZTool for uninstall"
