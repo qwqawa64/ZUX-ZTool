@@ -150,6 +150,17 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
             return
         }
 
+        val transitionSourceClass = loadClass(loader, TRANSITION_SOURCE_CLASS)
+        val taskDragSource = try {
+            transitionSourceClass?.getField("TASK_DRAG")?.get(null)
+        } catch (t: Throwable) {
+            logger.error("DesktopModeTransitionSource.TASK_DRAG not found", t)
+            null
+        }
+        if (taskDragSource == null) {
+            logger.warn("Fullscreen transition source unavailable")
+        }
+
         val closeVelocity = CLOSE_SPEED_DP_PER_SECOND *
             Resources.getSystem().displayMetrics.density
         logger.info(
@@ -228,7 +239,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                 ) {
                     resetResizeVeil(positioner)
                     if (velocity > 0f) {
-                        if (fullscreenTask(positioner, taskInfo)) {
+                        if (fullscreenTask(positioner, taskInfo, taskDragSource)) {
                             logger.info(
                                 "Freeform bottom edge fast drag fullscreens task: " +
                                     "taskId=${taskInfo.taskId}, velocity=${velocity.toInt()}px/s"
@@ -284,10 +295,15 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
 
     private fun fullscreenTask(
         positioner: Any,
-        taskInfo: ActivityManager.RunningTaskInfo
+        taskInfo: ActivityManager.RunningTaskInfo,
+        taskDragSource: Any?
     ): Boolean {
         return try {
             logger.info("Fullscreen attempt: taskId=${taskInfo.taskId}")
+            if (taskDragSource == null) {
+                logger.warn("Fullscreen transition source is null")
+                return false
+            }
             val controllerAccessor = positioner.javaClass.methods.firstOrNull {
                 it.name == "ovGetDesktopTasksController" && it.parameterTypes.isEmpty()
             }
@@ -300,10 +316,6 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                 logger.warn("DesktopTasksController is null for task ${taskInfo.taskId}")
                 return false
             }
-            val sourceClass = Class.forName(
-                "com.android.wm.shell.shared.desktopmode.DesktopModeTransitionSource"
-            )
-            val source = sourceClass.getField("TASK_DRAG").get(null)
             val moveToFullscreen = controller.javaClass.methods.firstOrNull {
                 it.name == "moveToFullscreen" && it.parameterTypes.size == 2
             }
@@ -312,7 +324,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                 return false
             }
             moveToFullscreen.isAccessible = true
-            moveToFullscreen.invoke(controller, taskInfo.taskId, source)
+            moveToFullscreen.invoke(controller, taskInfo.taskId, taskDragSource)
             logger.info("Fullscreen requested: taskId=${taskInfo.taskId}")
             true
         } catch (t: Throwable) {
@@ -431,6 +443,8 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         const val INJECTOR_CLASS = "com.android.wm.shell.windowdecor.OvfDriListenerInjector"
         const val POSITIONER_CLASS = "com.android.wm.shell.windowdecor.VeiledResizeTaskPositioner"
         const val DECORATION_CLASS = "com.android.wm.shell.windowdecor.DesktopModeWindowDecoration"
+        const val TRANSITION_SOURCE_CLASS =
+            "com.android.wm.shell.shared.desktopmode.DesktopModeTransitionSource"
         const val CTRL_TYPE_BOTTOM = 8
         const val CTRL_TYPE_BOTTOM_PROPORTIONAL = 8 or 16
         const val CTRL_TYPE_PROPORTIONAL_FLAG = 16
