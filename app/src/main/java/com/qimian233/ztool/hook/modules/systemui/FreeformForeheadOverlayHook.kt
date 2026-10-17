@@ -8,6 +8,7 @@ import android.graphics.Region
 import android.os.Binder
 import android.view.SurfaceControl
 import android.view.WindowInsets
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -16,7 +17,8 @@ import java.lang.reflect.Method
 
 /**
  * Drops the forced freeform caption inset so the app fills the window top, then
- * limits the caption touch region to the handle pill. ZUI desktop mode only.
+ * limits the caption touch region to the handle pill. PC mode keeps its title-bar
+ * touch region.
  */
 @SuppressLint("PrivateApi", "NewApi")
 class FreeformForeheadOverlayHook : AppHookModule() {
@@ -26,7 +28,8 @@ class FreeformForeheadOverlayHook : AppHookModule() {
     @Volatile
     private var regionAppliedLogged = false
 
-    override fun getModuleName(): String = "hook_test"
+    override fun getModuleName(): String =
+        PreferenceKeys.SYSTEM_UI_FREEFORM_NO_FOREHEAD.name
 
     override fun getTargetPackages(): Array<out String> =
         arrayOf(ScopeKeys.SYSTEM_UI.packageName)

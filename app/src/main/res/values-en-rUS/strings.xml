@@ -1133,6 +1133,8 @@
     <string name="system_ui_misc_freeform_bottom_edge_resize_summary">Drag the bottom controller to resize the small window proportionally instead of quick-swiping it to fullscreen; the threshold above still decides when it goes fullscreen</string>
     <string name="system_ui_misc_corner_handle_auto_hide_title">Auto-hide small-window corner handles</string>
     <string name="system_ui_misc_corner_handle_auto_hide_summary">Show the bottom-left and bottom-right handles for 5 seconds after creating a small window or resizing from a corner, then hide them; turn off to keep them always visible</string>
+    <string name="system_ui_misc_freeform_no_forehead_title">Remove the small-window forehead</string>
+    <string name="system_ui_misc_freeform_no_forehead_summary">Stop reserving a solid strip for the top handle: app content fills the window top and the three-dot handle floats above it; PC mode keeps its title-bar buttons and only drops the reserved space</string>
     <string name="system_ui_misc_freeform_fullscreen_width_title">Width threshold</string>
     <string name="system_ui_misc_freeform_fullscreen_width_summary">Fullscreen when the small window reaches this percentage of the screen width; 100% disables the width direction</string>
     <string name="system_ui_misc_freeform_fullscreen_height_title">Height threshold</string>

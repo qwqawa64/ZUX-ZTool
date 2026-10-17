@@ -83,6 +83,11 @@ class SystemUiMiscSettingsViewModel(
         repository.saveCornerHandleAutoHide(enabled)
     }
 
+    fun setFreeformNoForehead(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(freeformNoForehead = enabled)
+        repository.saveFreeformNoForehead(enabled)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }

@@ -40,6 +40,10 @@ class SystemUiMiscSettingsRepository(context: Context) {
                 KEY_SYSTEM_UI_CORNER_HANDLE_AUTO_HIDE,
                 true
             ),
+            freeformNoForehead = prefsUtils.loadBooleanSetting(
+                KEY_SYSTEM_UI_FREEFORM_NO_FOREHEAD,
+                false
+            ),
         )
     }
 
@@ -75,6 +79,10 @@ class SystemUiMiscSettingsRepository(context: Context) {
         prefsUtils.saveBooleanSetting(KEY_SYSTEM_UI_CORNER_HANDLE_AUTO_HIDE, enabled)
     }
 
+    fun saveFreeformNoForehead(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_SYSTEM_UI_FREEFORM_NO_FOREHEAD, enabled)
+    }
+
     fun forceStopScope(): ShellActionResult {
         val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
         return when (val result = ScopeUtils.restartScope(scopes)) {
@@ -100,6 +108,8 @@ class SystemUiMiscSettingsRepository(context: Context) {
             PreferenceKeys.SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE.name
         private val KEY_SYSTEM_UI_CORNER_HANDLE_AUTO_HIDE =
             PreferenceKeys.SYSTEM_UI_CORNER_HANDLE_AUTO_HIDE.name
+        private val KEY_SYSTEM_UI_FREEFORM_NO_FOREHEAD =
+            PreferenceKeys.SYSTEM_UI_FREEFORM_NO_FOREHEAD.name
 
         // Fullscreen thresholds are percentages of the current display; 100 % disables
         // that direction and both at 100 % keeps the window out of fullscreen.
@@ -127,6 +137,7 @@ data class SystemUiMiscSettingsUiState(
     val freeformFullscreenHeightPercent: Int = 85,
     val freeformBottomEdgeResize: Boolean = false,
     val cornerHandleAutoHide: Boolean = true,
+    val freeformNoForehead: Boolean = false,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )

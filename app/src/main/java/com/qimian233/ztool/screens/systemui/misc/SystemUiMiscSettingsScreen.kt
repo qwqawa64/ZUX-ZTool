@@ -93,6 +93,7 @@ fun SystemUiMiscSettingsRoute(
             onFreeformFullscreenHeightPercentChanged = viewModel::setFreeformFullscreenHeightPercent,
             onFreeformBottomEdgeResizeChanged = viewModel::setFreeformBottomEdgeResize,
             onCornerHandleAutoHideChanged = viewModel::setCornerHandleAutoHide,
+            onFreeformNoForeheadChanged = viewModel::setFreeformNoForehead,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -143,6 +144,7 @@ private fun SystemUiMiscSettingsScreen(
     onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
     onFreeformBottomEdgeResizeChanged: (Boolean) -> Unit,
     onCornerHandleAutoHideChanged: (Boolean) -> Unit,
+    onFreeformNoForeheadChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -195,6 +197,7 @@ private fun SystemUiMiscSettingsScreen(
                         onFreeformFullscreenHeightPercentChanged = onFreeformFullscreenHeightPercentChanged,
                         onFreeformBottomEdgeResizeChanged = onFreeformBottomEdgeResizeChanged,
                         onCornerHandleAutoHideChanged = onCornerHandleAutoHideChanged,
+                        onFreeformNoForeheadChanged = onFreeformNoForeheadChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -217,6 +220,7 @@ private fun systemUiMiscSettingsSections(
     onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
     onFreeformBottomEdgeResizeChanged: (Boolean) -> Unit,
     onCornerHandleAutoHideChanged: (Boolean) -> Unit,
+    onFreeformNoForeheadChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -329,6 +333,15 @@ private fun systemUiMiscSettingsSections(
                         )
                     )
                 }
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_misc_freeform_no_forehead_title),
+                        summary = stringResource(R.string.system_ui_misc_freeform_no_forehead_summary),
+                        checked = state.freeformNoForehead,
+                        onCheckedChange = onFreeformNoForeheadChanged,
+                        key = "system_ui_misc_freeform_no_forehead"
+                    )
+                )
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.system_ui_misc_corner_handle_auto_hide_title),

@@ -1184,6 +1184,8 @@
     <string name="system_ui_misc_freeform_bottom_edge_resize_summary">在底边控制器上拖动时等比缩放小窗，而不是快速下滑全屏；仍需达到上方阈值才会全屏</string>
     <string name="system_ui_misc_corner_handle_auto_hide_title">自动隐藏小窗角落把手</string>
     <string name="system_ui_misc_corner_handle_auto_hide_summary">小窗创建或使用左下角、右下角把手缩放后显示 5 秒，随后自动隐藏；关闭后恢复常显</string>
+    <string name="system_ui_misc_freeform_no_forehead_title">消除小窗额头</string>
+    <string name="system_ui_misc_freeform_no_forehead_summary">小窗不再为顶部把手预留一条纯色区域：应用内容直接占满窗口顶部，三点把手浮在应用上方；PC 模式保留标题栏按钮，只取消其占位</string>
     <string name="system_ui_misc_freeform_fullscreen_width_title">宽度阈值</string>
     <string name="system_ui_misc_freeform_fullscreen_width_summary">小窗宽度达到屏幕宽度的该比例时全屏；100% 表示宽度方向不触发</string>
     <string name="system_ui_misc_freeform_fullscreen_height_title">高度阈值</string>

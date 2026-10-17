@@ -49,6 +49,10 @@ object PreferenceKeys {
         BoolKey("system_ui_freeform_bottom_edge_resize", false)
     val SYSTEM_UI_CORNER_HANDLE_AUTO_HIDE =
         BoolKey("system_ui_corner_handle_auto_hide", true)
+    // Freeform caption strip: drop the forced captionBar inset so the app fills the
+    // window top and only the 50 dp handle stays touchable
+    val SYSTEM_UI_FREEFORM_NO_FOREHEAD =
+        BoolKey("system_ui_freeform_no_forehead", false)
     // Sidebar (com.zui.freeform.sidebar) drawer: lifts the host's hard-coded 5-slot
     // limit and switches the drawer to a user-editable order. Module name of
     // SidebarDrawerHook.
@@ -368,6 +372,7 @@ object PreferenceKeys {
         LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD,
         SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE,
         SYSTEM_UI_CORNER_HANDLE_AUTO_HIDE,
+        SYSTEM_UI_FREEFORM_NO_FOREHEAD,
         SIDEBAR_DRAWER_ENHANCE,
         SIDEBAR_DRAWER_EDITABLE,
         SIDEBAR_ALLAPPS_SECTIONS,

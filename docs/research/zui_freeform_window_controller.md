@@ -515,12 +515,12 @@ first PC-mode window logs `pcMode=true` in the drop message for confirmation.
    for both; step 2 only outside PC mode because the PC caption is a title bar
    with buttons. `isInZuiDesktopModeStatus()` is false on the observed
    launcher-desktop windows, so it is not usable as a gate.
-4. Test hook `FreeformForeheadOverlayHook` (`hook_test`) implements steps 1–2 and
-   is verified on TB710FU for non-PC freeform windows (§5.8). The PC branch is
-   compiled but not observed: `isUnderPcMode()` is false on this device, and PC
-   mode requires an external display / keyboard. Remaining work: turn the test
-   hook into a preference-backed module (scope key, switch + search entry) before
-   removing `hook_test`.
+4. `FreeformForeheadOverlayHook` implements steps 1–2 and is verified on TB710FU
+   for non-PC freeform windows (§5.8). The PC branch is compiled but not observed:
+   `isUnderPcMode()` is false on this device, and PC mode requires an external
+   display / keyboard. Wired to `PreferenceKeys.SYSTEM_UI_FREEFORM_NO_FOREHEAD`
+   (`system_ui_freeform_no_forehead`, default off) with a switch in
+   SystemUI → Misc and a search entry.
 5. The separate ZUI "TopBar" (`Settings.Secure.show_ov_top_bar`,
    `IOvFreeformService.supportsOvTopBar/enableOvTopBar`) lives in system_server
    and is not in the SystemUI APK; it is gated by `OvCaptionBarObserver` for the
