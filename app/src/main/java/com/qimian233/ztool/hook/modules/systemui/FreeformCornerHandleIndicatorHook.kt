@@ -21,6 +21,7 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
     private val hideTokens = ConcurrentHashMap<Int, Long>()
     private val resizing = ConcurrentHashMap<Int, Boolean>()
     private val seenTasks = ConcurrentHashMap.newKeySet<Int>()
+    private var borderViewField: Field? = null
 
     override fun getModuleName(): String = "system_ui_corner_handle_auto_hide"
 
@@ -45,10 +46,21 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
         val positionerClass = loadClass(loader, POSITIONER_CLASS) ?: return
         val decorationClass = loadClass(loader, DECORATION_CLASS) ?: return
 
-        val layoutField = field(injectorClass, "mBorderView") ?: return
+        val borderViewType = loadClass(loader, BORDER_VIEW_CLASS)
+        borderViewField = field(injectorClass, "mBorderView")
+            ?: borderViewType?.let { fieldByType(injectorClass, it) }
+            ?: run {
+                logger.error("Border view field not found")
+                return
+            }
         val positionerCtrl = field(positionerClass, "mCtrlType") ?: return
         val positionerDecoration = field(positionerClass, "mDesktopWindowDecoration") ?: return
-        val decorationTaskInfo = field(decorationClass, "mTaskInfo") ?: return
+        val decorationTaskInfo = field(decorationClass, "mTaskInfo")
+            ?: fieldByType(decorationClass, ActivityManager.RunningTaskInfo::class.java)
+            ?: run {
+                logger.error("RunningTaskInfo field not found")
+                return
+            }
 
         val updateMethod = injectorClass.declaredMethods.firstOrNull {
             it.name == "updateViewsAndSurfaces_Ovf"
@@ -177,11 +189,13 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
     }
 
     private fun injectorLayout(injector: Any): View? {
-        val field = injector.javaClass.declaredFields.firstOrNull {
-            it.name == "mBorderView" || it.name == "t"
+        borderViewField?.let { return it.get(injector) as? View }
+        val type = try {
+            injector.javaClass.classLoader?.loadClass(BORDER_VIEW_CLASS)
+        } catch (_: Throwable) {
+            null
         } ?: return null
-        field.isAccessible = true
-        return field.get(injector) as? View
+        return fieldByType(injector.javaClass, type)?.get(injector) as? View
     }
 
     private fun findView(layout: View, name: String): View? {
@@ -211,11 +225,25 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
 
     private fun field(owner: Class<*>, name: String): Field? =
         try {
-            owner.getDeclaredField(name).apply { isAccessible = true }
+            findField(owner, name)
         } catch (t: Throwable) {
-            logger.error("Field $name not found on ${owner.name}", t)
+            logger.warn("Field $name not found on ${owner.name}")
             null
         }
+
+    private fun fieldByType(owner: Class<*>, type: Class<*>): Field? {
+        var current: Class<*>? = owner
+        while (current != null) {
+            current.declaredFields.firstOrNull {
+                type.isAssignableFrom(it.type)
+            }?.let {
+                it.isAccessible = true
+                return it
+            }
+            current = current.superclass
+        }
+        return null
+    }
 
     private fun loadClass(loader: ClassLoader, name: String): Class<*>? =
         try {
@@ -229,6 +257,7 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
         const val INJECTOR_CLASS = "com.android.wm.shell.windowdecor.OvWindowDecorationInjector"
         const val POSITIONER_CLASS = "com.android.wm.shell.windowdecor.VeiledResizeTaskPositioner"
         const val DECORATION_CLASS = "com.android.wm.shell.windowdecor.DesktopModeWindowDecoration"
+        const val BORDER_VIEW_CLASS = "com.android.wm.shell.windowdecor.WindowDecorLinearLayout"
         const val HIDE_DELAY_MS = 5_000L
     }
 }
