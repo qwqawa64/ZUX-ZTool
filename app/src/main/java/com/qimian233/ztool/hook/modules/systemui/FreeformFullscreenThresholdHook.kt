@@ -175,22 +175,49 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
                     val start = taskStartField?.get(utility) as? Rect
                     if (start != null && start.height() > 0) {
                         val aspect = start.width().toFloat() / start.height()
-                        val minWidth = ((minWinField?.get(layoutInfo) as? Point)?.x ?: 1)
-                            .coerceIn(1, metrics.widthPixels)
-                        val newWidth = (rect.height() * aspect).toInt()
-                            .coerceIn(minWidth, metrics.widthPixels)
-                        val left = (rect.centerX() - newWidth / 2)
-                            .coerceIn(0, (metrics.widthPixels - newWidth).coerceAtLeast(0))
-                        rect.left = left
-                        rect.right = left + newWidth
-                        (finalBoundsField?.get(utility) as? Rect)?.set(rect)
-                        if (!bottomResizeLogged) {
-                            bottomResizeLogged = true
-                            logger.info(
-                                "Freeform bottom edge proportional resize: " +
-                                    "rect=$rect, aspect=$aspect"
+                        val minSize = minWinField?.get(layoutInfo) as? Point
+                        val minWidth = ((minSize?.x ?: 1).coerceIn(1, metrics.widthPixels))
+                        val minHeight = ((minSize?.y ?: 1).coerceIn(1, metrics.heightPixels))
+                        val rawWidth = (rect.height() * aspect).toInt()
+                        val finalBounds = finalBoundsField?.get(utility) as? Rect
+                        val hostAtMinSize =
+                            (finalBounds?.width() ?: Int.MAX_VALUE) <= minWidth ||
+                                (finalBounds?.height() ?: Int.MAX_VALUE) <= minHeight
+                        if (rect.height() <= minHeight || rawWidth <= minWidth || hostAtMinSize) {
+                            // Corner handles bottom out at the mini window; match that here
+                            // instead of keeping the aspect-derived (too wide) width.
+                            val top = rect.top.coerceIn(
+                                0,
+                                (metrics.heightPixels - minHeight).coerceAtLeast(0)
                             )
+                            val left = (rect.centerX() - minWidth / 2).coerceIn(
+                                0,
+                                (metrics.widthPixels - minWidth).coerceAtLeast(0)
+                            )
+                            rect.set(left, top, left + minWidth, top + minHeight)
+                            if (!bottomResizeLogged) {
+                                bottomResizeLogged = true
+                                logger.info(
+                                    "Freeform bottom edge snap to mini window: rect=$rect"
+                                )
+                            }
+                        } else {
+                            val newWidth = rawWidth.coerceIn(minWidth, metrics.widthPixels)
+                            val left = (rect.centerX() - newWidth / 2).coerceIn(
+                                0,
+                                (metrics.widthPixels - newWidth).coerceAtLeast(0)
+                            )
+                            rect.left = left
+                            rect.right = left + newWidth
+                            if (!bottomResizeLogged) {
+                                bottomResizeLogged = true
+                                logger.info(
+                                    "Freeform bottom edge proportional resize: " +
+                                        "rect=$rect, aspect=$aspect"
+                                )
+                            }
                         }
+                        finalBounds?.set(rect)
                     }
                 }
                 val widthHit = ctrlType != 0 && widthEnabled &&
