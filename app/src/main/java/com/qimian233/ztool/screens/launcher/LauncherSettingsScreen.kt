@@ -2,7 +2,6 @@ package com.qimian233.ztool.screens.launcher
 
 import android.widget.Toast
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,12 +9,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -34,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -1022,26 +1018,17 @@ private fun FreeformFullscreenPreview(
     heightPercent: Int
 ) {
     val configuration = LocalConfiguration.current
-    val density = LocalDensity.current
-    val screenWidthPx = with(density) {
-        configuration.screenWidthDp.coerceAtLeast(1).dp.toPx()
-    }.toInt()
-    val screenHeightPx = with(density) {
-        configuration.screenHeightDp.coerceAtLeast(1).dp.toPx()
-    }.toInt()
     val widthEnabled = widthPercent < 100
     val heightEnabled = heightPercent < 100
-    val widthPx = (screenWidthPx * widthPercent / 100f).toInt()
-    val heightPx = (screenHeightPx * heightPercent / 100f).toInt()
     val widthRemaining = if (widthEnabled) {
-        (widthPercent - 50).coerceAtLeast(0) / 100f * screenWidthPx
+        (widthPercent - 50).coerceAtLeast(0) * configuration.screenWidthDp
     } else {
-        Float.MAX_VALUE
+        Int.MAX_VALUE
     }
     val heightRemaining = if (heightEnabled) {
-        (heightPercent - 50).coerceAtLeast(0) / 100f * screenHeightPx
+        (heightPercent - 50).coerceAtLeast(0) * configuration.screenHeightDp
     } else {
-        Float.MAX_VALUE
+        Int.MAX_VALUE
     }
     val winner = when {
         !widthEnabled && !heightEnabled -> ThresholdWinner.None
@@ -1052,102 +1039,17 @@ private fun FreeformFullscreenPreview(
         else -> ThresholdWinner.Both
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.launcher_freeform_fullscreen_preview_title),
-            style = MaterialTheme.typography.titleSmall
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = stringResource(
-                R.string.launcher_freeform_fullscreen_preview_screen,
-                screenWidthPx,
-                screenHeightPx
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        FreeformThresholdBar(
-            label = stringResource(
-                R.string.launcher_freeform_fullscreen_preview_width,
-                widthPercent,
-                widthPx
-            ),
-            fraction = widthPercent / 100f,
-            highlighted = winner == ThresholdWinner.Width || winner == ThresholdWinner.Both
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        FreeformThresholdBar(
-            label = stringResource(
-                R.string.launcher_freeform_fullscreen_preview_height,
-                heightPercent,
-                heightPx
-            ),
-            fraction = heightPercent / 100f,
-            highlighted = winner == ThresholdWinner.Height || winner == ThresholdWinner.Both
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            text = stringResource(
-                when (winner) {
-                    ThresholdWinner.Width -> R.string.launcher_freeform_fullscreen_preview_winner_width
-                    ThresholdWinner.Height -> R.string.launcher_freeform_fullscreen_preview_winner_height
-                    ThresholdWinner.Both -> R.string.launcher_freeform_fullscreen_preview_winner_both
-                    ThresholdWinner.None -> R.string.launcher_freeform_fullscreen_preview_disabled
-                }
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-        if (winner != ThresholdWinner.None) {
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = stringResource(R.string.launcher_freeform_fullscreen_preview_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun FreeformThresholdBar(
-    label: String,
-    fraction: Float,
-    highlighted: Boolean
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = if (highlighted) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(4.dp)
-                )
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                    .height(8.dp)
-                    .background(
-                        color = if (highlighted) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline,
-                        shape = RoundedCornerShape(4.dp)
-                    )
-            )
-        }
-    }
+    Text(
+        text = stringResource(
+            when (winner) {
+                ThresholdWinner.Width -> R.string.launcher_freeform_fullscreen_preview_width
+                ThresholdWinner.Height -> R.string.launcher_freeform_fullscreen_preview_height
+                ThresholdWinner.Both -> R.string.launcher_freeform_fullscreen_preview_both
+                ThresholdWinner.None -> R.string.launcher_freeform_fullscreen_preview_disabled
+            }
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = LocalZToolColorScheme.current.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+    )
 }

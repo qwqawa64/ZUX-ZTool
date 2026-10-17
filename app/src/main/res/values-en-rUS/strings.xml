@@ -1134,15 +1134,10 @@
     <string name="launcher_freeform_fullscreen_height_title">Height threshold</string>
     <string name="launcher_freeform_fullscreen_height_summary">Fullscreen when the small window reaches this percentage of the screen height; 100% disables the height direction</string>
     <string name="launcher_freeform_fullscreen_percent_label">%1$d%%</string>
-    <string name="launcher_freeform_fullscreen_preview_title">Threshold preview</string>
-    <string name="launcher_freeform_fullscreen_preview_screen">Screen %1$d×%2$d px</string>
-    <string name="launcher_freeform_fullscreen_preview_width">Width %1$d%% · %2$d px</string>
-    <string name="launcher_freeform_fullscreen_preview_height">Height %1$d%% · %2$d px</string>
-    <string name="launcher_freeform_fullscreen_preview_winner_width">Default 1/2-screen window estimate: width triggers first</string>
-    <string name="launcher_freeform_fullscreen_preview_winner_height">Default 1/2-screen window estimate: height triggers first</string>
-    <string name="launcher_freeform_fullscreen_preview_winner_both">Default 1/2-screen window estimate: both trigger together</string>
-    <string name="launcher_freeform_fullscreen_preview_disabled">Both directions at 100%: no automatic fullscreen, the window stays as is</string>
-    <string name="launcher_freeform_fullscreen_preview_note">Estimated from the screen ratio and a default 1/2-screen window; the actual result depends on the current window size</string>
+    <string name="launcher_freeform_fullscreen_preview_width">Currently effective first: width threshold</string>
+    <string name="launcher_freeform_fullscreen_preview_height">Currently effective first: height threshold</string>
+    <string name="launcher_freeform_fullscreen_preview_both">Width and height thresholds currently take effect together</string>
+    <string name="launcher_freeform_fullscreen_preview_disabled">Both directions are 100%; no automatic fullscreen</string>
 
     <!--Desktop live wallpaper resources-->
     <string name="system_ui_animation_desktop_live_wallpaper_title">Desktop Live Wallpaper</string>
