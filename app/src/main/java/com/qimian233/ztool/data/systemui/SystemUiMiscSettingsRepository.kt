@@ -16,6 +16,22 @@ class SystemUiMiscSettingsRepository(context: Context) {
             bypassFaceAuthTimeout = prefsUtils.loadBooleanSetting(KEY_BYPASS_FACE_AUTH_TIMEOUT, false),
             aospScrollCapture = prefsUtils.loadBooleanSetting(KEY_FORCE_LONG_SCREENSHOT_AOSP, false),
             shadeReboundFix = prefsUtils.loadBooleanSetting(KEY_SHADE_REBOUND_FIX, false),
+            freeformFullscreenThreshold = prefsUtils.loadBooleanSetting(
+                KEY_LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD,
+                false
+            ),
+            freeformFullscreenWidthPercent = normalizeFreeformFullscreenPercent(
+                prefsUtils.loadIntegerSetting(
+                    KEY_LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT,
+                    FREEFORM_FULLSCREEN_PERCENT_DEFAULT
+                )
+            ),
+            freeformFullscreenHeightPercent = normalizeFreeformFullscreenPercent(
+                prefsUtils.loadIntegerSetting(
+                    KEY_LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT,
+                    FREEFORM_FULLSCREEN_PERCENT_DEFAULT
+                )
+            ),
         )
     }
 
@@ -24,6 +40,24 @@ class SystemUiMiscSettingsRepository(context: Context) {
     fun saveBypassFaceAuthTimeout(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_BYPASS_FACE_AUTH_TIMEOUT, enabled)
     fun saveAospScrollCapture(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_FORCE_LONG_SCREENSHOT_AOSP, enabled)
     fun saveShadeReboundFix(enabled: Boolean) = prefsUtils.saveBooleanSetting(KEY_SHADE_REBOUND_FIX, enabled)
+
+    fun saveFreeformFullscreenThreshold(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD, enabled)
+    }
+
+    fun saveFreeformFullscreenWidthPercent(percent: Int) {
+        prefsUtils.saveIntegerSetting(
+            KEY_LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT,
+            normalizeFreeformFullscreenPercent(percent)
+        )
+    }
+
+    fun saveFreeformFullscreenHeightPercent(percent: Int) {
+        prefsUtils.saveIntegerSetting(
+            KEY_LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT,
+            normalizeFreeformFullscreenPercent(percent)
+        )
+    }
 
     fun forceStopScope(): ShellActionResult {
         val scopes = ScopeUtils.getScopes(FeatureDestination.SystemUi)
@@ -40,6 +74,25 @@ class SystemUiMiscSettingsRepository(context: Context) {
         private val KEY_BYPASS_FACE_AUTH_TIMEOUT = PreferenceKeys.BYPASS_FACE_AUTH_TIMEOUT.name
         private val KEY_FORCE_LONG_SCREENSHOT_AOSP = PreferenceKeys.FORCE_LONG_SCREENSHOT_AOSP.name
         private val KEY_SHADE_REBOUND_FIX = PreferenceKeys.SHADE_REBOUND_FIX.name
+        private val KEY_LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD =
+            PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD.name
+        private val KEY_LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT =
+            PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT.name
+        private val KEY_LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT =
+            PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT.name
+
+        // Fullscreen thresholds are percentages of the current display; 100 % disables
+        // that direction and both at 100 % keeps the window out of fullscreen.
+        const val FREEFORM_FULLSCREEN_PERCENT_MIN = 50
+        const val FREEFORM_FULLSCREEN_PERCENT_MAX = 100
+        private const val FREEFORM_FULLSCREEN_PERCENT_DEFAULT = 85
+        private const val FREEFORM_FULLSCREEN_PERCENT_STEP = 5
+
+        /** Snaps a slider percentage to the 5 % step and clamps it to the slider range. */
+        fun normalizeFreeformFullscreenPercent(percent: Int): Int =
+            ((percent + FREEFORM_FULLSCREEN_PERCENT_STEP / 2) / FREEFORM_FULLSCREEN_PERCENT_STEP *
+                FREEFORM_FULLSCREEN_PERCENT_STEP)
+                .coerceIn(FREEFORM_FULLSCREEN_PERCENT_MIN, FREEFORM_FULLSCREEN_PERCENT_MAX)
     }
 }
 
@@ -49,6 +102,9 @@ data class SystemUiMiscSettingsUiState(
     val bypassFaceAuthTimeout: Boolean = false,
     val aospScrollCapture: Boolean = false,
     val shadeReboundFix: Boolean = false,
+    val freeformFullscreenThreshold: Boolean = false,
+    val freeformFullscreenWidthPercent: Int = 85,
+    val freeformFullscreenHeightPercent: Int = 85,
     val isRestartProcessing: Boolean = false,
     val showRestartDialog: Boolean = false
 )

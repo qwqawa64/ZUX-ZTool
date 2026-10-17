@@ -1178,17 +1178,17 @@
     <string name="launcher_freeform_keep_alive_title">小窗应用后台保活</string>
     <string name="launcher_freeform_keep_alive_summary">小窗最小化或进入最近任务后，名单内应用进程不再被降级清理或冻结，可保持持续运行；需重启系统和桌面后生效</string>
     <string name="launcher_freeform_keep_alive_apps_summary">已保活%d个应用</string>
-    <string name="launcher_freeform_fullscreen_threshold_title">自定义小窗全屏阈值</string>
-    <string name="launcher_freeform_fullscreen_threshold_summary">小窗宽度或高度达到设定比例时自动全屏，先达到者生效；100% 表示该方向不触发，仅平板小窗生效，重启桌面后生效</string>
-    <string name="launcher_freeform_fullscreen_width_title">宽度阈值</string>
-    <string name="launcher_freeform_fullscreen_width_summary">小窗宽度达到屏幕宽度的该比例时全屏；100% 表示宽度方向不触发</string>
-    <string name="launcher_freeform_fullscreen_height_title">高度阈值</string>
-    <string name="launcher_freeform_fullscreen_height_summary">小窗高度达到屏幕高度的该比例时全屏；100% 表示高度方向不触发</string>
-    <string name="launcher_freeform_fullscreen_percent_label">%1$d%%</string>
-    <string name="launcher_freeform_fullscreen_preview_width">当前先生效：宽度阈值</string>
-    <string name="launcher_freeform_fullscreen_preview_height">当前先生效：高度阈值</string>
-    <string name="launcher_freeform_fullscreen_preview_both">当前宽度与高度阈值同时生效</string>
-    <string name="launcher_freeform_fullscreen_preview_disabled">当前两个方向均为 100%，不会自动全屏</string>
+    <string name="system_ui_misc_freeform_fullscreen_threshold_title">自定义小窗全屏阈值</string>
+    <string name="system_ui_misc_freeform_fullscreen_threshold_summary">小窗宽度或高度达到设定比例时自动全屏，先达到者生效；100% 表示该方向不触发，仅平板小窗生效，重启系统界面后生效</string>
+    <string name="system_ui_misc_freeform_fullscreen_width_title">宽度阈值</string>
+    <string name="system_ui_misc_freeform_fullscreen_width_summary">小窗宽度达到屏幕宽度的该比例时全屏；100% 表示宽度方向不触发</string>
+    <string name="system_ui_misc_freeform_fullscreen_height_title">高度阈值</string>
+    <string name="system_ui_misc_freeform_fullscreen_height_summary">小窗高度达到屏幕高度的该比例时全屏；100% 表示高度方向不触发</string>
+    <string name="system_ui_misc_freeform_fullscreen_percent_label">%1$d%%</string>
+    <string name="system_ui_misc_freeform_fullscreen_preview_width">当前先生效：宽度阈值</string>
+    <string name="system_ui_misc_freeform_fullscreen_preview_height">当前先生效：高度阈值</string>
+    <string name="system_ui_misc_freeform_fullscreen_preview_both">当前宽度与高度阈值同时生效</string>
+    <string name="system_ui_misc_freeform_fullscreen_preview_disabled">当前两个方向均为 100%，不会自动全屏</string>
 
     <!--桌面动态壁纸页资源值-->
     <string name="system_ui_animation_desktop_live_wallpaper_title">桌面动态壁纸</string>

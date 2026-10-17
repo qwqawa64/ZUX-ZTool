@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -136,9 +135,6 @@ fun LauncherSettingsRoute(
             onDisableRecentAppDisplayChanged = viewModel::setDisableRecentAppDisplay,
             onForceFreeformEntryChanged = viewModel::setForceFreeformEntry,
             onFreeformKeepAliveEnabledChanged = viewModel::setFreeformKeepAliveEnabled,
-            onFreeformFullscreenThresholdChanged = viewModel::setFreeformFullscreenThreshold,
-            onFreeformFullscreenWidthPercentChanged = viewModel::setFreeformFullscreenWidthPercent,
-            onFreeformFullscreenHeightPercentChanged = viewModel::setFreeformFullscreenHeightPercent,
             onSelectKeepAlivePackages = {
                 val activity = context as? android.app.Activity
                 if (activity != null) {
@@ -246,9 +242,6 @@ private fun LauncherSettingsScreen(
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onForceFreeformEntryChanged: (Boolean) -> Unit,
     onFreeformKeepAliveEnabledChanged: (Boolean) -> Unit,
-    onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
-    onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
-    onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
     onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
@@ -326,9 +319,6 @@ private fun LauncherSettingsScreen(
                         onDisableRecentAppDisplayChanged = onDisableRecentAppDisplayChanged,
                         onForceFreeformEntryChanged = onForceFreeformEntryChanged,
                         onFreeformKeepAliveEnabledChanged = onFreeformKeepAliveEnabledChanged,
-                        onFreeformFullscreenThresholdChanged = onFreeformFullscreenThresholdChanged,
-                        onFreeformFullscreenWidthPercentChanged = onFreeformFullscreenWidthPercentChanged,
-                        onFreeformFullscreenHeightPercentChanged = onFreeformFullscreenHeightPercentChanged,
                         onSelectKeepAlivePackages = onSelectKeepAlivePackages,
                         onLauncherBatchUninstallChanged = onLauncherBatchUninstallChanged,
                         onBigFolderAlignChanged = onBigFolderAlignChanged,
@@ -374,9 +364,6 @@ private fun launcherSettingsSections(
     onDisableRecentAppDisplayChanged: (Boolean) -> Unit,
     onForceFreeformEntryChanged: (Boolean) -> Unit,
     onFreeformKeepAliveEnabledChanged: (Boolean) -> Unit,
-    onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
-    onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
-    onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
     onSelectKeepAlivePackages: () -> Unit,
     onLauncherBatchUninstallChanged: (Boolean) -> Unit,
     onBigFolderAlignChanged: (Boolean) -> Unit,
@@ -777,60 +764,6 @@ private fun launcherSettingsSections(
         }
         add(
             SettingItem.Switch(
-                title = stringResource(R.string.launcher_freeform_fullscreen_threshold_title),
-                summary = stringResource(R.string.launcher_freeform_fullscreen_threshold_summary),
-                checked = state.freeformFullscreenThreshold,
-                onCheckedChange = onFreeformFullscreenThresholdChanged,
-                key = "launcher_freeform_fullscreen_threshold"
-            )
-        )
-        if (state.freeformFullscreenThreshold) {
-            add(
-                SettingItem.Custom(
-                    key = "deco_launcher_freeform_fullscreen_preview",
-                    content = {
-                        FreeformFullscreenPreview(
-                            widthPercent = state.freeformFullscreenWidthPercent,
-                            heightPercent = state.freeformFullscreenHeightPercent
-                        )
-                    }
-                )
-            )
-            add(
-                SettingItem.Slider(
-                    title = stringResource(R.string.launcher_freeform_fullscreen_width_title),
-                    summary = stringResource(R.string.launcher_freeform_fullscreen_width_summary),
-                    value = state.freeformFullscreenWidthPercent.toFloat(),
-                    valueText = stringResource(
-                        R.string.launcher_freeform_fullscreen_percent_label,
-                        state.freeformFullscreenWidthPercent
-                    ),
-                    valueRange = LauncherSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MIN.toFloat()..
-                        LauncherSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MAX.toFloat(),
-                    steps = 9,
-                    onValueChange = { onFreeformFullscreenWidthPercentChanged(it.toInt()) },
-                    key = "launcher_freeform_fullscreen_width"
-                )
-            )
-            add(
-                SettingItem.Slider(
-                    title = stringResource(R.string.launcher_freeform_fullscreen_height_title),
-                    summary = stringResource(R.string.launcher_freeform_fullscreen_height_summary),
-                    value = state.freeformFullscreenHeightPercent.toFloat(),
-                    valueText = stringResource(
-                        R.string.launcher_freeform_fullscreen_percent_label,
-                        state.freeformFullscreenHeightPercent
-                    ),
-                    valueRange = LauncherSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MIN.toFloat()..
-                        LauncherSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MAX.toFloat(),
-                    steps = 9,
-                    onValueChange = { onFreeformFullscreenHeightPercentChanged(it.toInt()) },
-                    key = "launcher_freeform_fullscreen_height"
-                )
-            )
-        }
-        add(
-            SettingItem.Switch(
                 title = stringResource(R.string.launcher_show_ram_info),
                 summary = stringResource(R.string.launcher_show_ram_info_summary),
                 checked = state.showRamInfo,
@@ -1007,49 +940,5 @@ private fun DisableDockWarningDialog(
         dismissButton = {
             ZToolTextButton(onClick = onDoNotShowAgain, text = stringResource(R.string.common_do_not_show_again), isPrimary = false)
         }
-    )
-}
-
-private enum class ThresholdWinner { Width, Height, Both, None }
-
-@Composable
-private fun FreeformFullscreenPreview(
-    widthPercent: Int,
-    heightPercent: Int
-) {
-    val configuration = LocalConfiguration.current
-    val widthEnabled = widthPercent < 100
-    val heightEnabled = heightPercent < 100
-    val widthRemaining = if (widthEnabled) {
-        (widthPercent - 50).coerceAtLeast(0) * configuration.screenWidthDp
-    } else {
-        Int.MAX_VALUE
-    }
-    val heightRemaining = if (heightEnabled) {
-        (heightPercent - 50).coerceAtLeast(0) * configuration.screenHeightDp
-    } else {
-        Int.MAX_VALUE
-    }
-    val winner = when {
-        !widthEnabled && !heightEnabled -> ThresholdWinner.None
-        !widthEnabled -> ThresholdWinner.Height
-        !heightEnabled -> ThresholdWinner.Width
-        widthRemaining < heightRemaining -> ThresholdWinner.Width
-        heightRemaining < widthRemaining -> ThresholdWinner.Height
-        else -> ThresholdWinner.Both
-    }
-
-    Text(
-        text = stringResource(
-            when (winner) {
-                ThresholdWinner.Width -> R.string.launcher_freeform_fullscreen_preview_width
-                ThresholdWinner.Height -> R.string.launcher_freeform_fullscreen_preview_height
-                ThresholdWinner.Both -> R.string.launcher_freeform_fullscreen_preview_both
-                ThresholdWinner.None -> R.string.launcher_freeform_fullscreen_preview_disabled
-            }
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = LocalZToolColorScheme.current.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
     )
 }

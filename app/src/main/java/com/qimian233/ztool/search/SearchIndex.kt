@@ -804,6 +804,25 @@ object SearchIndex {
             titleRes = R.string.system_ui_misc_shade_rebound_fix_title,
             summaryRes = R.string.system_ui_misc_shade_rebound_fix_summary
         ),
+        systemUiMisc.item(
+            id = "system_ui_misc_freeform_fullscreen_threshold",
+            titleRes = R.string.system_ui_misc_freeform_fullscreen_threshold_title,
+            summaryRes = R.string.system_ui_misc_freeform_fullscreen_threshold_summary
+        ),
+        systemUiMisc.item(
+            id = "system_ui_misc_freeform_fullscreen_width",
+            titleRes = R.string.system_ui_misc_freeform_fullscreen_width_title,
+            summaryRes = R.string.system_ui_misc_freeform_fullscreen_width_summary,
+            parentTitleRes = R.string.system_ui_misc_freeform_fullscreen_threshold_title,
+            parentKey = "system_ui_misc_freeform_fullscreen_threshold"
+        ),
+        systemUiMisc.item(
+            id = "system_ui_misc_freeform_fullscreen_height",
+            titleRes = R.string.system_ui_misc_freeform_fullscreen_height_title,
+            summaryRes = R.string.system_ui_misc_freeform_fullscreen_height_summary,
+            parentTitleRes = R.string.system_ui_misc_freeform_fullscreen_threshold_title,
+            parentKey = "system_ui_misc_freeform_fullscreen_threshold"
+        ),
 
         framework.item(
             id = "framework_keep_rotation",
@@ -1390,25 +1409,6 @@ object SearchIndex {
             summaryRes = R.string.launcher_freeform_keep_alive_apps_summary,
             parentTitleRes = R.string.launcher_freeform_keep_alive_title,
             parentKey = "freeform_keep_alive_enabled"
-        ),
-        launcher.item(
-            id = "launcher_freeform_fullscreen_threshold",
-            titleRes = R.string.launcher_freeform_fullscreen_threshold_title,
-            summaryRes = R.string.launcher_freeform_fullscreen_threshold_summary
-        ),
-        launcher.item(
-            id = "launcher_freeform_fullscreen_width",
-            titleRes = R.string.launcher_freeform_fullscreen_width_title,
-            summaryRes = R.string.launcher_freeform_fullscreen_width_summary,
-            parentTitleRes = R.string.launcher_freeform_fullscreen_threshold_title,
-            parentKey = "launcher_freeform_fullscreen_threshold"
-        ),
-        launcher.item(
-            id = "launcher_freeform_fullscreen_height",
-            titleRes = R.string.launcher_freeform_fullscreen_height_title,
-            summaryRes = R.string.launcher_freeform_fullscreen_height_summary,
-            parentTitleRes = R.string.launcher_freeform_fullscreen_threshold_title,
-            parentKey = "launcher_freeform_fullscreen_threshold"
         ),
         launcher.item(
             id = "launcher_larger_dock",

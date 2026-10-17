@@ -33,20 +33,6 @@ class LauncherSettingsRepository(
             freeformKeepAliveEnabled =
                 prefsUtils.loadBooleanSetting(KEY_FREEFORM_KEEP_ALIVE_ENABLED, false),
             freeformKeepAlivePackages = loadFreeformKeepAlivePackages(),
-            freeformFullscreenThreshold =
-                prefsUtils.loadBooleanSetting(KEY_LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD, false),
-            freeformFullscreenWidthPercent = normalizeFreeformFullscreenPercent(
-                prefsUtils.loadIntegerSetting(
-                    KEY_LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT,
-                    FREEFORM_FULLSCREEN_PERCENT_DEFAULT
-                )
-            ),
-            freeformFullscreenHeightPercent = normalizeFreeformFullscreenPercent(
-                prefsUtils.loadIntegerSetting(
-                    KEY_LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT,
-                    FREEFORM_FULLSCREEN_PERCENT_DEFAULT
-                )
-            ),
             customGridSize = prefsUtils.loadBooleanSetting(KEY_CUSTOM_GRID_SIZE, false),
             customGridRow = prefsUtils.loadIntegerSetting(KEY_CUSTOM_LAUNCHER_ROW, DEFAULT_ROW)
                 .coerceIn(GRID_MIN, GRID_MAX),
@@ -138,24 +124,6 @@ class LauncherSettingsRepository(
         prefsUtils.saveStringSetting(
             KEY_FREEFORM_KEEP_ALIVE_PACKAGES,
             packageNames.joinToString(separator = ",", postfix = ",")
-        )
-    }
-
-    fun saveFreeformFullscreenThreshold(enabled: Boolean) {
-        prefsUtils.saveBooleanSetting(KEY_LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD, enabled)
-    }
-
-    fun saveFreeformFullscreenWidthPercent(percent: Int) {
-        prefsUtils.saveIntegerSetting(
-            KEY_LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT,
-            normalizeFreeformFullscreenPercent(percent)
-        )
-    }
-
-    fun saveFreeformFullscreenHeightPercent(percent: Int) {
-        prefsUtils.saveIntegerSetting(
-            KEY_LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT,
-            normalizeFreeformFullscreenPercent(percent)
         )
     }
 
@@ -356,19 +324,6 @@ class LauncherSettingsRepository(
         const val WIDE_GRID_INSET_MAX = 160
         private const val WIDE_GRID_INSET_DEFAULT = 0
 
-        // Freeform fullscreen thresholds are percentages of the current display.
-        // 100 % disables that dimension; both at 100 % keeps the window out of fullscreen.
-        const val FREEFORM_FULLSCREEN_PERCENT_MIN = 50
-        const val FREEFORM_FULLSCREEN_PERCENT_MAX = 100
-        private const val FREEFORM_FULLSCREEN_PERCENT_DEFAULT = 85
-        private const val FREEFORM_FULLSCREEN_PERCENT_STEP = 5
-
-        /** Snaps a slider percentage to the 5 % step and clamps it to the slider range. */
-        fun normalizeFreeformFullscreenPercent(percent: Int): Int =
-            ((percent + FREEFORM_FULLSCREEN_PERCENT_STEP / 2) / FREEFORM_FULLSCREEN_PERCENT_STEP *
-                FREEFORM_FULLSCREEN_PERCENT_STEP)
-                .coerceIn(FREEFORM_FULLSCREEN_PERCENT_MIN, FREEFORM_FULLSCREEN_PERCENT_MAX)
-
         // Big-folder hand tuning sliders, in launcher-local px (see docs/research/big_folder_tuning.md).
         const val BIG_FOLDER_TUNE_MIN = -200
         const val BIG_FOLDER_TUNE_MAX = 200
@@ -386,12 +341,6 @@ class LauncherSettingsRepository(
         private val KEY_LAUNCHER_FORCE_FREEFORM_ENTRY = PreferenceKeys.LAUNCHER_FORCE_FREEFORM_ENTRY.name
         private val KEY_FREEFORM_KEEP_ALIVE_ENABLED = PreferenceKeys.FREEFORM_KEEP_ALIVE_ENABLED.name
         private val KEY_FREEFORM_KEEP_ALIVE_PACKAGES = PreferenceKeys.FREEFORM_KEEP_ALIVE_PACKAGES.name
-        private val KEY_LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD =
-            PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD.name
-        private val KEY_LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT =
-            PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT.name
-        private val KEY_LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT =
-            PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT.name
         private val KEY_ZUI_LAUNCHER_HOTSEAT_BACKUP = PreferenceKeys.ZUI_LAUNCHER_HOTSEAT_BACKUP.name
         private val KEY_CUSTOM_GRID_SIZE = PreferenceKeys.CUSTOM_GRID_SIZE.name
         private val KEY_CUSTOM_LAUNCHER_ROW = PreferenceKeys.CUSTOM_LAUNCHER_ROW.name

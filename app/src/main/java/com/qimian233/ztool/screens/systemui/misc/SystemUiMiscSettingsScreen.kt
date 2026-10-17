@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -40,6 +42,7 @@ import com.qimian233.ztool.ui.components.ZToolScaffold
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
+import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.data.systemui.SystemUiMiscSettingsUiState
 import com.qimian233.ztool.viewmodel.SystemUiMiscSettingsViewModel
 
@@ -85,6 +88,9 @@ fun SystemUiMiscSettingsRoute(
             onBypassFaceAuthTimeoutChanged = viewModel::setBypassFaceAuthTimeout,
             onAospScrollCaptureChanged = viewModel::setAospScrollCapture,
             onShadeReboundFixChanged = viewModel::setShadeReboundFix,
+            onFreeformFullscreenThresholdChanged = viewModel::setFreeformFullscreenThreshold,
+            onFreeformFullscreenWidthPercentChanged = viewModel::setFreeformFullscreenWidthPercent,
+            onFreeformFullscreenHeightPercentChanged = viewModel::setFreeformFullscreenHeightPercent,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -130,6 +136,9 @@ private fun SystemUiMiscSettingsScreen(
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
     onAospScrollCaptureChanged: (Boolean) -> Unit,
     onShadeReboundFixChanged: (Boolean) -> Unit,
+    onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
+    onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
+    onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -177,6 +186,9 @@ private fun SystemUiMiscSettingsScreen(
                         onBypassFaceAuthTimeoutChanged = onBypassFaceAuthTimeoutChanged,
                         onAospScrollCaptureChanged = onAospScrollCaptureChanged,
                         onShadeReboundFixChanged = onShadeReboundFixChanged,
+                        onFreeformFullscreenThresholdChanged = onFreeformFullscreenThresholdChanged,
+                        onFreeformFullscreenWidthPercentChanged = onFreeformFullscreenWidthPercentChanged,
+                        onFreeformFullscreenHeightPercentChanged = onFreeformFullscreenHeightPercentChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -194,6 +206,9 @@ private fun systemUiMiscSettingsSections(
     onBypassFaceAuthTimeoutChanged: (Boolean) -> Unit,
     onAospScrollCaptureChanged: (Boolean) -> Unit,
     onShadeReboundFixChanged: (Boolean) -> Unit,
+    onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
+    onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
+    onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -243,6 +258,60 @@ private fun systemUiMiscSettingsSections(
                         key = "system_ui_misc_shade_rebound_fix"
                     )
                 )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_misc_freeform_fullscreen_threshold_title),
+                        summary = stringResource(R.string.system_ui_misc_freeform_fullscreen_threshold_summary),
+                        checked = state.freeformFullscreenThreshold,
+                        onCheckedChange = onFreeformFullscreenThresholdChanged,
+                        key = "system_ui_misc_freeform_fullscreen_threshold"
+                    )
+                )
+                if (state.freeformFullscreenThreshold) {
+                    add(
+                        SettingItem.Custom(
+                            key = "deco_system_ui_misc_freeform_fullscreen_preview",
+                            content = {
+                                FreeformFullscreenPreview(
+                                    widthPercent = state.freeformFullscreenWidthPercent,
+                                    heightPercent = state.freeformFullscreenHeightPercent
+                                )
+                            }
+                        )
+                    )
+                    add(
+                        SettingItem.Slider(
+                            title = stringResource(R.string.system_ui_misc_freeform_fullscreen_width_title),
+                            summary = stringResource(R.string.system_ui_misc_freeform_fullscreen_width_summary),
+                            value = state.freeformFullscreenWidthPercent.toFloat(),
+                            valueText = stringResource(
+                                R.string.system_ui_misc_freeform_fullscreen_percent_label,
+                                state.freeformFullscreenWidthPercent
+                            ),
+                            valueRange = SystemUiMiscSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MIN.toFloat()..
+                                SystemUiMiscSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MAX.toFloat(),
+                            steps = 9,
+                            onValueChange = { onFreeformFullscreenWidthPercentChanged(it.toInt()) },
+                            key = "system_ui_misc_freeform_fullscreen_width"
+                        )
+                    )
+                    add(
+                        SettingItem.Slider(
+                            title = stringResource(R.string.system_ui_misc_freeform_fullscreen_height_title),
+                            summary = stringResource(R.string.system_ui_misc_freeform_fullscreen_height_summary),
+                            value = state.freeformFullscreenHeightPercent.toFloat(),
+                            valueText = stringResource(
+                                R.string.system_ui_misc_freeform_fullscreen_percent_label,
+                                state.freeformFullscreenHeightPercent
+                            ),
+                            valueRange = SystemUiMiscSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MIN.toFloat()..
+                                SystemUiMiscSettingsRepository.FREEFORM_FULLSCREEN_PERCENT_MAX.toFloat(),
+                            steps = 9,
+                            onValueChange = { onFreeformFullscreenHeightPercentChanged(it.toInt()) },
+                            key = "system_ui_misc_freeform_fullscreen_height"
+                        )
+                    )
+                }
             }
         )
     )
@@ -269,5 +338,49 @@ private fun RestartScopeDialog(
         dismissButton = {
             ZToolTextButton(onClick = onDismiss, text = stringResource(R.string.common_restart_no), isPrimary = false)
         }
+    )
+}
+
+private enum class ThresholdWinner { Width, Height, Both, None }
+
+@Composable
+private fun FreeformFullscreenPreview(
+    widthPercent: Int,
+    heightPercent: Int
+) {
+    val configuration = LocalConfiguration.current
+    val widthEnabled = widthPercent < 100
+    val heightEnabled = heightPercent < 100
+    val widthRemaining = if (widthEnabled) {
+        (widthPercent - 50).coerceAtLeast(0) * configuration.screenWidthDp
+    } else {
+        Int.MAX_VALUE
+    }
+    val heightRemaining = if (heightEnabled) {
+        (heightPercent - 50).coerceAtLeast(0) * configuration.screenHeightDp
+    } else {
+        Int.MAX_VALUE
+    }
+    val winner = when {
+        !widthEnabled && !heightEnabled -> ThresholdWinner.None
+        !widthEnabled -> ThresholdWinner.Height
+        !heightEnabled -> ThresholdWinner.Width
+        widthRemaining < heightRemaining -> ThresholdWinner.Width
+        heightRemaining < widthRemaining -> ThresholdWinner.Height
+        else -> ThresholdWinner.Both
+    }
+
+    Text(
+        text = stringResource(
+            when (winner) {
+                ThresholdWinner.Width -> R.string.system_ui_misc_freeform_fullscreen_preview_width
+                ThresholdWinner.Height -> R.string.system_ui_misc_freeform_fullscreen_preview_height
+                ThresholdWinner.Both -> R.string.system_ui_misc_freeform_fullscreen_preview_both
+                ThresholdWinner.None -> R.string.system_ui_misc_freeform_fullscreen_preview_disabled
+            }
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = LocalZToolColorScheme.current.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
     )
 }

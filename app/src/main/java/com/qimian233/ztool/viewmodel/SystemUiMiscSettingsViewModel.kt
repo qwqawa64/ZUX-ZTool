@@ -56,6 +56,23 @@ class SystemUiMiscSettingsViewModel(
         repository.saveShadeReboundFix(enabled)
     }
 
+    fun setFreeformFullscreenThreshold(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(freeformFullscreenThreshold = enabled)
+        repository.saveFreeformFullscreenThreshold(enabled)
+    }
+
+    fun setFreeformFullscreenWidthPercent(percent: Int) {
+        val value = SystemUiMiscSettingsRepository.normalizeFreeformFullscreenPercent(percent)
+        _uiState.value = _uiState.value.copy(freeformFullscreenWidthPercent = value)
+        repository.saveFreeformFullscreenWidthPercent(value)
+    }
+
+    fun setFreeformFullscreenHeightPercent(percent: Int) {
+        val value = SystemUiMiscSettingsRepository.normalizeFreeformFullscreenPercent(percent)
+        _uiState.value = _uiState.value.copy(freeformFullscreenHeightPercent = value)
+        repository.saveFreeformFullscreenHeightPercent(value)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }
