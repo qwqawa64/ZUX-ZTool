@@ -475,6 +475,19 @@ Pass criteria: the pixel row at `task.top + 10` matches the app content (not a
 distinct band), the app's top bar receives taps outside the pill, dragging the
 pill moves the window, and tapping the pill opens the handle menu.
 
+### 5.8 Result on TB710FU (2026-10-18, test hook `FreeformForeheadOverlayHook`)
+
+| Check | Before | After |
+| --- | --- | --- |
+| Task `LocalInsetsSources` | `2` (`captionBar` + `mandatorySystemGestures`, `FORCE_CONSUMING`) | none printed (0) |
+| Caption input window `touchableRegion` | `[1431,2485][1529,3042]` (98×988 strip) | `[1431,2485][1529,2610]` (98×125 = the 50 dp pill) |
+| Pixels at `task.top+10..+90` | `#303030` band | `#0f1416` app background, dots overlay |
+| Pill drag | moves window | moves window (bounds 200 → 471) |
+| Pill tap | opens handle menu | opens handle menu, positioned under the caption |
+
+So the app now owns the full window height, the strip is gone, and only the pill
+keeps its input channel.
+
 ---
 
 ## 6. Open items
@@ -488,10 +501,11 @@ pill moves the window, and tapping the pill opens the handle menu.
 3. Scope resolved: apply to every freeform window that is not PC mode
    (`!OvcPcModeUtils.isUnderPcMode()`). `isInZuiDesktopModeStatus()` is false on
    the observed launcher-desktop windows, so it is not a usable gate.
-4. Test hook `FreeformForeheadOverlayHook` (`hook_test`) implements steps 1–2.
-   First on-device attempt loaded the hook but the gate initially required
-   `isInZuiDesktopModeStatus()`, so it was a no-op; the gate is now PC-mode-only
-   and needs one more install + SystemUI restart to verify.
+4. Test hook `FreeformForeheadOverlayHook` (`hook_test`) implements steps 1–2 and
+   is verified on TB710FU (§5.8). Gating is `freeform && !isUnderPcMode()`;
+   `isInZuiDesktopModeStatus()` turned out to be false for the windows under test.
+   Remaining work: turn the test hook into a preference-backed module (scope key,
+   switch + search entry) before removing `hook_test`.
 4. The separate ZUI "TopBar" (`Settings.Secure.show_ov_top_bar`,
    `IOvFreeformService.supportsOvTopBar/enableOvTopBar`) lives in system_server
    and is not in the SystemUI APK; it is gated by `OvCaptionBarObserver` for the
