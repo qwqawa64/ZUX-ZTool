@@ -27,6 +27,7 @@ class SogouEnterKeyHook : AppHookModule() {
     private var mfInputConnectionGet: Method? = null
     private var composingCacheField: Field? = null
     private var composingQuery: Method? = null
+    private var composingProbeAvailable = false
 
     override fun getModuleName(): String = PreferenceKeys.SOGOU_ENTER_KEY.name
 
@@ -61,24 +62,45 @@ class SogouEnterKeyHook : AppHookModule() {
                     return@hookWithId chain.proceed()
                 }
                 if (event.repeatCount > 0) {
+                    logger.trace("Enter repeat: code=$keyCode consume=$consumeEnterUp")
                     return@hookWithId if (consumeEnterUp) true else chain.proceed()
-                }
-                if (event.isAltPressed || event.isMetaPressed) {
-                    return@hookWithId chain.proceed()
                 }
 
                 val service = chain.thisObject as InputMethodService
-                if (!isSendEditor(service) || isComposing(service)) {
+                val mode = readMode()
+                val sendEditor = isSendEditor(service)
+                val composing = isComposing(service)
+                logger.info(
+                    "Enter down: code=$keyCode shift=${event.isShiftPressed} " +
+                        "ctrl=${event.isCtrlPressed} alt=${event.isAltPressed} " +
+                        "meta=${event.isMetaPressed} ${editorSummary(service)} " +
+                        "sendEditor=$sendEditor composing=$composing " +
+                        "mode=${mode.storageValue}"
+                )
+                logger.trace(
+                    "Enter editor package=${service.currentInputEditorInfo?.packageName}"
+                )
+
+                if (event.isAltPressed || event.isMetaPressed) {
+                    logger.info("Enter passed: alt/meta modifier")
+                    return@hookWithId chain.proceed()
+                }
+                if (!sendEditor) {
+                    logger.info("Enter passed: not a send editor")
+                    return@hookWithId chain.proceed()
+                }
+                if (composing) {
+                    logger.info("Enter passed: composing")
                     return@hookWithId chain.proceed()
                 }
 
-                val mode = readMode()
                 val modified = event.isShiftPressed || event.isCtrlPressed
                 val send = if (modified) {
                     mode == SogouEnterKeyMode.EnterNewline
                 } else {
                     mode == SogouEnterKeyMode.EnterSend
                 }
+                logger.info("Enter handled: modified=$modified send=$send")
                 performEnter(service, send)
                 consumeEnterUp = true
                 true
@@ -86,12 +108,15 @@ class SogouEnterKeyHook : AppHookModule() {
 
             hookWithId(onKeyUp, "sogou_enter_key_up") { chain ->
                 val keyCode = chain.args[0] as Int
-                if ((keyCode == KeyEvent.KEYCODE_ENTER ||
-                        keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) &&
-                    consumeEnterUp
+                if (keyCode == KeyEvent.KEYCODE_ENTER ||
+                    keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
                 ) {
-                    consumeEnterUp = false
-                    return@hookWithId true
+                    if (consumeEnterUp) {
+                        logger.debug("Enter up consumed: code=$keyCode")
+                        consumeEnterUp = false
+                        return@hookWithId true
+                    }
+                    logger.trace("Enter up passed: code=$keyCode")
                 }
                 chain.proceed()
             }
@@ -113,37 +138,65 @@ class SogouEnterKeyHook : AppHookModule() {
             composingQuery = composingCacheField?.type?.getDeclaredMethod("j")?.apply {
                 isAccessible = true
             }
-        } catch (_: Throwable) {
+            composingProbeAvailable = true
+            logger.info("Composing probe resolved")
+        } catch (t: Throwable) {
             mfGet = null
             mfInputConnectionGet = null
             composingCacheField = null
             composingQuery = null
+            composingProbeAvailable = false
+            logger.warn(
+                "Composing probe unavailable, falling back to spans: " +
+                    t.javaClass.simpleName
+            )
         }
     }
 
     private fun isComposing(service: InputMethodService): Boolean {
         // Sogou's cached InputConnection exposes its composing range; fall back to app spans.
-        try {
-            val mf = mfGet?.invoke(null)
-            val inputConnection = mfInputConnectionGet?.invoke(mf)
-            val cache = composingCacheField?.get(inputConnection)
-            val composing = composingQuery?.invoke(cache) as? Boolean
-            if (composing == true) return true
-        } catch (_: Throwable) {
+        if (composingProbeAvailable) {
+            try {
+                val mf = mfGet?.invoke(null)
+                val inputConnection = mfInputConnectionGet?.invoke(mf)
+                val cache = composingCacheField?.get(inputConnection)
+                val composing = composingQuery?.invoke(cache) as? Boolean
+                logger.debug("Composing probe: wrapper=$composing")
+                if (composing == true) return true
+            } catch (t: Throwable) {
+                logger.debug("Composing probe failed: ${t.javaClass.simpleName}")
+            }
         }
 
         return try {
-            val inputConnection = service.currentInputConnection ?: return false
+            val inputConnection = service.currentInputConnection
+            if (inputConnection == null) {
+                logger.debug("Composing span probe: no input connection")
+                return false
+            }
             val text = inputConnection.getExtractedText(
                 ExtractedTextRequest().apply { flags = 0 },
                 0
-            )?.text as? Spanned ?: return false
-            text.getSpans(0, text.length, Any::class.java).any {
+            )?.text as? Spanned
+            if (text == null) {
+                logger.debug("Composing span probe: extracted text is not spanned")
+                return false
+            }
+            val composing = text.getSpans(0, text.length, Any::class.java).any {
                 it.javaClass.name.contains("ComposingText")
             }
-        } catch (_: Throwable) {
+            logger.debug("Composing span probe: composing=$composing")
+            composing
+        } catch (t: Throwable) {
+            logger.debug("Composing span probe failed: ${t.javaClass.simpleName}")
             false
         }
+    }
+
+    private fun editorSummary(service: InputMethodService): String {
+        val info = service.currentInputEditorInfo ?: return "editor=null"
+        val action = info.imeOptions and EditorInfo.IME_MASK_ACTION
+        return "action=$action inputType=${info.inputType}"
     }
 
     private fun isSendEditor(service: InputMethodService): Boolean {
