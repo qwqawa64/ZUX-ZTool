@@ -29,6 +29,9 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
     @Volatile
     private var maxSizeLogged = false
 
+    @Volatile
+    private var bottomResizeLogged = false
+
     override fun getModuleName(): String =
         PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD.name
 
@@ -111,6 +114,9 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         val hideVeil = method(decorClass, "ovfHideFullBlackVeil")
         val maxField = field(layoutInfoClass, "maxWinSizeWhEdge") ?: return
         val safeMarginField = field(layoutInfoClass, "safeMargin")
+        val taskStartField = field(utilityClass, "mTaskBoundsAtDragStart")
+        val finalBoundsField = field(utilityClass, "finalBounds")
+        val minWinField = field(layoutInfoClass, "minWinSize")
 
         hookWithId(changeBounds, "freeform_fullscreen_systemui") { chain ->
             try {
@@ -161,6 +167,28 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
                 val result = chain.proceed(args.toTypedArray())
 
                 val ctrlType = (chain.args.getOrNull(0) as? Number)?.toInt() ?: 0
+                if ((ctrlType and 16) != 0) {
+                    val start = taskStartField?.get(utility) as? Rect
+                    if (start != null && start.height() > 0) {
+                        val aspect = start.width().toFloat() / start.height()
+                        val minWidth = ((minWinField?.get(layoutInfo) as? Point)?.x ?: 1)
+                            .coerceIn(1, metrics.widthPixels)
+                        val newWidth = (rect.height() * aspect).toInt()
+                            .coerceIn(minWidth, metrics.widthPixels)
+                        val left = (rect.centerX() - newWidth / 2)
+                            .coerceIn(0, (metrics.widthPixels - newWidth).coerceAtLeast(0))
+                        rect.left = left
+                        rect.right = left + newWidth
+                        (finalBoundsField?.get(utility) as? Rect)?.set(rect)
+                        if (!bottomResizeLogged) {
+                            bottomResizeLogged = true
+                            logger.info(
+                                "Freeform bottom edge proportional resize: " +
+                                    "rect=$rect, aspect=$aspect"
+                            )
+                        }
+                    }
+                }
                 val widthHit = ctrlType != 0 && widthEnabled &&
                     rect.width() >= targetWidth
                 val heightHit = ctrlType != 0 && heightEnabled &&
