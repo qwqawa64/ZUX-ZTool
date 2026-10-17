@@ -101,11 +101,16 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                 chain.proceed()
             }
         }
-        installVelocityClose(loader)
+        try {
+            installVelocityClose(loader)
+        } catch (t: Throwable) {
+            logger.error("Freeform bottom edge velocity install failed", t)
+        }
         logger.info("Freeform bottom edge resize installed")
     }
 
     private fun installVelocityClose(loader: ClassLoader) {
+        logger.info("Installing freeform bottom edge velocity close")
         val injectorClass = loadClass(loader, INJECTOR_CLASS) ?: return
         val positionerClass = loadClass(loader, POSITIONER_CLASS) ?: return
         val decorationClass = loadClass(loader, DECORATION_CLASS) ?: return
@@ -212,10 +217,16 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                     as? ActivityManager.RunningTaskInfo
                 val velocity = taskInfo?.let { velocityByTaskId.remove(it.taskId) } ?: 0f
                 val bounds = readBounds(positionerBounds, positioner)
+                logger.info(
+                    "Freeform bottom edge end: taskId=${taskInfo?.taskId}, " +
+                        "ctrlType=0x${Integer.toHexString(ctrlType)}, " +
+                        "velocity=${velocity.toInt()}px/s, bounds=$bounds"
+                )
                 if ((ctrlType and CTRL_TYPE_PROPORTIONAL_FLAG) != 0 &&
                     taskInfo != null &&
                     abs(velocity) >= closeVelocity
                 ) {
+                    resetResizeVeil(positioner)
                     if (velocity > 0f) {
                         if (fullscreenTask(positioner, taskInfo)) {
                             logger.info(
@@ -254,24 +265,55 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
             null
         }
 
+    private fun resetResizeVeil(positioner: Any) {
+        try {
+            val reset = positioner.javaClass.methods.firstOrNull {
+                it.name == "resetVeilIfVisible$2" && it.parameterTypes.isEmpty()
+            }
+            if (reset != null) {
+                reset.isAccessible = true
+                reset.invoke(positioner)
+                logger.debug("Freeform bottom edge resize veil reset")
+            } else {
+                logger.warn("resetVeilIfVisible$2 not found")
+            }
+        } catch (t: Throwable) {
+            logger.warn("Failed to reset resize veil: ${t.message}")
+        }
+    }
+
     private fun fullscreenTask(
         positioner: Any,
         taskInfo: ActivityManager.RunningTaskInfo
     ): Boolean {
         return try {
+            logger.info("Fullscreen attempt: taskId=${taskInfo.taskId}")
             val controllerAccessor = positioner.javaClass.methods.firstOrNull {
                 it.name == "ovGetDesktopTasksController" && it.parameterTypes.isEmpty()
-            } ?: return false
-            val controller = controllerAccessor.invoke(positioner) ?: return false
+            }
+            if (controllerAccessor == null) {
+                logger.warn("ovGetDesktopTasksController not found on ${positioner.javaClass.name}")
+                return false
+            }
+            val controller = controllerAccessor.invoke(positioner)
+            if (controller == null) {
+                logger.warn("DesktopTasksController is null for task ${taskInfo.taskId}")
+                return false
+            }
             val sourceClass = Class.forName(
                 "com.android.wm.shell.shared.desktopmode.DesktopModeTransitionSource"
             )
             val source = sourceClass.getField("TASK_DRAG").get(null)
             val moveToFullscreen = controller.javaClass.methods.firstOrNull {
                 it.name == "moveToFullscreen" && it.parameterTypes.size == 2
-            } ?: return false
+            }
+            if (moveToFullscreen == null) {
+                logger.warn("moveToFullscreen not found on ${controller.javaClass.name}")
+                return false
+            }
             moveToFullscreen.isAccessible = true
             moveToFullscreen.invoke(controller, taskInfo.taskId, source)
+            logger.info("Fullscreen requested: taskId=${taskInfo.taskId}")
             true
         } catch (t: Throwable) {
             logger.error("Failed to fullscreen freeform task ${taskInfo.taskId}", t)
@@ -394,6 +436,6 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         const val CTRL_TYPE_PROPORTIONAL_FLAG = 16
         const val REMOVE_TRANSITION = 2
         // Original freeform quick-swipe threshold.
-        const val CLOSE_SPEED_DP_PER_SECOND = 800f
+        const val CLOSE_SPEED_DP_PER_SECOND = 100f
     }
 }
