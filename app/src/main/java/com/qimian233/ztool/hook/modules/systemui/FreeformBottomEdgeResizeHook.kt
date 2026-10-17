@@ -258,7 +258,8 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                             "Freeform bottom edge fast drag closes task: " +
                                 "taskId=${taskInfo.taskId}, velocity=${velocity.toInt()}px/s"
                         )
-                        hideVeilAfter(positioner, 250L)
+                        // The task teardown releases the veil surfaces; hiding it here
+                        // after removal would touch released SurfaceControls.
                         return@hookWithId bounds ?: Rect()
                     }
                 }
