@@ -357,7 +357,7 @@ hookWithId(updateCaptionInsets, "freeform_forehead_overlay") { chain ->
     val wct    = chain.args[1] as? WindowContainerTransaction
     if (task == null || wct == null ||
         task.windowingMode != WINDOWING_MODE_FREEFORM ||
-        isPcModeOrDesktopMode()
+        isPcMode()
     ) {
         return@hookWithId chain.proceed()
     }
@@ -381,10 +381,11 @@ Notes:
 * Also guard `WindowDecoration.addCaptionInset` (used by
   `DesktopTasksController.moveToFreeformFromKeyBoard`, `onToDesktop` and a
   handle-menu click) for freeform, in case a future path re-adds the source.
-* Guard with `!OvcPcModeUtils.isUnderPcMode() && !OvcPcModeUtils.isInZuiDesktopModeStatus()`
-  if PC/desktop mode should keep its title bar. On the test device the freeform
-  windows were in ZUI desktop mode, so decide explicitly whether the feature is
-  meant for desktop mode too.
+* Guard with `!OvcPcModeUtils.isUnderPcMode()` only. Measured at runtime:
+  `OvcPcModeUtils.isInZuiDesktopModeStatus()` is **false** for the launcher-desktop
+  freeform windows on this device, so gating on it would disable the feature;
+  it denotes the PC-like "ZUI desktop mode", not "windows floating over the ZUI
+  launcher". `isUnderPcMode()` is the gate the user asked for (PC mode untouched).
 * Apps that ignore insets never showed the band; for them nothing changes except
   the dots now sit on their content.
 
@@ -484,9 +485,13 @@ pill moves the window, and tapping the pill opens the handle menu.
 2. Confirm whether `OvcWinDecorCtlList.mExcldeCaptionFromAppBounds*` contains
    ZTool/Settings; those packages take the `setAppBounds` path instead of the
    forced inset and would need the same treatment in step 1.
-3. Decide the scope: ZUI desktop mode only, or PC mode as well. The freeform
-   windows observed on this device were desktop-mode windows
-   (`zui_desktop_window_decor_freeform` path in `OvcPcModeUtils.getLayoutResId`).
+3. Scope resolved: apply to every freeform window that is not PC mode
+   (`!OvcPcModeUtils.isUnderPcMode()`). `isInZuiDesktopModeStatus()` is false on
+   the observed launcher-desktop windows, so it is not a usable gate.
+4. Test hook `FreeformForeheadOverlayHook` (`hook_test`) implements steps 1–2.
+   First on-device attempt loaded the hook but the gate initially required
+   `isInZuiDesktopModeStatus()`, so it was a no-op; the gate is now PC-mode-only
+   and needs one more install + SystemUI restart to verify.
 4. The separate ZUI "TopBar" (`Settings.Secure.show_ov_top_bar`,
    `IOvFreeformService.supportsOvTopBar/enableOvTopBar`) lives in system_server
    and is not in the SystemUI APK; it is gated by `OvCaptionBarObserver` for the
