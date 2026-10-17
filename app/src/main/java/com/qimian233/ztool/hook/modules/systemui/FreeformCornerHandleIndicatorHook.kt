@@ -20,6 +20,7 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
     private val injectors = ConcurrentHashMap<Int, Any>()
     private val hideTokens = ConcurrentHashMap<Int, Long>()
     private val resizing = ConcurrentHashMap<Int, Boolean>()
+    private val seenTasks = ConcurrentHashMap.newKeySet<Int>()
 
     override fun getModuleName(): String = "system_ui_corner_handle_auto_hide"
 
@@ -29,6 +30,7 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
     override fun isEnabled(): Boolean = true
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
+        logger.info("Corner handle indicator loadPackage")
         try {
             install(param)
         } catch (t: Throwable) {
@@ -37,6 +39,7 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
     }
 
     private fun install(param: PackageLoadedParam) {
+        logger.info("Corner handle indicator install start")
         val loader = param.defaultClassLoader
         val injectorClass = loadClass(loader, INJECTOR_CLASS) ?: return
         val positionerClass = loadClass(loader, POSITIONER_CLASS) ?: return
@@ -81,16 +84,17 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
 
         hookWithId(updateMethod, "corner_handle_creation") { chain ->
             val injector = chain.thisObject
-            val firstLayout = injector != null && layoutField.get(injector) == null
             val result = chain.proceed()
-            if (firstLayout && injector != null) {
-                val taskInfo = chain.args.getOrNull(2) as? ActivityManager.RunningTaskInfo
-                if (taskInfo != null) {
-                    if (isResizeable(taskInfo)) {
-                        injectors[taskInfo.taskId] = injector
-                        show(taskInfo.taskId)
-                        scheduleHide(taskInfo.taskId)
-                    }
+            val taskInfo = chain.args.getOrNull(2) as? ActivityManager.RunningTaskInfo
+            if (injector != null && taskInfo != null && seenTasks.add(taskInfo.taskId)) {
+                logger.info(
+                    "Corner handle first update: taskId=${taskInfo.taskId}, " +
+                        "resizeable=${isResizeable(taskInfo)}"
+                )
+                if (isResizeable(taskInfo)) {
+                    injectors[taskInfo.taskId] = injector
+                    show(taskInfo.taskId)
+                    scheduleHide(taskInfo.taskId)
                 }
             }
             result
@@ -157,10 +161,19 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
     }
 
     private fun setVisibility(taskId: Int, visibility: Int) {
-        val injector = injectors[taskId] ?: return
-        val layout = injectorLayout(injector) ?: return
+        val injector = injectors[taskId]
+        if (injector == null) {
+            logger.warn("Corner handle injector missing for task $taskId")
+            return
+        }
+        val layout = injectorLayout(injector)
+        if (layout == null) {
+            logger.warn("Corner handle layout missing for task $taskId")
+            return
+        }
         findView(layout, "ovc_wdb_bottom_gesture_left")?.visibility = visibility
         findView(layout, "ovc_wdb_bottom_gesture_right")?.visibility = visibility
+        logger.info("Corner handle visibility=$visibility task=$taskId")
     }
 
     private fun injectorLayout(injector: Any): View? {
@@ -176,14 +189,19 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
             "id",
             layout.context.packageName
         )
-        if (id == 0) return null
+        if (id == 0) {
+            logger.warn("Corner handle id not found: $name")
+            return null
+        }
         return layout.findViewById(id)
     }
 
     private fun scheduleHide(taskId: Int) {
         val token = SystemClock.uptimeMillis()
         hideTokens[taskId] = token
+        logger.info("Corner handle hide scheduled: task=$taskId token=$token")
         handler.postDelayed({
+            logger.info("Corner handle hide fired: task=$taskId token=$token")
             if (hideTokens[taskId] == token && resizing[taskId] != true) {
                 hide(taskId)
             }
