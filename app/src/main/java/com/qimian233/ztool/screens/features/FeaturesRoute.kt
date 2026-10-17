@@ -453,7 +453,9 @@ private fun FeaturesRoute(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            items(items = items, key = { it.packageName }) { item ->
+                            // Cross-app cards share an empty packageName, so the stable
+                            // unique key is the destination itself.
+                            items(items = items, key = { it.destination }) { item ->
                                 FeatureCard(
                                     item = item,
                                     onClick = { onFeatureClick(item) }
