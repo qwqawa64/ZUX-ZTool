@@ -8,7 +8,7 @@ import com.qimian233.ztool.hook.modules.gametool.DeviceModelDisguiseHook
 import com.qimian233.ztool.hook.modules.gametool.DisableGameAudioApp
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix
 import com.qimian233.ztool.hook.modules.launcher.LauncherFreeformEntryHook
-import com.qimian233.ztool.hook.modules.launcher.FreeformFullscreenThresholdHook
+import com.qimian233.ztool.hook.modules.systemui.FreeformFullscreenThresholdHook
 import com.qimian233.ztool.hook.modules.launcher.FreeformKeepAliveLauncherHook
 import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableDockBar
 import com.qimian233.ztool.hook.modules.launcher.dockbar.DisableDockBackground
