@@ -6,6 +6,7 @@ import android.os.SystemClock
 import android.view.SurfaceControlViewHost
 import android.view.View
 import android.view.WindowManager
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -21,12 +22,11 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
     private val hideTokens = ConcurrentHashMap<Int, Long>()
     private val resizing = ConcurrentHashMap<Int, Boolean>()
 
-    override fun getModuleName(): String = "system_ui_corner_handle_auto_hide"
+    override fun getModuleName(): String =
+        PreferenceKeys.SYSTEM_UI_CORNER_HANDLE_AUTO_HIDE.name
 
     override fun getTargetPackages(): Array<out String> =
         arrayOf(ScopeKeys.SYSTEM_UI.packageName)
-
-    override fun isEnabled(): Boolean = true
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         try {

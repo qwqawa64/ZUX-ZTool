@@ -92,6 +92,7 @@ fun SystemUiMiscSettingsRoute(
             onFreeformFullscreenWidthPercentChanged = viewModel::setFreeformFullscreenWidthPercent,
             onFreeformFullscreenHeightPercentChanged = viewModel::setFreeformFullscreenHeightPercent,
             onFreeformBottomEdgeResizeChanged = viewModel::setFreeformBottomEdgeResize,
+            onCornerHandleAutoHideChanged = viewModel::setCornerHandleAutoHide,
             onRestartScope = viewModel::showRestartDialog,
             scrollState = scrollState,
             highlightRegistry = highlightRegistry
@@ -141,6 +142,7 @@ private fun SystemUiMiscSettingsScreen(
     onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
     onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
     onFreeformBottomEdgeResizeChanged: (Boolean) -> Unit,
+    onCornerHandleAutoHideChanged: (Boolean) -> Unit,
     onRestartScope: () -> Unit,
     scrollState: ScrollState,
     highlightRegistry: HighlightAnchorRegistry
@@ -192,6 +194,7 @@ private fun SystemUiMiscSettingsScreen(
                         onFreeformFullscreenWidthPercentChanged = onFreeformFullscreenWidthPercentChanged,
                         onFreeformFullscreenHeightPercentChanged = onFreeformFullscreenHeightPercentChanged,
                         onFreeformBottomEdgeResizeChanged = onFreeformBottomEdgeResizeChanged,
+                        onCornerHandleAutoHideChanged = onCornerHandleAutoHideChanged,
                     ),
                     bottomPadding = 96.dp,
                     highlightRegistry = highlightRegistry
@@ -213,6 +216,7 @@ private fun systemUiMiscSettingsSections(
     onFreeformFullscreenWidthPercentChanged: (Int) -> Unit,
     onFreeformFullscreenHeightPercentChanged: (Int) -> Unit,
     onFreeformBottomEdgeResizeChanged: (Boolean) -> Unit,
+    onCornerHandleAutoHideChanged: (Boolean) -> Unit,
 ): List<SettingSection> {
     return listOf(
         SettingSection(
@@ -325,6 +329,15 @@ private fun systemUiMiscSettingsSections(
                         )
                     )
                 }
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_ui_misc_corner_handle_auto_hide_title),
+                        summary = stringResource(R.string.system_ui_misc_corner_handle_auto_hide_summary),
+                        checked = state.cornerHandleAutoHide,
+                        onCheckedChange = onCornerHandleAutoHideChanged,
+                        key = "system_ui_misc_corner_handle_auto_hide"
+                    )
+                )
             }
         )
     )

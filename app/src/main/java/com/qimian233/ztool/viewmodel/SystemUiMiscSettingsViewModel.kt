@@ -78,6 +78,11 @@ class SystemUiMiscSettingsViewModel(
         repository.saveFreeformBottomEdgeResize(enabled)
     }
 
+    fun setCornerHandleAutoHide(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(cornerHandleAutoHide = enabled)
+        repository.saveCornerHandleAutoHide(enabled)
+    }
+
     fun showRestartDialog() {
         _uiState.value = _uiState.value.copy(showRestartDialog = true)
     }

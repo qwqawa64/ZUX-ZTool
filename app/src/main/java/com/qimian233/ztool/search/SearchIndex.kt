@@ -817,6 +817,11 @@ object SearchIndex {
             parentKey = "system_ui_misc_freeform_fullscreen_threshold"
         ),
         systemUiMisc.item(
+            id = "system_ui_misc_corner_handle_auto_hide",
+            titleRes = R.string.system_ui_misc_corner_handle_auto_hide_title,
+            summaryRes = R.string.system_ui_misc_corner_handle_auto_hide_summary
+        ),
+        systemUiMisc.item(
             id = "system_ui_misc_freeform_fullscreen_width",
             titleRes = R.string.system_ui_misc_freeform_fullscreen_width_title,
             summaryRes = R.string.system_ui_misc_freeform_fullscreen_width_summary,
