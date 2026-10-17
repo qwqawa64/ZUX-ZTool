@@ -19,7 +19,7 @@ import kotlin.math.abs
  *
  * SystemUI treats ctrlType 8 as the bottom gesture bar and returns before
  * `onDragPositioningStart`; returning 8|16 marks the same edge while bypassing that check.
- * A drag at or above [CLOSE_SPEED_DP_PER_SECOND] closes the task instead of resizing.
+ * A fast upward drag closes the task; a fast downward drag calls moveToFullscreen directly.
  */
 @SuppressLint("PrivateApi")
 class FreeformBottomEdgeResizeHook : AppHookModule() {
@@ -118,6 +118,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         val positionerCtrl = field(positionerClass, "mCtrlType") ?: return
         val positionerDecoration = field(positionerClass, "mDesktopWindowDecoration") ?: return
         val positionerTransitions = field(positionerClass, "mTransitions") ?: return
+        val positionerBounds = field(positionerClass, "mRepositionTaskBounds") ?: return
         val decorationTaskInfo = field(decorationClass, "mTaskInfo") ?: return
 
         val injectorMethod = try {
@@ -181,7 +182,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                                 val elapsed = event.eventTime - start
                                 if (elapsed > 0) {
                                     velocityByTaskId[taskId] =
-                                        abs(rawY - startY) * 1000f / elapsed
+                                        (rawY - startY) * 1000f / elapsed
                                 }
                             }
                             if (event.actionMasked == MotionEvent.ACTION_UP) {
@@ -210,17 +211,32 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                 val taskInfo = decoration?.let { decorationTaskInfo.get(it) }
                     as? ActivityManager.RunningTaskInfo
                 val velocity = taskInfo?.let { velocityByTaskId.remove(it.taskId) } ?: 0f
+                val bounds = readBounds(positionerBounds, positioner)
                 if ((ctrlType and CTRL_TYPE_PROPORTIONAL_FLAG) != 0 &&
                     taskInfo != null &&
-                    velocity >= closeVelocity &&
-                    closeTask(positioner, taskInfo, positionerTransitions)
+                    abs(velocity) >= closeVelocity
                 ) {
-                    logger.info(
-                        "Freeform bottom edge fast drag closes task: " +
-                            "taskId=${taskInfo.taskId}, velocity=${velocity.toInt()}px/s"
-                    )
-                    val bounds = Rect()
-                    return@hookWithId bounds
+                    if (velocity > 0f) {
+                        if (fullscreenTask(positioner, taskInfo)) {
+                            logger.info(
+                                "Freeform bottom edge fast drag fullscreens task: " +
+                                    "taskId=${taskInfo.taskId}, velocity=${velocity.toInt()}px/s"
+                            )
+                            return@hookWithId bounds ?: Rect()
+                        }
+                    } else if (closeTask(
+                            positioner,
+                            taskInfo,
+                            positionerTransitions,
+                            bounds
+                        )
+                    ) {
+                        logger.info(
+                            "Freeform bottom edge fast drag closes task: " +
+                                "taskId=${taskInfo.taskId}, velocity=${velocity.toInt()}px/s"
+                        )
+                        return@hookWithId bounds ?: Rect()
+                    }
                 }
             } catch (t: Throwable) {
                 logger.error("Freeform bottom edge velocity close failed", t)
@@ -229,11 +245,57 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         }
     }
 
+    private fun readBounds(field: Field, target: Any): Rect? =
+        try {
+            val value: Any? = field.get(target)
+            value as? Rect
+        } catch (t: Throwable) {
+            logger.warn("Failed to read reposition bounds: ${t.message}")
+            null
+        }
+
+    private fun fullscreenTask(
+        positioner: Any,
+        taskInfo: ActivityManager.RunningTaskInfo
+    ): Boolean {
+        return try {
+            val controllerAccessor = positioner.javaClass.methods.firstOrNull {
+                it.name == "ovGetDesktopTasksController" && it.parameterTypes.isEmpty()
+            } ?: return false
+            val controller = controllerAccessor.invoke(positioner) ?: return false
+            val sourceClass = Class.forName(
+                "com.android.wm.shell.shared.desktopmode.DesktopModeTransitionSource"
+            )
+            val source = sourceClass.getField("TASK_DRAG").get(null)
+            val moveToFullscreen = controller.javaClass.methods.firstOrNull {
+                it.name == "moveToFullscreen" && it.parameterTypes.size == 2
+            } ?: return false
+            moveToFullscreen.isAccessible = true
+            moveToFullscreen.invoke(controller, taskInfo.taskId, source)
+            true
+        } catch (t: Throwable) {
+            logger.error("Failed to fullscreen freeform task ${taskInfo.taskId}", t)
+            false
+        }
+    }
+
     private fun closeTask(
         positioner: Any,
         taskInfo: ActivityManager.RunningTaskInfo,
-        transitionsField: Field
+        transitionsField: Field,
+        bounds: Rect?
     ): Boolean {
+        try {
+            val service = Class.forName("android.app.ActivityTaskManager")
+                .getMethod("getService")
+                .invoke(null)
+            service.javaClass
+                .getMethod("removeTask", Int::class.javaPrimitiveType)
+                .invoke(service, taskInfo.taskId)
+            return true
+        } catch (t: Throwable) {
+            logger.warn("Direct task close failed, falling back to transition: ${t.message}")
+        }
         val transaction = try {
             Class.forName("android.window.WindowContainerTransaction")
                 .getConstructor()
@@ -244,8 +306,17 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         } ?: return false
         val token = taskToken(taskInfo) ?: return false
         try {
-            Class.forName("android.window.WindowContainerTransaction")
-                .getMethod("removeTask", Class.forName("android.window.WindowContainerToken"))
+            val transactionClass = Class.forName("android.window.WindowContainerTransaction")
+            val tokenClass = Class.forName("android.window.WindowContainerToken")
+            if (bounds != null) {
+                // Commit the live resize bounds before removal so the close transition
+                // does not replay the pre-drag bounds.
+                transactionClass
+                    .getMethod("setBounds", tokenClass, Rect::class.java)
+                    .invoke(transaction, token, bounds)
+            }
+            transactionClass
+                .getMethod("removeTask", tokenClass)
                 .invoke(transaction, token)
         } catch (t: Throwable) {
             logger.error("Failed to build removeTask transaction", t)
@@ -259,7 +330,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                 }
                 if (start != null) {
                     start.isAccessible = true
-                    start.invoke(transitions, REMOVE_TRANSITION, transaction, positioner)
+                    start.invoke(transitions, REMOVE_TRANSITION, transaction, null)
                     return true
                 }
             } catch (t: Throwable) {
@@ -322,6 +393,7 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         const val CTRL_TYPE_BOTTOM_PROPORTIONAL = 8 or 16
         const val CTRL_TYPE_PROPORTIONAL_FLAG = 16
         const val REMOVE_TRANSITION = 2
-        const val CLOSE_SPEED_DP_PER_SECOND = 500f
+        // Original freeform quick-swipe threshold.
+        const val CLOSE_SPEED_DP_PER_SECOND = 800f
     }
 }
