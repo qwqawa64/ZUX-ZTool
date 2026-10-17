@@ -100,9 +100,11 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
                 !seenTasks.contains(taskInfo.taskId)
             ) {
                 val layout = injectorLayout(injector)
-                if (layout == null) {
+                if (layout == null || !viewsReady(layout)) {
                     logger.debug(
-                        "Corner handle layout not ready for task ${taskInfo.taskId}; retrying"
+                        "Corner handle views not ready for task ${taskInfo.taskId}; " +
+                            "layout=${layout?.javaClass?.simpleName}, " +
+                            "children=${(layout as? android.view.ViewGroup)?.childCount}"
                     )
                 } else {
                     seenTasks.add(taskInfo.taskId)
@@ -201,6 +203,10 @@ class FreeformCornerHandleIndicatorHook : AppHookModule() {
         }
         logger.info("Corner handle visibility=$visibility task=$taskId")
     }
+
+    private fun viewsReady(layout: View): Boolean =
+        findView(layout, "ovc_wdb_bottom_gesture_left") != null &&
+            findView(layout, "ovc_wdb_bottom_gesture_right") != null
 
     private fun injectorLayout(injector: Any): View? {
         borderViewField?.let { return it.get(injector) as? View }
