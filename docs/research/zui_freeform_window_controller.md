@@ -352,20 +352,22 @@ val mInsetsField      = findField(decorClass, "mWindowDecorationInsets")
 val removeInsets      = insetsClass.getDeclaredMethod("remove", WindowContainerTransaction::class.java)
 
 hookWithId(updateCaptionInsets, "freeform_forehead_overlay") { chain ->
-    val decor  = chain.thisObject ?: return@hookWithId chain.proceed()
-    val task   = mTaskInfoField.get(decor) as? ActivityManager.RunningTaskInfo
-    val wct    = chain.args[1] as? WindowContainerTransaction
-    if (task == null || wct == null ||
-        task.windowingMode != WINDOWING_MODE_FREEFORM ||
-        isPcMode()
-    ) {
-        return@hookWithId chain.proceed()
-    }
-    mInsetsField.get(decor)?.let { removeInsets.invoke(it, wct) }
+    val decor = chain.thisObject ?: return@hookWithId chain.proceed()
+    val wct   = chain.args.getOrNull(1) ?: return@hookWithId chain.proceed()
+    if (!isFreeform(decor)) return@hookWithId chain.proceed()
+    val task  = mTaskInfoField.get(decor) as ActivityManager.RunningTaskInfo
+    // WindowDecorationInsets.remove() skips captionBar outside PC/OV-default mode,
+    // so drop both sources directly on the transaction.
+    wct.removeInsetsSource(task.token, mOwnerField.get(decor), 0, captionBar())
+    wct.removeInsetsSource(task.token, mOwnerField.get(decor), 0, mandatorySystemGestures())
     mInsetsField.set(decor, null)
     null
 }
 ```
+
+(The shipped hook reaches these two calls through reflection: `WindowContainerTransaction`,
+`TaskInfo.getWindowingMode()` and `TaskInfo.token` are `@SystemApi` and not visible
+to the module at compile time.)
 
 Why skip the call instead of letting it run and removing afterwards: the source
 and the `setAppBounds` decision are both built inside that method; skipping it
@@ -381,11 +383,12 @@ Notes:
 * Also guard `WindowDecoration.addCaptionInset` (used by
   `DesktopTasksController.moveToFreeformFromKeyBoard`, `onToDesktop` and a
   handle-menu click) for freeform, in case a future path re-adds the source.
-* Guard with `!OvcPcModeUtils.isUnderPcMode()` only. Measured at runtime:
-  `OvcPcModeUtils.isInZuiDesktopModeStatus()` is **false** for the launcher-desktop
-  freeform windows on this device, so gating on it would disable the feature;
-  it denotes the PC-like "ZUI desktop mode", not "windows floating over the ZUI
-  launcher". `isUnderPcMode()` is the gate the user asked for (PC mode untouched).
+* Gate on freeform only — **PC mode is included** (user decision). Step 1 drops the
+  inset for PC-mode freeform windows as well; step 2 is skipped there because the
+  PC caption is a title bar with minimize/maximize/close buttons (§5.3).
+* `OvcPcModeUtils.isInZuiDesktopModeStatus()` is **false** for the launcher-desktop
+  freeform windows on this device, so it must not be used as the gate; it denotes
+  the PC-like "ZUI desktop mode", not "windows floating over the ZUI launcher".
 * Apps that ignore insets never showed the band; for them nothing changes except
   the dots now sit on their content.
 
@@ -393,7 +396,8 @@ Notes:
 
 After step 1 the caption surface still covers the top 98 px and, with a null
 region, its input channel is the whole surface — the app's own top bar buttons
-would become dead. Restrict it:
+would become dead. Restrict it (non-PC mode only; in PC mode the caption is the
+`pcmode_window_decor` title bar whose buttons must stay touchable):
 
 Hook `WindowDecoration.updateViewHierarchy(RelayoutParams, RelayoutResult, SurfaceControl.Transaction, Region)`.
 When the incoming region is null and the task is freeform, replace it with the
@@ -448,10 +452,14 @@ transparent-caption apps) so that path is not broken.
    already request `mLimitTouchRegionToSystemAreas`; preserve that region.
 4. **Inset consumers.** Desktop-mode-aware apps that draw their own title bar
    from `captionBar` insets will draw it into the window top, under the dots.
-5. **OTA drift.** Class/method names (`WindowDecoration`, `updateCaptionInsets`,
+5. **PC-mode title bar overlays the app.** PC mode keeps its
+   `pcmode_window_decor` title bar (step 2 skipped), so the title bar now floats
+   over the app's top ~40 dp instead of the app being inset. Apps whose top bar
+   carries controls in that strip will be partly covered.
+6. **OTA drift.** Class/method names (`WindowDecoration`, `updateCaptionInsets`,
    `mWindowDecorationInsets`, `remove`) are obfuscation-sensitive; fail closed
    (no hook installed, log a warning) like the other SystemUI hooks.
-6. **Hot reload.** Resolve classes/fields in `handleLoadPackage`, never inside the
+7. **Hot reload.** Resolve classes/fields in `handleLoadPackage`, never inside the
    callback, and capture them (project rule).
 
 ### 5.7 Verification plan
@@ -488,6 +496,11 @@ pill moves the window, and tapping the pill opens the handle menu.
 So the app now owns the full window height, the strip is gone, and only the pill
 keeps its input channel.
 
+PC-mode freeform windows take step 1 but not step 2. On TB710FU
+`OvcPcModeUtils.isUnderPcMode()` is **false** (PC mode needs an external
+display / keyboard setup), so that branch is not covered by the table above; the
+first PC-mode window logs `pcMode=true` in the drop message for confirmation.
+
 ---
 
 ## 6. Open items
@@ -498,15 +511,17 @@ keeps its input channel.
 2. Confirm whether `OvcWinDecorCtlList.mExcldeCaptionFromAppBounds*` contains
    ZTool/Settings; those packages take the `setAppBounds` path instead of the
    forced inset and would need the same treatment in step 1.
-3. Scope resolved: apply to every freeform window that is not PC mode
-   (`!OvcPcModeUtils.isUnderPcMode()`). `isInZuiDesktopModeStatus()` is false on
-   the observed launcher-desktop windows, so it is not a usable gate.
+3. Scope: every freeform window, **PC mode included** (user decision). Step 1 runs
+   for both; step 2 only outside PC mode because the PC caption is a title bar
+   with buttons. `isInZuiDesktopModeStatus()` is false on the observed
+   launcher-desktop windows, so it is not usable as a gate.
 4. Test hook `FreeformForeheadOverlayHook` (`hook_test`) implements steps 1–2 and
-   is verified on TB710FU (§5.8). Gating is `freeform && !isUnderPcMode()`;
-   `isInZuiDesktopModeStatus()` turned out to be false for the windows under test.
-   Remaining work: turn the test hook into a preference-backed module (scope key,
-   switch + search entry) before removing `hook_test`.
-4. The separate ZUI "TopBar" (`Settings.Secure.show_ov_top_bar`,
+   is verified on TB710FU for non-PC freeform windows (§5.8). The PC branch is
+   compiled but not observed: `isUnderPcMode()` is false on this device, and PC
+   mode requires an external display / keyboard. Remaining work: turn the test
+   hook into a preference-backed module (scope key, switch + search entry) before
+   removing `hook_test`.
+5. The separate ZUI "TopBar" (`Settings.Secure.show_ov_top_bar`,
    `IOvFreeformService.supportsOvTopBar/enableOvTopBar`) lives in system_server
    and is not in the SystemUI APK; it is gated by `OvCaptionBarObserver` for the
    fullscreen caption only. If a per-app top bar ever draws its own region,

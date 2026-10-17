@@ -123,14 +123,14 @@ class FreeformForeheadOverlayHook : AppHookModule() {
         val captionBarType = WindowInsets.Type.captionBar()
         val gesturesType = WindowInsets.Type.mandatorySystemGestures()
 
+        fun pcModeNow(): Boolean =
+            runCatching { isPcMode.invoke(null) as? Boolean == true }.getOrDefault(false)
+
         fun targetTask(decor: Any): ActivityManager.RunningTaskInfo? {
             val task = taskInfoField.get(decor) as? ActivityManager.RunningTaskInfo ?: return null
             val windowingMode = runCatching { getWindowingMode.invoke(task) as? Int }
                 .getOrNull() ?: return null
-            if (windowingMode != WINDOWING_MODE_FREEFORM) return null
-            val pcMode = runCatching { isPcMode.invoke(null) as? Boolean == true }
-                .getOrDefault(false)
-            return if (pcMode) null else task
+            return if (windowingMode == WINDOWING_MODE_FREEFORM) task else null
         }
 
         // WindowDecorationInsets.remove() skips captionBar outside PC/OV-default mode,
@@ -153,7 +153,7 @@ class FreeformForeheadOverlayHook : AppHookModule() {
                 }.getOrDefault(false)
                 logger.info(
                     "Freeform caption inset dropped: task=${task.taskId}, " +
-                        "zuiDesktopMode=$desktopMode"
+                        "pcMode=${pcModeNow()}, zuiDesktopMode=$desktopMode"
                 )
             }
         }
@@ -199,7 +199,7 @@ class FreeformForeheadOverlayHook : AppHookModule() {
                 val decor = chain.thisObject
                 val existingRegion = chain.args.getOrNull(3) as? Region
                 if (decor == null || existingRegion != null || targetTask(decor) == null ||
-                    captionVisibleField?.getBoolean(decor) == false
+                    captionVisibleField?.getBoolean(decor) == false || pcModeNow()
                 ) {
                     return@hookWithId chain.proceed()
                 }
@@ -228,7 +228,7 @@ class FreeformForeheadOverlayHook : AppHookModule() {
             }
         }
 
-        logger.info("Freeform forehead overlay installed (ZUI desktop mode only)")
+        logger.info("Freeform forehead overlay installed (freeform, PC mode included)")
     }
 
     @Suppress("DEPRECATION")
