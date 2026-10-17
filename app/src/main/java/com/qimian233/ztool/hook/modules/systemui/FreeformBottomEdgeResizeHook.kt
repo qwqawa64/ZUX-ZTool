@@ -1,22 +1,32 @@
 package com.qimian233.ztool.hook.modules.systemui
 
 import android.annotation.SuppressLint
+import android.app.ActivityManager
+import android.content.res.Resources
+import android.graphics.Rect
+import android.view.MotionEvent
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
+import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
 
 /**
  * Makes the freeform bottom edge start a normal resize instead of the quick-swipe gesture.
  *
  * SystemUI treats ctrlType 8 as the bottom gesture bar and returns before
  * `onDragPositioningStart`; returning 8|16 marks the same edge while bypassing that check.
+ * A drag at or above [CLOSE_SPEED_DP_PER_SECOND] closes the task instead of resizing.
  */
 @SuppressLint("PrivateApi")
 class FreeformBottomEdgeResizeHook : AppHookModule() {
     @Volatile
     private var transformedLogged = false
+
+    private val velocityByTaskId = ConcurrentHashMap<Int, Float>()
 
     override fun getModuleName(): String =
         PreferenceKeys.SYSTEM_UI_FREEFORM_BOTTOM_EDGE_RESIZE.name
@@ -91,12 +101,227 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
                 chain.proceed()
             }
         }
+        installVelocityClose(loader)
         logger.info("Freeform bottom edge resize installed")
     }
 
+    private fun installVelocityClose(loader: ClassLoader) {
+        val injectorClass = loadClass(loader, INJECTOR_CLASS) ?: return
+        val positionerClass = loadClass(loader, POSITIONER_CLASS) ?: return
+        val decorationClass = loadClass(loader, DECORATION_CLASS) ?: return
+
+        val injectorCtrl = field(injectorClass, "mCtrlType") ?: return
+        val injectorTaskInfo = field(injectorClass, "mTaskInfo") ?: return
+        val dragStartY = field(injectorClass, "mDragStartY") ?: return
+        val quickSwipeStart = field(injectorClass, "mQuickSwipeStartTimeMs") ?: return
+        val touchSlop = field(injectorClass, "SCALED_TOUCH_SLOP") ?: return
+        val positionerCtrl = field(positionerClass, "mCtrlType") ?: return
+        val positionerDecoration = field(positionerClass, "mDesktopWindowDecoration") ?: return
+        val positionerTransitions = field(positionerClass, "mTransitions") ?: return
+        val decorationTaskInfo = field(decorationClass, "mTaskInfo") ?: return
+
+        val injectorMethod = try {
+            findMethod(
+                injectorClass,
+                "handleDragGestureEvent",
+                Float::class.javaPrimitiveType,
+                MotionEvent::class.java
+            )
+        } catch (t: Throwable) {
+            logger.error("OvfDriListenerInjector.handleDragGestureEvent not found", t)
+            return
+        }
+        val endMethod = try {
+            findMethod(
+                positionerClass,
+                "onDragPositioningEnd",
+                Int::class.javaPrimitiveType,
+                Float::class.javaPrimitiveType,
+                Float::class.javaPrimitiveType
+            )
+        } catch (t: Throwable) {
+            logger.error("VeiledResizeTaskPositioner.onDragPositioningEnd not found", t)
+            return
+        }
+
+        val closeVelocity = CLOSE_SPEED_DP_PER_SECOND *
+            Resources.getSystem().displayMetrics.density
+        logger.info(
+            "Freeform bottom edge close threshold: " +
+                "${CLOSE_SPEED_DP_PER_SECOND}dp/s (${closeVelocity}px/s)"
+        )
+
+        hookWithId(injectorMethod, "freeform_bottom_velocity_track") { chain ->
+            try {
+                val injector = chain.thisObject
+                if (injector == null) return@hookWithId chain.proceed()
+                val ctrlType: Int = injectorCtrl.getInt(injector)
+                if ((ctrlType and CTRL_TYPE_PROPORTIONAL_FLAG) == 0) {
+                    return@hookWithId chain.proceed()
+                }
+                val event = chain.args.getOrNull(1) as? MotionEvent
+                    ?: return@hookWithId false
+                val rawY = (chain.args.getOrNull(0) as? Number)?.toFloat()
+                    ?: event.rawY
+                val taskInfo = injectorTaskInfo.get(injector)
+                    as? ActivityManager.RunningTaskInfo
+                val taskId = taskInfo?.taskId
+                if (taskId != null) {
+                    var start = quickSwipeStart.getLong(injector)
+                    val startY = dragStartY.getFloat(injector)
+                    if (start == 0L &&
+                        abs(rawY - startY) > touchSlop.getInt(injector)
+                    ) {
+                        start = event.eventTime
+                        quickSwipeStart.setLong(injector, start)
+                    }
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_MOVE, MotionEvent.ACTION_UP -> {
+                            if (start != 0L) {
+                                val elapsed = event.eventTime - start
+                                if (elapsed > 0) {
+                                    velocityByTaskId[taskId] =
+                                        abs(rawY - startY) * 1000f / elapsed
+                                }
+                            }
+                            if (event.actionMasked == MotionEvent.ACTION_UP) {
+                                quickSwipeStart.setLong(injector, 0L)
+                            }
+                        }
+                        MotionEvent.ACTION_CANCEL -> {
+                            velocityByTaskId.remove(taskId)
+                            quickSwipeStart.setLong(injector, 0L)
+                        }
+                    }
+                }
+                false
+            } catch (t: Throwable) {
+                logger.error("Freeform bottom edge velocity tracking failed", t)
+                false
+            }
+        }
+
+        hookWithId(endMethod, "freeform_bottom_velocity_close") { chain ->
+            try {
+                val positioner = chain.thisObject
+                if (positioner == null) return@hookWithId chain.proceed()
+                val ctrlType: Int = positionerCtrl.getInt(positioner)
+                val decoration = positionerDecoration.get(positioner)
+                val taskInfo = decoration?.let { decorationTaskInfo.get(it) }
+                    as? ActivityManager.RunningTaskInfo
+                val velocity = taskInfo?.let { velocityByTaskId.remove(it.taskId) } ?: 0f
+                if ((ctrlType and CTRL_TYPE_PROPORTIONAL_FLAG) != 0 &&
+                    taskInfo != null &&
+                    velocity >= closeVelocity &&
+                    closeTask(positioner, taskInfo, positionerTransitions)
+                ) {
+                    logger.info(
+                        "Freeform bottom edge fast drag closes task: " +
+                            "taskId=${taskInfo.taskId}, velocity=${velocity.toInt()}px/s"
+                    )
+                    val bounds = Rect()
+                    return@hookWithId bounds
+                }
+            } catch (t: Throwable) {
+                logger.error("Freeform bottom edge velocity close failed", t)
+            }
+            chain.proceed()
+        }
+    }
+
+    private fun closeTask(
+        positioner: Any,
+        taskInfo: ActivityManager.RunningTaskInfo,
+        transitionsField: Field
+    ): Boolean {
+        val transaction = try {
+            Class.forName("android.window.WindowContainerTransaction")
+                .getConstructor()
+                .newInstance()
+        } catch (t: Throwable) {
+            logger.error("WindowContainerTransaction unavailable", t)
+            null
+        } ?: return false
+        val token = taskToken(taskInfo) ?: return false
+        try {
+            Class.forName("android.window.WindowContainerTransaction")
+                .getMethod("removeTask", Class.forName("android.window.WindowContainerToken"))
+                .invoke(transaction, token)
+        } catch (t: Throwable) {
+            logger.error("Failed to build removeTask transaction", t)
+            return false
+        }
+        val transitions = transitionsField.get(positioner)
+        if (transitions != null) {
+            try {
+                val start = transitions.javaClass.methods.firstOrNull {
+                    it.name == "startTransition" && it.parameterTypes.size == 3
+                }
+                if (start != null) {
+                    start.isAccessible = true
+                    start.invoke(transitions, REMOVE_TRANSITION, transaction, positioner)
+                    return true
+                }
+            } catch (t: Throwable) {
+                logger.warn("Remove transition failed, falling back to ATM: ${t.message}")
+            }
+        }
+        return try {
+            val service = Class.forName("android.app.ActivityTaskManager")
+                .getMethod("getService")
+                .invoke(null)
+            service.javaClass
+                .getMethod("removeTask", Int::class.javaPrimitiveType)
+                .invoke(service, taskInfo.taskId)
+            true
+        } catch (t: Throwable) {
+            logger.error("Failed to close freeform task ${taskInfo.taskId}", t)
+            false
+        }
+    }
+
+    private fun taskToken(taskInfo: Any): Any? {
+        var type: Class<*>? = taskInfo.javaClass
+        while (type != null) {
+            try {
+                val tokenField = type.getDeclaredField("token")
+                tokenField.isAccessible = true
+                return tokenField.get(taskInfo)
+            } catch (_: NoSuchFieldException) {
+                type = type.superclass
+            } catch (t: Throwable) {
+                logger.error("Failed to read task token", t)
+                return null
+            }
+        }
+        return null
+    }
+
+    private fun loadClass(loader: ClassLoader, name: String): Class<*>? =
+        try {
+            loader.loadClass(name)
+        } catch (t: Throwable) {
+            logger.error("$name not found", t)
+            null
+        }
+
+    private fun field(owner: Class<*>, name: String): Field? =
+        try {
+            findField(owner, name)
+        } catch (t: Throwable) {
+            logger.error("Field $name not found on ${owner.name}", t)
+            null
+        }
+
     private companion object {
         const val GEOMETRY_CLASS = "com.android.wm.shell.windowdecor.DragResizeWindowGeometry"
+        const val INJECTOR_CLASS = "com.android.wm.shell.windowdecor.OvfDriListenerInjector"
+        const val POSITIONER_CLASS = "com.android.wm.shell.windowdecor.VeiledResizeTaskPositioner"
+        const val DECORATION_CLASS = "com.android.wm.shell.windowdecor.DesktopModeWindowDecoration"
         const val CTRL_TYPE_BOTTOM = 8
         const val CTRL_TYPE_BOTTOM_PROPORTIONAL = 8 or 16
+        const val CTRL_TYPE_PROPORTIONAL_FLAG = 16
+        const val REMOVE_TRANSITION = 2
+        const val CLOSE_SPEED_DP_PER_SECOND = 500f
     }
 }
