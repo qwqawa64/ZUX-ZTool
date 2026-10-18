@@ -122,9 +122,32 @@ The BLE payload carries ids 32..41 verbatim; the conversion from those ids to th
 firmware's 0..18 slot index has not been located yet, and id 42 (edge warning) does not
 fit the 19-slot budget.
 
+## Redirecting one waveform to another (hook feasibility)
+
+Every continuous request converges on
+`ZuiPenHapticService.setHapticContinuousParams(int id, int level, int friction)` inside
+system_server: it is both the AIDL stub used by whitelisted apps and the internal method
+`processDefaultHaptic` calls for the default fallback. One hook on that method can
+therefore remap both paths, e.g. pen (36) -> pencil (33), by replacing `chain.args[0]`
+before `chain.proceed(...)`.
+
+Everything that turns an id into a BLE payload runs after the rewrite, so it keeps
+working on the remapped id: the `pen_haptic_sound` -> `_NS` mapping (36 -> 33 -> 38 with
+sound off), the eraser override (tool type 4 still forces 35/40), the 32..41 validation,
+`checkCaller()`, and the id/level dedupe against `mPenCurrentHapticId`.
+
+- The hook must be an `android`-scope `SystemHookModule`; the class is loaded from
+  `services.jar` in system_server (`ScopeKeys.ANDROID_SYSTEM`, `HowToRestart.Reboot`).
+  A penservice-side hook would only cover the settings test canvas.
+- Every rewrite should be `chain.proceed()` untouched when no rule matches, to avoid
+  boxing an argument array on the hover / pen-down path.
+- Impact waveforms have a second choke point, `setHapticImpactParams(int id, int level,
+  int times, int cutoff)`; the same technique applies there.
+
 ## Open items
 
 - [ ] Record one clip per id and confirm the five `_NS` ids sound/vibrate differently.
 - [ ] Locate the 32..41 -> 0..18 slot conversion in `PARKER.bin`.
 - [ ] Decide what firmware id 42 does and whether it is reachable.
 - [ ] Consider exposing the selector in ZTool via a shell/root setting write.
+- [ ] Prototype the continuous-id redirect hook and measure stylus input overhead.
