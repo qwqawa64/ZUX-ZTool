@@ -831,6 +831,7 @@
     <string name="page_settings_predictive_back_gesture_title">Predictive back gesture</string>
     <string name="page_settings_predictive_back_gesture_summary">Enable predictive back gesture animation.</string>
     <string-array name="notify_num_size_options">
+        <item>0</item>
         <item>1</item>
         <item>2</item>
         <item>3</item>

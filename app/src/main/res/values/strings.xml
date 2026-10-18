@@ -530,6 +530,7 @@
     <string name="system_ui_status_bar_notification_icon_native_summary">对未适配APP无效</string>
     <string name="system_ui_status_bar_title_suffix">\ - 状态栏设置</string>
     <string-array name="notify_num_size_options">
+        <item>0</item>
         <item>1</item>
         <item>2</item>
         <item>3</item>
