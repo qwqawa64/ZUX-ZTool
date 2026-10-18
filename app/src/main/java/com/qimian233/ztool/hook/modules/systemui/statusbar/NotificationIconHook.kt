@@ -97,7 +97,7 @@ class NotificationIconHook : AppHookModule() {
             val ctor: Constructor<*> = viewDataClass.getDeclaredConstructor(
                 List::class.java,
                 Int::class.javaPrimitiveType,
-                classLoader.loadClass("com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconsViewData\$LimitType")
+                classLoader.loadClass($$"com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconsViewData$LimitType")
             )
 
             hookWithId(ctor, "ctor_2") { chain ->
@@ -131,12 +131,8 @@ class NotificationIconHook : AppHookModule() {
     private fun getListSize(list: Any?): Int {
         return try {
             list!!.javaClass.getDeclaredMethod("size").invoke(list) as Int
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             0
         }
-    }
-
-    companion object {
-        private const val PREFS_NAME = "StatusBar_notifyNumSize"
     }
 }
