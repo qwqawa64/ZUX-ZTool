@@ -914,6 +914,18 @@ object SearchIndex {
             summaryRes = R.string.system_framework_fine_volume_steps_summary
         ),
         framework.item(
+            id = "framework_pen_haptic_redirect",
+            titleRes = R.string.system_framework_pen_haptic_redirect_title,
+            summaryRes = R.string.system_framework_pen_haptic_redirect_summary
+        ),
+        framework.item(
+            id = "framework_pen_haptic_redirect_rules",
+            titleRes = R.string.system_framework_pen_haptic_rules_title,
+            summaryRes = R.string.system_framework_pen_haptic_rules_summary,
+            parentTitleRes = R.string.system_framework_pen_haptic_redirect_title,
+            parentKey = "framework_pen_haptic_redirect"
+        ),
+        framework.item(
             id = "framework_pkgmgr_allow_downgrade",
             titleRes = R.string.system_framework_pkgmgr_allow_downgrade_title,
             summaryRes = R.string.system_framework_pkgmgr_allow_downgrade_summary

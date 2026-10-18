@@ -5,6 +5,8 @@ import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.EnhancedShellExecutor.ShellResult
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.data.pen.PenHapticRedirectRule
+import com.qimian233.ztool.data.pen.PenHapticWaveformIds
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 
@@ -44,6 +46,8 @@ class FrameworkSettingsRepository(
             pkgMgrBypassArscRestriction = prefsUtils.loadBooleanSetting(KEY_PKG_MGR_BYPASS_ARSC_RESTRICTION, false),
             aiInputSigns = aiInputSigns,
             aiInputSignsError = validateAiInputSigns(aiInputSigns),
+            penHapticRedirect = prefsUtils.loadBooleanSetting(KEY_PEN_HAPTIC_REDIRECT, false),
+            penHapticRedirectRules = loadPenHapticRedirectRules(),
         )
     }
 
@@ -104,6 +108,27 @@ class FrameworkSettingsRepository(
 
     fun saveVolumeKeyNonlinear(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_VOLUME_KEY_NONLINEAR, enabled)
+    }
+
+    fun savePenHapticRedirect(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_PEN_HAPTIC_REDIRECT, enabled)
+    }
+
+    fun savePenHapticRedirectRules(rules: List<PenHapticRedirectRule>) {
+        val sanitized = PenHapticWaveformIds.sanitizeRules(
+            rules.associate { it.sourceId to it.targetId }
+        )
+        prefsUtils.saveStringSetting(
+            KEY_PEN_HAPTIC_REDIRECT_RULES,
+            PenHapticWaveformIds.formatRules(sanitized)
+        )
+    }
+
+    private fun loadPenHapticRedirectRules(): List<PenHapticRedirectRule> {
+        val raw = prefsUtils.loadStringSetting(KEY_PEN_HAPTIC_REDIRECT_RULES, "")
+        return PenHapticWaveformIds.parseRules(raw).map { (source, target) ->
+            PenHapticRedirectRule(source, target)
+        }
     }
 
     fun saveDisableVolumeWarn(enabled: Boolean) {
@@ -230,6 +255,9 @@ class FrameworkSettingsRepository(
         private val KEY_DISABLE_HBM_THERMAL_LIMIT = PreferenceKeys.DISABLE_HBM_THERMAL_LIMIT.name
         private val KEY_FINE_VOLUME_STEPS = PreferenceKeys.FINE_VOLUME_STEPS.name
         private val KEY_VOLUME_KEY_NONLINEAR = PreferenceKeys.VOLUME_KEY_NONLINEAR.name
+        private val KEY_PEN_HAPTIC_REDIRECT = PreferenceKeys.PEN_HAPTIC_WAVEFORM_REDIRECT.name
+        private val KEY_PEN_HAPTIC_REDIRECT_RULES =
+            PreferenceKeys.PEN_HAPTIC_WAVEFORM_REDIRECT_RULES.name
         private val KEY_DISABLE_SAFE_VOLUME_WARNING = PreferenceKeys.DISABLE_SAFE_VOLUME_WARNING.name
 
         private val KEY_PKG_MGR_ALLOW_DOWNGRADE = PreferenceKeys.PKG_MGR_ALLOW_DOWNGRADE.name

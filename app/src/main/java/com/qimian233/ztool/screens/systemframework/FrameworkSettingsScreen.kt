@@ -4,15 +4,19 @@ import android.widget.Toast
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
@@ -30,12 +34,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
+import com.qimian233.ztool.data.pen.PenHapticRedirectRule
+import com.qimian233.ztool.data.pen.PenHapticWaveformCatalog
 import com.qimian233.ztool.ui.components.QuickHelpExample
 import com.qimian233.ztool.ui.components.QuickHelpItem
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
@@ -44,8 +51,10 @@ import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolOutlinedTextField
+import com.qimian233.ztool.ui.components.ZToolPopupDialogField
 import com.qimian233.ztool.ui.components.ZToolQuickHelpDialog
 import com.qimian233.ztool.ui.components.ZToolScaffold
+import com.qimian233.ztool.ui.components.ZToolSettingsDivider
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolSliderRow
 import com.qimian233.ztool.ui.components.ZToolSwitchRow
@@ -109,6 +118,10 @@ fun FrameworkSettingsRoute(
             onDisableVolumeWarnChanged = viewModel::setDisableVolumeWarn,
             onFineVolumeStepsChanged = viewModel::setFineVolumeSteps,
             onVolumeKeyNonlinearChanged = viewModel::setVolumeKeyNonlinear,
+            onPenHapticRedirectChanged = viewModel::setPenHapticRedirectEnabled,
+            onPenHapticRuleAdded = viewModel::addPenHapticRedirectRule,
+            onPenHapticRuleTargetChanged = viewModel::setPenHapticRedirectTarget,
+            onPenHapticRuleRemoved = viewModel::removePenHapticRedirectRule,
             onPkgMgrAllowDowngradeChanged = viewModel::setPkgMgrAllowDowngrade,
             onPkgMgrBypassVerificationChanged = viewModel::setPkgMgrBypassVerification,
             onPkgMgrDisableVerificationAgentChanged = viewModel::setPkgMgrDisableVerificationAgent,
@@ -178,6 +191,10 @@ private fun FrameworkSettingsScreen(
     onDisableVolumeWarnChanged: (Boolean) -> Unit,
     onFineVolumeStepsChanged: (Boolean) -> Unit,
     onVolumeKeyNonlinearChanged: (Boolean) -> Unit,
+    onPenHapticRedirectChanged: (Boolean) -> Unit,
+    onPenHapticRuleAdded: (Int) -> Unit,
+    onPenHapticRuleTargetChanged: (Int, Int) -> Unit,
+    onPenHapticRuleRemoved: (Int) -> Unit,
     onPkgMgrAllowDowngradeChanged: (Boolean) -> Unit,
     onPkgMgrBypassVerificationChanged: (Boolean) -> Unit,
     onPkgMgrDisableVerificationAgentChanged: (Boolean) -> Unit,
@@ -244,6 +261,10 @@ private fun FrameworkSettingsScreen(
                         onDisableVolumeWarnChanged = onDisableVolumeWarnChanged,
                         onFineVolumeStepsChanged = onFineVolumeStepsChanged,
                         onVolumeKeyNonlinearChanged = onVolumeKeyNonlinearChanged,
+                        onPenHapticRedirectChanged = onPenHapticRedirectChanged,
+                        onPenHapticRuleAdded = onPenHapticRuleAdded,
+                        onPenHapticRuleTargetChanged = onPenHapticRuleTargetChanged,
+                        onPenHapticRuleRemoved = onPenHapticRuleRemoved,
                         onPkgMgrAllowDowngradeChanged = onPkgMgrAllowDowngradeChanged,
                         onPkgMgrBypassVerificationChanged = onPkgMgrBypassVerificationChanged,
                         onPkgMgrDisableVerificationAgentChanged = onPkgMgrDisableVerificationAgentChanged,
@@ -278,6 +299,10 @@ private fun frameworkSettingsSections(
     onDisableVolumeWarnChanged: (Boolean) -> Unit,
     onFineVolumeStepsChanged: (Boolean) -> Unit,
     onVolumeKeyNonlinearChanged: (Boolean) -> Unit,
+    onPenHapticRedirectChanged: (Boolean) -> Unit,
+    onPenHapticRuleAdded: (Int) -> Unit,
+    onPenHapticRuleTargetChanged: (Int, Int) -> Unit,
+    onPenHapticRuleRemoved: (Int) -> Unit,
     onPkgMgrAllowDowngradeChanged: (Boolean) -> Unit,
     onPkgMgrBypassVerificationChanged: (Boolean) -> Unit,
     onPkgMgrDisableVerificationAgentChanged: (Boolean) -> Unit,
@@ -502,6 +527,35 @@ private fun frameworkSettingsSections(
                     key = "framework_ai_input_expand"
                 )
             )
+        ),
+        SettingSection(
+            title = stringResource(R.string.system_framework_pen_haptic_title),
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_pen_haptic_redirect_title),
+                        summary = stringResource(R.string.system_framework_pen_haptic_redirect_summary),
+                        checked = state.penHapticRedirect,
+                        onCheckedChange = onPenHapticRedirectChanged,
+                        key = "framework_pen_haptic_redirect"
+                    )
+                )
+                if (state.penHapticRedirect) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                PenHapticRedirectEditor(
+                                    rules = state.penHapticRedirectRules,
+                                    onAddRule = onPenHapticRuleAdded,
+                                    onTargetChanged = onPenHapticRuleTargetChanged,
+                                    onRemoveRule = onPenHapticRuleRemoved
+                                )
+                            },
+                            key = "framework_pen_haptic_redirect_rules"
+                        )
+                    )
+                }
+            }
         )
     )
 }
@@ -623,4 +677,106 @@ private fun AiInputInfoDialog(
         onDismiss = onDismiss,
         confirmButtonText = stringResource(android.R.string.ok)
     )
+}
+
+@Composable
+private fun PenHapticRedirectEditor(
+    rules: List<PenHapticRedirectRule>,
+    onAddRule: (Int) -> Unit,
+    onTargetChanged: (Int, Int) -> Unit,
+    onRemoveRule: (Int) -> Unit
+) {
+    val silentSuffix = stringResource(R.string.system_framework_pen_wave_silent_label)
+    val names = LinkedHashMap<Int, String>()
+    for (waveform in PenHapticWaveformCatalog.all) {
+        val label = stringResource(waveform.nameRes)
+        names[waveform.id] = if (waveform.silent) label + silentSuffix else label
+    }
+    val usedSources = rules.mapTo(HashSet()) { it.sourceId }
+    val availableSources = PenHapticWaveformCatalog.all.filter { it.id !in usedSources }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (rules.isEmpty()) {
+            Text(
+                text = stringResource(R.string.system_framework_pen_haptic_rules_empty_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = LocalZToolColorScheme.current.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+            )
+        }
+        rules.forEachIndexed { index, rule ->
+            if (index > 0) {
+                ZToolSettingsDivider()
+            }
+            PenHapticRedirectRuleRow(
+                rule = rule,
+                names = names,
+                onTargetChanged = onTargetChanged,
+                onRemoveRule = onRemoveRule
+            )
+        }
+        ZToolSettingsDivider()
+        ZToolPopupDialogField(
+            value = stringResource(R.string.system_framework_pen_haptic_add_rule_button),
+            options = availableSources,
+            optionLabel = { names[it.id].orEmpty() },
+            onOptionSelected = { onAddRule(it.id) },
+            enabled = availableSources.isNotEmpty(),
+            dialogTitle = stringResource(R.string.system_framework_pen_haptic_add_rule_button),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun PenHapticRedirectRuleRow(
+    rule: PenHapticRedirectRule,
+    names: Map<Int, String>,
+    onTargetChanged: (Int, Int) -> Unit,
+    onRemoveRule: (Int) -> Unit
+) {
+    val source = PenHapticWaveformCatalog.byId(rule.sourceId)
+    val targets = source
+        ?.let { PenHapticWaveformCatalog.ofKind(it.kind) }
+        ?.filter { it.id != rule.sourceId }
+        .orEmpty()
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = names[rule.sourceId] ?: rule.sourceId.toString(),
+            style = MaterialTheme.typography.bodyLarge,
+            color = LocalZToolColorScheme.current.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+            contentDescription = null,
+            tint = LocalZToolColorScheme.current.onSurfaceVariant,
+            modifier = Modifier.size(18.dp)
+        )
+        ZToolPopupDialogField(
+            value = names[rule.targetId] ?: rule.targetId.toString(),
+            options = targets,
+            optionLabel = { names[it.id].orEmpty() },
+            onOptionSelected = { onTargetChanged(rule.sourceId, it.id) },
+            dialogTitle = stringResource(R.string.system_framework_pen_haptic_target_title),
+            modifier = Modifier.weight(1.4f)
+        )
+        IconButton(onClick = { onRemoveRule(rule.sourceId) }) {
+            Icon(
+                imageVector = Icons.Rounded.Delete,
+                contentDescription = stringResource(R.string.system_framework_pen_haptic_remove_rule_button),
+                tint = LocalZToolColorScheme.current.onSurfaceVariant
+            )
+        }
+    }
 }

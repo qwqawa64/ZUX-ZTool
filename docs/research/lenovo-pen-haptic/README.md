@@ -2,8 +2,9 @@
 
 Research on the ZUI stylus-pen haptic feedback chain. `haptic-chain.md` follows the
 vibration-strength limit and what would be needed to lift it; `waveform-kinds.md`
-follows which waveform the default writing feedback plays and how to select it. This is
-analysis material only — nothing here is wired into the ZTool hook modules yet.
+follows which waveform the default writing feedback plays and how to select it. The
+waveform redirect described there is now a shipped ZTool feature; strength remains
+analysis only.
 
 ## Directory contents
 
@@ -24,7 +25,7 @@ docs/research/lenovo-pen-haptic/
 - [x] App-side scope of `com.lenovo.penservice` mapped
 - [x] Haptic level chain traced end-to-end on the tablet side (app + services.jar)
 - [x] Default waveform kind chain traced end-to-end (`pen_haptic_brush`, live-confirmed)
+- [x] Waveform redirect shipped as a ZTool feature (rule editor, continuous + impact)
 - [x] Firmware download pipeline reproduced locally (SHA256 verified)
 - [ ] IDA analysis of `PARKER.bin`: level -> waveform table, saturation behavior above level 5
 - [ ] Firmware id -> waveform slot mapping for the 32..41 continuous ids
-- [ ] Prototype hook decision (services.jar parameter check vs. firmware-only outcome)

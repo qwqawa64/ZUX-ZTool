@@ -3,6 +3,8 @@ package com.qimian233.ztool.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.data.pen.PenHapticRedirectRule
+import com.qimian233.ztool.data.pen.PenHapticWaveformCatalog
 import com.qimian233.ztool.data.systemframework.FrameworkSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -117,6 +119,38 @@ class FrameworkSettingsViewModel(
         repository.saveVolumeKeyNonlinear(enabled)
     }
 
+    fun setPenHapticRedirectEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(penHapticRedirect = enabled)
+        repository.savePenHapticRedirect(enabled)
+    }
+
+    fun addPenHapticRedirectRule(sourceId: Int) {
+        if (_uiState.value.penHapticRedirectRules.any { it.sourceId == sourceId }) return
+        val targetId = PenHapticWaveformCatalog.defaultTarget(sourceId) ?: return
+        savePenHapticRedirectRules(
+            _uiState.value.penHapticRedirectRules + PenHapticRedirectRule(sourceId, targetId)
+        )
+    }
+
+    fun setPenHapticRedirectTarget(sourceId: Int, targetId: Int) {
+        savePenHapticRedirectRules(
+            _uiState.value.penHapticRedirectRules.map { rule ->
+                if (rule.sourceId == sourceId) rule.copy(targetId = targetId) else rule
+            }
+        )
+    }
+
+    fun removePenHapticRedirectRule(sourceId: Int) {
+        savePenHapticRedirectRules(
+            _uiState.value.penHapticRedirectRules.filterNot { it.sourceId == sourceId }
+        )
+    }
+
+    private fun savePenHapticRedirectRules(rules: List<PenHapticRedirectRule>) {
+        _uiState.value = _uiState.value.copy(penHapticRedirectRules = rules)
+        repository.savePenHapticRedirectRules(rules)
+    }
+
     fun setPkgMgrAllowDowngrade(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(pkgMgrAllowDowngrade = enabled)
         repository.savePkgMgrAllowDowngrade(enabled)
@@ -223,4 +257,6 @@ data class FrameworkSettingsUiState(
     val pkgMgrBypassSharedUser: Boolean = false,
     val pkgMgrAllowHiddenApisSystemApps: Boolean = false,
     val pkgMgrBypassArscRestriction: Boolean = false,
+    val penHapticRedirect: Boolean = false,
+    val penHapticRedirectRules: List<PenHapticRedirectRule> = emptyList(),
 )

@@ -66,6 +66,8 @@ object PreferenceKeys {
     val FINE_VOLUME_STEPS = BoolKey("fine_volume_steps", false)
     // Non-linear volume key ramping: drop early key repeats, accelerating while held
     val VOLUME_KEY_NONLINEAR = BoolKey("volume_key_nonlinear", false)
+    // Rewrite pen haptic waveform ids (continuous + impact) before they reach the pen
+    val PEN_HAPTIC_WAVEFORM_REDIRECT = BoolKey("pen_haptic_waveform_redirect", false)
     // Remove system server safe volume limitation
     val DISABLE_SAFE_VOLUME_WARNING = BoolKey("disable_safe_volume_warning", false)
     // Keep the control-center volume slider showing the real stream level when a
@@ -352,6 +354,9 @@ object PreferenceKeys {
     val ABOUT_DEVICE_INFO_ROM = StringKey("about_device_info_rom", "")
     val ABOUT_DEVICE_INFO_SOFTWARE = StringKey("about_device_info_software", "")
     val AI_INPUT_EXPAND_SIGNS = StringKey("AI_INPUT_EXPAND_SIGNS", "")
+    // Waveform rewrite rules as "source:target,source:target" (see PenHapticWaveformIds)
+    val PEN_HAPTIC_WAVEFORM_REDIRECT_RULES =
+        StringKey("pen_haptic_waveform_redirect_rules", "")
     // Forced half-width punctuation list; canonical ASCII forms, parsed with
     // fullwidth/halfwidth normalization and auto pairing on the hook side
     val HALF_WIDTH_PUNCT_SIGNS = StringKey("half_width_punct_signs", "#*-+=")
@@ -385,6 +390,7 @@ object PreferenceKeys {
         SIDEBAR_ALLAPPS_SEARCH,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
+        PEN_HAPTIC_WAVEFORM_REDIRECT,
         PKG_MGR_ALLOW_DOWNGRADE, PKG_MGR_BYPASS_VERIFICATION,
         PKG_MGR_DISABLE_VERIFICATION_AGENT, PKG_MGR_BYPASS_DIGEST,
         PKG_MGR_USE_PREVIOUS_SIGNATURES, PKG_MGR_BYPASS_EXACT_SIG_MATCH,
@@ -494,6 +500,7 @@ object PreferenceKeys {
         ABOUT_DEVICE_INFO_RAM, ABOUT_DEVICE_INFO_ROM,
         ABOUT_DEVICE_INFO_SOFTWARE,
         AI_INPUT_EXPAND_SIGNS,
+        PEN_HAPTIC_WAVEFORM_REDIRECT_RULES,
         HALF_WIDTH_PUNCT_SIGNS, SOGOU_ENTER_KEY_MODE,
         CUSTOM_CONTROL_CENTER_DATE_FORMAT,
         API_URL, REGULAR,

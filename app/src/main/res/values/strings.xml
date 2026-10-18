@@ -1271,4 +1271,27 @@
     <string name="ztool_sidebar_drawer_drop" tools:ignore="UnusedResources">移出抽屉</string>
     <string name="ztool_sidebar_allapps_search_hint" tools:ignore="UnusedResources">搜索应用</string>
     <string name="ztool_sidebar_allapps_empty_message" tools:ignore="UnusedResources">没有匹配的应用</string>
+    <!-- 手写笔波形重定向（system framework scope） -->
+    <string name="system_framework_pen_haptic_title">手写笔书写反馈</string>
+    <string name="system_framework_pen_haptic_redirect_title">波形重定向</string>
+    <string name="system_framework_pen_haptic_redirect_summary">把一种书写或冲击波形的请求替换成另一种，例如用铅笔的反馈替代钢笔。</string>
+    <string name="system_framework_pen_haptic_rules_title">重定向规则</string>
+    <string name="system_framework_pen_haptic_rules_summary">左侧波形被请求时改为播放右侧波形，仅对支持书写反馈的应用生效。</string>
+    <string name="system_framework_pen_haptic_rules_empty_message">尚未添加规则</string>
+    <string name="system_framework_pen_haptic_add_rule_button">添加规则</string>
+    <string name="system_framework_pen_haptic_remove_rule_button">删除规则</string>
+    <string name="system_framework_pen_haptic_target_title">选择目标波形</string>
+    <string name="system_framework_pen_wave_ball_pen_label">中性笔</string>
+    <string name="system_framework_pen_wave_pencil_label">铅笔</string>
+    <string name="system_framework_pen_wave_chisel_marker_label">荧光笔</string>
+    <string name="system_framework_pen_wave_fountain_pen_label">钢笔</string>
+    <string name="system_framework_pen_wave_eraser_label">橡皮擦</string>
+    <string name="system_framework_pen_wave_silent_label">（无书写音效）</string>
+    <string name="system_framework_pen_wave_impact_click_label">点击</string>
+    <string name="system_framework_pen_wave_impact_connected_label">连接成功</string>
+    <string name="system_framework_pen_wave_impact_feedback_on_label">开启书写反馈</string>
+    <string name="system_framework_pen_wave_impact_brush_change_label">切换笔刷</string>
+    <string name="system_framework_pen_wave_impact_text_focus_label">文本框聚焦</string>
+    <string name="system_framework_pen_wave_impact_recognition_label">识别完成</string>
+    <string name="system_framework_pen_wave_impact_press_label">按压</string>
 </resources>

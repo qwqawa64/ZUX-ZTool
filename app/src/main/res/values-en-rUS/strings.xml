@@ -1218,4 +1218,27 @@
     <string name="ztool_sidebar_drawer_drop" tools:ignore="UnusedResources">Remove from drawer</string>
     <string name="ztool_sidebar_allapps_search_hint" tools:ignore="UnusedResources">Search apps</string>
     <string name="ztool_sidebar_allapps_empty_message" tools:ignore="UnusedResources">No matching apps</string>
+    <!-- Pen waveform redirect (system framework scope) -->
+    <string name="system_framework_pen_haptic_title">Pen writing feedback</string>
+    <string name="system_framework_pen_haptic_redirect_title">Waveform redirect</string>
+    <string name="system_framework_pen_haptic_redirect_summary">Replace one writing or impact waveform with another, for example play the pencil feedback instead of the fountain pen.</string>
+    <string name="system_framework_pen_haptic_rules_title">Redirect rules</string>
+    <string name="system_framework_pen_haptic_rules_summary">When the left waveform is requested, play the right one instead. Applies to apps that support writing feedback.</string>
+    <string name="system_framework_pen_haptic_rules_empty_message">No rules yet</string>
+    <string name="system_framework_pen_haptic_add_rule_button">Add rule</string>
+    <string name="system_framework_pen_haptic_remove_rule_button">Remove rule</string>
+    <string name="system_framework_pen_haptic_target_title">Choose target waveform</string>
+    <string name="system_framework_pen_wave_ball_pen_label">Ball pen</string>
+    <string name="system_framework_pen_wave_pencil_label">Pencil</string>
+    <string name="system_framework_pen_wave_chisel_marker_label">Highlighter</string>
+    <string name="system_framework_pen_wave_fountain_pen_label">Fountain pen</string>
+    <string name="system_framework_pen_wave_eraser_label">Eraser</string>
+    <string name="system_framework_pen_wave_silent_label">" (silent)"</string>
+    <string name="system_framework_pen_wave_impact_click_label">Click</string>
+    <string name="system_framework_pen_wave_impact_connected_label">Connected</string>
+    <string name="system_framework_pen_wave_impact_feedback_on_label">Writing feedback on</string>
+    <string name="system_framework_pen_wave_impact_brush_change_label">Brush change</string>
+    <string name="system_framework_pen_wave_impact_text_focus_label">Text field focus</string>
+    <string name="system_framework_pen_wave_impact_recognition_label">Recognition finished</string>
+    <string name="system_framework_pen_wave_impact_press_label">Press</string>
 </resources>
