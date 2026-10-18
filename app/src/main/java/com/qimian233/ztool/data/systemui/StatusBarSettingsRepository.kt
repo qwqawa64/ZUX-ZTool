@@ -182,7 +182,7 @@ class StatusBarSettingsRepository(
     private fun notifyNumSizeToOption(value: Int): String {
         return when (value) {
             100 -> context.getString(R.string.system_ui_notify_num_unlimited)
-            else -> value.coerceIn(1, 14).toString()
+            else -> value.coerceIn(0, 14).toString()
         }
     }
 
