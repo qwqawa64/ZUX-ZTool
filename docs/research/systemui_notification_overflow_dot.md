@@ -187,7 +187,14 @@ Notes:
 * A user-facing toggle would need the usual `PreferenceKeys` + repository + UiState +
   `SearchIndex` wiring (`docs/hook/add_frontend_item.md`); the hook itself needs nothing else.
 
-## 7. Status
+## 7. Implementation and status
+
+Implemented as the standalone module
+`hook/modules/systemui/statusbar/NotificationOverflowDotHook.kt`, gated by
+`PreferenceKeys.HIDE_NOTIFICATION_OVERFLOW_DOT` (`hide_notification_overflow_dot`) and exposed
+as the `status_bar_notification_overflow_dot` row in the status-bar settings page. It does not
+depend on `NotificationIconHook` or on the icon-limit switch, and it filters to the
+`notificationIcons` container so the AOD dot is untouched.
 
 Static analysis of the bundled SystemUI (versionName 17.5.24, versionCode 20260716,
 compileSdk 36). Not verified on a device.

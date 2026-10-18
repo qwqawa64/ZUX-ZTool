@@ -475,6 +475,8 @@
     <string name="system_ui_status_bar_notification_settings_title">Status bar notification</string>
     <string name="system_ui_status_bar_notification_icon_limit_title">Notification icon limit</string>
     <string name="system_ui_status_bar_notification_icon_limit_summary">System default is 4.</string>
+    <string name="system_ui_status_bar_notification_overflow_dot_title">Hide notification overflow dot</string>
+    <string name="system_ui_status_bar_notification_overflow_dot_summary">Hide the dot placeholder shown when notification icons do not fit.</string>
     <string name="system_ui_status_bar_notification_icon_native_title">Use native notification icons</string>
     <string name="system_ui_status_bar_notification_icon_native_summary">No effect for unsupported apps.</string>
     <string name="system_ui_status_bar_title_suffix">\ - Status Bar Settings</string>

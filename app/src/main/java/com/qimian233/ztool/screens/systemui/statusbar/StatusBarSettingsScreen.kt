@@ -133,6 +133,7 @@ fun StatusBarSettingsRoute(
                 }
             },
             onNativeNotificationIconChanged = viewModel::setNativeNotificationIcon,
+            onNotificationOverflowDotChanged = viewModel::setHideNotificationOverflowDot,
             onNetworkSpeedSizeChanged = viewModel::setNetworkSpeedSize,
             onNetworkSpeedDoubleLayerChanged = viewModel::setNetworkSpeedDoubleLayer,
             onNetworkSpeedRefreshEnabledChanged = viewModel::setNetworkSpeedRefreshEnabled,
@@ -218,6 +219,7 @@ private fun StatusBarSettingsScreen(
     onTextBoldChanged: (Boolean) -> Unit,
     onNotificationIconLimitChanged: (String) -> Unit,
     onNativeNotificationIconChanged: (Boolean) -> Unit,
+    onNotificationOverflowDotChanged: (Boolean) -> Unit,
     onNetworkSpeedSizeChanged: (Boolean) -> Unit,
     onNetworkSpeedDoubleLayerChanged: (Boolean) -> Unit,
     onNetworkSpeedRefreshEnabledChanged: (Boolean) -> Unit,
@@ -283,6 +285,7 @@ private fun StatusBarSettingsScreen(
                         onTextBoldChanged = onTextBoldChanged,
                         onNotificationIconLimitChanged = onNotificationIconLimitChanged,
                         onNativeNotificationIconChanged = onNativeNotificationIconChanged,
+                        onNotificationOverflowDotChanged = onNotificationOverflowDotChanged,
                         onNetworkSpeedSizeChanged = onNetworkSpeedSizeChanged,
                         onNetworkSpeedDoubleLayerChanged = onNetworkSpeedDoubleLayerChanged,
                         onNetworkSpeedRefreshEnabledChanged = onNetworkSpeedRefreshEnabledChanged,
@@ -318,6 +321,7 @@ private fun statusBarSettingsSections(
     onTextBoldChanged: (Boolean) -> Unit,
     onNotificationIconLimitChanged: (String) -> Unit,
     onNativeNotificationIconChanged: (Boolean) -> Unit,
+    onNotificationOverflowDotChanged: (Boolean) -> Unit,
     onNetworkSpeedSizeChanged: (Boolean) -> Unit,
     onNetworkSpeedDoubleLayerChanged: (Boolean) -> Unit,
     onNetworkSpeedRefreshEnabledChanged: (Boolean) -> Unit,
@@ -477,6 +481,13 @@ private fun statusBarSettingsSections(
                         )
                     },
                     key = "status_bar_notification_icon_limit"
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.system_ui_status_bar_notification_overflow_dot_title),
+                    summary = stringResource(R.string.system_ui_status_bar_notification_overflow_dot_summary),
+                    checked = state.hideNotificationOverflowDot,
+                    onCheckedChange = onNotificationOverflowDotChanged,
+                    key = "status_bar_notification_overflow_dot"
                 ),
                 SettingItem.Switch(
                     title = stringResource(R.string.system_ui_status_bar_notification_icon_native_title),

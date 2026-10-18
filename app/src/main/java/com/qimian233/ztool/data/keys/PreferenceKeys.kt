@@ -92,6 +92,8 @@ object PreferenceKeys {
     val SYSTEMUI_CHARGE_WATTS = BoolKey("systemui_charge_watts", false)
     val SYSTEMUI_REAL_WATTS = BoolKey("systemUI_RealWatts", false)
     val NOTIFICATION_ICON_LIMIT = BoolKey("notification_icon_limit", false)
+    // Hides the dot placeholder drawn when the status bar runs out of notification-icon slots
+    val HIDE_NOTIFICATION_OVERFLOW_DOT = BoolKey("hide_notification_overflow_dot", false)
     val CUSTOM_CONTROL_CENTER_DATE = BoolKey("Custom_ControlCenterDate", false)
     val CONTROL_CENTER_NO_TILE_LABELS = BoolKey("control_center_no_tile_labels", false)
     val MEDIA_OUTPUT_DIALOG_CENTER = BoolKey("media_output_dialog_center", false)
@@ -385,7 +387,8 @@ object PreferenceKeys {
         PKG_MGR_BYPASS_SHARED_USER, PKG_MGR_ALLOW_HIDDEN_APIS_SYSTEM_APPS,
         PKG_MGR_BYPASS_ARSC_RESTRICTION,
         STATUSBAR_DISPLAY_SECONDS, CUSTOM_STATUSBAR_CLOCK, SYSTEMUI_CHARGE_WATTS,
-        SYSTEMUI_REAL_WATTS, NOTIFICATION_ICON_LIMIT, CUSTOM_CONTROL_CENTER_DATE,
+        SYSTEMUI_REAL_WATTS, NOTIFICATION_ICON_LIMIT, HIDE_NOTIFICATION_OVERFLOW_DOT,
+        CUSTOM_CONTROL_CENTER_DATE,
         CONTROL_CENTER_NO_TILE_LABELS, NO_CHARGE_ANIMATION, NATIVE_NOTIFICATION_ICON,
         MEDIA_OUTPUT_DIALOG_CENTER,
         SYSTEMUI_NETWORK_SPEED_SIZE, SYSTEMUI_NETWORK_SPEED_DOUBLELAYER,

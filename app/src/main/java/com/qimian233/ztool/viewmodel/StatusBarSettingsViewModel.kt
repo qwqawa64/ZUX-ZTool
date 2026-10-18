@@ -114,6 +114,11 @@ class StatusBarSettingsViewModel(
         repository.saveNativeNotificationIcon(enabled)
     }
 
+    fun setHideNotificationOverflowDot(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(hideNotificationOverflowDot = enabled)
+        repository.saveHideNotificationOverflowDot(enabled)
+    }
+
     fun setNetworkSpeedSize(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(networkSpeedSize = enabled)
         repository.saveNetworkSpeedSize(enabled)
@@ -216,6 +221,7 @@ data class StatusBarSettingsUiState(
     val textColorText: String = "",
     val textBold: Boolean = false,
     val notificationIconLimitOption: String = "",
+    val hideNotificationOverflowDot: Boolean = false,
     val nativeNotificationIcon: Boolean = false,
     val networkSpeedSize: Boolean = false,
     val networkSpeedDoubleLayer: Boolean = false,

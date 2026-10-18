@@ -132,6 +132,7 @@ import com.qimian233.ztool.hook.modules.systemui.statusbar.NativeNotificationIco
 import com.qimian233.ztool.hook.modules.systemui.statusbar.NetworkSpeedHideSlowHook
 import com.qimian233.ztool.hook.modules.systemui.statusbar.NetworkSpeedRefresh
 import com.qimian233.ztool.hook.modules.systemui.statusbar.NotificationIconHook
+import com.qimian233.ztool.hook.modules.systemui.statusbar.NotificationOverflowDotHook
 import com.qimian233.ztool.hook.modules.systemui.statusbar.StatusBarClockSecondsHook
 import com.qimian233.ztool.hook.modules.systemui.statusbar.SystemUIBatteryHook
 import com.qimian233.ztool.hook.modules.systemui.statusbar.SystemUINetworkSpeedSizeHook
@@ -206,6 +207,7 @@ object HookManager {
         registerHookModule(SystemUIChargeWattsHook())
         registerHookModule(SystemUIRealWatts())
         registerHookModule(NotificationIconHook())
+        registerHookModule(NotificationOverflowDotHook())
         registerHookModule(CustomControlCenterDate())
         registerHookModule(ControlCenterNoTileLabelsHook())
         registerHookModule(NoChargeAnimation())

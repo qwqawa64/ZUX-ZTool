@@ -526,6 +526,8 @@
     <string name="system_ui_status_bar_notification_settings_title">状态栏通知</string>
     <string name="system_ui_status_bar_notification_icon_limit_title">通知图标数量限制</string>
     <string name="system_ui_status_bar_notification_icon_limit_summary">系统默认为4</string>
+    <string name="system_ui_status_bar_notification_overflow_dot_title">隐藏通知溢出圆点</string>
+    <string name="system_ui_status_bar_notification_overflow_dot_summary">通知图标放不下时不再显示圆点占位</string>
     <string name="system_ui_status_bar_notification_icon_native_title">使用原生通知图标</string>
     <string name="system_ui_status_bar_notification_icon_native_summary">对未适配APP无效</string>
     <string name="system_ui_status_bar_title_suffix">\ - 状态栏设置</string>

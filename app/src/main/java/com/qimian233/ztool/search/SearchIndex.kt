@@ -466,6 +466,11 @@ object SearchIndex {
             summaryRes = R.string.system_ui_status_bar_notification_icon_limit_summary
         ),
         systemUiStatusBar.item(
+            id = "status_bar_notification_overflow_dot",
+            titleRes = R.string.system_ui_status_bar_notification_overflow_dot_title,
+            summaryRes = R.string.system_ui_status_bar_notification_overflow_dot_summary
+        ),
+        systemUiStatusBar.item(
             id = "status_bar_notification_icon_native",
             titleRes = R.string.system_ui_status_bar_notification_icon_native_title,
             summaryRes = R.string.system_ui_status_bar_notification_icon_native_summary

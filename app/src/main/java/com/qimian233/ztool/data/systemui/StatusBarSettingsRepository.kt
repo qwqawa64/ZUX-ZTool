@@ -39,7 +39,8 @@ class StatusBarSettingsRepository(
             textColor = prefsUtils.loadIntegerSetting(KEY_CLOCK_TEXT_COLOR, 0xFFFFFFFF.toInt()),
             textColorEnabled = prefsUtils.loadBooleanSetting(KEY_CLOCK_TEXT_COLOR_ENABLED, false),
             textBold = prefsUtils.loadBooleanSetting(KEY_CLOCK_TEXT_BOLD, false),
-            notificationIconLimitOption = notifyNumSizeToOption(prefsUtils.loadIntegerSetting(KEY_NOTIFY_NUM_SIZE, 4))
+            notificationIconLimitOption = notifyNumSizeToOption(prefsUtils.loadIntegerSetting(KEY_NOTIFY_NUM_SIZE, 4)),
+            hideNotificationOverflowDot = prefsUtils.loadBooleanSetting(KEY_HIDE_NOTIFICATION_OVERFLOW_DOT, false)
         )
     }
 
@@ -101,6 +102,10 @@ class StatusBarSettingsRepository(
 
     fun saveNativeNotificationIcon(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_NATIVE_NOTIFICATION_ICON, enabled)
+    }
+
+    fun saveHideNotificationOverflowDot(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_HIDE_NOTIFICATION_OVERFLOW_DOT, enabled)
     }
 
     fun saveNetworkSpeedSize(enabled: Boolean) {
@@ -195,6 +200,7 @@ class StatusBarSettingsRepository(
         private val KEY_CLOCK_TEXT_COLOR_ENABLED = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR_ENABLED.name
         private val KEY_CLOCK_TEXT_BOLD = PreferenceKeys.CUSTOM_STATUSBAR_CLOCK_TEXT_BOLD.name
         private val KEY_NOTIFICATION_ICON_LIMIT = PreferenceKeys.NOTIFICATION_ICON_LIMIT.name
+        private val KEY_HIDE_NOTIFICATION_OVERFLOW_DOT = PreferenceKeys.HIDE_NOTIFICATION_OVERFLOW_DOT.name
         private val KEY_NATIVE_NOTIFICATION_ICON = PreferenceKeys.NATIVE_NOTIFICATION_ICON.name
         private val KEY_NETWORK_SPEED_SIZE = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_SIZE.name
         private val KEY_NETWORK_SPEED_DOUBLE_LAYER = PreferenceKeys.SYSTEMUI_NETWORK_SPEED_DOUBLELAYER.name
