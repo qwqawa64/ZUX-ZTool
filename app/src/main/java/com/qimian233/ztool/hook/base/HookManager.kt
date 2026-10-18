@@ -78,6 +78,7 @@ import com.qimian233.ztool.hook.modules.systemframework.AllowAllRestrictedSettin
 import com.qimian233.ztool.hook.modules.systemframework.AllowGetPackages
 import com.qimian233.ztool.hook.modules.systemframework.AllowRelativeAppLaunch
 import com.qimian233.ztool.hook.modules.systemframework.AllowUntrustedTouch
+import com.qimian233.ztool.hook.modules.systemframework.ClipboardAccessToastHook
 import com.qimian233.ztool.hook.modules.systemframework.DisableFlagSecure
 import com.qimian233.ztool.hook.modules.systemframework.DisableGameAudio
 import com.qimian233.ztool.hook.modules.systemframework.DisableHbmThermalLimit
@@ -191,6 +192,7 @@ object HookManager {
         registerHookModule(DisableHbmThermalLimit())
         registerHookModule(FineVolumeSteps())
         registerHookModule(VolumeKeyNonlinearRamp())
+        registerHookModule(ClipboardAccessToastHook())
         registerHookModule(SystemSplitScreenMandatory())
 
         registerHookModule(ZuiDialogSkinHook())

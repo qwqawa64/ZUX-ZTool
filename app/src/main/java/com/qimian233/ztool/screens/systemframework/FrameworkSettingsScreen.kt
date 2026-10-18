@@ -2,13 +2,16 @@ package com.qimian233.ztool.screens.systemframework
 
 import android.widget.Toast
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -61,6 +64,7 @@ import com.qimian233.ztool.ui.components.ZToolSwitchRow
 import com.qimian233.ztool.ui.components.ZToolRestartSystemDialog
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
+import com.qimian233.ztool.utils.AppChooserDialog
 import com.qimian233.ztool.viewmodel.FrameworkSettingsUiState
 import com.qimian233.ztool.viewmodel.FrameworkSettingsViewModel
 import kotlin.math.roundToInt
@@ -116,6 +120,24 @@ fun FrameworkSettingsRoute(
             onAllowRelativeAppLaunchChanged = viewModel::setAllowRelativeAppLaunch,
             onDisableHbmThermalLimitChanged = viewModel::setDisableHbmThermalLimit,
             onDisableVolumeWarnChanged = viewModel::setDisableVolumeWarn,
+            onClipboardToastSuppressChanged = viewModel::setClipboardAccessToastSuppress,
+            onSelectClipboardToastPackages = {
+                AppChooserDialog.show(
+                    context,
+                    viewModel.loadUserInstalledPackageNames(),
+                    uiState.clipboardAccessToastPackages,
+                    context.getString(R.string.system_framework_clipboard_toast_apps_picker_title),
+                    object : AppChooserDialog.AppSelectionCallback {
+                        override fun onSelected(selectedApps: List<AppChooserDialog.AppInfo>) {
+                            viewModel.setClipboardAccessToastPackages(
+                                selectedApps.map { it.packageName }
+                            )
+                        }
+
+                        override fun onCancel() = Unit
+                    }
+                )
+            },
             onFineVolumeStepsChanged = viewModel::setFineVolumeSteps,
             onVolumeKeyNonlinearChanged = viewModel::setVolumeKeyNonlinear,
             onPenHapticRedirectChanged = viewModel::setPenHapticRedirectEnabled,
@@ -189,6 +211,8 @@ private fun FrameworkSettingsScreen(
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
     onDisableVolumeWarnChanged: (Boolean) -> Unit,
+    onClipboardToastSuppressChanged: (Boolean) -> Unit,
+    onSelectClipboardToastPackages: () -> Unit,
     onFineVolumeStepsChanged: (Boolean) -> Unit,
     onVolumeKeyNonlinearChanged: (Boolean) -> Unit,
     onPenHapticRedirectChanged: (Boolean) -> Unit,
@@ -259,6 +283,8 @@ private fun FrameworkSettingsScreen(
                         onAllowRelativeAppLaunchChanged = onAllowRelativeAppLaunchChanged,
                         onDisableHbmThermalLimitChanged = onDisableHbmThermalLimitChanged,
                         onDisableVolumeWarnChanged = onDisableVolumeWarnChanged,
+                        onClipboardToastSuppressChanged = onClipboardToastSuppressChanged,
+                        onSelectClipboardToastPackages = onSelectClipboardToastPackages,
                         onFineVolumeStepsChanged = onFineVolumeStepsChanged,
                         onVolumeKeyNonlinearChanged = onVolumeKeyNonlinearChanged,
                         onPenHapticRedirectChanged = onPenHapticRedirectChanged,
@@ -297,6 +323,8 @@ private fun frameworkSettingsSections(
     onAllowRelativeAppLaunchChanged: (Boolean) -> Unit,
     onDisableHbmThermalLimitChanged: (Boolean) -> Unit,
     onDisableVolumeWarnChanged: (Boolean) -> Unit,
+    onClipboardToastSuppressChanged: (Boolean) -> Unit,
+    onSelectClipboardToastPackages: () -> Unit,
     onFineVolumeStepsChanged: (Boolean) -> Unit,
     onVolumeKeyNonlinearChanged: (Boolean) -> Unit,
     onPenHapticRedirectChanged: (Boolean) -> Unit,
@@ -527,6 +555,33 @@ private fun frameworkSettingsSections(
                     key = "framework_ai_input_expand"
                 )
             )
+        ),
+        SettingSection(
+            title = stringResource(R.string.system_framework_clipboard_title),
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_clipboard_toast_suppress_title),
+                        summary = stringResource(R.string.system_framework_clipboard_toast_suppress_summary),
+                        checked = state.clipboardAccessToastSuppress,
+                        onCheckedChange = onClipboardToastSuppressChanged,
+                        key = "framework_clipboard_access_toast"
+                    )
+                )
+                if (state.clipboardAccessToastSuppress) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                ClipboardToastPackagesRow(
+                                    packageCount = state.clipboardAccessToastPackages.size,
+                                    onClick = onSelectClipboardToastPackages
+                                )
+                            },
+                            key = "framework_clipboard_access_toast_apps"
+                        )
+                    )
+                }
+            }
         ),
         SettingSection(
             title = stringResource(R.string.system_framework_pen_haptic_title),
@@ -778,5 +833,35 @@ private fun PenHapticRedirectRuleRow(
                 tint = LocalZToolColorScheme.current.onSurfaceVariant
             )
         }
+    }
+}
+
+@Composable
+private fun ClipboardToastPackagesRow(
+    packageCount: Int,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(
+                R.string.system_framework_clipboard_toast_apps_summary,
+                packageCount
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = LocalZToolColorScheme.current.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+            contentDescription = null,
+            tint = LocalZToolColorScheme.current.onSurfaceVariant
+        )
     }
 }

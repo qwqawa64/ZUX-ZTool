@@ -77,6 +77,10 @@ object PreferenceKeys {
     // (ui_night_mode_override_on/off) via root; not read by any hook module
     val FIX_NIGHT_MODE_OVERRIDE = BoolKey("fix_night_mode_override", false)
 
+    // System framework · clipboard: skip the "pasted from your clipboard" access
+    // toast for the apps listed in CLIPBOARD_ACCESS_TOAST_PACKAGES
+    val CLIPBOARD_ACCESS_TOAST_SUPPRESS = BoolKey("clipboard_access_toast_suppress", false)
+
     // System framework · package manager service (install restriction bypass group)
     val PKG_MGR_ALLOW_DOWNGRADE = BoolKey("pkg_mgr_allow_downgrade", false)
     val PKG_MGR_BYPASS_VERIFICATION = BoolKey("pkg_mgr_bypass_verification", false)
@@ -343,6 +347,8 @@ object PreferenceKeys {
     // Package names of apps whose processes must never be cached/killed while
     // (or after) running in a freeform window; comma-separated
     val FREEFORM_KEEP_ALIVE_PACKAGES = StringKey("freeform_keep_alive_packages", "")
+    // Reading apps exempted from the clipboard access toast; comma-separated
+    val CLIPBOARD_ACCESS_TOAST_PACKAGES = StringKey("clipboard_access_toast_packages", "")
     val CUSTOM_OTA_TARGET_VERSION_NAME = StringKey("Custom_ota_target_versionName", "")
     val CUSTOM_OTA_TARGET_DEVICE_ID = StringKey("Custom_ota_target_deviceID", "")
     val TB_ENGINE_OTA_PRIVATE_KEY = StringKey("tbengine_ota_private_key", "")
@@ -396,6 +402,7 @@ object PreferenceKeys {
         PKG_MGR_USE_PREVIOUS_SIGNATURES, PKG_MGR_BYPASS_EXACT_SIG_MATCH,
         PKG_MGR_BYPASS_SHARED_USER, PKG_MGR_ALLOW_HIDDEN_APIS_SYSTEM_APPS,
         PKG_MGR_BYPASS_ARSC_RESTRICTION,
+        CLIPBOARD_ACCESS_TOAST_SUPPRESS,
         STATUSBAR_DISPLAY_SECONDS, CUSTOM_STATUSBAR_CLOCK, SYSTEMUI_CHARGE_WATTS,
         SYSTEMUI_REAL_WATTS, NOTIFICATION_ICON_LIMIT, HIDE_NOTIFICATION_OVERFLOW_DOT,
         CUSTOM_CONTROL_CENTER_DATE,
@@ -494,6 +501,7 @@ object PreferenceKeys {
     val stringKeys: List<StringKey> = listOf(
         MISTAKE_TOUCH_WHITE_LIST_GAME, FORCE_STOP_WHITE_LIST,
         FREEFORM_KEEP_ALIVE_PACKAGES,
+        CLIPBOARD_ACCESS_TOAST_PACKAGES,
         CUSTOM_OTA_TARGET_VERSION_NAME, CUSTOM_OTA_TARGET_DEVICE_ID,
         TB_ENGINE_OTA_PRIVATE_KEY, TB_ENGINE_OTA_PUBLIC_KEY, TB_ENGINE_OTA_CERT,
         ABOUT_DEVICE_INFO_MODEL, ABOUT_DEVICE_INFO_CPU,

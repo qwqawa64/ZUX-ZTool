@@ -743,6 +743,11 @@
     <string name="system_framework_custom_detector_err">格式错误：请使用英文逗号分隔多个检测符</string>
     <string name="system_framework_custom_detector_hint">请输入自定义的检测符，多个使用英文逗号分隔</string>
     <string name="system_framework_misc_title">杂项</string>
+    <string name="system_framework_clipboard_title">剪贴板</string>
+    <string name="system_framework_clipboard_toast_suppress_title">剪贴板访问提示白名单</string>
+    <string name="system_framework_clipboard_toast_suppress_summary">白名单内的应用读取剪贴板时，不显示“已将剪贴板中的内容粘贴到…”提示</string>
+    <string name="system_framework_clipboard_toast_apps_summary">已选择 %1$d 个应用</string>
+    <string name="system_framework_clipboard_toast_apps_picker_title">选择不提示的应用</string>
     <string name="system_framework_fix_night_mode_title">修复深色模式自动切换</string>
     <string name="system_framework_fix_night_mode_summary">深色模式选了"日落到日出"却不自动切换时，点击清除残留的手动覆盖设置并立即生效，无需重启</string>
     <string name="system_framework_fix_night_mode_done">已清除残留覆盖并重新应用深色模式调度</string>

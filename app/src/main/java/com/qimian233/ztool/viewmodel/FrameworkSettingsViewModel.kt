@@ -109,6 +109,19 @@ class FrameworkSettingsViewModel(
         repository.saveDisableVolumeWarn(enabled)
     }
 
+    fun setClipboardAccessToastSuppress(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(clipboardAccessToastSuppress = enabled)
+        repository.saveClipboardAccessToastSuppress(enabled)
+    }
+
+    fun setClipboardAccessToastPackages(packageNames: List<String>) {
+        _uiState.value = _uiState.value.copy(clipboardAccessToastPackages = packageNames)
+        repository.saveClipboardAccessToastPackages(packageNames)
+    }
+
+    fun loadUserInstalledPackageNames(): List<String> =
+        repository.loadUserInstalledPackageNames()
+
     fun setFineVolumeSteps(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(fineVolumeSteps = enabled)
         repository.saveFineVolumeSteps(enabled)
@@ -259,4 +272,6 @@ data class FrameworkSettingsUiState(
     val pkgMgrBypassArscRestriction: Boolean = false,
     val penHapticRedirect: Boolean = false,
     val penHapticRedirectRules: List<PenHapticRedirectRule> = emptyList(),
+    val clipboardAccessToastSuppress: Boolean = false,
+    val clipboardAccessToastPackages: List<String> = emptyList(),
 )

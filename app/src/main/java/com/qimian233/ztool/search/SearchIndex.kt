@@ -982,6 +982,17 @@ object SearchIndex {
             summaryRes = R.string.system_framework_disable_flag_secure_summary
         ),
         framework.item(
+            id = "framework_clipboard_access_toast",
+            titleRes = R.string.system_framework_clipboard_toast_suppress_title,
+            summaryRes = R.string.system_framework_clipboard_toast_suppress_summary
+        ),
+        framework.item(
+            id = "framework_clipboard_access_toast_apps",
+            titleRes = R.string.system_framework_clipboard_toast_apps_picker_title,
+            parentTitleRes = R.string.system_framework_clipboard_toast_suppress_title,
+            parentKey = "framework_clipboard_access_toast"
+        ),
+        framework.item(
             id = "framework_ai_input_expand",
             titleRes = R.string.system_framework_ai_input_expand_title,
             summaryRes = R.string.system_framework_ai_input_expand_summary

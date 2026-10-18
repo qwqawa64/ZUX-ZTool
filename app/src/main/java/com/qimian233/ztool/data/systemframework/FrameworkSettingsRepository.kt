@@ -1,6 +1,7 @@
 package com.qimian233.ztool.data.systemframework
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.EnhancedShellExecutor.ShellResult
 import com.qimian233.ztool.R
@@ -48,6 +49,9 @@ class FrameworkSettingsRepository(
             aiInputSignsError = validateAiInputSigns(aiInputSigns),
             penHapticRedirect = prefsUtils.loadBooleanSetting(KEY_PEN_HAPTIC_REDIRECT, false),
             penHapticRedirectRules = loadPenHapticRedirectRules(),
+            clipboardAccessToastSuppress =
+                prefsUtils.loadBooleanSetting(KEY_CLIPBOARD_ACCESS_TOAST_SUPPRESS, false),
+            clipboardAccessToastPackages = loadClipboardAccessToastPackages(),
         )
     }
 
@@ -133,6 +137,38 @@ class FrameworkSettingsRepository(
 
     fun saveDisableVolumeWarn(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_DISABLE_SAFE_VOLUME_WARNING, enabled)
+    }
+
+    fun saveClipboardAccessToastSuppress(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_CLIPBOARD_ACCESS_TOAST_SUPPRESS, enabled)
+    }
+
+    fun saveClipboardAccessToastPackages(packageNames: List<String>) {
+        prefsUtils.saveStringSetting(
+            KEY_CLIPBOARD_ACCESS_TOAST_PACKAGES,
+            packageNames.joinToString(separator = ",")
+        )
+    }
+
+    /** Installed user apps offered by the whitelist picker. */
+    fun loadUserInstalledPackageNames(): List<String> {
+        val packageManager = context.packageManager
+        return packageManager.getInstalledPackages(0)
+            .filter { packageInfo ->
+                val appInfo = packageInfo.applicationInfo ?: return@filter false
+                val isSystemApp = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
+                val isUpdatedSystemApp =
+                    appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP != 0
+                !isSystemApp || isUpdatedSystemApp
+            }
+            .map { it.packageName }
+    }
+
+    private fun loadClipboardAccessToastPackages(): List<String> {
+        return prefsUtils.loadStringSetting(KEY_CLIPBOARD_ACCESS_TOAST_PACKAGES, "")
+            .split(',', '\n')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
     }
 
     fun savePkgMgrAllowDowngrade(enabled: Boolean) {
@@ -259,6 +295,11 @@ class FrameworkSettingsRepository(
         private val KEY_PEN_HAPTIC_REDIRECT_RULES =
             PreferenceKeys.PEN_HAPTIC_WAVEFORM_REDIRECT_RULES.name
         private val KEY_DISABLE_SAFE_VOLUME_WARNING = PreferenceKeys.DISABLE_SAFE_VOLUME_WARNING.name
+
+        private val KEY_CLIPBOARD_ACCESS_TOAST_SUPPRESS =
+            PreferenceKeys.CLIPBOARD_ACCESS_TOAST_SUPPRESS.name
+        private val KEY_CLIPBOARD_ACCESS_TOAST_PACKAGES =
+            PreferenceKeys.CLIPBOARD_ACCESS_TOAST_PACKAGES.name
 
         private val KEY_PKG_MGR_ALLOW_DOWNGRADE = PreferenceKeys.PKG_MGR_ALLOW_DOWNGRADE.name
         private val KEY_PKG_MGR_BYPASS_VERIFICATION = PreferenceKeys.PKG_MGR_BYPASS_VERIFICATION.name
