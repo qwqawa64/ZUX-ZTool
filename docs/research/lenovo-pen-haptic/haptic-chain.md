@@ -3,6 +3,9 @@
 Targets found while auditing `com.lenovo.penservice` (v1.8.220260331) and the ZUI
 framework `services.jar`. All class references are from Jadx decompilation.
 
+This document covers vibration *strength*. Which waveform the default feedback uses is a
+separate, independent chain — see `waveform-kinds.md`.
+
 ## Call chain
 
 ```
@@ -71,3 +74,7 @@ key exercises this path — the cheapest end-to-end test of lifted values.
   is off; eraser events force id 35/40.
 - Touch panel haptic enable goes through `TouchscreenServiceManager.setHaptics()` (TP
   node write), separate from the pen-side GATT channel.
+- The waveform kind (32..41) is not bound to the level: `processDefaultHaptic` reads
+  `mCurrentHapticType`, which comes from `Settings.Global pen_haptic_brush`. See
+  `waveform-kinds.md` for the id table and the `_NS` family selected by
+  `pen_haptic_sound`.
