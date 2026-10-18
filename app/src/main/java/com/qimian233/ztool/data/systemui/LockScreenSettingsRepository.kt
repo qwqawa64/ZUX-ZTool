@@ -2,7 +2,7 @@ package com.qimian233.ztool.data.systemui
 
 import android.content.Context
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.screens.features.FeatureDestination
+import com.qimian233.ztool.data.features.FeatureDestination
 import com.qimian233.ztool.R
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.data.keys.PreferenceKeys

@@ -2,19 +2,17 @@ package com.qimian233.ztool.utils
 
 import android.util.Log
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.screens.features.FeatureDestination
+import com.qimian233.ztool.data.features.FeatureCatalog
+import com.qimian233.ztool.data.features.FeatureDestination
 import com.qimian233.ztool.data.keys.HowToRestart
 import com.qimian233.ztool.data.keys.Scope
-import com.qimian233.ztool.data.keys.ScopeKeys
 
 /**
  * Scope utilities.
- * <p>
- * Centrally defines each feature entry's scope list and the unified scope restart
- * logic, shared by the frontend FeaturesRoute and the repositories.
- * All scope package names and preferred restart methods come from [ScopeKeys];
- * hardcoding package names here is forbidden.
- * </p>
+ *
+ * Scope lists come from [FeatureCatalog]; package names and preferred restart
+ * methods still come from `ScopeKeys`. [restartScope] implements the unified
+ * restart logic shared by the frontend and the repositories.
  */
 object ScopeUtils {
 
@@ -22,63 +20,10 @@ object ScopeUtils {
 
     /**
      * Returns all scopes (package name + preferred restart method) involved in a
-     * feature entry. All these packages must be inside the LSPosed scope for the
-     * feature's hooks to take full effect.
+     * feature entry, as declared by [FeatureCatalog].
      */
-    fun getScopes(destination: FeatureDestination): List<Scope> {
-        return when (destination) {
-            FeatureDestination.SettingsDetail -> listOf(
-                ScopeKeys.SETTINGS,
-                ScopeKeys.PERMISSION_CONTROLLER,
-                ScopeKeys.ZUI_SAFE_CENTER
-            )
-            FeatureDestination.Ota -> listOf(
-                ScopeKeys.OTA,
-                ScopeKeys.TB_ENGINE,
-                ScopeKeys.SETTINGS
-            )
-            FeatureDestination.SafeCenter -> listOf(
-                ScopeKeys.ZUI_SAFE_CENTER,
-                ScopeKeys.LENOVO_SAFE_CENTER,
-                ScopeKeys.DOCUMENTS_UI
-            )
-            FeatureDestination.Framework -> listOf(
-                ScopeKeys.ANDROID_SYSTEM,
-                ScopeKeys.SYSTEM_SERVER
-            )
-            FeatureDestination.GameTool -> listOf(
-                ScopeKeys.GAME_SERVICE,
-            )
-            FeatureDestination.PackageInstaller -> listOf(ScopeKeys.PACKAGE_INSTALLER)
-            FeatureDestination.SystemUi -> listOf(
-                ScopeKeys.SYSTEM_UI,
-                ScopeKeys.WALLPAPER_SETTINGS
-            )
-            FeatureDestination.Launcher -> listOf(ScopeKeys.LAUNCHER)
-            FeatureDestination.MobileDesktop -> listOf(
-                ScopeKeys.MOBILE_DESKTOP,
-            )
-            FeatureDestination.TbEngine -> listOf(ScopeKeys.TB_ENGINE)
-            FeatureDestination.ZuiPerformance -> listOf(ScopeKeys.ZUI_PERFORMANCE)
-            FeatureDestination.SogouIme -> listOf(ScopeKeys.SOGOU_OEM_IME)
-            FeatureDestination.DeviceService -> listOf(
-                ScopeKeys.LENOVO_DEVICE_SERVICE,
-                ScopeKeys.TAB_PUSHOUT
-            )
-            FeatureDestination.FreeformBar -> listOf(ScopeKeys.FREEFORM_SIDEBAR)
-            // Scope-gate union only; the hub applies changes with a system reboot.
-            FeatureDestination.FreeformHub -> listOf(
-                ScopeKeys.SETTINGS,
-                ScopeKeys.SYSTEM_UI,
-                ScopeKeys.LAUNCHER,
-                ScopeKeys.ANDROID_SYSTEM,
-                ScopeKeys.SYSTEM_SERVER
-            )
-            // Cross-app feature: the effective set is whatever the user ticked in the
-            // LSPosed manager, so there is no fixed scope list to restart.
-            FeatureDestination.UiComponents -> emptyList()
-        }
-    }
+    fun getScopes(destination: FeatureDestination): List<Scope> =
+        FeatureCatalog.card(destination).scopes()
 
     /**
      * Returns all scope package names (including the primary package) for a feature entry.

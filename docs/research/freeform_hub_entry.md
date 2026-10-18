@@ -64,16 +64,18 @@ pattern (`FrameworkSettingsScreen.RestartSystemDialog`, `HomeRepository.reboot`)
 ## Proposed entry
 
 - New `FeatureDestination.Freeform("feature/freeform")`, shown on the Features
-  grid as a cross-app card (same shape as `UiComponents`):
-  `packageName = ""`, `alwaysVisible = true`, no app icon (default icon).
-- `scopePackages = ScopeUtils.getScopePackages(FeatureDestination.Freeform)` =
+  grid as a cross-app card (same shape as `UiComponents`): a `FeatureCatalog`
+  entry with `FeatureAvailability.AlwaysAvailable` and a module-local `LocalGlyph`
+  icon (`R.drawable.ic_feature_freeform_hub`) rendered inside a themed background
+  block.
+- `FeatureScopeSource.Fixed` =
   `[SETTINGS, SYSTEM_UI, LAUNCHER, ANDROID_SYSTEM, SYSTEM_SERVER]`. Unlike
-  `UiComponents` (which leaves the list empty because the user selects the
-  scope), this is a fixed union, so the existing "not in scope → request scope"
-  flow on the card works and asks LSPosed for exactly the packages the page
-  needs.
-- `ScopeUtils.getScopes()` returns that union **only for the in-scope gate**; it
-  must never be fed to `restartScope()`.
+  `UiComponents` (which uses `FeatureScopeSource.UserManaged` because the user
+  selects the scope), this is a fixed union, so the existing "not in scope →
+  request scope" flow on the card works and asks LSPosed for exactly the packages
+  the page needs.
+- The catalog card's scopes feed the in-scope gate **only**; they must never be
+  fed to `restartScope()`.
 - Page sections, in reading order:
   1. 一视界 — blacklist switch, module switch, landscape-view wizard, config
      selection, adapted-strategy list.
@@ -89,9 +91,10 @@ pattern (`FrameworkSettingsScreen.RestartSystemDialog`, `HomeRepository.reboot`)
 
 ## Wiring checklist
 
-1. `FeatureDestination`: add enum entry, card in `FeaturesRoute`, route in
-   `ZToolNavHost` + `navigationRouteIndex`.
-2. `ScopeUtils`: add the union branch.
+1. `FeatureDestination`: add the enum entry and its route in `ZToolNavHost` +
+   `navigationRouteIndex`.
+2. `FeatureCatalog`: add the card metadata and the `FeatureScopeSource.Fixed`
+   union; `ScopeUtils.getScopes()` derives from it.
 3. `SearchIndex`: add `feature_card_freeform`; re-point every moved row's
    `SearchEntry.route` to `FeatureDestination.Freeform.route` and move it to a
    new `Screen(groupTitleRes = R.string.freeform_app_name)`. `SettingItem.key`

@@ -5,7 +5,7 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.navigation.HiddenRoute
 import com.qimian233.ztool.navigation.MainRoute
-import com.qimian233.ztool.screens.features.FeatureDestination
+import com.qimian233.ztool.data.features.FeatureDestination
 import com.qimian233.ztool.screens.ztoolsettings.about.SettingsAboutRouteName
 import com.qimian233.ztool.ui.components.SearchHighlightIndexBridge
 

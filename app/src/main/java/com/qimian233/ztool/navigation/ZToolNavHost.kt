@@ -18,7 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.qimian233.ztool.BuildConfig
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.keys.ScopeKeys
-import com.qimian233.ztool.screens.features.FeatureDestination
+import com.qimian233.ztool.data.features.FeatureDestination
 import com.qimian233.ztool.screens.features.FeaturesMainRoute
 import com.qimian233.ztool.screens.freeform.FreeformHubSettingsRoute
 import com.qimian233.ztool.screens.freeformbar.FreeformBarSettingsRoute

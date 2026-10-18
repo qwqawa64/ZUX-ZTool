@@ -1,7 +1,7 @@
 package com.qimian233.ztool.data.systemui
 
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.screens.features.FeatureDestination
+import com.qimian233.ztool.data.features.FeatureDestination
 import com.qimian233.ztool.utils.ScopeUtils
 import com.qimian233.ztool.viewmodel.SystemUiSettingsUiState
 

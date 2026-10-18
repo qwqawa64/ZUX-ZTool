@@ -11,7 +11,7 @@ import android.provider.Settings
 import androidx.core.content.edit
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.service.EdgeBubbleService
-import com.qimian233.ztool.screens.features.FeatureDestination
+import com.qimian233.ztool.data.features.FeatureDestination
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.FontInstallerManager

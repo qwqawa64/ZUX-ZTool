@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import com.qimian233.ztool.EnhancedShellExecutor
-import com.qimian233.ztool.screens.features.FeatureDestination
+import com.qimian233.ztool.data.features.FeatureDestination
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.ModulePreferencesUtils
 import com.qimian233.ztool.utils.ScopeUtils

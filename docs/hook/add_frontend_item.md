@@ -351,7 +351,7 @@ SettingItem.Custom(
 
 Hook 的作用域包名**统一由 `ScopeKeys` 管理**（`app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`），不要在代码中手写包名字符串。
 
-- `ScopeUtils.getScopes()` 集中定义每个功能入口的作用域列表（包名 + 推荐重启方式），引用 `ScopeKeys`；前端功能入口（`FeaturesRoute`、`MainActivity`）和各 Repository 的"重启作用域"逻辑也来自 `ScopeKeys` / `ScopeUtils`。
+- `FeatureCatalog`（`data/features/FeatureCatalog.kt`）声明每个功能卡片的元数据（名称、描述、图标、作用域来源、可用性），作用域包名与推荐重启方式引用 `ScopeKeys`；`ScopeUtils.getScopes()` 直接委托给它。前端功能入口（`FeaturesRoute`、`MainActivity`）和各 Repository 的"重启作用域"逻辑仍来自 `ScopeKeys` / `ScopeUtils`。
 - 每个 `Scope` 同时注册了 `HowToRestart`（`AmStop` / `KillAll` / `Reboot`），`ScopeUtils.restartScope()` 据此选择重启命令。
 - 后端 Hook 的 `getTargetPackages()` 必须返回 `ScopeKeys.CONSTANT.packageName` 引用（详见 `add_new_hook_module.md`）。
 
