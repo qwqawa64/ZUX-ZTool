@@ -311,6 +311,33 @@ PC-mode caption paths and will not remove the freeform `captionBar` inset.
   maximize / minimize / safe-margin animations (`startAnimation` in the
   positioners). This is the object `FreeformFullscreenThresholdHook` rewrites.
 
+### 4.1 Drag-end horizontal clamp (the "50 %" rule)
+
+Moving a freeform window is `TaskPositioner` ctrlType 0: during the drag the task
+surface is only translated (`DragPositioningCallbackUtility.setPositionOnDrag`), and
+the final bounds are committed on `ACTION_UP`. Before committing,
+`DesktopModeTouchEventListener.handleMotionEvent` calls
+`DragPositioningCallbackUtility.snapTaskBoundsIfNecessary(bounds, calculateValidDragArea())`.
+
+`DesktopModeWindowDecoration.calculateValidDragArea()` has a ZUI branch (taken when
+`OvfSubFeatureFlags.enableOvFreeform_inWmShell()` and `ovfDpcUtilityCanProcess()`):
+
+```text
+half = (width - ov_window_decor_caption_bar_width_pad) / 2   // 50 dp caption pill
+left = -width + captionBarWidth + half  ≈ -(width - captionBarWidth) / 2
+```
+
+So the left edge can move offscreen by only about `(width - 50 dp) / 2` (≈44 % for the
+988 px task measured in §2.1). That is why an edge-bubble trigger ratio of 50 % or more
+can never be reached: the drag is snapped back before the commit. The same snap is used
+by `CaptionWindowDecorViewModel.CaptionTouchEventListener` (AOSP area variant) and
+`OvfScaleTaskPositionerDecorator.onDragPositioningEnd`.
+
+`FreeformEdgeBubbleDragLimitHook` (SystemUI, gated by `freeform_edge_bubble`) widens that
+area to `-ceil(width * percent / 100) - 64` on the left and
+`displayWidth + triggerPx - width` on the right, so the configured ratio is reachable;
+the vertical limit is left untouched.
+
 ---
 
 ## 5. Design: overlay the controller instead of reserving height
