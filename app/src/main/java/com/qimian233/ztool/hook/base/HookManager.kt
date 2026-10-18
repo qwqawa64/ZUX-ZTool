@@ -97,6 +97,7 @@ import com.qimian233.ztool.hook.modules.systemframework.PackageManagerHiddenApiH
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerSharedUserBypassHook
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerSignatureBypassHook
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerVerificationAgentHook
+import com.qimian233.ztool.hook.modules.systemframework.PenHapticWaveformRedirectHook
 import com.qimian233.ztool.hook.modules.systemframework.VolumeKeyNonlinearRamp
 import com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory as SystemSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ChargeAnimationDurationHook
@@ -202,6 +203,7 @@ object HookManager {
         registerHookModule(PackageManagerSharedUserBypassHook())
         registerHookModule(PackageManagerHiddenApiHook())
         registerHookModule(PackageManagerArscBypassHook())
+        registerHookModule(PenHapticWaveformRedirectHook())
 
         registerHookModule(StatusBarClockSecondsHook())
         registerHookModule(CustomStatusBarClock())

@@ -150,4 +150,6 @@ sound off), the eraser override (tool type 4 still forces 35/40), the 32..41 val
 - [ ] Locate the 32..41 -> 0..18 slot conversion in `PARKER.bin`.
 - [ ] Decide what firmware id 42 does and whether it is reachable.
 - [ ] Consider exposing the selector in ZTool via a shell/root setting write.
-- [ ] Prototype the continuous-id redirect hook and measure stylus input overhead.
+- [x] Prototype redirect hook implemented (`PenHapticWaveformRedirectHook`, test-only,
+      36 -> 33, id -> id table).
+- [ ] On-device verify the prototype and measure stylus input overhead.
