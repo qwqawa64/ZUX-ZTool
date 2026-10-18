@@ -17,8 +17,9 @@ import com.qimian233.ztool.hook.base.ModuleLog
  * The all-apps panel's own chrome: a search field pinned to the top of the panel and a hint shown
  * while a query matches nothing.
  *
- * The field is added once per process and re-tinted on later shows; each sibling is pushed below it
- * so the grid and the A–Z rail keep their space.
+ * The field outlives the panel it sits in and is moved into whichever panel is current, because the
+ * host re-inflates its popup on a configuration change; each sibling is pushed below it so the grid
+ * and the A–Z rail keep their space.
  */
 internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
 
@@ -32,20 +33,29 @@ internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
 
     fun attach(panel: ViewGroup, colors: SidebarPalette, query: (String) -> Unit) {
         onQuery = query
-        val existing = inputField
-        if (existing != null && existing.parent === panel) {
-            applyPalette(colors)
-            existing.visibility = View.VISIBLE
-            clear()
-            return
-        }
-        val input = existing ?: buildField(panel, colors).also { inputField = it }
-        if (input.parent == null) panel.addView(input, 0)
-        applyPalette(colors)
+        val input = inputField ?: buildField(panel, colors).also { inputField = it }
         input.visibility = View.VISIBLE
-        pushSiblingsBelow(panel, input)
-        installEmptyView(panel, colors)
+        ensureInPanel(panel, colors)
         clear()
+    }
+
+    /** Moves the field into [panel] when the host replaced the panel it was added to. */
+    fun rehost(panel: ViewGroup, colors: SidebarPalette) {
+        if (inputField == null) return
+        ensureInPanel(panel, colors)
+    }
+
+    private fun ensureInPanel(panel: ViewGroup, colors: SidebarPalette) {
+        val input = inputField ?: return
+        if (input.parent !== panel) {
+            // The host re-inflates the panel on a configuration change, so a field that still has a
+            // parent is sitting in a panel that is no longer current.
+            (input.parent as? ViewGroup)?.removeView(input)
+            panel.addView(input, 0)
+            pushSiblingsBelow(panel, input)
+        }
+        applyPalette(colors)
+        installEmptyView(panel, colors)
     }
 
     /** Re-tints the field and the hint for the panel's current theme. */
@@ -125,6 +135,10 @@ internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
         val existing = emptyView
         if (existing != null) {
             existing.setTextColor(colors.textHint)
+            if (existing.parent !== panel) {
+                (existing.parent as? ViewGroup)?.removeView(existing)
+                panel.addView(existing)
+            }
             return
         }
         val context = panel.context

@@ -252,6 +252,10 @@ Interception points found while adding the letter sections:
   sizes, so it needs no help.
 * `RecyclerView$ViewHolder.itemView` is a public field, reachable by `getField` on the class the
   host's classloader holds.
+* `zui.widget.AlphabeticIndexBar` owns a `PopupWindow` and creates it from `dispatchTouchEvent`, so
+  the bar in the panel is not a passive drawing: touching it anchors a popup on the drawer's own
+  `PopupWindow`, which is what raises `BadTokenException` in the host process once that token is no
+  longer valid. A replacement index UI has to do its own scrolling instead of delegating to the bar.
 
 ### 4.2.2 Panel theming and the colour anchors a hook can use
 
@@ -264,10 +268,18 @@ host itself resolves.
   `res/OS.xml` **at inflation time**, i.e. once per service process. `allapp_rl` carries the same
   drawable in XML and `showAllAppWindow()` re-applies it with `getResources().getDrawable(...)` on
   every show.
-* `FloatService.onConfigurationChanged()` only rebuilds the edge handle (`updateFloatingWindow()` →
-  `showFloatingWindow()`); it never re-inflates or re-tints the popup. A ZUI theme switch arrives as
-  `com.zui.intent.action.THEME_CHANGED` in `FloatService$ThemeReceiver` and is used for app icons
-  only.
+* `FloatService.onConfigurationChanged()` → `updateFloatingWindow()` (removes `mRootView`) →
+  `showFloatingWindow()` → `initSideBarView()`. **`initSideBarView()` re-inflates `drawer_window` and
+  builds a new `PopupWindow`**, replacing `mDrawerContent`, `mDrawerLayout`, `mAppIconLv`,
+  `mAllAppLayout`, `mAppIconGv`, `mFootView` and `popupWindow` in one pass, so a light/dark switch
+  (a `uiMode` configuration change) orphans every view a hook injected into `allapp_rl` or into the
+  FrameLayout around `index_bar`. Such views must be re-parented to the new panel, not merely
+  re-tinted. The previous `PopupWindow` is never dismissed by this path; it keeps its own content
+  until it is dismissed normally.
+* A ZUI theme switch arrives as `com.zui.intent.action.THEME_CHANGED` in
+  `FloatService$ThemeReceiver`, whose `onReceive` only calls `SidebarAppUtils.refreshLauncherAppIcon`;
+  it neither rebuilds nor re-tints the popup, so injected chrome keeps its place there and only
+  needs the new palette.
 * `Theme.ZuiFreeformBar` (`0x7f11028e`) is the app theme. The vendored ZUI toolkit ships explicit
   `.Dark` style variants (`Widget.Zui.ListView.Dialog.Dark`, `Theme.Zui.MessageDialog.Dark`, …)
   rather than night qualifiers, so resolving a colour *with* the theme

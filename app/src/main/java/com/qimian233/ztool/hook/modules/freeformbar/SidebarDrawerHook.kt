@@ -305,7 +305,10 @@ class SidebarDrawerHook : AppHookModule() {
         }.onFailure { logger.warn("could not hook the theme receiver: " + it.message) }
     }
 
-    /** Re-applies the palette to every piece of chrome that outlives a single panel show. */
+    /**
+     * Re-applies the palette to every piece of chrome that outlives a single panel show, and moves
+     * the chrome into the panel the service holds now.
+     */
     private fun refreshChrome(context: Context) {
         val palette = paletteFor(context)
         SidebarPressScale.palette = palette
@@ -313,7 +316,12 @@ class SidebarDrawerHook : AppHookModule() {
         adapter?.notifyDataSetChanged()
         allAppsGrid?.applyPalette(palette)
         allAppsGrid?.notifyChanged()
-        allAppsSearch?.applyPalette(palette)
+        val panel = allAppLayoutField?.get(context) as? android.view.ViewGroup
+        if (panel != null) {
+            allAppsSearch?.rehost(panel, palette)
+        } else {
+            allAppsSearch?.applyPalette(palette)
+        }
         styleFootView(context, palette)
         refreshRail(context, palette)
     }

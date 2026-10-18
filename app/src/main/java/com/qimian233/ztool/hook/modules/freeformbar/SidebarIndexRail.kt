@@ -24,11 +24,8 @@ internal interface SidebarLetterSource {
 
 /**
  * A–Z rail for the all-apps panel, occupying the slot the host reserved for its own
- * `zui.widget.AlphabeticIndexBar`.
- *
- * The host's bar is hidden rather than used: on touch it shows its own PopupWindow, which fails
- * with `BadTokenException` because the drawer's PopupWindow token is no longer valid, killing the
- * process. This rail only scrolls the grid, so it cannot fail that way.
+ * `zui.widget.AlphabeticIndexBar`, which is hidden: touching that bar shows a PopupWindow whose
+ * token is already invalid, which raises `BadTokenException` in the host process.
  *
  * Letters and their grid rows come from the panel's own row model, so the rail keeps matching the
  * sections once the grid grew letter headings.
@@ -77,7 +74,10 @@ internal class SidebarIndexRail(
         val existing = rail
         if (existing == null) {
             rail = buildRail(host.context, hostBar?.layoutParams).also { host.addView(it) }
-        } else if (existing.parent == null) {
+        } else if (existing.parent !== host) {
+            // The host re-inflates the panel on a configuration change, which leaves the rail in a
+            // panel that is no longer on screen; move it to the host the panel has now.
+            (existing.parent as? ViewGroup)?.removeView(existing)
             host.addView(existing)
         }
         focused = -1
