@@ -49,6 +49,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.freeform.FreeformEdgeBubbleConfig
 import com.qimian233.ztool.data.freeform.FreeformHubRepository
 import com.qimian233.ztool.data.systemui.SystemUiMiscSettingsRepository
 import com.qimian233.ztool.screens.zuisetting.floatingwindow.FloatingWindow
@@ -471,6 +472,7 @@ fun FreeformHubSettingsRoute(
                 )
             },
             onEdgeBubbleChanged = viewModel::setEdgeBubbleEnabled,
+            onEdgeBubbleTriggerMarginPxChanged = viewModel::setEdgeBubbleTriggerMarginPx,
             onFloatMandatoryChanged = viewModel::setFloatMandatory,
             onSplitScreenMandatoryChanged = viewModel::setSplitScreenMandatory,
             onFreeformFullscreenThresholdChanged = viewModel::setFreeformFullscreenThreshold,
@@ -552,6 +554,7 @@ private fun FreeformHubSettingsScreen(
     onZuiForceFreeform: () -> Unit,
     onZuiForceFixed: () -> Unit,
     onEdgeBubbleChanged: (Boolean) -> Unit,
+    onEdgeBubbleTriggerMarginPxChanged: (Int) -> Unit,
     onFloatMandatoryChanged: (Boolean) -> Unit,
     onSplitScreenMandatoryChanged: (Boolean) -> Unit,
     onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
@@ -615,6 +618,7 @@ private fun FreeformHubSettingsScreen(
                         onZuiForceFreeform = onZuiForceFreeform,
                         onZuiForceFixed = onZuiForceFixed,
                         onEdgeBubbleChanged = onEdgeBubbleChanged,
+                        onEdgeBubbleTriggerMarginPxChanged = onEdgeBubbleTriggerMarginPxChanged,
                         onFloatMandatoryChanged = onFloatMandatoryChanged,
                         onSplitScreenMandatoryChanged = onSplitScreenMandatoryChanged,
                         onFreeformFullscreenThresholdChanged = onFreeformFullscreenThresholdChanged,
@@ -648,6 +652,7 @@ private fun freeformHubSections(
     onZuiForceFreeform: () -> Unit,
     onZuiForceFixed: () -> Unit,
     onEdgeBubbleChanged: (Boolean) -> Unit,
+    onEdgeBubbleTriggerMarginPxChanged: (Int) -> Unit,
     onFloatMandatoryChanged: (Boolean) -> Unit,
     onSplitScreenMandatoryChanged: (Boolean) -> Unit,
     onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
@@ -785,6 +790,31 @@ private fun freeformHubSections(
                             )
                         )
                         if (state.edgeBubbleEnabled) {
+                            add(
+                                SettingItem.Slider(
+                                    key = "settings_detail_edge_bubble_margin",
+                                    title = stringResource(
+                                        R.string.settings_edge_bubble_trigger_margin_title
+                                    ),
+                                    summary = stringResource(
+                                        R.string.settings_edge_bubble_trigger_margin_summary
+                                    ),
+                                    value = state.edgeBubbleTriggerMarginPx.toFloat(),
+                                    valueText = stringResource(
+                                        R.string.settings_edge_bubble_trigger_margin_label,
+                                        state.edgeBubbleTriggerMarginPx
+                                    ),
+                                    valueRange =
+                                        FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_MIN.toFloat()..
+                                            FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_MAX.toFloat(),
+                                    steps = (FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_MAX -
+                                        FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_MIN) /
+                                        FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_STEP - 1,
+                                    onValueChange = {
+                                        onEdgeBubbleTriggerMarginPxChanged(it.toInt())
+                                    }
+                                )
+                            )
                             add(
                                 SettingItem.Custom(
                                     key = "deco_freeform_hub_edge_bubble_hint",

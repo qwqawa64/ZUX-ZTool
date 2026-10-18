@@ -349,6 +349,9 @@
     <string name="settings_edge_bubble_title">Floating window edge bubble</string>
     <string name="settings_edge_bubble_summary">Dragging a floating window past the screen edge docks it into a bubble; tap the bubble to restore. Takes effect after a system restart</string>
     <string name="settings_edge_bubble_hint">Keep ZTool resident in the background</string>
+    <string name="settings_edge_bubble_trigger_margin_title">Edge docking sensitivity</string>
+    <string name="settings_edge_bubble_trigger_margin_summary">Docks the floating window into a bubble when its edge is within this distance of the screen edge; larger values react sooner, 0 requires reaching the edge</string>
+    <string name="settings_edge_bubble_trigger_margin_label">%1$d px</string>
     <string name="edge_bubble_notification_channel">Floating window edge bubble</string>
     <string name="edge_bubble_notification_title">Floating window edge bubble active</string>
     <string name="edge_bubble_notification_text">Keep this service running to show edge bubbles</string>

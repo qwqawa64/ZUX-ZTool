@@ -40,6 +40,7 @@ class FreeformHubRepository(
             showZuiForceConfig = detail.showZuiForceConfig,
             forceFreeformEntryHookEnabled = detail.forceFreeformEntryHookEnabled,
             edgeBubbleEnabled = detail.edgeBubbleEnabled,
+            edgeBubbleTriggerMarginPx = detail.edgeBubbleTriggerMarginPx,
             floatMandatory = detail.floatMandatory,
             splitScreenMandatory = detail.splitScreenMandatory,
             freeformFullscreenThreshold = misc.freeformFullscreenThreshold,
@@ -95,6 +96,9 @@ class FreeformHubRepository(
 
     fun saveEdgeBubbleEnabled(enabled: Boolean) =
         settingsDetailRepository.saveEdgeBubbleEnabled(enabled)
+
+    fun saveEdgeBubbleTriggerMarginPx(px: Int) =
+        settingsDetailRepository.saveEdgeBubbleTriggerMarginPx(px)
 
     fun saveFreeformFullscreenThreshold(enabled: Boolean) =
         systemUiMiscSettingsRepository.saveFreeformFullscreenThreshold(enabled)

@@ -4,6 +4,7 @@ import android.os.Build
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.data.freeform.FreeformEdgeBubbleConfig
 import com.qimian233.ztool.data.settings.CustomizeAboutDeviceInfoRepository
 import com.qimian233.ztool.data.settings.OvConfigSelection
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
@@ -371,6 +372,7 @@ data class SettingsDetailUiState(
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
     val forceFreeformEntryHookEnabled: Boolean = false,
     val edgeBubbleEnabled: Boolean = false,
+    val edgeBubbleTriggerMarginPx: Int = FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_DEFAULT,
     val showRestartDialog: Boolean = false,
     val appDetail: Boolean = false,
     val appIconUnmask: Boolean = false,

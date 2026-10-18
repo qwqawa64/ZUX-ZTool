@@ -12,6 +12,7 @@ import androidx.core.content.edit
 import com.qimian233.ztool.EnhancedShellExecutor
 import com.qimian233.ztool.service.EdgeBubbleService
 import com.qimian233.ztool.data.features.FeatureDestination
+import com.qimian233.ztool.data.freeform.FreeformEdgeBubbleConfig
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.EmbeddingConfigManager
 import com.qimian233.ztool.utils.FontInstallerManager
@@ -48,6 +49,7 @@ class SettingsDetailRepository(
                 prefsUtils.loadBooleanSetting(KEY_LAUNCHER_FORCE_FREEFORM_ENTRY, false),
             edgeBubbleEnabled =
                 prefsUtils.loadBooleanSetting(KEY_FREEFORM_EDGE_BUBBLE, false),
+            edgeBubbleTriggerMarginPx = edgeBubbleTriggerMarginPx(),
             allowAddingLanguages = prefsUtils.loadBooleanSetting(KEY_ALLOW_ADDING_LANGUAGE, false)
         )
     }
@@ -81,6 +83,21 @@ class SettingsDetailRepository(
             Log.w("SettingsDetailRepository", "edge bubble service switch failed", t)
         }
     }
+
+    fun saveEdgeBubbleTriggerMarginPx(px: Int) {
+        prefsUtils.saveIntegerSetting(
+            KEY_FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX,
+            FreeformEdgeBubbleConfig.normalizeTriggerMarginPx(px)
+        )
+    }
+
+    private fun edgeBubbleTriggerMarginPx(): Int =
+        FreeformEdgeBubbleConfig.normalizeTriggerMarginPx(
+            prefsUtils.loadIntegerSetting(
+                KEY_FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX,
+                FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_DEFAULT
+            )
+        )
 
     fun saveRemoveBlacklist(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_REMOVE_BLACKLIST, enabled)
@@ -282,6 +299,8 @@ class SettingsDetailRepository(
         private val KEY_SETTINGS_APP_ICON_UNMASK = PreferenceKeys.SETTINGS_APP_ICON_UNMASK.name
         private val KEY_LAUNCHER_FORCE_FREEFORM_ENTRY = PreferenceKeys.LAUNCHER_FORCE_FREEFORM_ENTRY.name
         private val KEY_FREEFORM_EDGE_BUBBLE = PreferenceKeys.FREEFORM_EDGE_BUBBLE.name
+        private val KEY_FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX =
+            PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX.name
         private val KEY_ALLOW_ADDING_LANGUAGE = PreferenceKeys.ALLOW_ADD_LANGUAGE.name
     }
 }

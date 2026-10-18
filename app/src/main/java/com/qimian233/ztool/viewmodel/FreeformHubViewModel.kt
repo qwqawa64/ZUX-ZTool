@@ -3,6 +3,7 @@ package com.qimian233.ztool.viewmodel
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.data.freeform.FreeformEdgeBubbleConfig
 import com.qimian233.ztool.data.freeform.FreeformHubRepository
 import com.qimian233.ztool.data.settings.SettingsDetailRepository
 import com.qimian233.ztool.data.systemui.SystemUiMiscSettingsRepository
@@ -64,6 +65,12 @@ class FreeformHubViewModel(
     fun setEdgeBubbleEnabled(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(edgeBubbleEnabled = enabled)
         repository.saveEdgeBubbleEnabled(enabled)
+    }
+
+    fun setEdgeBubbleTriggerMarginPx(px: Int) {
+        val value = FreeformEdgeBubbleConfig.normalizeTriggerMarginPx(px)
+        _uiState.value = _uiState.value.copy(edgeBubbleTriggerMarginPx = value)
+        repository.saveEdgeBubbleTriggerMarginPx(value)
     }
 
     fun setFloatMandatory(enabled: Boolean) {
@@ -233,6 +240,7 @@ data class FreeformHubUiState(
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
     val forceFreeformEntryHookEnabled: Boolean = false,
     val edgeBubbleEnabled: Boolean = false,
+    val edgeBubbleTriggerMarginPx: Int = FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_DEFAULT,
     val floatMandatory: Boolean = false,
     val splitScreenMandatory: Boolean = false,
     val freeformFullscreenThreshold: Boolean = false,

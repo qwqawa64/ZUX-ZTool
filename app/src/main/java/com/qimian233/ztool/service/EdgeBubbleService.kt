@@ -18,6 +18,7 @@ import android.util.Log
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.freeform.FreeformEdgeBubbleConfig
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.FreeformBubbleBridge
 import com.qimian233.ztool.utils.ModulePreferencesUtils
@@ -38,10 +39,8 @@ class EdgeBubbleService : Service() {
         private const val BASE_CENTER_Y_RATIO = 0.35f
         private const val CENTER_Y_STAGGER_RATIO = 0.15f
         private const val POLL_INTERVAL_MS = 600L
-        /** Window flush to the display edge within this margin triggers a bubble. */
-        private const val EDGE_TOUCH_MARGIN_PX = 48
-        /** Small cooldown after a bubble restore; the hook now nudges restored
-         *  bounds 96px inward, clear of the 48px edge-trigger zone. */
+        /** Small cooldown after a bubble restore; the hook nudges restored bounds
+         *  clear of the configured edge-trigger zone. */
         private const val RESTORE_COOLDOWN_MS = 1000L
 
         /**
@@ -69,6 +68,7 @@ class EdgeBubbleService : Service() {
     private val bubblePrefs by lazy {
         getSharedPreferences("edge_bubble_pos", MODE_PRIVATE)
     }
+    private val prefsUtils by lazy { ModulePreferencesUtils(this) }
     private var polling = false
     private var realDisplayWidth = 0
     private var realDisplayHeight = 0
@@ -142,6 +142,7 @@ class EdgeBubbleService : Service() {
     private fun handleFreeformTasks(tasks: List<FreeformBubbleBridge.FreeformTask>) {
         if (!polling) return
         val now = SystemClock.elapsedRealtime()
+        val marginPx = triggerMarginPx()
         // Present = still a freeform task, visible OR docked-hidden. A docked task
         // must keep its bubble; only leaving freeform entirely removes it.
         val presentIds = HashSet<Int>()
@@ -149,8 +150,8 @@ class EdgeBubbleService : Service() {
             presentIds.add(task.taskId)
             if (task.hidden) continue // docked behind home: bubble is already up
             val side = when {
-                task.bounds.left <= EDGE_TOUCH_MARGIN_PX -> 0
-                realDisplayWidth - task.bounds.right <= EDGE_TOUCH_MARGIN_PX -> 1
+                task.bounds.left <= marginPx -> 0
+                realDisplayWidth - task.bounds.right <= marginPx -> 1
                 else -> -1
             }
             val cooledDown = now - (restoredAt[task.taskId] ?: 0L) >= RESTORE_COOLDOWN_MS
@@ -178,6 +179,15 @@ class EdgeBubbleService : Service() {
     /** Remembered vertical ratio for a task's bubble (0..1 of screen height). */
     private fun storedCenterYRatio(taskId: Int): Float =
         bubblePrefs.getFloat("cy_$taskId", Float.NaN)
+
+    /** Current edge-trigger distance; re-read every poll so slider changes apply live. */
+    private fun triggerMarginPx(): Int =
+        FreeformEdgeBubbleConfig.normalizeTriggerMarginPx(
+            prefsUtils.loadIntegerSetting(
+                PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX.name,
+                FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_DEFAULT
+            )
+        )
 
     private fun reconcileExisting() {
         if (bubbles.isNotEmpty()) return
