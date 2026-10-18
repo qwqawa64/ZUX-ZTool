@@ -253,6 +253,44 @@ Interception points found while adding the letter sections:
 * `RecyclerView$ViewHolder.itemView` is a public field, reachable by `getField` on the class the
   host's classloader holds.
 
+### 4.2.2 Panel theming and the colour anchors a hook can use
+
+The app **never branches on `Configuration.UI_MODE_NIGHT` in code** (no reference anywhere in the
+dex). Every light/dark difference therefore comes from resource qualifiers or from the theme the
+views were inflated with, and the only faithful way to follow the panel is to read the colours the
+host itself resolves.
+
+* `drawer_layout` (top-5 drawer) takes `android:background="@drawable/popup_background_zui"` from
+  `res/OS.xml` **at inflation time**, i.e. once per service process. `allapp_rl` carries the same
+  drawable in XML and `showAllAppWindow()` re-applies it with `getResources().getDrawable(...)` on
+  every show.
+* `FloatService.onConfigurationChanged()` only rebuilds the edge handle (`updateFloatingWindow()` →
+  `showFloatingWindow()`); it never re-inflates or re-tints the popup. A ZUI theme switch arrives as
+  `com.zui.intent.action.THEME_CHANGED` in `FloatService$ThemeReceiver` and is used for app icons
+  only.
+* `Theme.ZuiFreeformBar` (`0x7f11028e`) is the app theme. The vendored ZUI toolkit ships explicit
+  `.Dark` style variants (`Widget.Zui.ListView.Dialog.Dark`, `Theme.Zui.MessageDialog.Dark`, …)
+  rather than night qualifiers, so resolving a colour *with* the theme
+  (`Resources.getColorStateList(id, theme)`) is what mirrors the host.
+
+Colour resources in `com.zui.freeform.sidebar` that a hook can resolve at runtime:
+
+| Resource | ID | Host use |
+|---|---|---|
+| `color/grid_pkg_name_color` | `0x7f0600d3` | `appname_tv` text colour in `appgriditem` — the panel's primary text colour |
+| `color/alphabetic_index_bar_text_color` | `0x7f060028` | letter colour of `zui.widget.AlphabeticIndexBar` (resolved with the theme) |
+| `color/alphabetic_index_bar_focused_text_color` | `0x7f060025` | focused letter colour |
+| `color/alphabetic_index_bar_focused_background` | `0x7f060024` | focused disc behind that letter |
+| `color/alphabetic_index_bar_hint_text_color` | `0x7f060027` | popup hint text |
+| `color/alphabetic_index_bar_background` | `0x7f060023` | bar background |
+| `drawable/popup_background_zui` | `0x7f0801ad` | the popup background of both panels |
+
+`SidebarPalette` (ZTool) uses `grid_pkg_name_color` as the panel's primary colour and derives every
+fill from it at a low alpha, and takes the rail's three colours from the index-bar resources so the
+replacement rail matches the bar it hides. If a resource cannot be resolved the palette falls back to
+the `uiMode` night flag. The chrome is re-tinted from `FloatService.onConfigurationChanged` and from
+`FloatService$ThemeReceiver.onReceive`.
+
 
 ### 4.3 The app list
 

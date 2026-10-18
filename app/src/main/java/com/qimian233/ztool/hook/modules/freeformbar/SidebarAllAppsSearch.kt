@@ -17,9 +17,8 @@ import com.qimian233.ztool.hook.base.ModuleLog
  * The all-apps panel's own chrome: a search field pinned to the top of the panel and a hint shown
  * while a query matches nothing.
  *
- * The field is added once, because the panel's view tree is inflated once per service process;
- * every later panel show only clears the query. Each sibling of the field is pushed below it, so
- * the grid and the A–Z rail keep the space they had.
+ * The field is added once per process and re-tinted on later shows; each sibling is pushed below it
+ * so the grid and the A–Z rail keep their space.
  */
 internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
 
@@ -31,20 +30,32 @@ internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
     /** The installed field, for callers that have to keep it out of the panel's hover handling. */
     val view: View? get() = inputField
 
-    fun attach(panel: ViewGroup, query: (String) -> Unit) {
+    fun attach(panel: ViewGroup, colors: SidebarPalette, query: (String) -> Unit) {
         onQuery = query
         val existing = inputField
         if (existing != null && existing.parent === panel) {
+            applyPalette(colors)
             existing.visibility = View.VISIBLE
             clear()
             return
         }
-        val input = existing ?: buildField(panel).also { inputField = it }
+        val input = existing ?: buildField(panel, colors).also { inputField = it }
         if (input.parent == null) panel.addView(input, 0)
+        applyPalette(colors)
         input.visibility = View.VISIBLE
         pushSiblingsBelow(panel, input)
-        installEmptyView(panel)
+        installEmptyView(panel, colors)
         clear()
+    }
+
+    /** Re-tints the field and the hint for the panel's current theme. */
+    fun applyPalette(colors: SidebarPalette) {
+        inputField?.let { input ->
+            input.setTextColor(colors.textPrimary)
+            input.setHintTextColor(colors.textHint)
+            input.background = pill(input.resources.displayMetrics.density, colors.fieldFill)
+        }
+        emptyView?.setTextColor(colors.textHint)
     }
 
     /** Hides the field without dropping it, so its `layout_below` anchors stay resolvable. */
@@ -66,7 +77,7 @@ internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
         silent = false
     }
 
-    private fun buildField(panel: ViewGroup): EditText {
+    private fun buildField(panel: ViewGroup, colors: SidebarPalette): EditText {
         val context = panel.context
         val density = context.resources.displayMetrics.density
         val input = EditText(context).apply {
@@ -74,13 +85,13 @@ internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
             hint = SidebarStrings.get(
                 context, SidebarStrings.STRING_SEARCH_HINT, SidebarStrings.FALLBACK_SEARCH_HINT
             )
-            setHintTextColor(HINT_COLOR)
-            setTextColor(TEXT_COLOR)
+            setHintTextColor(colors.textHint)
+            setTextColor(colors.textPrimary)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, TEXT_SP)
             isSingleLine = true
             inputType = InputType.TYPE_CLASS_TEXT
             imeOptions = EditorInfo.IME_ACTION_SEARCH or EditorInfo.IME_FLAG_NO_EXTRACT_UI
-            background = pill(density)
+            background = pill(density, colors.fieldFill)
             setPadding(
                 (PAD_H_DP * density).toInt(), (PAD_V_DP * density).toInt(),
                 (PAD_H_DP * density).toInt(), (PAD_V_DP * density).toInt()
@@ -110,14 +121,18 @@ internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
         }
     }
 
-    private fun installEmptyView(panel: ViewGroup) {
-        if (emptyView != null) return
+    private fun installEmptyView(panel: ViewGroup, colors: SidebarPalette) {
+        val existing = emptyView
+        if (existing != null) {
+            existing.setTextColor(colors.textHint)
+            return
+        }
         val context = panel.context
         val label = TextView(context).apply {
             text = SidebarStrings.get(
                 context, SidebarStrings.STRING_EMPTY, SidebarStrings.FALLBACK_EMPTY
             )
-            setTextColor(HINT_COLOR)
+            setTextColor(colors.textHint)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, TEXT_SP)
             visibility = View.GONE
             isClickable = false
@@ -141,10 +156,10 @@ internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
         }
     }
 
-    private fun pill(density: Float): GradientDrawable = GradientDrawable().apply {
+    private fun pill(density: Float, fill: Int): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         cornerRadius = CORNER_DP * density
-        setColor(FIELD_FILL)
+        setColor(fill)
     }
 
     private companion object {
@@ -153,8 +168,5 @@ internal class SidebarAllAppsSearch(private val logger: ModuleLog) {
         const val PAD_V_DP = 8f
         const val MARGIN_DP = 12f
         const val TEXT_SP = 13f
-        const val FIELD_FILL = 0x1FFFFFFF
-        val TEXT_COLOR = 0xFFFFFFFF.toInt()
-        val HINT_COLOR = 0x80FFFFFF.toInt()
     }
 }

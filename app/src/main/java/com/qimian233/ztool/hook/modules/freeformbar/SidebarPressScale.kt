@@ -20,11 +20,14 @@ internal object SidebarPressScale {
 
     private const val SCALE = 0.88f
     private const val DURATION = 90L
-    private const val HIGHLIGHT_COLOR = 0x33FFFFFF
+    private const val HIGHLIGHT_FALLBACK = 0x33FFFFFF
     private const val HIGHLIGHT_CORNER_DP = 12f
 
     /** Set once by the hook so the press path can be traced. */
     var logger: ModuleLog? = null
+
+    /** The palette of the panel currently on screen, refreshed whenever the host re-shows it. */
+    var palette: SidebarPalette? = null
 
     private var iconId = 0
     private var pressedIcon: View? = null
@@ -116,6 +119,6 @@ internal object SidebarPressScale {
     private fun highlight(container: View): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         cornerRadius = HIGHLIGHT_CORNER_DP * container.resources.displayMetrics.density
-        setColor(HIGHLIGHT_COLOR)
+        setColor(palette?.pressHighlight ?: HIGHLIGHT_FALLBACK)
     }
 }

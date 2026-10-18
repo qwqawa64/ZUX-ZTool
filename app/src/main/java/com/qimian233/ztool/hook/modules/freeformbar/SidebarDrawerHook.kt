@@ -46,7 +46,6 @@ class SidebarDrawerHook : AppHookModule() {
     private var allAppsSearch: SidebarAllAppsSearch? = null
     private var spanHookInstalled = false
     private var memberCount: Int = 0
-    private var footStyled = false
     private var paddingBalanced = false
     private var drawerWidth: Int = 0
     private var footViewField: Field? = null
@@ -95,6 +94,7 @@ class SidebarDrawerHook : AppHookModule() {
         allAppsGrid = SidebarAllAppsGrid(hostPackage, classLoader, logger)
         allAppsSearch = SidebarAllAppsSearch(logger)
         installAllAppsHooks(classLoader)
+        installChromeRefreshHooks(classLoader, floatServiceClass)
 
         hookWithId(generateTop5App, "sidebar_drawer_top5") { chain ->
             val context = chain.args[0] as? Context ?: return@hookWithId chain.proceed()
@@ -267,6 +267,60 @@ class SidebarDrawerHook : AppHookModule() {
         }.onFailure { logger.warn("could not span the letter headings: " + it.message) }
     }
 
+    /**
+     * Re-tints the chrome on the two signals that can change the panel's theme: a configuration
+     * change (light/dark) and the host's ZUI theme broadcast.
+     */
+    private fun installChromeRefreshHooks(classLoader: ClassLoader, floatServiceClass: Class<*>) {
+        runCatching {
+            val onConfigurationChanged = findMethod(
+                floatServiceClass, "onConfigurationChanged",
+                android.content.res.Configuration::class.java
+            )
+            hookWithId(onConfigurationChanged, "sidebar_drawer_config") { chain ->
+                val result = chain.proceed()
+                (chain.thisObject as? Context)?.let { context ->
+                    runCatching { refreshChrome(context) }
+                        .onFailure { logger.warn("chrome refresh failed: " + it.message) }
+                }
+                result
+            }
+        }.onFailure { logger.warn("could not hook onConfigurationChanged: " + it.message) }
+
+        runCatching {
+            val receiverClass =
+                classLoader.loadClass($$"com.zui.freeform.sidebar.FloatService$ThemeReceiver")
+            val onReceive = findMethod(
+                receiverClass, "onReceive",
+                Context::class.java, android.content.Intent::class.java
+            )
+            hookWithId(onReceive, "sidebar_drawer_theme") { chain ->
+                val result = chain.proceed()
+                (chain.args[0] as? Context)?.let { context ->
+                    runCatching { refreshChrome(context) }
+                        .onFailure { logger.warn("chrome refresh failed: " + it.message) }
+                }
+                result
+            }
+        }.onFailure { logger.warn("could not hook the theme receiver: " + it.message) }
+    }
+
+    /** Re-applies the palette to every piece of chrome that outlives a single panel show. */
+    private fun refreshChrome(context: Context) {
+        val palette = paletteFor(context)
+        SidebarPressScale.palette = palette
+        adapter?.applyPalette(palette)
+        adapter?.notifyDataSetChanged()
+        allAppsGrid?.applyPalette(palette)
+        allAppsGrid?.notifyChanged()
+        allAppsSearch?.applyPalette(palette)
+        styleFootView(context, palette)
+        refreshRail(context, palette)
+    }
+
+    private fun paletteFor(context: Context): SidebarPalette =
+        SidebarPalette.of(context, hostPackage)
+
     /** The drawer-open path is an R8 lambda, so match it by prefix instead of by name. */
     private fun findDrawerOpenMethod(floatServiceClass: Class<*>): Method? =
         floatServiceClass.declaredMethods.firstOrNull {
@@ -356,7 +410,9 @@ class SidebarDrawerHook : AppHookModule() {
             logger.warn("drawer ListView not found, leaving the host adapter in place")
             return
         }
+        val palette = paletteFor(context)
         SidebarPressScale.logger = logger
+        SidebarPressScale.palette = palette
         balanceListPadding(listView)
         // The host restores its own views when the popup goes away, so a drawer reopened while
         // editing would come back in the edit layout with no panel to edit in.
@@ -365,9 +421,11 @@ class SidebarDrawerHook : AppHookModule() {
             leaveEditMode(context)
         }
         val drawerAdapter = adapter
-            ?: SidebarDrawerAdapter(context, hostPackage, editable(), callbacks(context), logger)
-                .also { adapter = it }
-        styleFootView(context)
+            ?: SidebarDrawerAdapter(
+                context, hostPackage, editable(), callbacks(context), palette, logger
+            ).also { adapter = it }
+        drawerAdapter.applyPalette(palette)
+        styleFootView(context, palette)
         // The host re-attaches its own capped adapter and listener every time the drawer opens,
         // so both are re-asserted rather than only pushing data into the existing instance.
         if (currentAdapter(listView) !== drawerAdapter) {
@@ -413,21 +471,19 @@ class SidebarDrawerHook : AppHookModule() {
      * Gives the host's "more" footer the same rounded tile the empty slots use, inset to the same
      * size so the two line up exactly.
      */
-    private fun styleFootView(context: Context) {
-        if (footStyled) return
+    private fun styleFootView(context: Context, palette: SidebarPalette) {
         val footer = footViewField?.get(context) as? android.view.ViewGroup ?: return
         val tile = adapter?.iconSize ?: return
         for (index in 0 until footer.childCount) {
             val icon = footer.getChildAt(index) as? android.widget.ImageView ?: continue
             val size = icon.layoutParams?.width?.takeIf { it > 0 } ?: tile
             val inset = ((size - tile) / 2).coerceAtLeast(0)
-            val disc = SidebarTiles.tile(SidebarTiles.SLOT_FILL, tile)
+            val disc = SidebarTiles.tile(palette.slotFill, tile)
             icon.background = if (inset > 0) {
                 android.graphics.drawable.InsetDrawable(disc, inset, inset, inset, inset)
             } else {
                 disc
             }
-            footStyled = true
         }
     }
 
@@ -517,6 +573,7 @@ class SidebarDrawerHook : AppHookModule() {
     private fun reapplyEditChrome(context: Context) {
         val drawerAdapter = adapter ?: return
         val grid = appIconGvField?.get(context) as? android.view.ViewGroup ?: return
+        SidebarPressScale.palette = paletteFor(context)
         if (drawerAdapter.isEditMode()) {
             applyEditLayout(context, true)
             refreshBadges(context)
@@ -538,31 +595,37 @@ class SidebarDrawerHook : AppHookModule() {
         val panel = allAppLayoutField?.get(context) as? android.view.ViewGroup ?: return
         val grid = appIconGvField?.get(context) as? android.view.View ?: return
         val apps = appAllListField?.get(context) as? List<Any> ?: emptyList()
+        val palette = paletteFor(context)
+        SidebarPressScale.palette = palette
         val gridImpl = allAppsGrid
         val adapter = runCatching { grid.javaClass.getMethod("getAdapter").invoke(grid) }.getOrNull()
         if (gridImpl != null && adapter != null && apps.isNotEmpty()) {
             val sections = sections() && gridImpl.canRenderHeaders
-            gridImpl.adopt(context, adapter, apps, sections)
+            gridImpl.adopt(context, adapter, apps, sections, palette)
             if (sections) installSpanHook(context)
         } else {
             gridImpl?.release()
         }
-        installSearch(context, panel)
-        refreshRail(context)
+        installSearch(context, panel, palette)
+        refreshRail(context, palette)
         updateEmptyHint()
     }
 
-    private fun installSearch(context: Context, panel: android.view.ViewGroup) {
+    private fun installSearch(
+        context: Context,
+        panel: android.view.ViewGroup,
+        palette: SidebarPalette
+    ) {
         val search = allAppsSearch ?: return
         if (!searchEnabled()) {
             search.detach()
             return
         }
-        search.attach(panel) { query ->
+        search.attach(panel, palette) { query ->
             runCatching {
                 allAppsGrid?.filter(query)
                 updateEmptyHint()
-                refreshRail(context)
+                refreshRail(context, palette)
                 // The badges are not refreshed here: their membership set costs a full pinyin sort
                 // of every installed app, and the decorator's own layout listener re-derives each
                 // badge from the new positions anyway.
@@ -582,7 +645,7 @@ class SidebarDrawerHook : AppHookModule() {
     }
 
     /** Builds the A–Z rail from the panel's current sections and hides the host's crashing one. */
-    private fun refreshRail(context: Context) {
+    private fun refreshRail(context: Context, palette: SidebarPalette) {
         val rail = indexRail ?: return
         val panel = allAppLayoutField?.get(context) as? android.view.ViewGroup ?: return
         val grid = appIconGvField?.get(context) as? android.view.View ?: return
@@ -593,7 +656,7 @@ class SidebarDrawerHook : AppHookModule() {
         }
         // Explicit: some ZUI builds turn the platform's stretch overscroll off by default.
         grid.overScrollMode = android.view.View.OVER_SCROLL_ALWAYS
-        rail.attach(panel, grid, source)
+        rail.attach(panel, grid, source, palette)
     }
 
     /** Re-reads the host's all-apps list, e.g. after a package was installed or removed. */
@@ -601,9 +664,11 @@ class SidebarDrawerHook : AppHookModule() {
         val grid = allAppsGrid ?: return
         if (!grid.isAdopted()) return
         val apps = appAllListField?.get(context) as? List<Any> ?: return
+        val palette = paletteFor(context)
+        grid.applyPalette(palette)
         grid.refresh(apps)
         updateEmptyHint()
-        refreshRail(context)
+        refreshRail(context, palette)
     }
 
     /**

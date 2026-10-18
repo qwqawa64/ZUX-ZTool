@@ -1,7 +1,6 @@
 package com.qimian233.ztool.hook.modules.freeformbar
 
 import android.content.Context
-import android.graphics.Color
 import android.graphics.drawable.StateListDrawable
 import android.view.Gravity
 import android.view.MotionEvent
@@ -27,6 +26,7 @@ internal class SidebarDrawerAdapter(
     private val hostPackage: String,
     private val editable: Boolean,
     private val callbacks: DrawerCallbacks,
+    private var palette: SidebarPalette,
     private val logger: ModuleLog
 ) : BaseAdapter() {
 
@@ -75,6 +75,11 @@ internal class SidebarDrawerAdapter(
     }
 
     fun isEditMode(): Boolean = editMode
+
+    /** Swaps in the palette of the theme the host is currently drawing the panel with. */
+    fun applyPalette(colors: SidebarPalette) {
+        palette = colors
+    }
 
     /** Marks the row being dragged, or -1 when no drag is running. */
     fun setDraggingIndex(index: Int) {
@@ -129,7 +134,7 @@ internal class SidebarDrawerAdapter(
             setPadding(0, padTop, 0, padTop)
         }
         row.addView(View(context).apply {
-            background = SidebarTiles.tile(SidebarTiles.SLOT_FILL, iconSize)
+            background = SidebarTiles.tile(palette.slotFill, iconSize)
             layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
         })
         return row
@@ -137,7 +142,9 @@ internal class SidebarDrawerAdapter(
 
     private fun actionRow(): View {
         val label = if (editMode) doneLabel else editLabel
-        val icon = SidebarIcons.get(context, if (editMode) SidebarIcons.DONE else SidebarIcons.EDIT)
+        val icon = SidebarIcons.get(
+            context, if (editMode) SidebarIcons.DONE else SidebarIcons.EDIT, palette.textPrimary
+        )
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
@@ -149,7 +156,7 @@ internal class SidebarDrawerAdapter(
         if (icon == null) {
             row.addView(TextView(context).apply {
                 text = label
-                setTextColor(Color.WHITE)
+                setTextColor(palette.textPrimary)
                 textSize = 13f
                 gravity = Gravity.CENTER
             })
@@ -180,13 +187,13 @@ internal class SidebarDrawerAdapter(
         return row
     }
 
-    /** The slot tile's shape, darkened, plus a pressed state. */
+    /** The slot tile's shape, shaded for the button, plus a pressed state. */
     private fun buttonBackground(size: Int): StateListDrawable = StateListDrawable().apply {
         addState(
             intArrayOf(android.R.attr.state_pressed),
-            SidebarTiles.tile(SidebarTiles.BUTTON_FILL_PRESSED, size)
+            SidebarTiles.tile(palette.buttonFillPressed, size)
         )
-        addState(intArrayOf(), SidebarTiles.tile(SidebarTiles.BUTTON_FILL, size))
+        addState(intArrayOf(), SidebarTiles.tile(palette.buttonFill, size))
     }
 
     private fun appRow(app: Any, alreadyVisible: Boolean, index: Int): View {

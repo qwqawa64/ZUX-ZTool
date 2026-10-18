@@ -44,6 +44,7 @@ internal class SidebarAllAppsGrid(
     private var binding = false
     private var iconId = 0
     private var labelId = 0
+    private var palette: SidebarPalette? = null
 
     /** False when the host's item view cannot be reached, which leaves headings unrenderable. */
     val canRenderHeaders: Boolean get() = itemViewField != null
@@ -72,15 +73,27 @@ internal class SidebarAllAppsGrid(
     }
 
     /** Takes over [candidate] for the app list the panel was just built from. */
-    fun adopt(context: Context, candidate: Any, apps: List<Any>, sections: Boolean) {
+    fun adopt(
+        context: Context,
+        candidate: Any,
+        apps: List<Any>,
+        sections: Boolean,
+        colors: SidebarPalette
+    ) {
         adapter = candidate
         this.apps = apps
         this.sections = sections
+        this.palette = colors
         query = ""
         iconId = context.resources.getIdentifier("appicon_iv", "id", hostPackage)
         labelId = context.resources.getIdentifier("appname_tv", "id", hostPackage)
         model.forget()
         model.submit(apps, query, sections)
+    }
+
+    /** Swaps in the palette of the theme the host is currently drawing the panel with. */
+    fun applyPalette(colors: SidebarPalette) {
+        palette = colors
     }
 
     fun filter(newQuery: String) {
@@ -161,7 +174,7 @@ internal class SidebarAllAppsGrid(
         val density = item.resources.displayMetrics.density
         label.text = letter
         label.setTextSize(TypedValue.COMPLEX_UNIT_SP, HEADER_SP)
-        label.setTextColor(HEADER_COLOR)
+        label.setTextColor(palette?.header ?: HEADER_FALLBACK)
         label.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         label.includeFontPadding = false
         label.setPadding(
@@ -186,6 +199,8 @@ internal class SidebarAllAppsGrid(
         const val HEADER_SP = 12f
         const val HEADER_TOP_DP = 6f
         const val HEADER_BOTTOM_DP = 2f
-        const val HEADER_COLOR = 0xB3FFFFFF.toInt()
+
+        /** Used only when no palette has been resolved yet. */
+        const val HEADER_FALLBACK = 0xB3FFFFFF.toInt()
     }
 }

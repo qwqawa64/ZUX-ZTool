@@ -1,7 +1,6 @@
 package com.qimian233.ztool.hook.modules.freeformbar
 
 import android.content.Context
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.MotionEvent
@@ -49,13 +48,24 @@ internal class SidebarIndexRail(
     private var positions: List<Int> = emptyList()
     private var itemHeight: Int = 0
     private var focused: Int = -1
+    private var inactiveColor: Int = DEFAULT_INACTIVE
+    private var focusedColor: Int = DEFAULT_FOCUSED
+    private var focusFillColor: Int = DEFAULT_FOCUS_FILL
     private val letterViews = ArrayList<TextView>()
     private var scrollListener: ViewTreeObserver.OnScrollChangedListener? = null
 
     /** Builds or refreshes the rail for the panel's current sections. */
-    fun attach(panel: ViewGroup, grid: View, source: SidebarLetterSource) {
+    fun attach(
+        panel: ViewGroup,
+        grid: View,
+        source: SidebarLetterSource,
+        colors: SidebarPalette
+    ) {
         this.grid = grid
         this.source = source
+        inactiveColor = colors.railInactive
+        focusedColor = colors.railFocusedText
+        focusFillColor = colors.railFocusFill
         val groups = source.groups()
         letters = groups.map { it.first }
         positions = groups.map { it.second }
@@ -135,7 +145,7 @@ internal class SidebarIndexRail(
                 text = letter
                 textSize = LETTER_SP
                 gravity = Gravity.CENTER
-                setTextColor(INACTIVE)
+                setTextColor(inactiveColor)
                 // Without this the glyph sits low in its box, so a centred disc looks high.
                 includeFontPadding = false
                 layoutParams = LinearLayout.LayoutParams(itemHeight, itemHeight)
@@ -153,7 +163,7 @@ internal class SidebarIndexRail(
     }
 
     private fun style(view: TextView, active: Boolean, animate: Boolean) {
-        view.setTextColor(if (active) Color.WHITE else INACTIVE)
+        view.setTextColor(if (active) focusedColor else inactiveColor)
         view.background = if (active) focusBubble() else null
         val scale = if (active) FOCUSED_SCALE else 1f
         if (animate) {
@@ -166,7 +176,7 @@ internal class SidebarIndexRail(
 
     private fun focusBubble(): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.OVAL
-        setColor(FOCUS_FILL)
+        setColor(focusFillColor)
     }
 
     private fun onTouch(view: View, event: MotionEvent): Boolean {
@@ -219,7 +229,10 @@ internal class SidebarIndexRail(
         /** Kept small: the glyph has to stay inside the disc drawn behind it. */
         const val FOCUSED_SCALE = 1.12f
         const val FOCUS_ANIM_MS = 90L
-        const val INACTIVE = 0x99FFFFFF.toInt()
-        const val FOCUS_FILL = 0x59FFFFFF
+
+        /** Used only before the first [attach], i.e. when no palette has been resolved yet. */
+        const val DEFAULT_INACTIVE = 0x99FFFFFF.toInt()
+        const val DEFAULT_FOCUSED = 0xFFFFFFFF.toInt()
+        const val DEFAULT_FOCUS_FILL = 0x59FFFFFF
     }
 }
