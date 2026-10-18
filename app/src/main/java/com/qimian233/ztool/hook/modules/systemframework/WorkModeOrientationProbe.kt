@@ -4,15 +4,16 @@ import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
+import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Read-only probe for ZUI PC/work-mode orientation decisions.
+ * Probe and opt-in experiment for ZUI PC/work-mode orientation.
  *
- * Logs the launch-param and window-container orientation choices plus the
- * display-rotation freezes so the caller that forces landscape can be found.
- * It never changes behaviour. The module reports as `test_hook`, so it is
- * always enabled while installed.
+ * Logs PC-mode force-orientation, launch-param and display-rotation decisions.
+ * When `debug.ztool.pc_portrait` is `1`, rotation-90 freezes are skipped so the
+ * work desktop can follow the sensor; without the flag behaviour is unchanged.
+ * The module reports as `test_hook`, so it is always enabled while installed.
  */
 class WorkModeOrientationProbe : SystemHookModule() {
 
@@ -24,6 +25,21 @@ class WorkModeOrientationProbe : SystemHookModule() {
     private val landscapeLogCount = AtomicInteger(0)
 
     private val launchLogCount = AtomicInteger(0)
+
+    private val overrideLogCount = AtomicInteger(0)
+
+    private val systemPropertiesGet: Method? by lazy {
+        runCatching {
+            Class.forName("android.os.SystemProperties")
+                .getMethod("get", String::class.java)
+        }.getOrNull()
+    }
+
+    @Volatile
+    private var pcMode = false
+
+    @Volatile
+    private var pcModeCheckedAt = 0L
 
     @Throws(Throwable::class)
     override fun handleSystemServerStarting(param: SystemServerStartingParam) {
@@ -100,6 +116,27 @@ class WorkModeOrientationProbe : SystemHookModule() {
                 Int::class.javaPrimitiveType, containerClass)
             val getOverrideOrientation = findMethod(
                 containerClass, "getOverrideOrientation")
+            val setOverrideOrientation = findMethod(
+                containerClass, "setOverrideOrientation", Int::class.javaPrimitiveType)
+
+            hookWithId(setOverrideOrientation, "probe_set_override_orientation") { chain ->
+                val orientation = chain.args[0] as Int
+                if (orientation == LANDSCAPE && isPcMode()) {
+                    val count = overrideLogCount.incrementAndGet()
+                    if (count <= MAX_OVERRIDE_LOGS) {
+                        logger.info(
+                            "setOverrideOrientation(LANDSCAPE) on " +
+                                "${describe(chain.thisObject)}\n" + callerStack()
+                        )
+                    } else if (count == MAX_OVERRIDE_LOGS + 1) {
+                        logger.warn(
+                            "setOverrideOrientation probe limit ($MAX_OVERRIDE_LOGS) reached, " +
+                                "further logs suppressed"
+                        )
+                    }
+                }
+                chain.proceed()
+            }
 
             hookWithId(setOrientation, "probe_window_set_orientation") { chain ->
                 val orientation = chain.args[0] as Int
@@ -141,11 +178,19 @@ class WorkModeOrientationProbe : SystemHookModule() {
                 Int::class.javaPrimitiveType,
                 String::class.java)
             hookWithId(freeze, "probe_freeze_display_rotation") { chain ->
+                val rotation = chain.args[1] as Int
                 logger.info(
                     "freezeDisplayRotation(display=${chain.args[0]}, " +
-                        "rotation=${rotationName(chain.args[1] as Int)}, " +
+                        "rotation=${rotationName(rotation)}, " +
                         "reason=${chain.args[2]})\n" + callerStack()
                 )
+                if (isPortraitExperimentEnabled() && isPcMode() && rotation == ROTATION_90) {
+                    logger.warn(
+                        "Portrait experiment: skipped freeze at ROTATION_90 " +
+                            "(reason=${chain.args[2]})"
+                    )
+                    return@hookWithId null
+                }
                 chain.proceed()
             }
 
@@ -168,11 +213,21 @@ class WorkModeOrientationProbe : SystemHookModule() {
                 Int::class.javaPrimitiveType,
                 String::class.java)
             hookWithId(setUserRotation, "probe_set_user_rotation") { chain ->
+                val mode = chain.args[0] as Int
+                val rotation = chain.args[1] as Int
                 logger.info(
-                    "setUserRotation(mode=${chain.args[0]}, " +
-                        "rotation=${rotationName(chain.args[1] as Int)}, " +
+                    "setUserRotation(mode=$mode, " +
+                        "rotation=${rotationName(rotation)}, " +
                         "reason=${chain.args[2]})"
                 )
+                if (isPortraitExperimentEnabled() && isPcMode() &&
+                    mode == USER_ROTATION_LOCKED && rotation == ROTATION_90
+                ) {
+                    logger.warn(
+                        "Portrait experiment: skipped setUserRotation(LOCKED, ROTATION_90)"
+                    )
+                    return@hookWithId null
+                }
                 chain.proceed()
             }
 
@@ -188,6 +243,21 @@ class WorkModeOrientationProbe : SystemHookModule() {
             logger.error("Probe: display-rotation hooks not installed", t)
         }
     }
+
+    private fun systemProperty(key: String): String? =
+        runCatching { systemPropertiesGet?.invoke(null, key) as? String }.getOrNull()
+
+    private fun isPcMode(): Boolean {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - pcModeCheckedAt > 2000L) {
+            pcMode = systemProperty("persist.sys.zui.pcmode") == "1"
+            pcModeCheckedAt = now
+        }
+        return pcMode
+    }
+
+    private fun isPortraitExperimentEnabled(): Boolean =
+        systemProperty("debug.ztool.pc_portrait") == "1"
 
     private fun describe(target: Any?): String {
         if (target == null) return "null"
@@ -241,7 +311,10 @@ class WorkModeOrientationProbe : SystemHookModule() {
     private companion object {
         const val LANDSCAPE = 0
         const val UNSPECIFIED = -1
+        const val ROTATION_90 = 1
+        const val USER_ROTATION_LOCKED = 1
         const val MAX_LANDSCAPE_LOGS = 120
         const val MAX_LAUNCH_LOGS = 200
+        const val MAX_OVERRIDE_LOGS = 100
     }
 }
