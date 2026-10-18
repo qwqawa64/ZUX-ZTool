@@ -11,8 +11,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * Probe and opt-in experiment for ZUI PC/work-mode orientation.
  *
  * Logs PC-mode force-orientation, launch-param and display-rotation decisions.
- * When `debug.ztool.pc_portrait` is `1`, rotation-90 freezes are skipped so the
- * work desktop can follow the sensor; without the flag behaviour is unchanged.
+ * When `debug.ztool.pc_portrait` is `1`, rotation-90 freezes are skipped and the
+ * PC-mode landscape override is bypassed, so the work desktop can follow the
+ * sensor; without the flag behaviour is unchanged.
  * The module reports as `test_hook`, so it is always enabled while installed.
  */
 class WorkModeOrientationProbe : SystemHookModule() {
@@ -28,6 +29,8 @@ class WorkModeOrientationProbe : SystemHookModule() {
 
     private val overrideLogCount = AtomicInteger(0)
 
+    private val overrideShortCircuitLogs = AtomicInteger(0)
+
     private val systemPropertiesGet: Method? by lazy {
         runCatching {
             Class.forName("android.os.SystemProperties")
@@ -40,6 +43,12 @@ class WorkModeOrientationProbe : SystemHookModule() {
 
     @Volatile
     private var pcModeCheckedAt = 0L
+
+    @Volatile
+    private var portraitOverrideActive = false
+
+    @Volatile
+    private var portraitOverrideCheckedAt = 0L
 
     @Throws(Throwable::class)
     override fun handleSystemServerStarting(param: SystemServerStartingParam) {
@@ -116,8 +125,30 @@ class WorkModeOrientationProbe : SystemHookModule() {
                 Int::class.javaPrimitiveType, containerClass)
             val getOverrideOrientation = findMethod(
                 containerClass, "getOverrideOrientation")
+            val overrideOrientationField = findField(
+                containerClass, "mOverrideOrientation")
             val setOverrideOrientation = findMethod(
                 containerClass, "setOverrideOrientation", Int::class.javaPrimitiveType)
+
+            hookWithId(getOverrideOrientation, "probe_get_override_orientation") { chain ->
+                if (isPortraitOverrideActive()) {
+                    val self = chain.thisObject
+                    if (self == null) {
+                        return@hookWithId chain.proceed()
+                    }
+                    val raw = overrideOrientationField.getInt(self)
+                    if (raw != LANDSCAPE &&
+                        overrideShortCircuitLogs.incrementAndGet() <= 5
+                    ) {
+                        logger.info(
+                            "Portrait experiment: getOverrideOrientation on " +
+                                "${describe(self)} -> ${orientationName(raw)}"
+                        )
+                    }
+                    return@hookWithId raw
+                }
+                chain.proceed()
+            }
 
             hookWithId(setOverrideOrientation, "probe_set_override_orientation") { chain ->
                 val orientation = chain.args[0] as Int
@@ -258,6 +289,17 @@ class WorkModeOrientationProbe : SystemHookModule() {
 
     private fun isPortraitExperimentEnabled(): Boolean =
         systemProperty("debug.ztool.pc_portrait") == "1"
+
+    private fun isPortraitOverrideActive(): Boolean {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - portraitOverrideCheckedAt > 2000L) {
+            portraitOverrideActive =
+                systemProperty("debug.ztool.pc_portrait") == "1" &&
+                    systemProperty("persist.sys.zui.pcmode") == "1"
+            portraitOverrideCheckedAt = now
+        }
+        return portraitOverrideActive
+    }
 
     private fun describe(target: Any?): String {
         if (target == null) return "null"
