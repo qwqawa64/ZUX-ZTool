@@ -722,7 +722,7 @@ private fun PenHapticRedirectEditor(
             optionLabel = { names[it.id].orEmpty() },
             onOptionSelected = { onAddRule(it.id) },
             enabled = availableSources.isNotEmpty(),
-            dialogTitle = stringResource(R.string.system_framework_pen_haptic_add_rule_button),
+            dialogTitle = stringResource(R.string.system_framework_pen_haptic_source_title),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 4.dp)

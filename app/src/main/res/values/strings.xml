@@ -1279,6 +1279,7 @@
     <string name="system_framework_pen_haptic_rules_summary">左侧波形被请求时改为播放右侧波形，仅对支持书写反馈的应用生效。</string>
     <string name="system_framework_pen_haptic_rules_empty_message">尚未添加规则</string>
     <string name="system_framework_pen_haptic_add_rule_button">添加规则</string>
+    <string name="system_framework_pen_haptic_source_title">选择源波形</string>
     <string name="system_framework_pen_haptic_remove_rule_button">删除规则</string>
     <string name="system_framework_pen_haptic_target_title">选择目标波形</string>
     <string name="system_framework_pen_wave_ball_pen_label">中性笔</string>

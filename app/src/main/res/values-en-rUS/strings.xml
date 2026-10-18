@@ -1226,6 +1226,7 @@
     <string name="system_framework_pen_haptic_rules_summary">When the left waveform is requested, play the right one instead. Applies to apps that support writing feedback.</string>
     <string name="system_framework_pen_haptic_rules_empty_message">No rules yet</string>
     <string name="system_framework_pen_haptic_add_rule_button">Add rule</string>
+    <string name="system_framework_pen_haptic_source_title">Choose source waveform</string>
     <string name="system_framework_pen_haptic_remove_rule_button">Remove rule</string>
     <string name="system_framework_pen_haptic_target_title">Choose target waveform</string>
     <string name="system_framework_pen_wave_ball_pen_label">Ball pen</string>
