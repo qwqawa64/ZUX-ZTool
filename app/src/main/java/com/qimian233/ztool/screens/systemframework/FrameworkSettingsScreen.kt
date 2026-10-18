@@ -390,34 +390,73 @@ private fun frameworkSettingsSections(
         ),
         SettingSection(
             title = stringResource(R.string.system_framework_disable_zui_applist_title),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_disable_zui_applist_enable_title),
-                    summary = stringResource(R.string.system_framework_disable_zui_applist_enable_summary),
-                    checked = state.allowGetPackages,
-                    onCheckedChange = onAllowGetPackagesChanged,
-                    key = "framework_disable_zui_applist"
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_allow_relative_app_launch_title),
-                    checked = state.allowRelativeAppLaunch,
-                    onCheckedChange = onAllowRelativeAppLaunchChanged,
-                    key = "framework_allow_relative_app_launch"
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_allow_untrusted_touch),
-                    checked = state.allowUntrustedTouch,
-                    onCheckedChange = onAllowUntrustedTouch,
-                    key = "framework_allow_untrusted_touch"
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_allow_all_restricted_settings_title),
-                    summary = stringResource(R.string.system_framework_allow_all_restricted_settings_summary),
-                    checked = state.allowAllRestrictedSettings,
-                    onCheckedChange = onAllowAllRestrictedSettingsChanged,
-                    key = "framework_allow_all_restricted_settings"
-                ),
-            )
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_disable_zui_applist_enable_title),
+                        summary = stringResource(R.string.system_framework_disable_zui_applist_enable_summary),
+                        checked = state.allowGetPackages,
+                        onCheckedChange = onAllowGetPackagesChanged,
+                        key = "framework_disable_zui_applist"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_allow_relative_app_launch_title),
+                        checked = state.allowRelativeAppLaunch,
+                        onCheckedChange = onAllowRelativeAppLaunchChanged,
+                        key = "framework_allow_relative_app_launch"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_allow_untrusted_touch),
+                        checked = state.allowUntrustedTouch,
+                        onCheckedChange = onAllowUntrustedTouch,
+                        key = "framework_allow_untrusted_touch"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_allow_all_restricted_settings_title),
+                        summary = stringResource(R.string.system_framework_allow_all_restricted_settings_summary),
+                        checked = state.allowAllRestrictedSettings,
+                        onCheckedChange = onAllowAllRestrictedSettingsChanged,
+                        key = "framework_allow_all_restricted_settings"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_disable_flag_secure_title),
+                        summary = stringResource(R.string.system_framework_disable_flag_secure_summary),
+                        checked = state.disableFlagSecure,
+                        onCheckedChange = onDisableFlagSecureChanged,
+                        key = "framework_disable_flag_secure"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_clipboard_toast_suppress_title),
+                        summary = stringResource(R.string.system_framework_clipboard_toast_suppress_summary),
+                        checked = state.clipboardAccessToastSuppress,
+                        onCheckedChange = onClipboardToastSuppressChanged,
+                        key = "framework_clipboard_access_toast"
+                    )
+                )
+                if (state.clipboardAccessToastSuppress) {
+                    add(
+                        SettingItem.Custom(
+                            content = {
+                                ClipboardToastPackagesRow(
+                                    packageCount = state.clipboardAccessToastPackages.size,
+                                    onClick = onSelectClipboardToastPackages
+                                )
+                            },
+                            key = "framework_clipboard_access_toast_apps"
+                        )
+                    )
+                }
+            }
         ),
         SettingSection(
             title = stringResource(R.string.system_framework_pkgmgr_section_title),
@@ -536,13 +575,6 @@ private fun frameworkSettingsSections(
                     onCheckedChange = onFineVolumeStepsChanged,
                     key = "framework_fine_volume_steps"
                 ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.system_framework_disable_flag_secure_title),
-                    summary = stringResource(R.string.system_framework_disable_flag_secure_summary),
-                    checked = state.disableFlagSecure,
-                    onCheckedChange = onDisableFlagSecureChanged,
-                    key = "framework_disable_flag_secure"
-                ),
                 SettingItem.Custom(
                     content = {
                         AiInputSettingsContent(
@@ -555,33 +587,6 @@ private fun frameworkSettingsSections(
                     key = "framework_ai_input_expand"
                 )
             )
-        ),
-        SettingSection(
-            title = stringResource(R.string.system_framework_clipboard_title),
-            items = buildList {
-                add(
-                    SettingItem.Switch(
-                        title = stringResource(R.string.system_framework_clipboard_toast_suppress_title),
-                        summary = stringResource(R.string.system_framework_clipboard_toast_suppress_summary),
-                        checked = state.clipboardAccessToastSuppress,
-                        onCheckedChange = onClipboardToastSuppressChanged,
-                        key = "framework_clipboard_access_toast"
-                    )
-                )
-                if (state.clipboardAccessToastSuppress) {
-                    add(
-                        SettingItem.Custom(
-                            content = {
-                                ClipboardToastPackagesRow(
-                                    packageCount = state.clipboardAccessToastPackages.size,
-                                    onClick = onSelectClipboardToastPackages
-                                )
-                            },
-                            key = "framework_clipboard_access_toast_apps"
-                        )
-                    )
-                }
-            }
         ),
         SettingSection(
             title = stringResource(R.string.system_framework_pen_haptic_title),

@@ -743,7 +743,6 @@
     <string name="system_framework_custom_detector_err">格式错误：请使用英文逗号分隔多个检测符</string>
     <string name="system_framework_custom_detector_hint">请输入自定义的检测符，多个使用英文逗号分隔</string>
     <string name="system_framework_misc_title">杂项</string>
-    <string name="system_framework_clipboard_title">剪贴板</string>
     <string name="system_framework_clipboard_toast_suppress_title">剪贴板访问提示白名单</string>
     <string name="system_framework_clipboard_toast_suppress_summary">白名单内的应用读取剪贴板时，不显示“已将剪贴板中的内容粘贴到…”提示</string>
     <string name="system_framework_clipboard_toast_apps_summary">已选择 %1$d 个应用</string>

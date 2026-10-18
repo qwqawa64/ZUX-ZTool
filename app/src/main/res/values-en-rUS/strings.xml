@@ -660,7 +660,6 @@
     <string name="system_framework_custom_detector_err">Format error: separate multiple detection symbols with English commas.</string>
     <string name="system_framework_custom_detector_hint">Enter custom detection symbols. Separate multiple entries with English commas.</string>
     <string name="system_framework_misc_title">Misc</string>
-    <string name="system_framework_clipboard_title">Clipboard</string>
     <string name="system_framework_clipboard_toast_suppress_title">Clipboard access notice whitelist</string>
     <string name="system_framework_clipboard_toast_suppress_summary">Apps on this list read the clipboard without the “pasted from your clipboard” notice</string>
     <string name="system_framework_clipboard_toast_apps_summary">%1$d app(s) selected</string>
