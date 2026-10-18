@@ -55,7 +55,11 @@ internal class SidebarAllAppsGrid(
 
     override fun letterAt(position: Int): String? = model.letterAt(position)
 
-    override fun rowCount(): Int = model.size
+    override fun lineOf(position: Int): Int = model.lineOf(position)
+
+    override fun letterAtLine(line: Int): String? = model.letterAtLine(line)
+
+    override fun lineCount(): Int = model.lineCount
 
     fun appAt(position: Int): Any? = model.appAt(position)
 
@@ -74,12 +78,17 @@ internal class SidebarAllAppsGrid(
         binding = false
     }
 
-    /** Takes over [candidate] for the app list the panel was just built from. */
+    /**
+     * Takes over [candidate] for the app list the panel was just built from.
+     *
+     * @param spanCount columns per line, used to number the visual lines the rail interpolates.
+     */
     fun adopt(
         context: Context,
         candidate: Any,
         apps: List<Any>,
         sections: Boolean,
+        spanCount: Int,
         colors: SidebarPalette
     ) {
         adapter = candidate
@@ -89,6 +98,7 @@ internal class SidebarAllAppsGrid(
         query = ""
         iconId = context.resources.getIdentifier("appicon_iv", "id", hostPackage)
         labelId = context.resources.getIdentifier("appname_tv", "id", hostPackage)
+        model.columnsPerLine = spanCount.coerceAtLeast(1)
         model.forget()
         model.submit(apps, query, sections)
     }

@@ -22,8 +22,14 @@ internal interface SidebarLetterSource {
     /** The letter of the group the grid row [position] belongs to. */
     fun letterAt(position: Int): String?
 
-    /** The number of rows the grid's adapter holds. */
-    fun rowCount(): Int
+    /** The visual line the grid row [position] sits on. */
+    fun lineOf(position: Int): Int
+
+    /** The group letter of the visual line [line]. */
+    fun letterAtLine(line: Int): String?
+
+    /** Number of visual lines the grid lays out. */
+    fun lineCount(): Int
 }
 
 /**
@@ -112,14 +118,17 @@ internal class SidebarIndexRail(
 
     private fun syncToScroll() {
         if (SystemClock.uptimeMillis() < railFocusUntil) return
+        val source = source ?: return
         val first = firstVisiblePosition() ?: return
         val last = lastVisiblePosition() ?: return
-        val count = source?.rowCount() ?: return
-        val anchor = anchorRow(first, last, count)
-        val letter = source?.letterAt(anchor) ?: return
+        val firstLine = source.lineOf(first)
+        val lastLine = source.lineOf(last)
+        val lineCount = source.lineCount()
+        val anchor = anchorLine(firstLine, lastLine, lineCount)
+        val letter = source.letterAtLine(anchor) ?: return
         logger.trace(
-            "rail sync first=" + first + " last=" + last + " count=" + count +
-                " anchor=" + anchor + " letter=" + letter
+            "rail sync first=" + first + " last=" + last + " lines=" + firstLine + ".." + lastLine +
+                "/" + lineCount + " anchorLine=" + anchor + " letter=" + letter
         )
         val index = letters.indexOf(letter)
         if (index < 0 || index == focused) return
@@ -129,17 +138,17 @@ internal class SidebarIndexRail(
     }
 
     /**
-     * The grid row the highlight follows.
+     * The visual line the highlight follows.
      *
-     * It is the top row while there is more than a viewport of rows below, then it slides towards
-     * the bottom row, so the sections too short to ever reach the top are highlighted in order.
+     * It is the top line while there is more than a viewport of lines below, then it slides towards
+     * the bottom line, so the sections too short to ever reach the top are highlighted in order.
      */
-    private fun anchorRow(first: Int, last: Int, count: Int): Int {
-        val visible = last - first + 1
-        if (first <= 0 || visible <= 1) return first
-        val remaining = (count - 1 - last).coerceAtLeast(0)
+    private fun anchorLine(firstLine: Int, lastLine: Int, lineCount: Int): Int {
+        if (firstLine <= 0 || lastLine <= firstLine) return firstLine
+        val visible = lastLine - firstLine + 1
+        val remaining = (lineCount - 1 - lastLine).coerceAtLeast(0)
         val progress = (1f - remaining.toFloat() / visible).coerceIn(0f, 1f)
-        return first + Math.round((last - first) * progress)
+        return firstLine + Math.round((lastLine - firstLine) * progress)
     }
 
     /** The grid's first visible adapter position, via its layout manager. */

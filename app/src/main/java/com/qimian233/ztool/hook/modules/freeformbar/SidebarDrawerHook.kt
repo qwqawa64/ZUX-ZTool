@@ -609,7 +609,7 @@ class SidebarDrawerHook : AppHookModule() {
         val adapter = runCatching { grid.javaClass.getMethod("getAdapter").invoke(grid) }.getOrNull()
         if (gridImpl != null && adapter != null && apps.isNotEmpty()) {
             val sections = sections() && gridImpl.canRenderHeaders
-            gridImpl.adopt(context, adapter, apps, sections, palette)
+            gridImpl.adopt(context, adapter, apps, sections, spanCountOf(grid), palette)
             if (sections) installSpanHook(context)
         } else {
             gridImpl?.release()
@@ -618,6 +618,12 @@ class SidebarDrawerHook : AppHookModule() {
         refreshRail(context, palette)
         updateEmptyHint()
     }
+
+    /** Columns per line of the panel's grid, used to number the visual lines the rail interpolates. */
+    private fun spanCountOf(grid: android.view.View): Int = runCatching {
+        val manager = grid.javaClass.getMethod("getLayoutManager").invoke(grid) ?: return 1
+        (manager.javaClass.getMethod("getSpanCount").invoke(manager) as Int).coerceAtLeast(1)
+    }.getOrDefault(1)
 
     private fun installSearch(
         context: Context,

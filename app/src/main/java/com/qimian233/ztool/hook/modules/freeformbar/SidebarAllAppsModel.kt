@@ -20,9 +20,18 @@ internal class SidebarAllAppsModel(private val toPinYin: Method?) {
     private var rows: List<Row> = emptyList()
     private var letterByRow: IntArray = IntArray(0)
     private var columnByRow: IntArray = IntArray(0)
+    private var lineByRow: IntArray = IntArray(0)
+    private var letterByLine: Array<String?> = emptyArray()
+
+    /** Columns per visual line; the grid sets this before [submit] so lines can be numbered. */
+    var columnsPerLine: Int = 1
 
     /** Letter to the row index of its heading, in grid order. */
     var groups: List<Pair<String, Int>> = emptyList()
+        private set
+
+    /** Number of visual lines the rows occupy; headings take a line of their own. */
+    var lineCount: Int = 0
         private set
 
     val size: Int get() = rows.size
@@ -40,8 +49,11 @@ internal class SidebarAllAppsModel(private val toPinYin: Method?) {
         val letters = ArrayList<Pair<String, Int>>()
         val rowLetters = ArrayList<Int>(apps.size + 8)
         val rowColumns = ArrayList<Int>(apps.size + 8)
+        val rowLines = ArrayList<Int>(apps.size + 8)
+        val rowLineLetters = ArrayList<String>(apps.size + 8)
         var lastLetter: String? = null
         var column = 0
+        var groupLine = 0
         apps.forEachIndexed { index, app ->
             if (needle.isNotEmpty() && !matches(app, needle)) return@forEachIndexed
             val meta = metaOf(app)
@@ -49,22 +61,42 @@ internal class SidebarAllAppsModel(private val toPinYin: Method?) {
                 lastLetter = meta.letter
                 letters.add(meta.letter to built.size)
                 if (sections) {
-                    // A heading ends the previous row, so the group starts at the first column.
+                    // A heading ends the previous row, so the group starts on a fresh line.
+                    val line = groupLine + (column + columnsPerLine - 1) / columnsPerLine
                     column = 0
                     rowLetters.add(letters.size - 1)
                     rowColumns.add(0)
+                    rowLines.add(line)
+                    rowLineLetters.add(meta.letter)
                     built.add(Row(meta.letter, null, -1))
+                    groupLine = line + 1
                 }
             }
             rowLetters.add(letters.size - 1)
             rowColumns.add(column)
+            rowLines.add(
+                if (sections) groupLine + column / columnsPerLine
+                else built.size / columnsPerLine
+            )
+            rowLineLetters.add(meta.letter)
             column++
             built.add(Row(null, app, index))
         }
         rows = built
         letterByRow = rowLetters.toIntArray()
         columnByRow = rowColumns.toIntArray()
+        lineByRow = rowLines.toIntArray()
         groups = letters
+        lineCount = if (sections) {
+            groupLine + (column + columnsPerLine - 1) / columnsPerLine
+        } else {
+            (built.size + columnsPerLine - 1) / columnsPerLine
+        }
+        val lettersByLine = arrayOfNulls<String>(lineCount)
+        rowLines.forEachIndexed { row, line ->
+            if (lettersByLine.getOrNull(line) == null) lettersByLine[line] = rowLineLetters[row]
+        }
+        letterByLine = lettersByLine
     }
 
     /** The app shown at [position], or null when that row is a heading. */
@@ -92,6 +124,12 @@ internal class SidebarAllAppsModel(private val toPinYin: Method?) {
         val group = letterByRow.getOrNull(position) ?: return null
         return groups.getOrNull(group)?.first
     }
+
+    /** The visual line the grid row [position] sits on. */
+    fun lineOf(position: Int): Int = lineByRow.getOrNull(position) ?: 0
+
+    /** The group letter of visual line [line], or null outside the grid. */
+    fun letterAtLine(line: Int): String? = letterByLine.getOrNull(line)
 
     /** Drops the derived metadata; call when the host's app list itself changed. */
     fun forget() = cache.clear()
