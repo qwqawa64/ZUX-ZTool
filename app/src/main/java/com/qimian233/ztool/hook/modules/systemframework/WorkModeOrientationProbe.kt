@@ -31,6 +31,8 @@ class WorkModeOrientationProbe : SystemHookModule() {
 
     private val overrideShortCircuitLogs = AtomicInteger(0)
 
+    private val displayOrientationLogs = AtomicInteger(0)
+
     private val systemPropertiesGet: Method? by lazy {
         runCatching {
             Class.forName("android.os.SystemProperties")
@@ -57,6 +59,7 @@ class WorkModeOrientationProbe : SystemHookModule() {
         hookPcModeForceOrientation(classLoader)
         hookWindowContainerOrientation(classLoader)
         hookDisplayRotation(classLoader)
+        hookDisplayContent(classLoader)
         logger.info("WorkModeOrientationProbe installed")
     }
 
@@ -275,6 +278,29 @@ class WorkModeOrientationProbe : SystemHookModule() {
             }
         } catch (t: Throwable) {
             logger.error("Probe: display-rotation hooks not installed", t)
+        }
+    }
+
+    private fun hookDisplayContent(classLoader: ClassLoader) {
+        try {
+            val displayContentClass = classLoader.loadClass(
+                "com.android.server.wm.DisplayContent")
+            val getOrientation = findMethod(displayContentClass, "getOrientation")
+            hookWithId(getOrientation, "probe_display_get_orientation") { chain ->
+                val result = chain.proceed()
+                if (isPortraitOverrideActive() && (result as? Int) == LANDSCAPE) {
+                    if (displayOrientationLogs.incrementAndGet() <= 5) {
+                        logger.info(
+                            "Portrait experiment: DisplayContent.getOrientation returned " +
+                                "LANDSCAPE, using UNSPECIFIED"
+                        )
+                    }
+                    return@hookWithId UNSPECIFIED
+                }
+                result
+            }
+        } catch (t: Throwable) {
+            logger.error("Probe: DisplayContent.getOrientation hook not installed", t)
         }
     }
 
