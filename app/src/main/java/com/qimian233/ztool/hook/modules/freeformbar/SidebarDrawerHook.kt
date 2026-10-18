@@ -24,7 +24,7 @@ class SidebarDrawerHook : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.SIDEBAR_DRAWER_ENHANCE.name
 
-    override fun getTargetPackages(): Array<out String?>? =
+    override fun getTargetPackages(): Array<out String> =
         arrayOf(ScopeKeys.FREEFORM_SIDEBAR.packageName)
 
     private var appInfoListField: Field? = null
@@ -97,8 +97,7 @@ class SidebarDrawerHook : AppHookModule() {
         installAllAppsHooks(classLoader)
 
         hookWithId(generateTop5App, "sidebar_drawer_top5") { chain ->
-            val context = chain.args[0] as? Context
-            if (context == null) return@hookWithId chain.proceed()
+            val context = chain.args[0] as? Context ?: return@hookWithId chain.proceed()
             runCatching { resolve(composedKeys(context)) }.getOrElse { chain.proceed() }
         }
 
@@ -107,7 +106,7 @@ class SidebarDrawerHook : AppHookModule() {
         // after setAdapter, and replacing the adapter inside the call upsets the ListView.
         runCatching {
             val setAdapter = findMethod(
-                android.widget.ListView::class.java, "setAdapter",
+                ListView::class.java, "setAdapter",
                 android.widget.ListAdapter::class.java
             )
             hookWithId(setAdapter, "sidebar_drawer_setadapter") { chain ->
@@ -159,7 +158,7 @@ class SidebarDrawerHook : AppHookModule() {
             }
         }
 
-        val packageReceiverClass = classLoader.loadClass("com.zui.freeform.sidebar.FloatService\$PackageReceiver")
+        val packageReceiverClass = classLoader.loadClass($$"com.zui.freeform.sidebar.FloatService$PackageReceiver")
         val onReceive = findMethod(
             packageReceiverClass, "onReceive",
             Context::class.java, android.content.Intent::class.java
@@ -271,27 +270,27 @@ class SidebarDrawerHook : AppHookModule() {
     /** The drawer-open path is an R8 lambda, so match it by prefix instead of by name. */
     private fun findDrawerOpenMethod(floatServiceClass: Class<*>): Method? =
         floatServiceClass.declaredMethods.firstOrNull {
-            it.parameterCount == 0 && it.name.startsWith("lambda\$new\$1\$")
+            it.parameterCount == 0 && it.name.startsWith($$"lambda$new$1$")
         }?.apply { isAccessible = true }
 
-    private fun capacity(context: Context): Int =
+    private fun capacity(): Int =
         remotePreferences.getInt(PreferenceKeys.SIDEBAR_DRAWER_SLOTS.name, 8).coerceIn(1, MAX_SLOTS)
 
-    private fun recentSlots(context: Context): Int =
+    private fun recentSlots(): Int =
         remotePreferences.getInt(PreferenceKeys.SIDEBAR_DRAWER_RECENT_SLOTS.name, 2).coerceIn(0, 4)
 
     /** Whether the drawer exposes the 编辑 / 完成 row and the ▲ ▼ ✕ affordances. */
-    private fun editable(context: Context): Boolean =
+    private fun editable(): Boolean =
         remotePreferences.getBoolean(PreferenceKeys.SIDEBAR_DRAWER_EDITABLE.name, true)
 
     /** Whether the all-apps grid is grouped behind letter headings. */
-    private fun sections(context: Context): Boolean = remotePreferences.getBoolean(
+    private fun sections(): Boolean = remotePreferences.getBoolean(
         PreferenceKeys.SIDEBAR_ALLAPPS_SECTIONS.name,
         PreferenceKeys.SIDEBAR_ALLAPPS_SECTIONS.default
     )
 
     /** Whether the all-apps panel carries a search field. */
-    private fun searchEnabled(context: Context): Boolean = remotePreferences.getBoolean(
+    private fun searchEnabled(): Boolean = remotePreferences.getBoolean(
         PreferenceKeys.SIDEBAR_ALLAPPS_SEARCH.name,
         PreferenceKeys.SIDEBAR_ALLAPPS_SEARCH.default
     )
@@ -318,8 +317,8 @@ class SidebarDrawerHook : AppHookModule() {
         SidebarDrawerStore.readRecent(context).ifEmpty { visibleFreeformKeys(context) }
 
     /** How many slots the user's own apps may occupy, i.e. the capacity minus the recent slots. */
-    private fun memberSlots(context: Context): Int =
-        (capacity(context) - recentSlots(context)).coerceAtLeast(1)
+    private fun memberSlots(): Int =
+        (capacity() - recentSlots()).coerceAtLeast(1)
 
     /**
      * The apps occupying the user's slots, in order. Before the first customisation this is the
@@ -328,11 +327,11 @@ class SidebarDrawerHook : AppHookModule() {
      */
     private fun memberKeys(context: Context): List<String> {
         val known = allKeys(context)
-        if (!SidebarDrawerStore.isCustomized(context)) return known.take(memberSlots(context))
+        if (!SidebarDrawerStore.isCustomized(context)) return known.take(memberSlots())
         val knownSet = known.toSet()
         val stored = SidebarDrawerStore.readMembers(context)
             ?: SidebarDrawerStore.readLegacyOrder(context)
-        return stored.filter { it in knownSet }.take(memberSlots(context))
+        return stored.filter { it in knownSet }.take(memberSlots())
     }
 
     /** Drawer content: recent slots first, then the user's slots, which may be partly empty. */
@@ -341,9 +340,9 @@ class SidebarDrawerHook : AppHookModule() {
         if (known.isEmpty()) return emptyList()
         val knownSet = known.toSet()
         val out = LinkedHashSet<String>()
-        recentKeys(context).take(recentSlots(context)).forEach { if (it in knownSet) out += it }
+        recentKeys(context).take(recentSlots()).forEach { if (it in knownSet) out += it }
         memberKeys(context).forEach { out += it }
-        return out.take(capacity(context))
+        return out.take(capacity())
     }
 
     private fun resolve(keys: List<String>): List<Any> {
@@ -366,7 +365,7 @@ class SidebarDrawerHook : AppHookModule() {
             leaveEditMode(context)
         }
         val drawerAdapter = adapter
-            ?: SidebarDrawerAdapter(context, hostPackage, editable(context), callbacks(context), logger)
+            ?: SidebarDrawerAdapter(context, hostPackage, editable(), callbacks(context), logger)
                 .also { adapter = it }
         styleFootView(context)
         // The host re-attaches its own capped adapter and listener every time the drawer opens,
@@ -390,7 +389,7 @@ class SidebarDrawerHook : AppHookModule() {
                 }
             },
             // The rows are not clickable, so only this listener sees the whole gesture.
-            onTouchObserved = { event -> observeDrawerPress(context, listView, event) }
+            onTouchObserved = { event -> observeDrawerPress(listView, event) }
         ).also { dragReorder = it }
         drag.attach(listView)
         refreshDrawer(context)
@@ -433,7 +432,7 @@ class SidebarDrawerHook : AppHookModule() {
     }
 
     /** Squeezes the icon of the touched drawer row; a long press then hands over to the drag. */
-    private fun observeDrawerPress(context: Context, listView: ListView, event: android.view.MotionEvent) {
+    private fun observeDrawerPress(listView: ListView, event: android.view.MotionEvent) {
         val drawerAdapter = adapter ?: return
         when (event.actionMasked) {
             android.view.MotionEvent.ACTION_DOWN -> {
@@ -487,7 +486,7 @@ class SidebarDrawerHook : AppHookModule() {
      */
     private fun animateSwap(context: Context, from: Int, to: Int) {
         val listView = appIconLvField?.get(context) as? ListView ?: return
-        logger.trace("swap animation queued from=" + from + " to=" + to)
+        logger.trace("swap animation queued from=$from to=$to")
         val observer = listView.viewTreeObserver
         observer.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
             override fun onPreDraw(): Boolean {
@@ -509,7 +508,7 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun slide(view: android.view.View?, offset: Int) {
         if (view == null || offset == 0) return
-        logger.trace("swap animation applied offset=" + offset)
+        logger.trace("swap animation applied offset=$offset")
         view.translationY = offset.toFloat()
         view.animate().translationY(0f).setDuration(SWAP_ANIM_MS).start()
     }
@@ -542,7 +541,7 @@ class SidebarDrawerHook : AppHookModule() {
         val gridImpl = allAppsGrid
         val adapter = runCatching { grid.javaClass.getMethod("getAdapter").invoke(grid) }.getOrNull()
         if (gridImpl != null && adapter != null && apps.isNotEmpty()) {
-            val sections = sections(context) && gridImpl.canRenderHeaders
+            val sections = sections() && gridImpl.canRenderHeaders
             gridImpl.adopt(context, adapter, apps, sections)
             if (sections) installSpanHook(context)
         } else {
@@ -555,7 +554,7 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun installSearch(context: Context, panel: android.view.ViewGroup) {
         val search = allAppsSearch ?: return
-        if (!searchEnabled(context)) {
+        if (!searchEnabled()) {
             search.detach()
             return
         }
@@ -645,7 +644,7 @@ class SidebarDrawerHook : AppHookModule() {
             else -> memberKeys(context)
         }
         val items = resolve(keys)
-        val empty = if (editMode) (memberSlots(context) - items.size).coerceAtLeast(0) else 0
+        val empty = if (editMode) (memberSlots() - items.size).coerceAtLeast(0) else 0
         memberCount = if (editMode) items.size else 0
         if (!editMode) appTop5ListField?.set(context, items)
         drawerAdapter.submit(items, visibleKeys(context), editMode, empty)
@@ -698,7 +697,7 @@ class SidebarDrawerHook : AppHookModule() {
 
     private fun toggleEditMode(context: Context) {
         val drawerAdapter = adapter ?: return
-        if (!editable(context)) return
+        if (!editable()) return
         if (drawerAdapter.isEditMode()) {
             leaveEditMode(context)
             return
@@ -788,7 +787,7 @@ class SidebarDrawerHook : AppHookModule() {
         val next = members.toMutableList()
         if (present) {
             next.remove(key)
-        } else if (next.size < memberSlots(context)) {
+        } else if (next.size < memberSlots()) {
             next.add(key)
         } else {
             return
@@ -812,12 +811,12 @@ class SidebarDrawerHook : AppHookModule() {
         val members = memberKeys(context).toHashSet()
         val member: (Any) -> Boolean = { SidebarReflect.keyOf(it)?.let { key -> key in members } == true }
         val toggle: (Any) -> Unit = { toggleMembership(context, it) }
-        val canAdd = members.size < memberSlots(context)
+        val canAdd = members.size < memberSlots()
         logger.trace(
             "badge refresh: children=" + gridChildren +
                 " adopted=" + (source?.isAdopted() == true) +
                 " members=" + members.size +
-                " memberSlots=" + memberSlots(context) +
+                " memberSlots=" + memberSlots() +
                 " canAdd=" + canAdd
         )
         decorator.refresh(grid, appAt, member, toggle, canAdd)
