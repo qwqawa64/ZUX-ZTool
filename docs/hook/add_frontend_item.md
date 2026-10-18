@@ -347,11 +347,103 @@ SettingItem.Custom(
 
 只有当新 Hook 有独立的复杂流程、多个子页面或已有页面无法合理承载时，再考虑新增 Route/Activity。保留 Manifest 中已有 Activity 的启动契约，不要随意改包名或类名。
 
+新增独立页面时，还需在 `FeatureCatalog` 中登记对应的 Features 卡片，见 [注册功能卡片](#注册功能卡片)。
+
+## 注册功能卡片
+
+Features 网格上的每一张卡片都由 `FeatureCatalog`（`app/src/main/java/com/qimian233/ztool/data/features/FeatureCatalog.kt`）统一声明：图标来源、作用域来源、可用性都在这里。`FeaturesRoute` 只负责渲染、过滤与交互，不声明卡片；`ScopeUtils.getScopes()` 直接委托给 catalog。**不要在 `FeaturesRoute` 中新增卡片，也不要在 `ScopeUtils` 中新增作用域分支。**
+
+### 1. 添加 `FeatureDestination` 与路由
+
+在 `data/features/FeatureDestination.kt` 中增加枚举项及其 `route`，然后在 `ZToolNavHost` 中用 `routeWithTarget(...)` 注册 composable，并把该 route 补进 `navigationRouteIndex`。已有 route 字符串是导航契约，不要修改。
+
+### 2. 在 `FeatureCatalog.cards` 中登记卡片
+
+`FeatureCatalog.cards` 的列表顺序就是 Features 网格的显示顺序。两种常见形态：
+
+- **应用卡片**：使用私有辅助函数 `appCard(...)`。`primary` 同时决定 `FeatureIconSource.Package` 和 `FeatureAvailability.RequiresInstalled`，卡片需要的全部作用域写进 `scopes`。
+- **跨应用卡片**：显式构造 `FeatureCard`。图标用 `FeatureIconSource.LocalGlyph(R.drawable.ic_feature_xxx)`，可用性用 `FeatureAvailability.AlwaysAvailable`，作用域二选一：
+  - `FeatureScopeSource.Fixed(...)`：固定作用域并集，仍参与“是否在作用域内”的门控，并可发起作用域请求；
+  - `FeatureScopeSource.UserManaged`：用户在 LSPosed 中自行勾选作用域，不做门控，也不弹作用域请求对话框。
+
+| 场景                     | `icon`                                                    | `availability`                          | `scope`                                          |
+|------------------------|-----------------------------------------------------------|-----------------------------------------|--------------------------------------------------|
+| 应用卡片（`appCard`）        | `Package(primary.packageName)`                            | `RequiresInstalled(primary.packageName)` | `Fixed(scopes)`                                  |
+| 跨应用 · 固定并集            | `LocalGlyph(R.drawable.ic_feature_xxx)`                   | `AlwaysAvailable`                       | `Fixed(listOf(...))`，可门控、可请求                    |
+| 跨应用 · 用户自选             | `LocalGlyph(R.drawable.ic_feature_xxx)`                   | `AlwaysAvailable`                       | `UserManaged`，无门控、无请求弹窗                         |
+| 系统框架 / 无普通应用图标         | `Package(ScopeKeys.ANDROID_SYSTEM.packageName)`，或 `LocalGlyph(...)` | `AlwaysAvailable`                       | `Fixed(listOf(ANDROID_SYSTEM, SYSTEM_SERVER))`   |
+
+系统框架形态可直接参考现有 `Framework` 卡片：`Package(ScopeKeys.ANDROID_SYSTEM.packageName)` + `AlwaysAvailable`。
+
+```kotlin
+appCard(
+    destination = FeatureDestination.ExampleApp,
+    nameRes = R.string.example_app_name,
+    descriptionRes = R.string.example_app_description,
+    primary = ScopeKeys.EXAMPLE,
+    scopes = listOf(ScopeKeys.EXAMPLE, ScopeKeys.EXAMPLE_PLUGIN)
+)
+
+FeatureCard(
+    destination = FeatureDestination.ExampleHub,
+    nameRes = R.string.example_hub_app_name,
+    descriptionRes = R.string.example_hub_app_description,
+    icon = FeatureIconSource.LocalGlyph(R.drawable.ic_feature_example_hub),
+    scope = FeatureScopeSource.Fixed(listOf(ScopeKeys.SETTINGS, ScopeKeys.SYSTEM_UI)),
+    availability = FeatureAvailability.AlwaysAvailable
+)
+```
+
+### 3. 图标
+
+- 新的跨应用图标放在 `res/drawable/`，48dp 单色 vector，填充/描边颜色写死（例如 `#FF000000`），不要使用 `?attr/...`。
+- `CardIcon` 会把 `LocalGlyph` 渲染在 `primaryContainer` 圆角块中，并用 `onPrimaryContainer` 染色，所以图标本身只需提供一个可着色的图形。
+- 应用图标继续走 `FeatureIconLoader`（`data/features/FeatureIconLoader.kt`）的旧路径：卡片只声明 `FeatureIconSource.Package`，加载由屏幕级缓存负责。不要为某张卡片单独写图标加载代码。
+
+### 4. `SearchIndex`
+
+搜索索引仍需手工维护。为卡片新增一条 `SearchEntry`，`id` 使用 `feature_card_<name>`：
+
+```kotlin
+SearchEntry(
+    id = "feature_card_example_hub",
+    route = FeatureDestination.ExampleHub.route,
+    titleRes = R.string.example_hub_app_name,
+    summaryRes = R.string.example_hub_app_description,
+    isFeatureCard = true,
+    featureDestination = FeatureDestination.ExampleHub,
+    groupTitleRes = R.string.search_group_feature_cards
+)
+```
+
+仅当卡片可用性为 `FeatureAvailability.RequiresInstalled` 时才需要 `requiresPackage`；`AlwaysAvailable` 卡片不要填。
+
+### 5. 字符串
+
+优先复用已有的 `*_app_name` / `*_app_description`。任何新的用户可见文案都要同时写入 `res/values/strings.xml` 和 `res/values-en-rUS/strings.xml`。
+
+### 6. 作用域注册
+
+卡片的 `Fixed` 作用域若引入新的目标包，先按 [作用域管理](#作用域管理) 注册：在 `ScopeKeys.kt` 中登记（含 `HowToRestart`）、在 Hook 的 `getTargetPackages()` 中引用，并加入构建期 `scope.list`。
+
+### 7. 重启不属于卡片模型
+
+重启方式仍然来自各 `Scope` 注册的 `Scope.howToRestart`，以及页面/Repository 现有的重启流程。`FeatureCatalog` 不声明重启方式，不要给 `FeatureCard` 增加重启字段。
+
+### 8. 验证
+
+```powershell
+.\gradlew.bat assembleDebug
+.\gradlew.bat testDebugUnitTest --tests "com.qimian233.ztool.FeatureCatalogTest" --tests "com.qimian233.ztool.SearchIndexConsistencyTest"
+```
+
+`FeatureCatalogTest` 校验每个 `FeatureDestination` 恰好对应一张卡片、所有 `Package` 图标的包名非空、`RequiresInstalled` 卡片的图标包与可用性包一致，以及 `UserManaged` 卡片不暴露作用域。`SearchIndexConsistencyTest` 只校验页面 key 与索引的一致性；`feature_card_*` 条目不会被自动生成或自动补全，必须按第 4 步手工添加。
+
 ## 作用域管理
 
 Hook 的作用域包名**统一由 `ScopeKeys` 管理**（`app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt`），不要在代码中手写包名字符串。
 
-- `FeatureCatalog`（`data/features/FeatureCatalog.kt`）声明每个功能卡片的元数据（名称、描述、图标、作用域来源、可用性），作用域包名与推荐重启方式引用 `ScopeKeys`；`ScopeUtils.getScopes()` 直接委托给它。前端功能入口（`FeaturesRoute`、`MainActivity`）和各 Repository 的"重启作用域"逻辑仍来自 `ScopeKeys` / `ScopeUtils`。
+- `FeatureCatalog`（`data/features/FeatureCatalog.kt`）声明每个功能卡片的元数据（名称、描述、图标、作用域来源、可用性），作用域包名与推荐重启方式引用 `ScopeKeys`；`ScopeUtils.getScopes()` 直接委托给它。`FeaturesRoute` 从 `FeatureCatalog` 读取卡片作用域；各 Repository 的"重启作用域"逻辑仍走 `ScopeUtils` / `ScopeKeys`。
 - 每个 `Scope` 同时注册了 `HowToRestart`（`AmStop` / `KillAll` / `Reboot`），`ScopeUtils.restartScope()` 据此选择重启命令。
 - 后端 Hook 的 `getTargetPackages()` 必须返回 `ScopeKeys.CONSTANT.packageName` 引用（详见 `add_new_hook_module.md`）。
 
@@ -374,6 +466,8 @@ Hook 的作用域包名**统一由 `ScopeKeys` 管理**（`app/src/main/java/com
 7. 在页面中直接执行 Root/Shell：应由 Repository 封装，ViewModel 调用。
 
 ## 最小接入清单
+
+> 本清单针对页面内的开关/条目；新增 Features 卡片请按 [注册功能卡片](#注册功能卡片) 处理。
 
 新增一个 Hook 前端配置时，按以下顺序处理：
 

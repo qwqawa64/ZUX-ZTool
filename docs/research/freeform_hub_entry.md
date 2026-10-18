@@ -109,6 +109,8 @@ pattern (`FrameworkSettingsScreen.RestartSystemDialog`, `HomeRepository.reboot`)
    repositories (lowest risk, no key movement), plus `FreeformHubViewModel` and
    `FreeformHubUiState`.
 
+> Generic card registration checklist: see `注册功能卡片` in [add_frontend_item.md](../hook/add_frontend_item.md).
+
 ## Main cost and risks
 
 - The 一视界 block is the bulk of the diff: module install/remove, config

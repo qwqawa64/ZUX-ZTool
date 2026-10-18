@@ -40,6 +40,7 @@ Do not rely on a memorized file tree; explore the repository directly when neede
 - Single sources of truth in code:
   - `app/src/main/java/com/qimian233/ztool/data/keys/PreferenceKeys.kt` — every key in `xposed_module_config`.
   - `app/src/main/java/com/qimian233/ztool/data/keys/ScopeKeys.kt` — every scope package name and its preferred restart method.
+  - `app/src/main/java/com/qimian233/ztool/data/features/FeatureCatalog.kt` — every Features-grid card's icon source, scope source, and availability.
 - Layering: screens (`screens/**`) and shared UI (`ui/**`) must not do preference I/O, shell/root operations, or raw threads directly; persistence lives in `data/**/*Repository.kt`, values flow through `viewmodel/**` UiStates.
 - Hook entry point and infrastructure live in `hook/` (entry: `hook/HookInit.kt`, registered in `app/src/main/resources/META-INF/xposed/java_init.list`); per-app Hook modules live in `hook/modules/<package>/`.
 - App-side offline DexKit indexing lives in `dexindex/` (pure Kotlin, no libxposed dependency); the hook-side reader is `hook/base/DexIndexStore.kt`.
@@ -91,12 +92,12 @@ DexKit lookups must NOT run inside `handleLoadPackage` (they break LSPosed hot r
 
 ### Scope Management
 
-**`ScopeKeys` is the single source of truth for scope package names in code.** Every place that manages scope packages — Hook `getTargetPackages()` implementations, `ScopeUtils.getScopes()` / `getScopePackages()`, and frontend feature entries — must reference `ScopeKeys.CONSTANT.packageName` and never hardcode package name strings. The `HowToRestart` registered on each `Scope` drives the unified restart logic in `ScopeUtils.restartScope()`.
+**`ScopeKeys` is the single source of truth for scope package names in code.** Every place that manages scope packages — Hook `getTargetPackages()` implementations, `FeatureCatalog` card scope declarations, and frontend feature entries — must reference `ScopeKeys.CONSTANT.packageName` and never hardcode package name strings. `ScopeUtils.getScopes()` / `getScopePackages()` are consumers that delegate to the catalog; they are not declaration points. The `HowToRestart` registered on each `Scope` drives the unified restart logic in `ScopeUtils.restartScope()`.
 
 When adding a Hook that targets a package:
 
 1. Register the package in `ScopeKeys.kt` (with its preferred `HowToRestart`) before using it anywhere.
-2. Reference `ScopeKeys.CONSTANT.packageName` in the Hook's `getTargetPackages()`, and add it to `ScopeUtils.getScopes(...)` if the package belongs to a frontend feature entry.
+2. Reference `ScopeKeys.CONSTANT.packageName` in the Hook's `getTargetPackages()`, and add it to the relevant `FeatureCatalog` card's `FeatureScopeSource.Fixed` scopes if the package belongs to a frontend feature entry. `ScopeUtils` delegates to the catalog — do not edit it.
 3. Add the package to the build-time `scope.list` resource.
 
 Other scope rules:
@@ -129,6 +130,8 @@ The durable rules are:
 - **Preference keys must be registered in `PreferenceKeys.kt`** before use in Repository or Hook code. Reference them as `PreferenceKeys.CONSTANT_NAME.name` — never write key strings by hand.
 - Preference keys and default values must match the Hook-side reads exactly.
 - Use existing shared setting components such as `SettingItem.Switch`, dropdowns, sliders, and text inputs where applicable.
+
+**Features-grid cards** are registered in `FeatureCatalog.kt`; follow the `注册功能卡片` section of `docs/hook/add_frontend_item.md`. `FeaturesRoute` and `ScopeUtils` are consumers of the catalog, not registration points.
 
 **Search index maintenance**: every user-visible setting row and feature entry must be
 searchable. When adding a row, set its `SettingItem.key` and register a matching
