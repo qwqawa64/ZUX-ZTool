@@ -11,9 +11,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * Probe and opt-in experiment for ZUI PC/work-mode orientation.
  *
  * Logs PC-mode force-orientation, launch-param and display-rotation decisions.
- * When `debug.ztool.pc_portrait` is `1`, rotation-90 freezes are skipped and the
- * PC-mode landscape override is bypassed, so the work desktop can follow the
- * sensor; without the flag behaviour is unchanged.
+ * When `debug.ztool.pc_portrait` or `persist.sys.ztool.pc_portrait` is `1`,
+ * rotation-90 locks are rewritten to FREE and the PC-mode landscape override is
+ * bypassed, so the work desktop can follow the sensor.
  * The module reports as `test_hook`, so it is always enabled while installed.
  */
 class WorkModeOrientationProbe : SystemHookModule() {
@@ -215,12 +215,12 @@ class WorkModeOrientationProbe : SystemHookModule() {
                         "rotation=${rotationName(rotation)}, " +
                         "reason=${chain.args[2]})\n" + callerStack()
                 )
-                if (isPortraitExperimentEnabled() && isPcMode() && rotation == ROTATION_90) {
+                if (isPortraitExperimentEnabled() && rotation == ROTATION_90) {
                     logger.warn(
-                        "Portrait experiment: skipped freeze at ROTATION_90 " +
+                        "Portrait experiment: freeze at ROTATION_90, will rewrite the " +
+                            "resulting LOCKED user rotation to FREE " +
                             "(reason=${chain.args[2]})"
                     )
-                    return@hookWithId null
                 }
                 chain.proceed()
             }
@@ -251,13 +251,16 @@ class WorkModeOrientationProbe : SystemHookModule() {
                         "rotation=${rotationName(rotation)}, " +
                         "reason=${chain.args[2]})"
                 )
-                if (isPortraitExperimentEnabled() && isPcMode() &&
+                if (isPortraitExperimentEnabled() &&
                     mode == USER_ROTATION_LOCKED && rotation == ROTATION_90
                 ) {
                     logger.warn(
-                        "Portrait experiment: skipped setUserRotation(LOCKED, ROTATION_90)"
+                        "Portrait experiment: rewrote setUserRotation(LOCKED, ROTATION_90) " +
+                            "to FREE"
                     )
-                    return@hookWithId null
+                    return@hookWithId chain.proceed(
+                        arrayOf(USER_ROTATION_FREE, rotation, chain.args[2])
+                    )
                 }
                 chain.proceed()
             }
@@ -288,14 +291,13 @@ class WorkModeOrientationProbe : SystemHookModule() {
     }
 
     private fun isPortraitExperimentEnabled(): Boolean =
-        systemProperty("debug.ztool.pc_portrait") == "1"
+        systemProperty("debug.ztool.pc_portrait") == "1" ||
+            systemProperty("persist.sys.ztool.pc_portrait") == "1"
 
     private fun isPortraitOverrideActive(): Boolean {
         val now = android.os.SystemClock.elapsedRealtime()
         if (now - portraitOverrideCheckedAt > 2000L) {
-            portraitOverrideActive =
-                systemProperty("debug.ztool.pc_portrait") == "1" &&
-                    systemProperty("persist.sys.zui.pcmode") == "1"
+            portraitOverrideActive = isPortraitExperimentEnabled()
             portraitOverrideCheckedAt = now
         }
         return portraitOverrideActive
@@ -323,6 +325,7 @@ class WorkModeOrientationProbe : SystemHookModule() {
     }
 
     private fun orientationName(value: Int): String = when (value) {
+        -2 -> "UNSET(-2)"
         UNSPECIFIED -> "UNSPECIFIED(-1)"
         LANDSCAPE -> "LANDSCAPE(0)"
         1 -> "PORTRAIT(1)"
@@ -355,6 +358,7 @@ class WorkModeOrientationProbe : SystemHookModule() {
         const val UNSPECIFIED = -1
         const val ROTATION_90 = 1
         const val USER_ROTATION_LOCKED = 1
+        const val USER_ROTATION_FREE = 0
         const val MAX_LANDSCAPE_LOGS = 120
         const val MAX_LAUNCH_LOGS = 200
         const val MAX_OVERRIDE_LOGS = 100
