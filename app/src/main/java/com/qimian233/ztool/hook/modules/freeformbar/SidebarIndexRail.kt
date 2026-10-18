@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.freeformbar
 
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
+import android.os.SystemClock
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -20,6 +21,9 @@ internal interface SidebarLetterSource {
 
     /** The letter of the group the grid row [position] belongs to. */
     fun letterAt(position: Int): String?
+
+    /** The number of rows the grid's adapter holds. */
+    fun rowCount(): Int
 }
 
 /**
@@ -45,6 +49,9 @@ internal class SidebarIndexRail(
     private var positions: List<Int> = emptyList()
     private var itemHeight: Int = 0
     private var focused: Int = -1
+
+    /** Uptime limit until which the letter picked on the rail outranks the grid's scroll. */
+    private var railFocusUntil: Long = 0L
     private var inactiveColor: Int = DEFAULT_INACTIVE
     private var focusedColor: Int = DEFAULT_FOCUSED
     private var focusFillColor: Int = DEFAULT_FOCUS_FILL
@@ -81,6 +88,7 @@ internal class SidebarIndexRail(
             host.addView(existing)
         }
         focused = -1
+        railFocusUntil = 0L
         rail?.visibility = View.VISIBLE
         render()
         watchScroll(grid)
@@ -92,7 +100,7 @@ internal class SidebarIndexRail(
         rail?.visibility = View.GONE
     }
 
-    /** Keeps the highlight on the group at the top of the grid while the user scrolls it. */
+    /** Re-registers the grid's scroll listener that drives [syncToScroll]. */
     private fun watchScroll(grid: View) {
         scrollListener?.let { stale ->
             runCatching { grid.viewTreeObserver.removeOnScrollChangedListener(stale) }
@@ -103,8 +111,16 @@ internal class SidebarIndexRail(
     }
 
     private fun syncToScroll() {
-        val position = firstVisiblePosition() ?: return
-        val letter = source?.letterAt(position) ?: return
+        if (SystemClock.uptimeMillis() < railFocusUntil) return
+        val first = firstVisiblePosition() ?: return
+        val last = lastVisiblePosition() ?: return
+        val count = source?.rowCount() ?: return
+        val anchor = anchorRow(first, last, count)
+        val letter = source?.letterAt(anchor) ?: return
+        logger.trace(
+            "rail sync first=" + first + " last=" + last + " count=" + count +
+                " anchor=" + anchor + " letter=" + letter
+        )
         val index = letters.indexOf(letter)
         if (index < 0 || index == focused) return
         val previous = focused
@@ -112,15 +128,37 @@ internal class SidebarIndexRail(
         applyFocus(previous, index)
     }
 
+    /**
+     * The grid row the highlight follows.
+     *
+     * It is the top row while there is more than a viewport of rows below, then it slides towards
+     * the bottom row, so the sections too short to ever reach the top are highlighted in order.
+     */
+    private fun anchorRow(first: Int, last: Int, count: Int): Int {
+        val visible = last - first + 1
+        if (first <= 0 || visible <= 1) return first
+        val remaining = (count - 1 - last).coerceAtLeast(0)
+        val progress = (1f - remaining.toFloat() / visible).coerceIn(0f, 1f)
+        return first + Math.round((last - first) * progress)
+    }
+
     /** The grid's first visible adapter position, via its layout manager. */
-    private fun firstVisiblePosition(): Int? = runCatching {
-        val target = grid ?: return null
-        val manager = target.javaClass.getMethod("getLayoutManager").invoke(target) ?: return null
-        val position = manager.javaClass
-            .getMethod("findFirstVisibleItemPosition")
-            .invoke(manager) as Int
+    private fun firstVisiblePosition(): Int? = visiblePosition("findFirstVisibleItemPosition")
+
+    /** The grid's last visible adapter position, via its layout manager. */
+    private fun lastVisiblePosition(): Int? = visiblePosition("findLastVisibleItemPosition")
+
+    private fun visiblePosition(method: String): Int? = runCatching {
+        val manager = layoutManager() ?: return null
+        val position = manager.javaClass.getMethod(method).invoke(manager) as Int
         position.takeIf { it >= 0 }
     }.getOrNull()
+
+    private fun layoutManager(): Any? {
+        val target = grid ?: return null
+        return runCatching { target.javaClass.getMethod("getLayoutManager").invoke(target) }
+            .getOrNull()
+    }
 
     private fun buildRail(context: Context, hostParams: ViewGroup.LayoutParams?): LinearLayout =
         LinearLayout(context).apply {
@@ -195,6 +233,9 @@ internal class SidebarIndexRail(
             focused = index
             applyFocus(previous, index)
         }
+        // The grid's jump answers with scroll callbacks of its own; ignore them briefly so the
+        // tapped letter is not replaced by the row the jump leaves behind.
+        railFocusUntil = SystemClock.uptimeMillis() + RAIL_FOCUS_MS
         val target = grid ?: return
         val position = positions.getOrNull(index) ?: return
         runCatching { target.javaClass.getMethod("scrollToPosition", Int::class.javaPrimitiveType) }
@@ -229,6 +270,9 @@ internal class SidebarIndexRail(
         /** Kept small: the glyph has to stay inside the disc drawn behind it. */
         const val FOCUSED_SCALE = 1.12f
         const val FOCUS_ANIM_MS = 90L
+
+        /** Long enough for the tapped jump's layout pass, short enough not to swallow a scroll. */
+        const val RAIL_FOCUS_MS = 300L
 
         /** Used only before the first [attach], i.e. when no palette has been resolved yet. */
         const val DEFAULT_INACTIVE = 0x99FFFFFF.toInt()

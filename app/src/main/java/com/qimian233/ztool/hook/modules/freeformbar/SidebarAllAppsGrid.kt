@@ -55,6 +55,8 @@ internal class SidebarAllAppsGrid(
 
     override fun letterAt(position: Int): String? = model.letterAt(position)
 
+    override fun rowCount(): Int = model.size
+
     fun appAt(position: Int): Any? = model.appAt(position)
 
     fun isHeader(position: Int): Boolean = model.isHeader(position)
