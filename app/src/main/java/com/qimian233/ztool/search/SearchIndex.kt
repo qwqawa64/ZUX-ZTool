@@ -1016,9 +1016,9 @@ object SearchIndex {
             summaryRes = R.string.settings_edge_bubble_summary
         ),
         freeformHub.item(
-            id = "settings_detail_edge_bubble_margin",
-            titleRes = R.string.settings_edge_bubble_trigger_margin_title,
-            summaryRes = R.string.settings_edge_bubble_trigger_margin_summary
+            id = "settings_detail_edge_bubble_percent",
+            titleRes = R.string.settings_edge_bubble_trigger_percent_title,
+            summaryRes = R.string.settings_edge_bubble_trigger_percent_summary
         ),
         freeformHub.item(
             id = "settings_detail_zui_force_fixed",

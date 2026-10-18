@@ -49,7 +49,7 @@ class SettingsDetailRepository(
                 prefsUtils.loadBooleanSetting(KEY_LAUNCHER_FORCE_FREEFORM_ENTRY, false),
             edgeBubbleEnabled =
                 prefsUtils.loadBooleanSetting(KEY_FREEFORM_EDGE_BUBBLE, false),
-            edgeBubbleTriggerMarginPx = edgeBubbleTriggerMarginPx(),
+            edgeBubbleTriggerPercent = edgeBubbleTriggerPercent(),
             allowAddingLanguages = prefsUtils.loadBooleanSetting(KEY_ALLOW_ADDING_LANGUAGE, false)
         )
     }
@@ -84,18 +84,18 @@ class SettingsDetailRepository(
         }
     }
 
-    fun saveEdgeBubbleTriggerMarginPx(px: Int) {
+    fun saveEdgeBubbleTriggerPercent(percent: Int) {
         prefsUtils.saveIntegerSetting(
-            KEY_FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX,
-            FreeformEdgeBubbleConfig.normalizeTriggerMarginPx(px)
+            KEY_FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT,
+            FreeformEdgeBubbleConfig.normalizeTriggerPercent(percent)
         )
     }
 
-    private fun edgeBubbleTriggerMarginPx(): Int =
-        FreeformEdgeBubbleConfig.normalizeTriggerMarginPx(
+    private fun edgeBubbleTriggerPercent(): Int =
+        FreeformEdgeBubbleConfig.normalizeTriggerPercent(
             prefsUtils.loadIntegerSetting(
-                KEY_FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX,
-                FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_DEFAULT
+                KEY_FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT,
+                FreeformEdgeBubbleConfig.TRIGGER_PERCENT_DEFAULT
             )
         )
 
@@ -299,8 +299,8 @@ class SettingsDetailRepository(
         private val KEY_SETTINGS_APP_ICON_UNMASK = PreferenceKeys.SETTINGS_APP_ICON_UNMASK.name
         private val KEY_LAUNCHER_FORCE_FREEFORM_ENTRY = PreferenceKeys.LAUNCHER_FORCE_FREEFORM_ENTRY.name
         private val KEY_FREEFORM_EDGE_BUBBLE = PreferenceKeys.FREEFORM_EDGE_BUBBLE.name
-        private val KEY_FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX =
-            PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX.name
+        private val KEY_FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT =
+            PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT.name
         private val KEY_ALLOW_ADDING_LANGUAGE = PreferenceKeys.ALLOW_ADD_LANGUAGE.name
     }
 }

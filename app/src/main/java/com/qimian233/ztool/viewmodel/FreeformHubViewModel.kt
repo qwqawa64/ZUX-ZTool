@@ -67,10 +67,10 @@ class FreeformHubViewModel(
         repository.saveEdgeBubbleEnabled(enabled)
     }
 
-    fun setEdgeBubbleTriggerMarginPx(px: Int) {
-        val value = FreeformEdgeBubbleConfig.normalizeTriggerMarginPx(px)
-        _uiState.value = _uiState.value.copy(edgeBubbleTriggerMarginPx = value)
-        repository.saveEdgeBubbleTriggerMarginPx(value)
+    fun setEdgeBubbleTriggerPercent(percent: Int) {
+        val value = FreeformEdgeBubbleConfig.normalizeTriggerPercent(percent)
+        _uiState.value = _uiState.value.copy(edgeBubbleTriggerPercent = value)
+        repository.saveEdgeBubbleTriggerPercent(value)
     }
 
     fun setFloatMandatory(enabled: Boolean) {
@@ -240,7 +240,7 @@ data class FreeformHubUiState(
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
     val forceFreeformEntryHookEnabled: Boolean = false,
     val edgeBubbleEnabled: Boolean = false,
-    val edgeBubbleTriggerMarginPx: Int = FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_DEFAULT,
+    val edgeBubbleTriggerPercent: Int = FreeformEdgeBubbleConfig.TRIGGER_PERCENT_DEFAULT,
     val floatMandatory: Boolean = false,
     val splitScreenMandatory: Boolean = false,
     val freeformFullscreenThreshold: Boolean = false,

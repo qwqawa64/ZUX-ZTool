@@ -313,10 +313,10 @@ object PreferenceKeys {
         IntKey("launcher_freeform_fullscreen_width_percent", 85)
     val LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT =
         IntKey("launcher_freeform_fullscreen_height_percent", 85)
-    // Freeform edge bubble: distance (px) from the display edge at which a dragged
-    // window docks into a bubble; larger values dock sooner
-    val FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX =
-        IntKey("freeform_edge_bubble_trigger_margin_px", 48)
+    // Freeform edge bubble: percentage of the window width that must hang offscreen
+    // before the window docks into a bubble; fully on-screen windows never dock
+    val FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT =
+        IntKey("freeform_edge_bubble_trigger_percent", 50)
 
     // ═══════════════════════════════════════════════════════════
     // Float keys
@@ -475,7 +475,7 @@ object PreferenceKeys {
         LAUNCHER_BIG_FOLDER_TUNE_BG_X, LAUNCHER_BIG_FOLDER_TUNE_BG_Y,
         LAUNCHER_BIG_FOLDER_TUNE_SHIFT_X, LAUNCHER_BIG_FOLDER_TUNE_SHIFT_Y,
         LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT, LAUNCHER_FREEFORM_FULLSCREEN_HEIGHT_PERCENT,
-        FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX
+        FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT
     )
 
     val floatKeys: List<FloatKey> = listOf(

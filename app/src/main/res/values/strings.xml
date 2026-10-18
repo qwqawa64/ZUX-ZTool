@@ -389,9 +389,9 @@
     <string name="settings_edge_bubble_title">小窗贴边气泡</string>
     <string name="settings_edge_bubble_summary">将小窗拖出屏幕边缘后自动收纳为气泡，点击气泡可恢复；需重启系统后生效</string>
     <string name="settings_edge_bubble_hint">请保持 ZTool 在后台常驻</string>
-    <string name="settings_edge_bubble_trigger_margin_title">贴边灵敏度</string>
-    <string name="settings_edge_bubble_trigger_margin_summary">小窗边缘距屏幕边缘小于该值时自动收纳为气泡；数值越大越灵敏，0 表示拖到屏幕边缘才触发</string>
-    <string name="settings_edge_bubble_trigger_margin_label">%1$d px</string>
+    <string name="settings_edge_bubble_trigger_percent_title">贴边触发比例</string>
+    <string name="settings_edge_bubble_trigger_percent_summary">小窗移出屏幕的宽度超过该比例后才自动收纳为气泡；数值越大，需要拖出得越多才会触发</string>
+    <string name="settings_edge_bubble_trigger_percent_label">%1$d%%</string>
     <string name="edge_bubble_notification_channel">小窗贴边气泡</string>
     <string name="edge_bubble_notification_title">小窗贴边气泡已启用</string>
     <string name="edge_bubble_notification_text">保持此服务运行以显示贴边气泡</string>

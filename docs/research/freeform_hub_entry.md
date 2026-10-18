@@ -28,7 +28,7 @@ design constraint is restart, and reboot-only is the correct model for this page
 | 一视界拓展模块 install/remove | Magisk module `zuxos_embedding` | Magisk mount at boot | system reboot |
 | 自定义横屏视图 / 结果 / 已适配策略 | app-side config + floating window | ZTool only | none |
 | 强制分屏 / 自由小窗 / 固定比例小窗 (SDK ≥ 36) | `/data/system/zui/ov_common_persist_user_0.xml` | ZUI window manager service | system reboot |
-| 小窗贴边气泡（含贴边灵敏度） | `xposed_module_config` (`freeform_edge_bubble`, `freeform_edge_bubble_trigger_margin_px`) | `FreeformEdgeBubbleHook` @ `system_server`, `EdgeBubbleService` @ ZTool | system reboot |
+| 小窗贴边气泡（含贴边触发比例） | `xposed_module_config` (`freeform_edge_bubble`, `freeform_edge_bubble_trigger_percent`) | `FreeformEdgeBubbleHook` @ `system_server`, `EdgeBubbleService` @ ZTool | system reboot |
 | 强制小窗 / 强制分屏 (SDK < 36) | global `force_resizable_activities` + `Split_Screen_mandatory` | `SplitScreenMandatory` @ settings **and** `system_server` | settings process + system reboot |
 | 自定义全屏阈值 (+2 sliders, preview) | `system_ui_freeform_fullscreen_threshold` etc. | `FreeformFullscreenThresholdHook` @ `com.android.systemui` | SystemUI process |
 | 底边拖动等比缩放 | `system_ui_freeform_bottom_edge_resize` | `FreeformBottomEdgeResizeHook` @ SystemUI | SystemUI process |

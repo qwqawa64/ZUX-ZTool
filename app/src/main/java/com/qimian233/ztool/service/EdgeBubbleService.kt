@@ -40,7 +40,7 @@ class EdgeBubbleService : Service() {
         private const val CENTER_Y_STAGGER_RATIO = 0.15f
         private const val POLL_INTERVAL_MS = 600L
         /** Small cooldown after a bubble restore; the hook nudges restored bounds
-         *  clear of the configured edge-trigger zone. */
+         *  fully back onscreen, so the next poll must not re-dock too early. */
         private const val RESTORE_COOLDOWN_MS = 1000L
 
         /**
@@ -70,6 +70,7 @@ class EdgeBubbleService : Service() {
     }
     private val prefsUtils by lazy { ModulePreferencesUtils(this) }
     private var polling = false
+    private var realDisplayLeft = 0
     private var realDisplayWidth = 0
     private var realDisplayHeight = 0
 
@@ -126,6 +127,7 @@ class EdgeBubbleService : Service() {
         val metricsBounds = try {
             windowManager.maximumWindowMetrics.bounds
         } catch (_: Throwable) { null }
+        realDisplayLeft = metricsBounds?.left ?: 0
         realDisplayWidth = metricsBounds?.width() ?: resources.displayMetrics.widthPixels
         realDisplayHeight = metricsBounds?.height() ?: resources.displayMetrics.heightPixels
         mainHandler.postDelayed({ pollOnce() }, POLL_INTERVAL_MS)
@@ -142,16 +144,22 @@ class EdgeBubbleService : Service() {
     private fun handleFreeformTasks(tasks: List<FreeformBubbleBridge.FreeformTask>) {
         if (!polling) return
         val now = SystemClock.elapsedRealtime()
-        val marginPx = triggerMarginPx()
+        val triggerPercent = currentTriggerPercent()
         // Present = still a freeform task, visible OR docked-hidden. A docked task
         // must keep its bubble; only leaving freeform entirely removes it.
         val presentIds = HashSet<Int>()
         for (task in tasks) {
             presentIds.add(task.taskId)
             if (task.hidden) continue // docked behind home: bubble is already up
+            val width = task.bounds.width().coerceAtLeast(1)
+            val offLeft = (realDisplayLeft - task.bounds.left).coerceAtLeast(0)
+            val offRight = (task.bounds.right - realDisplayLeft - realDisplayWidth).coerceAtLeast(0)
+            val triggerWidth = width * triggerPercent / 100f
+            // Only the part outside the display counts: a window fully onscreen never
+            // docks, however close to the edge the user parks it.
             val side = when {
-                task.bounds.left <= marginPx -> 0
-                realDisplayWidth - task.bounds.right <= marginPx -> 1
+                offLeft >= triggerWidth -> 0
+                offRight >= triggerWidth -> 1
                 else -> -1
             }
             val cooledDown = now - (restoredAt[task.taskId] ?: 0L) >= RESTORE_COOLDOWN_MS
@@ -180,12 +188,12 @@ class EdgeBubbleService : Service() {
     private fun storedCenterYRatio(taskId: Int): Float =
         bubblePrefs.getFloat("cy_$taskId", Float.NaN)
 
-    /** Current edge-trigger distance; re-read every poll so slider changes apply live. */
-    private fun triggerMarginPx(): Int =
-        FreeformEdgeBubbleConfig.normalizeTriggerMarginPx(
+    /** Current offscreen-width trigger percentage; re-read every poll to apply live. */
+    private fun currentTriggerPercent(): Int =
+        FreeformEdgeBubbleConfig.normalizeTriggerPercent(
             prefsUtils.loadIntegerSetting(
-                PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX.name,
-                FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_DEFAULT
+                PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT.name,
+                FreeformEdgeBubbleConfig.TRIGGER_PERCENT_DEFAULT
             )
         )
 

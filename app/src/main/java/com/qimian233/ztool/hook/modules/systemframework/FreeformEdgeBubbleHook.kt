@@ -41,8 +41,8 @@ import java.util.concurrent.ConcurrentHashMap
  *    detect a window dragged to the screen edge and broadcast bubble add/remove events.
  *
  * The feature switch is [PreferenceKeys.FREEFORM_EDGE_BUBBLE] (read by
- * [com.qimian233.ztool.hook.base.BaseHookModule.isEnabled]); the trigger distance is
- * [PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX]. Toggling either requires a
+ * [com.qimian233.ztool.hook.base.BaseHookModule.isEnabled]); the trigger threshold is
+ * [PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT]. Toggling either requires a
  * system restart (scope HowToRestart.Reboot).
  */
 @SuppressLint("PrivateApi", "SdkLintPrivateApi", "BlockedPrivateApi")
@@ -79,9 +79,9 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         private const val BRIDGE_REGISTER_RETRY_INTERVAL_MS = 500L
         private const val ADB_SHELL_UID = 2000
 
-        /** Trigger distance from the display edge, captured at system-server start. */
-        @Volatile private var edgeTriggerMarginPx =
-            PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX.default
+        /** Trigger percentage of the window width that must hang offscreen. */
+        @Volatile private var edgeTriggerPercent =
+            PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT.default
 
         /** taskId → restore bounds, server-side session state (lost on reboot is fine). */
         private val restoreRects = ConcurrentHashMap<Int, Rect>()
@@ -107,21 +107,21 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
     @Throws(Throwable::class)
     override fun handleSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {
         val classLoader = param.classLoader
-        edgeTriggerMarginPx = readEdgeTriggerMarginPx()
+        edgeTriggerPercent = readEdgeTriggerPercent()
 
         installCheckPermissionPassthrough(classLoader)
         installEdgeDetectionHook(classLoader)
         registerBroadcastBridge(classLoader)
     }
 
-    private fun readEdgeTriggerMarginPx(): Int {
-        val key = PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_MARGIN_PX
+    private fun readEdgeTriggerPercent(): Int {
+        val key = PreferenceKeys.FREEFORM_EDGE_BUBBLE_TRIGGER_PERCENT
         val configured = try {
             remotePreferences.getInt(key.name, key.default)
         } catch (_: Throwable) {
             key.default
         }
-        return FreeformEdgeBubbleConfig.normalizeTriggerMarginPx(configured)
+        return FreeformEdgeBubbleConfig.normalizeTriggerPercent(configured)
     }
 
     /**
@@ -593,22 +593,22 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
         } catch (_: Throwable) { null }
         val target = Rect(stored)
         if (displayBounds != null && !displayBounds.isEmpty) {
-            // Must exceed the app-side trigger margin, or the next poll would dock the
-            // window again; applies vertically too, or a window docked near a corner
-            // would come back with its caption bar clipped offscreen.
-            val margin = maxOf(RESTORE_CLEARANCE_MIN_PX, edgeTriggerMarginPx * 2)
+            // Must leave the window fully onscreen, or its stored (edge-hanging)
+            // bounds would trigger the bubble again; applies vertically too, or a
+            // window docked near a corner would come back clipped offscreen.
+            val clearance = RESTORE_CLEARANCE_MIN_PX
             val dx = when {
-                target.left < displayBounds.left + margin ->
-                    displayBounds.left + margin - target.left
-                target.right > displayBounds.right - margin ->
-                    displayBounds.right - margin - target.right
+                target.left < displayBounds.left + clearance ->
+                    displayBounds.left + clearance - target.left
+                target.right > displayBounds.right - clearance ->
+                    displayBounds.right - clearance - target.right
                 else -> 0
             }
             val dy = when {
-                target.top < displayBounds.top + margin ->
-                    displayBounds.top + margin - target.top
-                target.bottom > displayBounds.bottom - margin ->
-                    displayBounds.bottom - margin - target.bottom
+                target.top < displayBounds.top + clearance ->
+                    displayBounds.top + clearance - target.top
+                target.bottom > displayBounds.bottom - clearance ->
+                    displayBounds.bottom - clearance - target.bottom
                 else -> 0
             }
             target.offset(dx, dy)
@@ -744,9 +744,9 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
     }
 
     /**
-     * Detects freeform tasks dragged to the display edge. A task whose edge is within
-     * the configured trigger margin (or hangs offscreen) docks into a bubble; a tracked
-     * task back inside the margin dismisses it.
+     * Detects freeform tasks dragged partly offscreen. Once the offscreen part reaches
+     * the configured share of the window width the task docks into a bubble; a tracked
+     * task back onscreen dismisses it.
      */
     @Throws(Throwable::class)
     private fun installEdgeDetectionHook(classLoader: ClassLoader) {
@@ -772,18 +772,26 @@ class FreeformEdgeBubbleHook : SystemHookModule() {
                 val dc = taskClass.getMethod("getDisplayContent").invoke(task)
                 dc?.javaClass?.getMethod("getBounds")?.invoke(dc) as? Rect
             } catch (_: Throwable) { null }
-            val marginPx = edgeTriggerMarginPx
+            val triggerPercent = edgeTriggerPercent
             val taskId = task.taskIdCompat()
             val wasTracked = minimizedSides.containsKey(taskId)
-            val side = when {
-                displayBounds == null -> -1
-                newBounds.left - displayBounds.left <= marginPx -> 0
-                displayBounds.right - newBounds.right <= marginPx -> 1
-                else -> -1
+            val side = if (displayBounds == null) {
+                -1
+            } else {
+                // Only the part of the window outside the display counts; a window fully
+                // inside never docks regardless of how close it is to the edge.
+                val offLeft = (displayBounds.left - newBounds.left).coerceAtLeast(0)
+                val offRight = (newBounds.right - displayBounds.right).coerceAtLeast(0)
+                val triggerWidth = newBounds.width().coerceAtLeast(1) * triggerPercent / 100f
+                when {
+                    offLeft >= triggerWidth -> 0
+                    offRight >= triggerWidth -> 1
+                    else -> -1
+                }
             }
             chain.proceed()
             if (side >= 0 && !wasTracked) {
-                // First time reaching the edge: record the onscreen bounds the user had,
+                // First time crossing the trigger: remember the bounds the window had,
                 // then dock the task behind home (ZUI native hide) so only the bubble
                 // remains visible.
                 restoreRects[taskId] = Rect(newBounds)

@@ -472,7 +472,7 @@ fun FreeformHubSettingsRoute(
                 )
             },
             onEdgeBubbleChanged = viewModel::setEdgeBubbleEnabled,
-            onEdgeBubbleTriggerMarginPxChanged = viewModel::setEdgeBubbleTriggerMarginPx,
+            onEdgeBubbleTriggerPercentChanged = viewModel::setEdgeBubbleTriggerPercent,
             onFloatMandatoryChanged = viewModel::setFloatMandatory,
             onSplitScreenMandatoryChanged = viewModel::setSplitScreenMandatory,
             onFreeformFullscreenThresholdChanged = viewModel::setFreeformFullscreenThreshold,
@@ -554,7 +554,7 @@ private fun FreeformHubSettingsScreen(
     onZuiForceFreeform: () -> Unit,
     onZuiForceFixed: () -> Unit,
     onEdgeBubbleChanged: (Boolean) -> Unit,
-    onEdgeBubbleTriggerMarginPxChanged: (Int) -> Unit,
+    onEdgeBubbleTriggerPercentChanged: (Int) -> Unit,
     onFloatMandatoryChanged: (Boolean) -> Unit,
     onSplitScreenMandatoryChanged: (Boolean) -> Unit,
     onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
@@ -618,7 +618,7 @@ private fun FreeformHubSettingsScreen(
                         onZuiForceFreeform = onZuiForceFreeform,
                         onZuiForceFixed = onZuiForceFixed,
                         onEdgeBubbleChanged = onEdgeBubbleChanged,
-                        onEdgeBubbleTriggerMarginPxChanged = onEdgeBubbleTriggerMarginPxChanged,
+                        onEdgeBubbleTriggerPercentChanged = onEdgeBubbleTriggerPercentChanged,
                         onFloatMandatoryChanged = onFloatMandatoryChanged,
                         onSplitScreenMandatoryChanged = onSplitScreenMandatoryChanged,
                         onFreeformFullscreenThresholdChanged = onFreeformFullscreenThresholdChanged,
@@ -652,7 +652,7 @@ private fun freeformHubSections(
     onZuiForceFreeform: () -> Unit,
     onZuiForceFixed: () -> Unit,
     onEdgeBubbleChanged: (Boolean) -> Unit,
-    onEdgeBubbleTriggerMarginPxChanged: (Int) -> Unit,
+    onEdgeBubbleTriggerPercentChanged: (Int) -> Unit,
     onFloatMandatoryChanged: (Boolean) -> Unit,
     onSplitScreenMandatoryChanged: (Boolean) -> Unit,
     onFreeformFullscreenThresholdChanged: (Boolean) -> Unit,
@@ -792,26 +792,26 @@ private fun freeformHubSections(
                         if (state.edgeBubbleEnabled) {
                             add(
                                 SettingItem.Slider(
-                                    key = "settings_detail_edge_bubble_margin",
+                                    key = "settings_detail_edge_bubble_percent",
                                     title = stringResource(
-                                        R.string.settings_edge_bubble_trigger_margin_title
+                                        R.string.settings_edge_bubble_trigger_percent_title
                                     ),
                                     summary = stringResource(
-                                        R.string.settings_edge_bubble_trigger_margin_summary
+                                        R.string.settings_edge_bubble_trigger_percent_summary
                                     ),
-                                    value = state.edgeBubbleTriggerMarginPx.toFloat(),
+                                    value = state.edgeBubbleTriggerPercent.toFloat(),
                                     valueText = stringResource(
-                                        R.string.settings_edge_bubble_trigger_margin_label,
-                                        state.edgeBubbleTriggerMarginPx
+                                        R.string.settings_edge_bubble_trigger_percent_label,
+                                        state.edgeBubbleTriggerPercent
                                     ),
                                     valueRange =
-                                        FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_MIN.toFloat()..
-                                            FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_MAX.toFloat(),
-                                    steps = (FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_MAX -
-                                        FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_MIN) /
-                                        FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_STEP - 1,
+                                        FreeformEdgeBubbleConfig.TRIGGER_PERCENT_MIN.toFloat()..
+                                            FreeformEdgeBubbleConfig.TRIGGER_PERCENT_MAX.toFloat(),
+                                    steps = (FreeformEdgeBubbleConfig.TRIGGER_PERCENT_MAX -
+                                        FreeformEdgeBubbleConfig.TRIGGER_PERCENT_MIN) /
+                                        FreeformEdgeBubbleConfig.TRIGGER_PERCENT_STEP - 1,
                                     onValueChange = {
-                                        onEdgeBubbleTriggerMarginPxChanged(it.toInt())
+                                        onEdgeBubbleTriggerPercentChanged(it.toInt())
                                     }
                                 )
                             )

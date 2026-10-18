@@ -372,7 +372,7 @@ data class SettingsDetailUiState(
     val showZuiForceConfig: Boolean = Build.VERSION.SDK_INT >= 36,
     val forceFreeformEntryHookEnabled: Boolean = false,
     val edgeBubbleEnabled: Boolean = false,
-    val edgeBubbleTriggerMarginPx: Int = FreeformEdgeBubbleConfig.TRIGGER_MARGIN_PX_DEFAULT,
+    val edgeBubbleTriggerPercent: Int = FreeformEdgeBubbleConfig.TRIGGER_PERCENT_DEFAULT,
     val showRestartDialog: Boolean = false,
     val appDetail: Boolean = false,
     val appIconUnmask: Boolean = false,
