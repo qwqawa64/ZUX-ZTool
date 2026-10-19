@@ -867,6 +867,11 @@ object SearchIndex {
             summaryRes = R.string.system_framework_keep_rotation_enable_summary
         ),
         framework.item(
+            id = "framework_work_mode_portrait",
+            titleRes = R.string.system_framework_work_mode_portrait_title,
+            summaryRes = R.string.system_framework_work_mode_portrait_summary
+        ),
+        framework.item(
             id = "framework_disable_hbm_thermal_limit",
             titleRes = R.string.system_framework_disable_hbm_thermal_limit_title
         ),

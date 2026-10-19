@@ -32,6 +32,11 @@ class FrameworkSettingsViewModel(
         repository.saveKeepRotation(enabled)
     }
 
+    fun setWorkModePortrait(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(workModePortrait = enabled)
+        repository.saveWorkModePortrait(enabled)
+    }
+
     fun setAllowGetPackages(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(allowGetPackages = enabled)
         repository.saveAllowGetPackages(enabled)
@@ -244,6 +249,7 @@ class FrameworkSettingsViewModel(
 
 data class FrameworkSettingsUiState(
     val keepRotation: Boolean = false,
+    val workModePortrait: Boolean = false,
     val allowGetPackages: Boolean = false,
     val disableFlagSecure: Boolean = false,
     val aiInputExpand: Boolean = false,

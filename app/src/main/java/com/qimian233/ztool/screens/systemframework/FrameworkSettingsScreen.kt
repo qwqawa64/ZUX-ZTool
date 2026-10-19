@@ -108,6 +108,7 @@ fun FrameworkSettingsRoute(
             onBack = onBack,
             onRestart = viewModel::showRestartConfirmDialog,
             onKeepRotationChanged = viewModel::setKeepRotation,
+            onWorkModePortraitChanged = viewModel::setWorkModePortrait,
             onAllowGetPackagesChanged = viewModel::setAllowGetPackages,
             onDisableFlagSecureChanged = viewModel::setDisableFlagSecure,
             onForceOnOffAnimationChanged = viewModel::setForceOnOffAnimation,
@@ -201,6 +202,7 @@ private fun FrameworkSettingsScreen(
     onBack: () -> Unit,
     onRestart: () -> Unit,
     onKeepRotationChanged: (Boolean) -> Unit,
+    onWorkModePortraitChanged: (Boolean) -> Unit,
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
@@ -271,6 +273,7 @@ private fun FrameworkSettingsScreen(
                     sections = frameworkSettingsSections(
                         state = state,
                         onKeepRotationChanged = onKeepRotationChanged,
+                        onWorkModePortraitChanged = onWorkModePortraitChanged,
                         onAllowGetPackagesChanged = onAllowGetPackagesChanged,
                         onDisableFlagSecureChanged = onDisableFlagSecureChanged,
                         onForceOnOffAnimationChanged = onForceOnOffAnimationChanged,
@@ -313,6 +316,7 @@ private fun FrameworkSettingsScreen(
 private fun frameworkSettingsSections(
     state: FrameworkSettingsUiState,
     onKeepRotationChanged: (Boolean) -> Unit,
+    onWorkModePortraitChanged: (Boolean) -> Unit,
     onAllowGetPackagesChanged: (Boolean) -> Unit,
     onDisableFlagSecureChanged: (Boolean) -> Unit,
     onForceOnOffAnimationChanged: (Boolean) -> Unit,
@@ -354,6 +358,15 @@ private fun frameworkSettingsSections(
                         checked = state.keepRotation,
                         onCheckedChange = onKeepRotationChanged,
                         key = "framework_keep_rotation"
+                    )
+                )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.system_framework_work_mode_portrait_title),
+                        summary = stringResource(R.string.system_framework_work_mode_portrait_summary),
+                        checked = state.workModePortrait,
+                        onCheckedChange = onWorkModePortraitChanged,
+                        key = "framework_work_mode_portrait"
                     )
                 )
                 add(

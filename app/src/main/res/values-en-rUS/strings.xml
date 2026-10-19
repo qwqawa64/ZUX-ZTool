@@ -746,6 +746,8 @@
     <string name="system_framework_screen_and_display_title">Screen and Display</string>
     <string name="system_framework_keep_rotation_enable_title">Keep screen orientation portrait</string>
     <string name="system_framework_keep_rotation_enable_summary">Change the default screen orientation from landscape to portrait.</string>
+    <string name="system_framework_work_mode_portrait_title">Portrait work mode</string>
+    <string name="system_framework_work_mode_portrait_summary">Let the work (PC) desktop follow the device orientation. Apps that declare a fixed orientation keep it; takes effect after re-entering work mode.</string>
     <string name="system_framework_disable_zui_applist_title">Security</string>
     <string name="system_framework_disable_flag_secure_title">Force allow screenshots</string>
     <string name="system_framework_disable_flag_secure_summary">Remove secure window flags to fix black screenshots in secure windows.</string>

@@ -100,7 +100,7 @@ import com.qimian233.ztool.hook.modules.systemframework.PackageManagerSignatureB
 import com.qimian233.ztool.hook.modules.systemframework.PackageManagerVerificationAgentHook
 import com.qimian233.ztool.hook.modules.systemframework.PenHapticWaveformRedirectHook
 import com.qimian233.ztool.hook.modules.systemframework.VolumeKeyNonlinearRamp
-import com.qimian233.ztool.hook.modules.systemframework.WorkModeOrientationProbe
+import com.qimian233.ztool.hook.modules.systemframework.WorkModePortrait
 import com.qimian233.ztool.hook.modules.systemframework.SplitScreenMandatory as SystemSplitScreenMandatory
 import com.qimian233.ztool.hook.modules.systemui.keyguard.ChargeAnimationDurationHook
 import com.qimian233.ztool.hook.modules.systemui.keyguard.BypassFaceAuthTimeout
@@ -186,7 +186,7 @@ object HookManager {
         registerHookModule(HalfWidthPunctHook())
         registerHookModule(SogouEnterKeyHook())
         registerHookModule(KeepRotation())
-        registerHookModule(WorkModeOrientationProbe())
+        registerHookModule(WorkModePortrait())
         registerHookModule(AllowRelativeAppLaunch())
         registerHookModule(ForceRelativeAppFreeform())
         registerHookModule(FreeformEdgeBubbleHook())

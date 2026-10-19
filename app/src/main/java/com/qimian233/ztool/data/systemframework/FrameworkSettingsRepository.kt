@@ -22,6 +22,7 @@ class FrameworkSettingsRepository(
         return FrameworkSettingsUiState(
             allowGetPackages = prefsUtils.loadBooleanSetting(KEY_ALLOW_GET_PACKAGES, false),
             keepRotation = prefsUtils.loadBooleanSetting(KEY_KEEP_ROTATION, false),
+            workModePortrait = prefsUtils.loadBooleanSetting(KEY_WORK_MODE_PORTRAIT, false),
             disableFlagSecure = prefsUtils.loadBooleanSetting(KEY_DISABLE_FLAG_SECURE, false),
             aiInputExpand = prefsUtils.loadBooleanSetting(KEY_AI_INPUT_EXPAND, false),
             forceOnOffAnimation = prefsUtils.loadBooleanSetting(KEY_FORCE_ON_OFF_ANIMATION, false),
@@ -57,6 +58,10 @@ class FrameworkSettingsRepository(
 
     fun saveKeepRotation(enabled: Boolean) {
         prefsUtils.saveBooleanSetting(KEY_KEEP_ROTATION, enabled)
+    }
+
+    fun saveWorkModePortrait(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_WORK_MODE_PORTRAIT, enabled)
     }
 
     fun saveAllowGetPackages(enabled: Boolean) {
@@ -275,6 +280,7 @@ class FrameworkSettingsRepository(
 
     companion object {
         private val KEY_KEEP_ROTATION = PreferenceKeys.KEEP_ROTATION.name
+        private val KEY_WORK_MODE_PORTRAIT = PreferenceKeys.WORK_MODE_PORTRAIT.name
         private val KEY_ALLOW_GET_PACKAGES = PreferenceKeys.ALLOW_GET_PACKAGES.name
         private val KEY_DISABLE_FLAG_SECURE = PreferenceKeys.DISABLE_FLAG_SECURE.name
         private val KEY_AI_INPUT_EXPAND = PreferenceKeys.AI_INPUT_EXPAND.name
