@@ -167,6 +167,9 @@ private fun ThemeSettingsScreen(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
+                ThemePreviewCard(
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
                 ZToolSettingsList(
                     highlightRegistry = highlightRegistry,
                     sections = themeSettingsSections(

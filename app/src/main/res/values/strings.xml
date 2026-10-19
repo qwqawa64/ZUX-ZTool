@@ -898,6 +898,9 @@
     <!--应用名单选择界面弹窗-->
     <string name="common_search_hint">搜索…</string>
     <string name="page_settings_app_ui_theme_settings">应用主题模式</string>
+    <string name="page_settings_theme_preview_title">外观预览</string>
+    <string name="page_settings_theme_preview_home_label">主页</string>
+    <string name="page_settings_theme_preview_features_label">功能页</string>
     <string name="page_settings_app_language_settings">应用语言</string>
     <string name="page_settings_open_app_language_settings_failed">无法打开应用语言设置</string>
     <string name="page_settings_frontend_style_title">主题风格</string>
