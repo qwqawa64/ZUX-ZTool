@@ -63,6 +63,30 @@
 - 手动验证（TB710FU / ZUX 17.5）：开启开关后进入工作模式即为竖屏；“全部应用”抽屉不再拉回
   横屏；返回桌面无需先打开竖屏应用。
 
+## 已知问题：抽屉/回桌面的横屏快照闪烁
+
+现象：打开“全部应用”抽屉、或从应用回到工作桌面时，会短暂看到横屏画面。
+
+排查结论（Transition 日志 + 逐帧截图）：
+
+- 逐帧 `screencap` 全部是 2000x3200，显示并没有真的转横屏；
+- `WindowManagerShell` 的过渡项是
+  `CHANGE ... sb=Rect(0,0-3200,2000) eb=Rect(0,0-2000,3200) r=1->0`，即窗口从横屏 bounds
+  动画到竖屏；
+- 来源是 `TaskLaunchParamsModifier.resolveOrientation` 在 PC 模式下对启动 bounds 的横屏强制
+  （`bounds` 为空的分支，以及 `getPCModeAppForceOrientation` 的 per-app 值）。
+
+失败的尝试（已回退）：Hook 三参数
+`resolveOrientation(ActivityRecord, TaskDisplayArea, Rect)`，对桌面包返回当前显示方向。
+结果横屏快照仍在，并且进入工作模式后桌面会停留在横屏，直到打开一个竖屏应用才触发方向重算。
+
+后续可行方向：
+
+1. 在 SystemUI 侧抑制这次 `CHANGE` 过渡的旋转动画
+   （`EnterOrExitPcModeTransitionHandler`），让配置切换即时完成；
+2. 只修正“重复打开已有 task”时的初始 bounds，不干预首次进入工作模式的 task 创建；
+3. 接受该过渡动画，作为已知视觉瑕疵记录。
+
 ## 剩余工作：Work Launcher 竖屏布局
 
 方向链路已验证可用，但 `com.zui.desktoplauncher` 的桌面布局仍按横屏设计：
