@@ -292,6 +292,7 @@ git commit ...
     - Do necessary verifications noted in the Verification chapter
     - *Commit changes*
     - Mark the corresponding todo item in your list or the Markdown file written in step 3 as completed
+    - Once the plan is marked as all finished, move it to `docs/archive/<plan_folder>`, for example, `docs/archive/stylus` or `docs/archive/compose_refactor`.
 5. Continue until at least one of the following condition is/are satisfied. Notify the user with the current situation after encountering these situations:
     - The work is done, no todo item left unchecked.
     - Some step requires additional information and these information cannot be fetched via Internet, build cache and user input.
