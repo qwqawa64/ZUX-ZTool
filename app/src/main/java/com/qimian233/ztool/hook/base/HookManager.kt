@@ -177,6 +177,7 @@ object HookManager {
      * Shared by [initialize] and [reinitializeForHotReload].
      */
     private fun registerAllModules(xposed: XposedInterface) {
+        // system server or framework (android and framework)
         registerHookModule(DisableFlagSecure())
         registerHookModule(AllowGetPackages())
         registerHookModule(AllowAllRestrictedSettings())
@@ -198,8 +199,10 @@ object HookManager {
         registerHookModule(ClipboardAccessToastHook())
         registerHookModule(SystemSplitScreenMandatory())
 
+        // all APPs with ZUI UI components
         registerHookModule(ZuiDialogSkinHook())
 
+        // Core patch, targets system server
         registerHookModule(PackageManagerDowngradeHook())
         registerHookModule(PackageManagerSignatureBypassHook())
         registerHookModule(PackageManagerVerificationAgentHook())
@@ -210,6 +213,7 @@ object HookManager {
         registerHookModule(PackageManagerArscBypassHook())
         registerHookModule(PenHapticWaveformRedirectHook())
 
+        // System UI (com.android.systemui)
         registerHookModule(StatusBarClockSecondsHook())
         registerHookModule(CustomStatusBarClock())
         registerHookModule(SystemUIChargeWattsHook())
@@ -249,9 +253,9 @@ object HookManager {
         registerHookModule(FineVolumeStepsSliderHook())
         registerHookModule(DisableBiometricErrorVibration())
         registerHookModule(MediaOutputDialogCenterHook())
-
         registerHookModule(DesktopLiveWallpaperHook())
 
+        // Android Settings (com.android.settings)
         registerHookModule(OneVisionCompletion())
         registerHookModule(AllowDisplayDolbyHook())
         registerHookModule(PermissionControllerHook())
@@ -265,6 +269,7 @@ object HookManager {
         registerHookModule(LocaleListEditorHook())
         registerHookModule(SettingsAppIconUnmaskHook())
 
+        // Package Installer (com.android.packageinstaller)
         registerHookModule(PackageInstallerHookScan())
         registerHookModule(PackageInstallerPermissionHook())
         registerHookModule(SkipInstallWarnPage())
@@ -272,6 +277,7 @@ object HookManager {
         registerHookModule(PackageInstallerStyleHook())
         registerHookModule(PackageInstallerNoDeleteModule())
 
+        // Launcher (com.zui.launcher)
         registerHookModule(DisableForceStop())
         registerHookModule(ZuiLauncherHotseatHook())
         registerHookModule(LauncherFreeformEntryHook())
@@ -299,6 +305,7 @@ object HookManager {
         registerHookModule(IconScaleOverrideHook())
         registerHookModule(WorkDesktopProbe())
 
+        // Game Helper (com.zui.game.service)
         registerHookModule(AutoMistakeTouchHook())
         registerHookModule(DisableGameAudio())
         registerHookModule(DisableGameAudioApp())
@@ -306,25 +313,32 @@ object HookManager {
         registerHookModule(CpuFrequencyFix())
         registerHookModule(SocTemperatureFix())
 
+        // Lenovo OTA (com.lenovo.ota)
         registerHookModule(DisableOtaCheck())
         registerHookModule(LenovoOTAHook())
         registerHookModule(NoAutoOtaInstall())
         registerHookModule(BlockOtaInstallDialog())
         registerHookModule(HideOtaNotifications())
 
+        // Wallpaper settings (com.zui.wallpapersettings)
         registerHookModule(ChargeAnimationFixModule())
 
+        // DocumentsUI (com.android.documentsui)
         registerHookModule(DocumentsUIBypass())
 
+        // ZUX freeform sidebar (com.zui.freeform.sidebar)
         registerHookModule(SidebarDrawerHook())
 
+        // Safe Center, including com.lenovo.safecenter and com.zui.safecenter
         registerHookModule(DisableAllVirusScans())
         registerHookModule(EnableAutorunByDefault())
 
+        // Motorola mobile desktop (com.motorola.mobiledesktop)
         registerHookModule(AutoAcceptFileTransferHook())
         registerHookModule(BypassShareWarningHook())
         registerHookModule(DisableNearbyShareAutoOffHook())
 
+        // Lenovo TB Engine (UDS, com.lenovo.tbengine)
         registerHookModule(DisableTbEngineAutoDownload())
         registerHookModule(DisableTbEngineAutoInstall())
         registerHookModule(DisableTbEngineAppUpdate())
@@ -332,11 +346,13 @@ object HookManager {
         registerHookModule(DisableTbEngineReporting())
         registerHookModule(SignTbEngineLocalOta())
 
+        // Lenovo device service (com.lenovo.lsf.device)
         registerHookModule(DisableLsfDevicePush())
         registerHookModule(DisableLsfDeviceAutoInstall())
         registerHookModule(DisableLsfDeviceAppListReporting())
         registerHookModule(DisableTabPushoutSdacRegister())
 
+        // ZUI performance service (com.zui.pp)
         registerHookModule(BlockPowerPolicySync())
         registerHookModule(BlockGamePolicyUpdate())
 
