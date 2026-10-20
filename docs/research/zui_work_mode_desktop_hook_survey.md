@@ -40,10 +40,16 @@ with `zui_component_provenance_and_hookability.md` §2.3), and its
 in the APK is therefore the work/PC desktop; there is no phone-launcher behaviour in it. The
 normal home on this device is still `com.zui.launcher`.
 
-ZTool has **no scope and no hook module** for it: `ScopeKeys.LAUNCHER` is `com.zui.launcher`,
-and `hook/modules/launcher/` targets that package only.
+ZTool now has a scope (`ScopeKeys.DESKTOP_LAUNCHER`) and two modules in
+`hook/modules/desktoplauncher/`: the read-only probe (§9) and the bounds fix (§12).
+`com.zui.launcher` keeps its own separate hooks.
 
 ## 2. Why the desktop stays landscape-shaped
+
+**The controlling fact is §12 / §10.5: `WindowBounds(Rect, Rect)` force-rotates every portrait
+rect into landscape, so the launcher only ever sees a landscape bound and therefore only ever
+builds a landscape `DeviceProfile`.** Everything in this section describes the *grid*, which is
+why the grid never reflows even after the bound is fixed.
 
 ### 2.1 The work grid is hardcoded to one landscape profile
 
@@ -565,6 +571,29 @@ adb shell "su -c 'grep -h \"\[test_hook\]\" /data/adb/lspd/log/modules_*.log | t
 `logcat -s ZToolXposedModule` only shows the framework's own `D` lines (module dispatch), which is
 why the probe output appears "missing" there.
 
+### 10.5 Fourth run (00:57) — one bound, always landscape
+
+```
+profile #1 … bounds=3200x2000
+displayinfo #1 currentSize=Point(3200, 2000) rotation=1
+    realBounds=(Rect(0,0-3200,2000), available=3200x1764, insets=Rect(0,98-0,138), hint=1, landscape=true)
+    supportedCount=1 [(the same landscape bound)]
+config WorkLauncher orientation=1 size=800x1280dp          ← panel rotated to portrait
+profile #2 … bounds=3200x2000                              ← rebuilt, still landscape
+displayinfo #2 currentSize=Point(2000, 3200) rotation=0     ← Info followed the panel
+    realBounds=(Rect(0,0-3200,2000), … landscape=true)      ← the bounds did not
+    supportedCount=1 [(3200x2000 landscape)]
+```
+
+- `Info.currentSize` / `Info.rotation` **do** follow the panel, so the launcher sees the rotation.
+- `Info.realBounds` and `Info.supportedBounds` do **not** — both keep the landscape 3200x2000 that
+  `WindowBounds`'s swapping constructor produced (§12.1).
+- The `DeviceProfile` *is* rebuilt after the rotation (so §11's listener gate is not the only path),
+  but it is rebuilt from the same landscape bound, hence identical.
+
+That is the whole bug in one line: **the launcher is told about the rotation, rebuilds, and then
+builds a landscape profile because the only bound it has is landscape.** §12 is the fix.
+
 ## 11. Why a rotation never reaches the workspace
 
 The refresh chain, read from `DisplayController` and `InvariantDeviceProfile`:
@@ -595,10 +624,13 @@ if (!Utilities.isWorkMode() || (flags & 20) == 0) return;
 H(context);   // re-resolve the grid and rebuild every DeviceProfile
 ```
 
-`20 == CHANGE_DENSITY(4) | CHANGE_NAVIGATION_MODE(16)`. **In work mode the profile is rebuilt
-only for a density or navigation-mode change — a rotation (2) or a supported-bounds change (8)
-alone never rebuilds it.** That is exactly what §10.3 shows: a rotation produces a `config` line
-and a re-measured hotseat, but no new `profile`.
+`20 == CHANGE_DENSITY(4) | CHANGE_NAVIGATION_MODE(16)`. **On this listener path the profile is
+rebuilt only for a density or navigation-mode change — a rotation (2) or a supported-bounds change
+(8) alone would not rebuild it.** §10.3 matches that (a rotation produced a `config` line and a
+re-measured hotseat but no `profile`), yet §10.5 shows a profile being rebuilt right after a
+rotation, so at least one other path (launcher-side config handling or the IDP singleton being
+re-initialised) also triggers a rebuild. Either way the rebuild is useless while the only bound is
+landscape (§12).
 
 Two consequences for the portrait feature:
 
@@ -609,3 +641,67 @@ Two consequences for the portrait feature:
    `supportedCount` and every entry; if the set is landscape-only, the fix belongs one level deeper
    (`WindowManagerProxy.getRealBounds` / `estimateInternalDisplayBounds`, or adding a portrait
    `WindowBounds` to the mutable `Set` right after `Info` is constructed).
+
+## 12. The fix that works: inject the portrait bound
+
+### 12.1 Root cause, in one constructor
+
+```java
+// com.zui.desktoplauncher.util.WindowBounds
+public WindowBounds(Rect rect, Rect insets, int hint) {
+    if (rect.height() > rect.width()) {
+        this.bounds = new Rect(0, 0, rect.height(), rect.width());   // portrait -> landscape
+    } else {
+        this.bounds = rect;
+    }
+    this.insets = insets;
+    this.rotationHint = 1;                                           // always landscape
+    this.availableSize = new Point(bounds.width() - l - r, bounds.height() - t - b);
+}
+```
+
+Every `WindowBounds` produced from a `WindowMetrics`/`Rect` goes through this constructor
+(`fromWindowMetrics` calls the 2-arg overload), so a 2000x3200 portrait window is stored as
+3200x2000 with `rotationHint = 1`. `DisplayController.Info.supportedBounds` therefore contained a
+single, landscape entry (confirmed: §10.5), and `InvariantDeviceProfile` built exactly one
+`DeviceProfile` — landscape — no matter which way the panel was held.
+
+### 12.2 The module
+
+`hook/modules/desktoplauncher/WorkDesktopPortrait.kt`, gated by
+`PreferenceKeys.WORK_MODE_PORTRAIT` (same switch as the system-side release), hooks
+`DisplayController$Info.<init>(Context, WindowManagerProxy, Map)` and, when the panel is portrait
+and `zui_pc_mode == 1`, appends a real portrait `WindowBounds` (built with the 5-arg constructor,
+which does **not** swap) to `Info.supportedBounds` — the set is mutable, so no field hacking is
+needed. The launcher's own machinery then builds both profiles and `getBestMatch` picks the
+portrait one.
+
+Measured effect (2026-10-21 00:59):
+
+```
+[work_mode_portrait] WorkDesktopPortrait: added bound 2000x3200 available=2000x2964 rotation=0
+[test_hook] displayinfo … supportedCount=2 [(2000x3200, landscape=false, hint=0); (3200x2000, landscape=true, hint=1)]
+[test_hook] profile #1 landscape=false … bounds=2000x3200 | grid=12x6 … rotationHint:0
+[test_hook] profile #2 landscape=true  … bounds=3200x2000 | grid=12x6 … rotationHint:1
+[test_hook] hotseat 2000x415 …
+```
+
+A screenshot of that state shows the work desktop filling a 2000x3200 panel: wallpaper, window
+icons, and the bottom bar spanning the full portrait width. This is the first time a portrait
+`DeviceProfile` ever existed in this APK.
+
+### 12.3 What is still landscape-shaped after this fix
+
+The bound fixes the *canvas*; the contents still come from landscape-tuned sources:
+
+1. **Grid shape**: `grid=12x6` in both profiles — the column count is the `work` grid option, not
+   derived from the bound. In a 2000 px-wide portrait window, 12 columns are ~53 dp apart against
+   a 60 dp icon, so the workspace is cramped and the shipped single-column layout (§2.3) hides it.
+   Making this portrait needs §6.1 (with its migration caveat).
+2. **PC all-apps drawer**: still `cols=9 rows=4` (§2.4, §10.2) — untouched by the bound fix.
+3. **Hotseat grouping**: the bar now spans 2000 px, but `numShownHotseatIcons=6` and the
+   recent-used block keep their landscape proportions.
+4. **`DisplayController.Info.realBounds` stays landscape** even after injection; only the
+   `supportedBounds` set was corrected. Widgets/drag code that reads `realBounds` directly still
+   sees 3200x2000, so a later revision may want to correct it too (it is a `final` field, so that
+   needs field reflection).
