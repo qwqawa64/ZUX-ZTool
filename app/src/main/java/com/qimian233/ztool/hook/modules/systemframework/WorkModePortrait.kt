@@ -8,15 +8,15 @@ import com.qimian233.ztool.hook.base.SystemHookModule
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Lets ZUI's PC/work desktop follow the device orientation.
  *
- * System server pins it to landscape in three places: the rotation lock set on
- * PC-mode entry, the PC-mode override in `WindowContainer`, and the PC-mode
- * shortcut in `DisplayContent`. All three are bypassed while enabled; apps that
- * declare a fixed orientation keep it, except the PC launcher's own activities,
- * which follow the device like an unspecified activity.
+ * System server pins it to landscape through the PC-mode rotation lock, the
+ * WindowContainer/ActivityRecord orientation overrides (including the desktop
+ * AppCompat policy), the launch-bounds force orientation, and the DisplayContent
+ * shortcut. Each is bypassed while enabled; apps with a fixed orientation keep it.
  */
 class WorkModePortrait : SystemHookModule() {
 
@@ -37,7 +37,14 @@ class WorkModePortrait : SystemHookModule() {
     @Volatile
     private var pcModeCheckedAt = 0L
 
+    private val probeLogs = AtomicInteger(0)
+
+    @Volatile
+    private var lastFeatureState: Boolean? = null
+
     private var infoField: Field? = null
+
+    private var componentField: Field? = null
 
     private var pcLauncherPackages: Set<String> = emptySet()
 
@@ -55,6 +62,7 @@ class WorkModePortrait : SystemHookModule() {
         try {
             val recordClass = classLoader.loadClass("com.android.server.wm.ActivityRecord")
             infoField = findField(recordClass, "info")
+            componentField = findField(recordClass, "mActivityComponent")
             pcLauncherPackages = loadPcLauncherPackages(classLoader)
         } catch (t: Throwable) {
             logger.error("WorkModePortrait: ActivityRecord lookup failed", t)
@@ -62,7 +70,44 @@ class WorkModePortrait : SystemHookModule() {
         hookUserRotation(classLoader)
         hookWindowOrientation(classLoader)
         hookDisplayOrientation(classLoader)
-        logger.info("WorkModePortrait installed")
+        hookPcModeForceOrientation(classLoader)
+        logger.info("WorkModePortrait installed, launcher=$pcLauncherPackages")
+    }
+
+    private fun hookPcModeForceOrientation(classLoader: ClassLoader) {
+        try {
+            val internalClass = classLoader.loadClass(
+                "com.android.server.wm.OVDesktopController\$OVDesktopControllerInternal")
+            val getForceOrientation = findMethod(
+                internalClass, "getPCModeAppForceOrientation", String::class.java)
+            hookWithId(
+                getForceOrientation,
+                "work_mode_portrait_force_orientation"
+            ) { chain ->
+                val result = chain.proceed()
+                try {
+                    val packageName = chain.args[0] as? String
+                    if (isFeatureEnabled() && packageName != null &&
+                        packageName in pcLauncherPackages
+                    ) {
+                        if (probeLogs.incrementAndGet() <= MAX_PROBE_LOGS) {
+                            logger.debug(
+                                "suppressed PC force orientation " +
+                                    "$result for $packageName"
+                            )
+                        }
+                        return@hookWithId UNSPECIFIED
+                    }
+                } catch (t: Throwable) {
+                    logger.error(
+                        "WorkModePortrait: force orientation hook failed", t)
+                }
+                result
+            }
+        } catch (t: Throwable) {
+            logger.error(
+                "WorkModePortrait: force orientation hook not installed", t)
+        }
     }
 
     private fun hookUserRotation(classLoader: ClassLoader) {
@@ -97,22 +142,93 @@ class WorkModePortrait : SystemHookModule() {
         try {
             val containerClass = classLoader.loadClass(
                 "com.android.server.wm.WindowContainer")
+            val recordClass = classLoader.loadClass(
+                "com.android.server.wm.ActivityRecord")
             val getOverrideOrientation = findMethod(
                 containerClass, "getOverrideOrientation")
+            val activityGetOverride = findMethod(
+                recordClass, "getOverrideOrientation")
+            val setOverrideOrientation = findMethod(
+                containerClass, "setOverrideOrientation", Int::class.javaPrimitiveType)
             val overrideOrientationField = findField(
                 containerClass, "mOverrideOrientation")
+
             hookWithId(
                 getOverrideOrientation,
                 "work_mode_portrait_window_orientation"
             ) { chain ->
-                if (isFeatureEnabled() && isPcMode()) {
+                try {
                     val self = chain.thisObject
-                    if (self != null) {
+                    if (self != null && isFeatureEnabled()) {
                         if (isPcLauncherRecord(self)) {
+                            // Clear the record's own sensorLandscape so launch bounds and
+                            // size-compat paths see an unspecified orientation too.
+                            if (overrideOrientationField.getInt(self) != UNSPECIFIED) {
+                                overrideOrientationField.setInt(self, UNSPECIFIED)
+                                logger.debug(
+                                    "launcher orientation forced unspecified: " +
+                                        recordInfo(self)?.name
+                                )
+                            }
                             return@hookWithId UNSPECIFIED
                         }
-                        return@hookWithId overrideOrientationField.getInt(self)
+                        if (isPcMode()) {
+                            return@hookWithId overrideOrientationField.getInt(self)
+                        }
                     }
+                } catch (t: Throwable) {
+                    logger.error(
+                        "WorkModePortrait: getOverrideOrientation hook failed", t)
+                }
+                chain.proceed()
+            }
+
+            hookWithId(
+                activityGetOverride,
+                "work_mode_portrait_activity_orientation"
+            ) { chain ->
+                val result = chain.proceed()
+                try {
+                    val self = chain.thisObject
+                    if (self != null && isFeatureEnabled() && isPcMode()) {
+                        val info = recordInfo(self)
+                        val manifest = info?.screenOrientation ?: UNSPECIFIED
+                        if (manifest < 0 || isPcLauncherRecord(self)) {
+                            if (probeLogs.incrementAndGet() <= MAX_PROBE_LOGS) {
+                                logger.debug(
+                                    "override -> UNSPECIFIED for " +
+                                        "${info?.name} (was $result)"
+                                )
+                            }
+                            return@hookWithId UNSPECIFIED
+                        }
+                    }
+                } catch (t: Throwable) {
+                    logger.error(
+                        "WorkModePortrait: activity orientation hook failed", t)
+                }
+                result
+            }
+
+            hookWithId(
+                setOverrideOrientation,
+                "work_mode_portrait_set_override"
+            ) { chain ->
+                val value = chain.args[0] as? Int
+                try {
+                    val self = chain.thisObject
+                    if (self != null && isFeatureEnabled() && value != null &&
+                        value != UNSPECIFIED && isPcLauncherRecord(self)
+                    ) {
+                        overrideOrientationField.setInt(self, UNSPECIFIED)
+                        logger.debug(
+                            "cleared initial orientation $value for " +
+                                (recordInfo(self)?.name ?: recordPackage(self))
+                        )
+                        return@hookWithId null
+                    }
+                } catch (t: Throwable) {
+                    logger.error("WorkModePortrait: set override hook failed", t)
                 }
                 chain.proceed()
             }
@@ -164,13 +280,22 @@ class WorkModePortrait : SystemHookModule() {
         }
     }
 
-    private fun isPcLauncherRecord(record: Any): Boolean {
-        val field = infoField ?: return false
+    private fun recordInfo(record: Any): ActivityInfo? {
+        val field = infoField ?: return null
+        return runCatching { field.get(record) as? ActivityInfo }.getOrNull()
+    }
+
+    private fun recordPackage(record: Any): String? {
+        recordInfo(record)?.packageName?.let { return it }
+        val field = componentField ?: return null
         return runCatching {
-            val info = field.get(record) as? ActivityInfo
-            val packageName = info?.packageName
-            packageName != null && packageName in pcLauncherPackages
-        }.getOrDefault(false)
+            (field.get(record) as? android.content.ComponentName)?.packageName
+        }.getOrNull()
+    }
+
+    private fun isPcLauncherRecord(record: Any): Boolean {
+        val packageName = recordPackage(record) ?: return false
+        return packageName in pcLauncherPackages
     }
 
     private fun loadPcLauncherPackages(classLoader: ClassLoader): Set<String> {
@@ -197,6 +322,10 @@ class WorkModePortrait : SystemHookModule() {
                     PreferenceKeys.WORK_MODE_PORTRAIT.default
                 )
             }.getOrDefault(false)
+            if (lastFeatureState != featureEnabled) {
+                lastFeatureState = featureEnabled
+                logger.debug("feature enabled=$featureEnabled")
+            }
             featureCheckedAt = now
         }
         return featureEnabled
@@ -220,6 +349,7 @@ class WorkModePortrait : SystemHookModule() {
         const val ROTATION_90 = 1
         const val USER_ROTATION_LOCKED = 1
         const val USER_ROTATION_FREE = 0
+        const val MAX_PROBE_LOGS = 40
         const val CACHE_TTL_MS = 2000L
     }
 }
