@@ -156,13 +156,11 @@ Two components can own the bottom bar, and both are present in this APK:
 `getOverviewActionsClaimedSpaceBelow` and by `getAbsoluteOpenFolderBounds` — i.e. it decides how
 much bottom space the **workspace** reserves, not necessarily whether the taskbar window exists.
 
-This must be settled on device before either hook is written (see §7 Q1). Either way the
-geometry story is the same: one horizontal row, sized from `DeviceProfile`
-(`taskbarHeight`/`hotseatBarSizePx`), with `numShownHotseatIcons` slots.
-
-First runtime check (§10, PC mode off): `TaskbarManager.recreateTaskbar()` reports `context=null`
-and `ZuiHotseat` is attached but `GONE` — no bottom bar exists outside PC mode, so the PC-mode run
-is still the deciding one.
+This was settled on device (§10.2): **the PC bottom bar is `ZuiHotseat`**. `taskbar.*` is never
+instantiated (`recreateTaskbar context=null`), while the hotseat stays `INVISIBLE` and is rendered
+through a surface with a populated recent-used container. Either way the geometry story is the
+same: one horizontal row, sized from `DeviceProfile` (`hotseatBarSizePx`), with
+`numShownHotseatIcons` slots.
 
 Taskbar geometry, already located:
 
@@ -319,30 +317,27 @@ and `PcAllAppsContainerView.onDeviceProfileChanged` is an empty override.
 
 ### 6.4 Bottom bar
 
-If it is the taskbar (`taskbar.*`), ranked by stability:
+It is the hotseat (`ZuiHotseat`, §10.2), so the seams are:
 
-1. `TaskbarActivityContext.createDefaultWindowLayoutParams(int, String)` — public, 3 callers;
-   rewrite the returned `LayoutParams` (gravity/width/height) to change the bar's bounds.
-2. `DeviceProfile.Builder.build(boolean)` — public seam into the constructor that finalises
-   `taskbarHeight` (final field), `taskbarIconSize`, `numShownHotseatIcons`, `startAlignTaskbar`,
-   `isLandscape`. One hook covers every consumer.
-3. `TaskbarManager.recreateTaskbar()` — public (`@VisibleForTesting`); trigger a re-layout after
-   changing dims.
-4. `TaskbarViewController.setTbHeight(float)` (protected, one caller) and
-   `TaskbarActivityContext.setTaskbarWindowHeight(int)` — cheap height overrides.
-5. `TaskbarView.onLayout` / private `n(boolean,int,int,int,int)` — the real icon walk; needed
-   only for a different arrangement (multi-row, top-anchored). Obfuscated → DexKit.
+1. `ZuiHotseat.resetCellSize(DeviceProfile)` — public, receives the profile whose
+   `numShownHotseatIcons`, `hotseatBarSizePx`, `hotseatCellHeightPx` drive the row.
+2. `ZuiHotseat.onMeasure`/`onLayout` — the actual row placement; `getRecentUsedLayout()` and
+   `getAllAppsEntryCount()` decide how much width the recent-used block claims.
+3. `DeviceProfile.numShownHotseatIcons` — the slot count, already read from the profile.
+4. `ZuiHotseat.setAlpha(float)` / `setRecentUsedShow(boolean)` — visible-state knobs (the view is
+   surface-rendered and stays `INVISIBLE`).
 
-If it is the hotseat (`ZuiHotseat`), the seam is `resetCellSize(DeviceProfile)` (public) plus
-`onMeasure`/`onLayout`, with `DeviceProfile.numShownHotseatIcons` as the slot count.
+The launcher taskbar (`taskbar.*`) is dead weight in PC mode, but if a later ZUI build re-enables
+it, its seams were: `TaskbarActivityContext.createDefaultWindowLayoutParams(int, String)` →
+`DeviceProfile.Builder.build(boolean)` (finalises the `final` `taskbarHeight`) →
+`TaskbarManager.recreateTaskbar()` → `TaskbarView.onLayout` / private `n(…)`.
 
 ## 7. Open questions (must be resolved before implementation)
 
-1. **Which component draws the PC bottom bar?** Code is contradictory (§2.5). With PC mode off
-   `TaskbarManager.getCurrentActivityContext()` is `null` and the hotseat is `GONE`; with PC mode on
-   it is *still* `null` but the hotseat becomes `INVISIBLE` with a populated recent-used container
-   (§10.1). The remaining check is `alpha`/surface: the probe now logs `setAlpha` and the parent
-   chain.
+1. ~~**Which component draws the PC bottom bar?**~~ **Resolved (§10.2): `ZuiHotseat`.** The launcher
+   taskbar (`taskbar.*`) is never instantiated — `TaskbarManager.recreateTaskbar()` reports
+   `context=null` throughout — while the hotseat, a child of `DragLayer`, stays `INVISIBLE` and is
+   alpha-animated with a populated recent-used container, i.e. it is rendered through a surface.
 2. ~~Grid change vs workspace DB.~~ Resolved: `GridSizeMigrationTask.migrateGridIfNeeded` compares
    the live grid with `KEY_WORKSPACE_SIZE`/`KEY_HOTSEAT_COUNT` and re-runs
    `MultiStepMigrationTask.migrate(old, new)` whenever they differ, then persists the new grid
@@ -436,8 +431,8 @@ What this already settles:
 3. **`isTaskbarPresent=false` is real at runtime**: `TaskbarManager.recreateTaskbar()` reports
    `context=null` and no `TaskbarActivityContext` is ever created, even when the launcher reacts to
    `zui_pc_mode` flipping to 1 by recreating its taskbar. `ZuiHotseat` is instead attached but
-   `visibility=4` (GONE) with an empty recent-used container. Neither bar is visible outside PC
-   mode; the real PC-mode run is still needed for Q1.
+   `INVISIBLE` (visibility 4) with an empty recent-used container. §10.2 shows what that becomes in
+   real PC mode.
 4. **Writing `Settings.System zui_pc_mode=1` is not enough to enter PC mode** — `persist.sys.zui.pcmode`
    and the display's `inPcmode` both stayed 0, and only the launcher's `recreateTaskbar()` fired.
    The probe therefore has to be driven from the real system toggle (quick settings / settings UI).
@@ -476,9 +471,8 @@ What the real PC-mode run changes:
    at the bounds source, not at `DeviceProfile`.
 2. **Still no launcher taskbar in PC mode**: `recreateTaskbar context=null`. The bar that is
    actually laid out is `ZuiHotseat` — `INVISIBLE` (visibility 4, not GONE) with a populated
-   recent-used container (`582x172`, 3 children). A view that is laid out but invisible is the
-   signature of ZUI rendering it through a `SurfaceControl` (`ZuiHotseat` has SurfaceControl code
-   paths). The extended probe logs `alpha`, `parent` and every `setAlpha(…)` call to settle it.
+   recent-used container (`582x172`, 3 children). §10.2 confirms it: the hotseat is the bar, drawn
+   through a surface while the view stays invisible.
 3. **The all-apps drawer reproduces the overflow by construction**: `cols=9 rows=4 perPage=36`
    are the same counts landscape would give, and 9 × 265 px = 2385 px on a 2000 px page.
 4. **`PcAllAppsActivity` is recreated three times in 80 s** (`23:55:06`, `23:56:17`,
@@ -488,7 +482,50 @@ What the real PC-mode run changes:
 5. `taskbarHeight` differs between two profiles for identical bounds (195 then 120) — two
    `DeviceProfile` variants coexist (home vs in-app/taskbar presentation).
 
-### 10.2 Capturing the probe output
+### 10.2 Second PC-mode run (00:46, probe v2, two processes)
+
+Both processes started while the display was **landscape** (`orientation=2`, `1280x800dp`):
+
+```
+taskbar recreateTaskbar context=null
+profile landscape=true … taskbarHeight=120 … bounds=3200x2000 | grid=12x6 … deviceType=2
+environment pcMode=1 dpPcMode=0 pcProp=1 orientation=2 size=1280x800dp density=400
+displayinfo currentSize=Point(3200, 2000) rotation=1 density=400 supportedCount=null [null]
+hotseat set alpha=0.0 visibility=8
+orientation WorkLauncher requested=-1 (was -1)
+activity WorkLauncher.onCreate window=-1x-1 gravity=0
+hotseat set alpha=0.0 visibility=4
+hotseat 3200x415 visibility=4 alpha=0.0 parent=DragLayer recentUsed=582x172 children=3
+allapps cols=9 rows=4 perPage=36 items=0 count=60 view=0x0
+activity PcAllAppsActivity.onCreate window=-1x-1 gravity=0
+… later in the same process …
+hotseat set alpha=1.0 visibility=4
+hotseat 2000x415 visibility=4 alpha=1.0 parent=DragLayer recentUsed=582x172 children=3
+```
+
+What this settles:
+
+1. **Q1 answered — the PC bottom bar is `ZuiHotseat`, not `taskbar.*`.**
+   `TaskbarManager.recreateTaskbar()` stays `context=null` for the whole session, while the hotseat
+   is a child of `DragLayer` that is kept `INVISIBLE` (4) and alpha-animated (0.0 → 1.0) with a
+   populated recent-used container. ZUI lays it out and renders it through a surface, so the view
+   itself never becomes `VISIBLE`. `DeviceProfile.isTaskbarPresent=false` is therefore consistent
+   with the real component, not a suppression of it.
+2. **The work desktop does not request landscape itself**: the only request is
+   `WorkLauncher requested=-1 (was -1)`. The repeat `PcAllAppsActivity.onCreate` calls in the
+   previous run must come from the manifest's `sensorLandscape` plus the system rotation, not from
+   in-process requests.
+3. **The same process re-measures the hotseat at 2000 px wide** (`3200x415` → `2000x415`) with no
+   new `profile` line. A 2000 px width is the portrait side of the panel, so the window rotated
+   while the profile stayed landscape — either the profile was rebuilt identically (the log gate
+   de-duplicates identical lines) or it was not rebuilt at all. Probe v3 distinguishes the two:
+   `displayinfo` now carries `currentSize`/`rotation`, and `config` lines mark the
+   `onConfigurationChanged` events.
+4. **`supportedBounds` could not be read** in this run (`supportedCount=null`): the field name in
+   `DisplayController$Info` is not `supportedBounds` as a plain field. Probe v3 falls back to
+   `getSupportedBounds()`, logs `infoClass`, and warns on every unresolved reflection target.
+
+### 10.3 Capturing the probe output
 
 LSPosed with verbose logging writes module output to files, **not** to the module's logcat tag:
 

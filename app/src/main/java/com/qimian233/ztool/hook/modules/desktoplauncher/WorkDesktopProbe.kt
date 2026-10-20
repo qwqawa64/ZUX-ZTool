@@ -40,6 +40,8 @@ class WorkDesktopProbe : AppHookModule() {
 
     private val orientationGate = Gate(MAX_ORIENTATION_LINES)
 
+    private val configGate = Gate(MAX_CONFIG_LINES)
+
     private val allAppsGate = Gate(MAX_ALL_APPS_LINES)
 
     private val taskbarGate = Gate(MAX_TASKBAR_LINES)
@@ -56,6 +58,7 @@ class WorkDesktopProbe : AppHookModule() {
         }.getOrNull()
         probeDeviceProfile(classLoader)
         probeActivities(classLoader)
+        probeActivityConfiguration(classLoader)
         probeRequestedOrientation(classLoader)
         probeAllApps(classLoader)
         probeTaskbar(classLoader)
@@ -86,6 +89,9 @@ class WorkDesktopProbe : AppHookModule() {
                     classLoader.loadClass(WINDOW_BOUNDS_CLASS), WINDOW_BOUNDS_FIELDS),
                 isLandscape = runCatching {
                     findMethod(classLoader.loadClass(WINDOW_BOUNDS_CLASS), "isLandscape")
+                }.getOrNull(),
+                supportedBounds = runCatching {
+                    findMethod(classLoader.loadClass(DISPLAY_INFO_CLASS), "getSupportedBounds")
                 }.getOrNull()
             )
             val toSmallString = reflector.method("toSmallString")
@@ -136,6 +142,27 @@ class WorkDesktopProbe : AppHookModule() {
                 logger.warn("probe: no onCreate on $className (${it.javaClass.simpleName})")
             }
         }
+    }
+
+    /** Logs configuration changes, so a rotation can be matched against profile rebuilds. */
+    private fun probeActivityConfiguration(classLoader: ClassLoader) {
+        runCatching {
+            val activityClass = classLoader.loadClass(ACTIVITY_CLASS)
+            val onConfigurationChanged = findMethod(
+                activityClass, "onConfigurationChanged",
+                android.content.res.Configuration::class.java)
+            hookWithId(onConfigurationChanged, "probe_activity_config") { chain ->
+                chain.proceed()
+                runCatching {
+                    val config = chain.args[0] as? android.content.res.Configuration
+                    val line = "${chain.thisObject?.javaClass?.simpleName}" +
+                        " orientation=${config?.orientation}" +
+                        " size=${config?.screenWidthDp}x${config?.screenHeightDp}dp"
+                    if (configGate.shouldLog(line)) logger.info("config $line")
+                }.onFailure { logger.error("probe: config dump failed", it) }
+                null
+            }
+        }.onFailure { logger.error("probe: onConfigurationChanged hook not installed", it) }
     }
 
     /** Logs every orientation request made by this process, to find who re-locks landscape. */
@@ -330,32 +357,39 @@ class WorkDesktopProbe : AppHookModule() {
 
     private fun resolveFields(owner: Class<*>, names: List<String>): Map<String, Field> =
         names.mapNotNull { name ->
-            runCatching { name to findField(owner, name) }.getOrNull()
+            runCatching { name to findField(owner, name) }.onFailure {
+                logger.debug("probe: no field $name on ${owner.simpleName}")
+            }.getOrNull()
         }.toMap()
 
     private fun resolveMethods(owner: Class<*>, names: List<String>): Map<String, Method> =
         names.mapNotNull { name ->
-            runCatching { name to findMethod(owner, name) }.getOrNull()
+            runCatching { name to findMethod(owner, name) }.onFailure {
+                logger.debug("probe: no method $name on ${owner.simpleName}")
+            }.getOrNull()
         }.toMap()
 
     /** Reads the display bounds the launcher actually sees; `supportedBounds` is the key line. */
     private class DisplayInfoProbe(
         private val infoFields: Map<String, Field>,
         private val boundsFields: Map<String, Field>,
-        private val isLandscape: Method?
+        private val isLandscape: Method?,
+        private val supportedBounds: Method?
     ) {
         fun describe(info: Any): String {
-            val supported = read(infoFields, "supportedBounds", info) as? List<*>
+            val supported = (read(infoFields, "supportedBounds", info)
+                ?: runCatching { supportedBounds?.invoke(info) }.getOrNull()) as? List<*>
             val bounds = supported?.joinToString("; ") { windowBounds ->
                 "bounds=${read(boundsFields, "bounds", windowBounds)}" +
                     " available=${read(boundsFields, "availableSize", windowBounds)}" +
                     " insets=${read(boundsFields, "insets", windowBounds)}" +
                     " rotationHint=${read(boundsFields, "rotationHint", windowBounds)}" +
                     " landscape=${runCatching { isLandscape?.invoke(windowBounds) }.getOrNull()}"
-            } ?: "null"
+            } ?: "unresolved"
             return "currentSize=${read(infoFields, "currentSize", info)}" +
                 " rotation=${read(infoFields, "rotation", info)}" +
                 " density=${read(infoFields, "systemDensityDpi", info)}" +
+                " infoClass=${info.javaClass.simpleName}" +
                 " supportedCount=${supported?.size} [$bounds]"
         }
 
@@ -431,6 +465,7 @@ class WorkDesktopProbe : AppHookModule() {
         const val MAX_ENVIRONMENT_LINES = 2
         const val MAX_DISPLAY_INFO_LINES = 4
         const val MAX_ORIENTATION_LINES = 12
+        const val MAX_CONFIG_LINES = 12
         const val MAX_ALL_APPS_LINES = 6
         const val MAX_TASKBAR_LINES = 8
         const val MAX_HOTSEAT_LINES = 12
