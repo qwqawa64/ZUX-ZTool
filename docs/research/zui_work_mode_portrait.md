@@ -92,6 +92,9 @@
 
 ## 剩余工作：Work Launcher 竖屏布局
 
+初步调研（业务逻辑位置、混淆强度、可用的公开调用点、候选 Hook 点）见
+`zui_work_mode_desktop_hook_survey.md`。
+
 方向链路已验证可用，但 `com.zui.desktoplauncher` 的桌面布局仍按横屏设计：
 
 - 桌面图标集中在左侧一列，没有按竖屏重新排布网格；
