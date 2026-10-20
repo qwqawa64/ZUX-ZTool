@@ -27,7 +27,7 @@ class DisableLsfDeviceAutoInstall : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.DISABLE_LSF_DEVICE_AUTO_INSTALL.name
 
-    override fun getTargetPackages(): Array<out String?> =
+    override fun getTargetPackages(): Array<out String> =
         arrayOf(ScopeKeys.LENOVO_DEVICE_SERVICE.packageName)
 
     @Throws(Throwable::class)

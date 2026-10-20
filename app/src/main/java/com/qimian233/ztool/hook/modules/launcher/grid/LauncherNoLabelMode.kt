@@ -29,7 +29,7 @@ class LauncherNoLabelMode : AppHookModule() {
 
     override fun getModuleName(): String = "launcher_no_label_mode"
 
-    override fun getTargetPackages(): Array<out String?> = arrayOf(ScopeKeys.LAUNCHER.packageName)
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         installBubbleTextViewVisibilityHook(param)

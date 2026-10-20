@@ -16,7 +16,7 @@ class BluePointRemovalHook : AppHookModule() {
 
     override fun getModuleName(): String = "launcher_hide_blue_point"
 
-    override fun getTargetPackages(): Array<out String?> = arrayOf(ScopeKeys.LAUNCHER.packageName)
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.LAUNCHER.packageName)
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         try {

@@ -14,7 +14,8 @@ enum class HowToRestart {
  * Could be improved further by also describing the preferred way to restart each scope.
  *
  */
-object ScopeKeys { 
+object ScopeKeys {
+    val UNRESTRICTED = Scope ("all", HowToRestart.Reboot) // For AiInputExpand.kt only
     val SETTINGS = Scope("com.android.settings", HowToRestart.AmStop)
     val PERMISSION_CONTROLLER = Scope("com.android.permissioncontroller", HowToRestart.AmStop)
     val ZUI_SAFE_CENTER = Scope("com.zui.safecenter", HowToRestart.AmStop)

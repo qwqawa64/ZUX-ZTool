@@ -19,7 +19,7 @@ class BlockPowerPolicySync : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.PP_BLOCK_POWER_POLICY_SYNC.name
 
-    override fun getTargetPackages(): Array<out String?>? = arrayOf(ScopeKeys.ZUI_PERFORMANCE.packageName)
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.ZUI_PERFORMANCE.packageName)
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {

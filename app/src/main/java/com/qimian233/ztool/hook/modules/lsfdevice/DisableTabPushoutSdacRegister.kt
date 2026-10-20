@@ -24,7 +24,7 @@ class DisableTabPushoutSdacRegister : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.DISABLE_TAB_PUSHOUT_SDAC.name
 
-    override fun getTargetPackages(): Array<out String?>? =
+    override fun getTargetPackages(): Array<out String> =
         arrayOf(ScopeKeys.TAB_PUSHOUT.packageName)
 
     @Throws(Throwable::class)

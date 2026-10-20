@@ -27,7 +27,7 @@ class DisableLsfDeviceAppListReporting : AppHookModule() {
     override fun getModuleName(): String =
         PreferenceKeys.DISABLE_LSF_DEVICE_APP_LIST_REPORTING.name
 
-    override fun getTargetPackages(): Array<out String?>? =
+    override fun getTargetPackages(): Array<out String> =
         arrayOf(ScopeKeys.LENOVO_DEVICE_SERVICE.packageName)
 
     @Throws(Throwable::class)

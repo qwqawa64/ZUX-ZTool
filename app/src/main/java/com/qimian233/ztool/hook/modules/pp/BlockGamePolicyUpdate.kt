@@ -21,7 +21,7 @@ class BlockGamePolicyUpdate : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.PP_BLOCK_GAME_POLICY_UPDATE.name
 
-    override fun getTargetPackages(): Array<out String?>? = arrayOf(ScopeKeys.ZUI_PERFORMANCE.packageName)
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.ZUI_PERFORMANCE.packageName)
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {

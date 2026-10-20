@@ -28,7 +28,7 @@ class DisableTbEngineReporting : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.DISABLE_TB_ENGINE_REPORTING.name
 
-    override fun getTargetPackages(): Array<out String?>? = arrayOf(ScopeKeys.TB_ENGINE.packageName)
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.TB_ENGINE.packageName)
 
     companion object {
         // Authorities of the two ContentProviders: UE big-data analytics + UPS push receipts

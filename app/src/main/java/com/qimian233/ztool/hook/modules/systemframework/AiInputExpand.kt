@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.systemframework
 import android.annotation.SuppressLint
 import android.text.TextUtils
 import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
@@ -15,7 +16,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 class AiInputExpand : AppHookModule() {
     override fun getModuleName(): String = PreferenceKeys.AI_INPUT_EXPAND.name
 
-    override fun getTargetPackages(): Array<String?>? = null
+    override fun getTargetPackages(): Array<String> = arrayOf(ScopeKeys.UNRESTRICTED.packageName)
 
     /**
      * Overrides this method to support global hooking

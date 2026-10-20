@@ -24,7 +24,7 @@ class DisableTbEngineAutoInstall : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.DISABLE_TB_ENGINE_AUTO_INSTALL.name
 
-    override fun getTargetPackages(): Array<out String?>? = arrayOf(ScopeKeys.TB_ENGINE.packageName)
+    override fun getTargetPackages(): Array<out String> = arrayOf(ScopeKeys.TB_ENGINE.packageName)
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {

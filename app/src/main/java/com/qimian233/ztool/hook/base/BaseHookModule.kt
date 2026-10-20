@@ -3,13 +3,15 @@ package com.qimian233.ztool.hook.base
 import android.content.SharedPreferences
 import android.util.Log
 import com.qimian233.ztool.data.keys.LogLevel
-import java.lang.reflect.Executable
-import java.lang.reflect.Field
-import java.lang.reflect.Method
+import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.data.keys.ScopeKeys
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import io.github.libxposed.api.XposedInterface.Hooker
 import io.github.libxposed.api.XposedModuleInterface
+import java.lang.reflect.Executable
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 
 /**
  * Hook module base class (libxposed version, Kotlin).
@@ -46,7 +48,7 @@ abstract class BaseHookModule {
 
     abstract fun getModuleName(): String
 
-    abstract fun getTargetPackages(): Array<out String?>?
+    abstract fun getTargetPackages(): Array<out String>
 
     /**
      * Performs Hook operations (default no-op).
@@ -67,9 +69,9 @@ abstract class BaseHookModule {
     }
 
     open fun supportsPackage(packageName: String?): Boolean {
-        val targets = getTargetPackages() ?: return false
+        val targets = getTargetPackages()
         for (target in targets) {
-            if (target == packageName) {
+            if (target == packageName || target == ScopeKeys.UNRESTRICTED.packageName) {
                 return true
             }
         }
@@ -78,10 +80,7 @@ abstract class BaseHookModule {
 
     open fun isEnabled(): Boolean {
         val moduleName = getModuleName()
-        if (moduleName == "hook_test" || moduleName == "test_hook") {
-            return true
-        }
-        return try {
+        return moduleName == PreferenceKeys.TEST_HOOK.name || try {
             val prefs = xposed.getRemotePreferences(PREFS_NAME)
             prefs.getBoolean(moduleName, false)
         } catch (_: Throwable) {
