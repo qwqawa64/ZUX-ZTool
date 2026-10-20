@@ -86,6 +86,10 @@ portrait grid option exists in any qualifier variant, and the code cannot select
 Portrait arithmetic: 2000 px / 2.5 = 800 dp wide, minus the 54 dp `horizontalMargin` pair leaves
 ~692 dp for 13 columns ≈ **53 dp per column against a 60 dp icon** — unusable as-is.
 
+> The XML is not the whole story: the live work profile on TB710FU reports **12x6**, because the
+> launcher restores a persisted grid (`migration_src_workspace_size=12,6`, `launcher_work.db`).
+> A hook must read the live `InvariantDeviceProfile`, not this table — see §10.
+
 ### 2.2 Tablets never transpose the grid
 
 ```java
@@ -155,6 +159,10 @@ much bottom space the **workspace** reserves, not necessarily whether the taskba
 This must be settled on device before either hook is written (see §7 Q1). Either way the
 geometry story is the same: one horizontal row, sized from `DeviceProfile`
 (`taskbarHeight`/`hotseatBarSizePx`), with `numShownHotseatIcons` slots.
+
+First runtime check (§10, PC mode off): `TaskbarManager.recreateTaskbar()` reports `context=null`
+and `ZuiHotseat` is attached but `GONE` — no bottom bar exists outside PC mode, so the PC-mode run
+is still the deciding one.
 
 Taskbar geometry, already located:
 
@@ -316,19 +324,23 @@ If it is the hotseat (`ZuiHotseat`), the seam is `resetCellSize(DeviceProfile)` 
 
 1. **Which component draws the PC bottom bar?** Code is contradictory (§2.5). Check on device in
    PC mode: `dumpsys window windows | grep -i taskbar` and `dumpsys activity top`. A probe hook
-   logging `TaskbarManager.getCurrentActivityContext()` is the code-level answer.
+   logging `TaskbarManager.getCurrentActivityContext()` is the code-level answer. With PC mode off
+   it is already `null` and the hotseat is `GONE` (§10); only a real PC-mode run can decide.
 2. ~~Grid change vs workspace DB.~~ Resolved: `GridSizeMigrationTask.migrateGridIfNeeded` compares
    the live grid with `KEY_WORKSPACE_SIZE`/`KEY_HOTSEAT_COUNT` and re-runs
    `MultiStepMigrationTask.migrate(old, new)` whenever they differ, then persists the new grid
    (§6.1). A per-orientation grid flip is therefore destructive; pick variant 1, 2 or 3 there.
-3. **Exact bounds.** Which `WindowBounds` the work desktop gets in PC mode (fullscreen vs
-   freeform) — i.e. whether 13x7 is measured against 2000x3200 or a landscape-sized window.
-   Log `DeviceProfile.toSmallString()`.
+3. **Exact bounds.** First run suggests the work desktop is measured against `3200x2000` landscape
+   bounds while the display is portrait `800x1280dp` (§10) — i.e. the landscape window is the whole
+   problem. Confirm with the real PC-mode toggle and watch for a portrait `DeviceProfile` line.
 4. **Launcher-side orientation requests.** Only `PcAllAppsActivity` declares `sensorLandscape`;
    `WorkLauncher`/`NormalLauncher` are `unspecified`. Confirm nothing else re-locks rotation.
 5. **Where `migrateGridIfNeeded` is called from** (`ModelDbController`) and whether it runs before
    or after the first workspace bind — it decides whether a one-time migration is visible as a
    flicker or is silent.
+6. **Why the live grid is 12x6 while the XML says 13x7.** The launcher restores a persisted grid
+   (`migration_src_workspace_size=12,6`); the code path that feeds it back into
+   `InvariantDeviceProfile` has not been located yet.
 
 ## 8. Suggested next steps
 
@@ -356,8 +368,8 @@ key plus UI wiring must replace it before this ships as a feature.
 
 Reading it:
 
-```
-adb logcat -s ZTool* | grep -E "WorkDesktopProbe|profile |environment |allapps |taskbar |hotseat "
+```powershell
+adb logcat -d -b all | Select-String "\[test_hook\]"
 ```
 
 - If `taskbar … context=…` lines appear while `hotseat recentUsed=null`, the bottom bar is the
@@ -368,3 +380,44 @@ adb logcat -s ZTool* | grep -E "WorkDesktopProbe|profile |environment |allapps |
 
 All lines are de-duplicated and capped per process, so the probe stays quiet after the first
 rebuilds.
+
+## 10. First probe run (TB710FU, 2026-10-20)
+
+Manually started `WorkLauncher` with PC mode off (`zui_pc_mode=0`), log level DEBUG:
+
+```
+profile landscape=true tablet=true multiDisplay=false twoPanels=false transpose=false
+        taskbarPresent=false taskbarHeight=195 stashedTaskbarHeight=30
+        hotseatBarHeight=308 hotseatIcons=6 insets=Rect(0, 98 - 0, 138)
+        bounds=3200x2000
+        | grid=12x6 folder=4x4 allAppsCols=6 idpHotseatIcons=6 deviceType=2
+        | isTablet:true, isMultiDisplay:false, widthPx:3200, heightPx:2000, … rotationHint:1
+environment pkg=com.zui.desktoplauncher pcMode=0 dpPcMode=0 pcProp=0
+        orientation=1 size=800x1280dp density=400 layoutConfig=6x4
+activity WorkLauncher.onCreate
+hotseat 2000x415 visibility=4 recentUsed=0x172 children=0 visibility=0
+taskbar recreateTaskbar context=null                # after writing zui_pc_mode=1
+```
+
+What this already settles:
+
+1. **The work desktop is laid out against landscape bounds even when the display is portrait.**
+   The display reports `orientation=1`, `800x1280dp`, yet the only `DeviceProfile` constructed has
+   `bounds=3200x2000`, `landscape=true`, `rotationHint=1`. That is Q3's "landscape-sized window"
+   answer (to be re-confirmed with the real PC-mode toggle, since this run had PC mode off).
+2. **The live grid is 12x6, not the 13x7 every `device_profiles` variant declares.** The
+   launcher's own prefs hold `migration_src_workspace_size=12,6`,
+   `migration_src_db_file=launcher_work.db`, `migration_src_device_type=2`, so the work grid is
+   restored/migrated from persisted state rather than taken raw from the XML. A hook must read the
+   live `InvariantDeviceProfile` instead of assuming the XML numbers.
+3. **`isTaskbarPresent=false` is real at runtime**: `TaskbarManager.recreateTaskbar()` reports
+   `context=null` and no `TaskbarActivityContext` is ever created, even when the launcher reacts to
+   `zui_pc_mode` flipping to 1 by recreating its taskbar. `ZuiHotseat` is instead attached but
+   `visibility=4` (GONE) with an empty recent-used container. Neither bar is visible outside PC
+   mode; the real PC-mode run is still needed for Q1.
+4. **Writing `Settings.System zui_pc_mode=1` is not enough to enter PC mode** — `persist.sys.zui.pcmode`
+   and the display's `inPcmode` both stayed 0, and only the launcher's `recreateTaskbar()` fired.
+   The probe therefore has to be driven from the real system toggle (quick settings / settings UI).
+
+Still open after this run: the PC-mode taskbar identity (Q1), the portrait `DeviceProfile`
+(only the landscape bound appeared), and the `allapps` grid once `PcAllAppsActivity` is opened.
