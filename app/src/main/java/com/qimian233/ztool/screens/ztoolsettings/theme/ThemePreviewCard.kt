@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -36,9 +35,6 @@ import com.qimian233.ztool.ui.theme.FrontendStyle
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-
-/** Widest the specimen column gets before it stops following the page width. */
-private val MaxSpecimenWidth = 960.dp
 
 private val SpecimenPadding = 16.dp
 
@@ -61,9 +57,7 @@ private const val FeatureGridColumns = 2
 @Composable
 fun ThemePreviewCard(modifier: Modifier = Modifier) {
     ZToolCard(
-        modifier = modifier
-            .widthIn(max = MaxSpecimenWidth)
-            .fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier
