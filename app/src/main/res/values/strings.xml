@@ -71,6 +71,10 @@
     <string name="page_firstrun_usage_restricted_step3_summary">长按授权页面中的 ZTool 图标进入应用信息，点击右上角的三点菜单并选择“允许受限制的设置”，返回后即可正常打开开关。</string>
     <string name="page_firstrun_usage_restricted_refresh_hint">解除限制并返回本页后，授权状态会自动刷新。</string>
     <string name="page_firstrun_usage_restricted_confirm_button">知道了</string>
+    <string name="page_firstrun_theme_title">个性化外观</string>
+    <string name="page_firstrun_theme_summary">先挑一套顺眼的界面风格，之后随时可以再改</string>
+    <string name="page_firstrun_theme_hint">下面的选项会立即生效，并应用到整个应用。你可以在「设置 - 应用主题模式」中随时调整这些设置。</string>
+    <string name="page_firstrun_theme_finish_button">完成</string>
     <!--重启菜单资源值-->
     <string name="page_home_soft_reboot">软重启</string>
     <string name="page_home_reboot">重启</string>

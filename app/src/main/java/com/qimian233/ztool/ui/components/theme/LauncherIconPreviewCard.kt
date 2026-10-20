@@ -1,4 +1,4 @@
-package com.qimian233.ztool.screens.ztoolsettings.theme
+package com.qimian233.ztool.ui.components.theme
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image

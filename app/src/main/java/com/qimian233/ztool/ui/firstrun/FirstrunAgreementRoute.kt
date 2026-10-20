@@ -100,6 +100,7 @@ import com.qimian233.ztool.ui.theme.LocalUseAlternativeIcon
 import com.qimian233.ztool.ui.theme.appLogoRes
 import com.qimian233.ztool.ui.theme.ztoolRevealCoverColor
 import com.qimian233.ztool.viewmodel.FirstrunAgreementViewModel
+import com.qimian233.ztool.viewmodel.rememberSettingsViewModel
 import kotlinx.coroutines.delay
 
 @Composable
@@ -129,6 +130,7 @@ fun FirstrunAgreementRoute(
     val agreementReadScrollState = rememberScrollState()
     val agreementPageScrollState = rememberScrollState()
     val permissionPageScrollState = rememberScrollState()
+    val themePageScrollState = rememberScrollState()
     val revealController = LocalThemeRevealController.current
     val introCoverColor = ztoolRevealCoverColor()
     val gate = remember { ScrollToBottomAgreementGate() }
@@ -323,6 +325,36 @@ fun FirstrunAgreementRoute(
                         onAgree = { tapAnchor -> navigateForward(tapAnchor, null) },
                         onBack = navigateBack
                     )
+                    FirstrunPage.Theme -> {
+                        val settingsViewModel = rememberSettingsViewModel(activity)
+                        val settingsUiState by settingsViewModel.uiState.collectAsState()
+                        FirstrunThemePage(
+                            settings = settingsUiState.themeSettings,
+                            manualSeedColorText = settingsUiState.manualSeedColorText,
+                            manualSeedColorError = settingsUiState.manualSeedColorError,
+                            isLastPage = page == pages.last(),
+                            pageScrollState = themePageScrollState,
+                            onFrontendStyleChanged = { style ->
+                                if (style != settingsUiState.themeSettings.frontendStyle) {
+                                    settingsViewModel.setFrontendStyle(style)
+                                }
+                            },
+                            onThemeModeChanged = settingsViewModel::setThemeMode,
+                            onMaterialColorSpecChanged = settingsViewModel::setMaterialColorSpec,
+                            onMaterialPaletteChanged = settingsViewModel::setMaterialPalette,
+                            onDynamicColorChanged = settingsViewModel::setDynamicColorEnabled,
+                            onAmoledBlackChanged = settingsViewModel::setAmoledBlackEnabled,
+                            onUseAlternativeIconChanged = settingsViewModel::setUseAlternativeIcon,
+                            onPredictiveBackGestureChanged = settingsViewModel::setPredictiveBackGestureEnabled,
+                            onEnableFloatingBottomBarChanged = settingsViewModel::setEnableFloatingBottomBar,
+                            onEnableFloatingBottomBarBlurChanged = settingsViewModel::setEnableFloatingBottomBarBlur,
+                            onManualColorChanged = settingsViewModel::setManualColorEnabled,
+                            onManualSeedColorTextChanged = settingsViewModel::setManualSeedColorText,
+                            onManualSeedColorEditingFinished = settingsViewModel::finishManualSeedColorEditing,
+                            onNext = { tapAnchor -> navigateForward(tapAnchor, null) },
+                            onBack = navigateBack
+                        )
+                    }
                 }
             }
         }
@@ -742,7 +774,7 @@ private fun StatusBanner(
 }
 
 @Composable
-private fun PageHeader(
+internal fun PageHeader(
     title: String,
     subtitle: String
 ) {
@@ -815,7 +847,7 @@ private fun FirstrunActionCard(
 }
 
 @Composable
-private fun BottomActionBar(
+internal fun BottomActionBar(
     modifier: Modifier = Modifier,
     nextText: String,
     nextEnabled: Boolean,
@@ -876,13 +908,15 @@ private enum class FirstrunPage {
     Splash,
     Agreement,
     SourceVerify,
-    Permissions
+    Permissions,
+    Theme
 }
 
 private fun FirstrunPageSchema.toFirstrunPage(): FirstrunPage = when (this) {
     FirstrunPageSchema.AGREEMENT -> FirstrunPage.Agreement
     FirstrunPageSchema.SOURCE_VERIFY -> FirstrunPage.SourceVerify
     FirstrunPageSchema.PERMISSIONS -> FirstrunPage.Permissions
+    FirstrunPageSchema.THEME -> FirstrunPage.Theme
 }
 
 /**

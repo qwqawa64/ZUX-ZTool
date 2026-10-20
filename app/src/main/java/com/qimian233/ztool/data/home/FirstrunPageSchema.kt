@@ -21,5 +21,6 @@ package com.qimian233.ztool.data.home
 enum class FirstrunPageSchema(val order: Int, val schemaVersion: Int) {
     AGREEMENT(order = 0, schemaVersion = 1),
     SOURCE_VERIFY(order = 1, schemaVersion = 1),
-    PERMISSIONS(order = 2, schemaVersion = 2);
+    PERMISSIONS(order = 2, schemaVersion = 2),
+    THEME(order = 3, schemaVersion = 1);
 }

@@ -54,13 +54,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qimian233.ztool.MainActivity
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.keys.LogLevel
-import com.qimian233.ztool.data.settings.SettingsRepository
 import com.qimian233.ztool.screens.search.FeatureSearchBar
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
@@ -75,7 +72,7 @@ import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.SettingsUiState
-import com.qimian233.ztool.viewmodel.SettingsViewModel
+import com.qimian233.ztool.viewmodel.rememberSettingsViewModel
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
@@ -269,18 +266,6 @@ private fun SettingsDialogs(
     }
 }
 
-@Composable
-internal fun rememberSettingsViewModel(activity: MainActivity): SettingsViewModel {
-    val context = LocalContext.current
-    return remember(activity) {
-        val repository = SettingsRepository(context.applicationContext)
-        ViewModelProvider(
-            activity,
-            SettingsViewModelFactory(repository)
-        )[SettingsViewModel::class.java]
-    }
-}
-
 private fun openAppLanguageSettings(context: Context) {
     val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
@@ -300,18 +285,6 @@ private fun openAppLanguageSettings(context: Context) {
 
 private fun showSettingsToast(context: Context, message: String) {
     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-}
-
-private class SettingsViewModelFactory(
-    private val repository: SettingsRepository
-) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-            return SettingsViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
-    }
 }
 
 @Composable

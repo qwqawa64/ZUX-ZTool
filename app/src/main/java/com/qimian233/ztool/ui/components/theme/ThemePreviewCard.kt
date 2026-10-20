@@ -1,4 +1,4 @@
-package com.qimian233.ztool.screens.ztoolsettings.theme
+package com.qimian233.ztool.ui.components.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,7 +38,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val SpecimenPadding = 16.dp
 
-/** Landscape 16:9 ratio for both frames. */
+/** Landscape 16:10 ratio for both frames. */
 private const val FrameAspectRatio = 16f / 10f
 
 /** Widest a single frame gets before the pair is centered instead of stretched. */
