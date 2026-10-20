@@ -4,6 +4,7 @@ com.android.systemui
 com.android.settings
 com.android.packageinstaller
 com.zui.launcher
+com.zui.desktoplauncher
 com.zui.safecenter
 com.zui.game.service
 com.lenovo.ota

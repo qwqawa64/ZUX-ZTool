@@ -32,6 +32,7 @@ import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
 import com.qimian233.ztool.hook.modules.launcher.LauncherAppIconUnmaskHook
 import com.qimian233.ztool.hook.modules.launcher.misc.RecentTaskMemoryViewHook
+import com.qimian233.ztool.hook.modules.desktoplauncher.WorkDesktopProbe
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDeviceAppListReporting
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDeviceAutoInstall
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDevicePush
@@ -296,6 +297,7 @@ object HookManager {
         registerHookModule(BatchUninstall())
         registerHookModule(LauncherWideGridHook())
         registerHookModule(IconScaleOverrideHook())
+        registerHookModule(WorkDesktopProbe())
 
         registerHookModule(AutoMistakeTouchHook())
         registerHookModule(DisableGameAudio())

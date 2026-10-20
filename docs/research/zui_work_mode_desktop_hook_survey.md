@@ -332,12 +332,39 @@ If it is the hotseat (`ZuiHotseat`), the seam is `resetCellSize(DeviceProfile)` 
 
 ## 8. Suggested next steps
 
-1. Add `ScopeKeys.DESKTOP_LAUNCHER` (`com.zui.desktoplauncher`, restart via `AmStop`), add it to
-   `scope.list`, and register a `DesktopLauncherDexIndexer` (start with the `t(...)` descriptor
-   and the `PcAllAppsPagedView` private fields).
-2. Ship a probe-only hook that logs, on the work desktop: `InvariantDeviceProfile` counts,
-   `DeviceProfile.toSmallString()` + `isLandscape/isTablet/transposeLayoutWithOrientation/
-   numShownHotseatIcons`, `PcAllAppsPagedView` `cellCountX/cellCountY/itemsPerPage`, and whether
-   a taskbar window exists. That resolves §7 Q1–Q3 and validates §2.1/§2.4 on real bounds.
+1. ~~Add `ScopeKeys.DESKTOP_LAUNCHER` …~~ Done: `ScopeKeys.DESKTOP_LAUNCHER` (`AmStop`) and
+   `com.zui.desktoplauncher` in `scope.list`.
+2. ~~Ship a probe-only hook~~ Done: `hook/modules/desktoplauncher/WorkDesktopProbe.kt` (§9).
 3. Then implement independently: §6.3 (all-apps) and §6.4 (bottom bar) are self-contained; §6.1
    waits for Q2.
+
+## 9. The probe hook (`WorkDesktopProbe`)
+
+`com.qimian233.ztool.hook.modules.desktoplauncher.WorkDesktopProbe` is read-only: it hooks and
+logs, never changes behaviour. It is gated by `PreferenceKeys.TEST_HOOK` (`"test_hook"`), which
+`BaseHookModule.isEnabled()` always lets through, so it runs without any frontend switch — a real
+key plus UI wiring must replace it before this ships as a feature.
+
+| Hook | What it prints |
+|---|---|
+| `DeviceProfile.<init>` (widest ctor) | one `profile …` line per supported window bound: `isLandscape/isTablet/isMultiDisplay/isTwoPanels/transpose/taskbarPresent`, `taskbarHeight`, `stashedTaskbarHeight`, `hotseatBarHeight`, `hotseatIcons`, `getInsets()`, `widthPx x heightPx`, the `InvariantDeviceProfile` grid (`numColumns x numRows`, folders, `numAllAppsColumns`, `deviceType`) and `toSmallString()`. Plus one `environment …` line: `zui_pc_mode`, `zui_dp_display_pc_mode`, `persist.sys.zui.pcmode`, orientation, dp size, density, `extra_new_layout_config`. |
+| `WorkLauncher.onCreate`, `PcAllAppsActivity.onCreate` | `activity <name>.onCreate` — tells which screen the following lines belong to |
+| `PcAllAppsPagedView.setupContentDimensions(int)` | `allapps cols/rows/perPage/items/count/view=<measured px>` |
+| `TaskbarManager.recreateTaskbar()` | `taskbar recreateTaskbar context=<TaskbarActivityContext|TaskbarActivityContextDp|null>` |
+| `TaskbarActivityContext.createDefaultWindowLayoutParams(int, String)` | `taskbar class/gravity/width/height/defaultHeight/requestedHeight` |
+| `ZuiHotseat.onLayout(…)` | `hotseat wxh visibility=… recentUsed=wxh children=…` |
+
+Reading it:
+
+```
+adb logcat -s ZTool* | grep -E "WorkDesktopProbe|profile |environment |allapps |taskbar |hotseat "
+```
+
+- If `taskbar … context=…` lines appear while `hotseat recentUsed=null`, the bottom bar is the
+  taskbar (§2.5 first row) — Q1 answered.
+- `profile` lines come in pairs (portrait + landscape bounds); `bounds=` and `insets=` answer Q3,
+  and `transpose=false` on both validates §2.2.
+- `allapps` in portrait should print `cols=9 rows=4` on TB710FU, confirming §2.4.
+
+All lines are de-duplicated and capped per process, so the probe stays quiet after the first
+rebuilds.

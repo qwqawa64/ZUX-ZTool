@@ -29,6 +29,7 @@ object ScopeKeys {
     val SYSTEM_UI = Scope("com.android.systemui", HowToRestart.KillAll)
     val WALLPAPER_SETTINGS = Scope("com.zui.wallpapersetting", HowToRestart.AmStop)
     val LAUNCHER = Scope("com.zui.launcher", HowToRestart.AmStop)
+    val DESKTOP_LAUNCHER = Scope("com.zui.desktoplauncher", HowToRestart.AmStop)
     val MOBILE_DESKTOP = Scope("com.motorola.mobiledesktop", HowToRestart.AmStop)
     val ZUI_PERFORMANCE = Scope("com.zui.pp", HowToRestart.KillAll)
     val SOGOU_OEM_IME = Scope("com.sohu.inputmethod.sogou.oem", HowToRestart.KillAll)
