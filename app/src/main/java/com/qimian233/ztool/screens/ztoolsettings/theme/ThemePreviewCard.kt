@@ -42,11 +42,12 @@ private val MaxSpecimenWidth = 960.dp
 
 private val SpecimenPadding = 16.dp
 
-/** Gap between the two frames. */
-private val FrameGap = 16.dp
+/** Landscape 16:9 ratio for both frames. */
+private const val FrameAspectRatio = 16f / 10f
 
-/** Landscape tablet ratio for both frames. */
-private const val FrameAspectRatio = 4f / 3f
+/** Widest a single frame gets before the pair is centered instead of stretched. */
+private val MaxFrameWidth = 400.dp
+private val FrameGap = 24.dp
 
 private const val InfoListRowCount = 4
 private const val FeatureGridRows = 3
@@ -55,7 +56,7 @@ private const val FeatureGridColumns = 2
 /**
  * Appearance specimen: two side-by-side tablet frames, one showing the home page's
  * module-status card and one a features page. Surfaces are drawn from the live
- * palette; bars stand in for text so the specimen shows colour, not UI copy.
+ * palette; bars stand in for text so the specimen shows color, not UI copy.
  */
 @Composable
 fun ThemePreviewCard(modifier: Modifier = Modifier) {
@@ -77,22 +78,29 @@ fun ThemePreviewCard(modifier: Modifier = Modifier) {
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(FrameGap),
-                verticalAlignment = Alignment.Top
-            ) {
-                PreviewFrameColumn(
-                    label = stringResource(R.string.page_settings_theme_preview_home_label),
-                    modifier = Modifier.weight(1f)
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val halfWidth = (maxWidth - FrameGap) / 2
+                val frameWidth = minOf(halfWidth, MaxFrameWidth)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        FrameGap,
+                        Alignment.CenterHorizontally
+                    ),
+                    verticalAlignment = Alignment.Top,
                 ) {
-                    PreviewHomePage()
-                }
-                PreviewFrameColumn(
-                    label = stringResource(R.string.page_settings_theme_preview_features_label),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    PreviewFeaturePage()
+                    PreviewFrameColumn(
+                        label = stringResource(R.string.page_settings_theme_preview_home_label),
+                        modifier = Modifier.width(frameWidth)
+                    ) {
+                        PreviewHomePage()
+                    }
+                    PreviewFrameColumn(
+                        label = stringResource(R.string.page_settings_theme_preview_features_label),
+                        modifier = Modifier.width(frameWidth)
+                    ) {
+                        PreviewFeaturePage()
+                    }
                 }
             }
         }
@@ -128,7 +136,7 @@ private fun PreviewFrameColumn(
     }
 }
 
-/** A bevelled tablet frame; every length scales with the frame width it is given. */
+/** A beveled tablet frame; every length scales with the frame width it is given. */
 @Composable
 private fun PreviewTabletFrame(content: @Composable () -> Unit) {
     val colors = LocalZToolColorScheme.current
