@@ -130,6 +130,7 @@ fun FirstrunAgreementRoute(
     val agreementReadScrollState = rememberScrollState()
     val agreementPageScrollState = rememberScrollState()
     val permissionPageScrollState = rememberScrollState()
+    val reportPageScrollState = rememberScrollState()
     val themePageScrollState = rememberScrollState()
     val revealController = LocalThemeRevealController.current
     val introCoverColor = ztoolRevealCoverColor()
@@ -187,6 +188,10 @@ fun FirstrunAgreementRoute(
     DisposableEffect(agreementReadScrollState.value, agreementReadScrollState.maxValue) {
         gate.onScrollChanged(agreementReadScrollState.value < agreementReadScrollState.maxValue)
         onDispose { }
+    }
+
+    LaunchedEffect(currentPageState.value) {
+        if (currentPageState.value == FirstrunPage.Report) viewModel.startReportCountdown()
     }
 
     val navigateBack: (Offset) -> Unit = { tapAnchor ->
@@ -289,6 +294,14 @@ fun FirstrunAgreementRoute(
                         onNext = { tapAnchor ->
                             navigateForward(tapAnchor) { viewModel.completeSourceVerifyPage() }
                         },
+                        onBack = navigateBack
+                    )
+                    FirstrunPage.Report -> FirstrunReportPage(
+                        isLastPage = page == pages.last(),
+                        countdownRemaining = uiState.reportCountdownRemaining,
+                        countdownFinished = uiState.reportCountdownFinished,
+                        pageScrollState = reportPageScrollState,
+                        onNext = { tapAnchor -> navigateForward(tapAnchor, null) },
                         onBack = navigateBack
                     )
                     FirstrunPage.Permissions -> PermissionPage(
@@ -924,6 +937,7 @@ private enum class FirstrunPage {
     Splash,
     Agreement,
     SourceVerify,
+    Report,
     Permissions,
     Theme
 }
@@ -931,6 +945,7 @@ private enum class FirstrunPage {
 private fun FirstrunPageSchema.toFirstrunPage(): FirstrunPage = when (this) {
     FirstrunPageSchema.AGREEMENT -> FirstrunPage.Agreement
     FirstrunPageSchema.SOURCE_VERIFY -> FirstrunPage.SourceVerify
+    FirstrunPageSchema.REPORT -> FirstrunPage.Report
     FirstrunPageSchema.PERMISSIONS -> FirstrunPage.Permissions
     FirstrunPageSchema.THEME -> FirstrunPage.Theme
 }

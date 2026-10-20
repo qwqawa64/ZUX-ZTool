@@ -74,6 +74,15 @@
     <string name="page_firstrun_theme_summary">Pick a front end that suits you; you can change it any time</string>
     <string name="page_firstrun_theme_hint">Changes below apply immediately across the app. You can adjust them any time in Settings - App theme mode.</string>
     <string name="page_firstrun_theme_finish_button">Finish</string>
+    <string name="page_firstrun_report_title">Reporting a problem</string>
+    <string name="page_firstrun_report_subtitle">When something goes wrong, prepare the information below first</string>
+    <string name="page_firstrun_report_hint">Reports without reproduction steps or logs are hard to diagnose. Work through these steps in order so we can locate and fix the problem faster:</string>
+    <string name="page_firstrun_report_step1">Open Settings - About in this app and install the latest beta build</string>
+    <string name="page_firstrun_report_step2">Clear the module log once from this app\'s settings</string>
+    <string name="page_firstrun_report_step3">Make sure the switch for the feature you are reporting is enabled, then reboot the device or restart the scope</string>
+    <string name="page_firstrun_report_step4">Reproduce the problem, preferably with a screen recording or screenshots</string>
+    <string name="page_firstrun_report_step5">Export the log from this app\'s settings</string>
+    <string name="page_firstrun_report_step6">Open an issue on GitHub: describe the problem and the reproduction steps, and attach your screenshots, recording and exported log</string>
     <string name="page_home_soft_reboot">Soft reboot</string>
     <string name="page_home_reboot">Reboot</string>
     <string name="page_home_bootloader">Reboot to Bootloader</string>

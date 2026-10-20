@@ -75,6 +75,15 @@
     <string name="page_firstrun_theme_summary">先挑一套顺眼的界面风格，之后随时可以再改</string>
     <string name="page_firstrun_theme_hint">下面的选项会立即生效，并应用到整个应用。你可以在「设置 - 应用主题模式」中随时调整这些设置。</string>
     <string name="page_firstrun_theme_finish_button">完成</string>
+    <string name="page_firstrun_report_title">问题反馈指南</string>
+    <string name="page_firstrun_report_subtitle">遇到问题时，请先按以下步骤准备信息</string>
+    <string name="page_firstrun_report_hint">缺少复现步骤或日志的问题往往难以排查，按顺序完成以下准备可以帮助我们更快定位并修复问题：</string>
+    <string name="page_firstrun_report_step1">前往本应用的设置 - 关于页面，下载并安装最新测试版</string>
+    <string name="page_firstrun_report_step2">前往本应用的设置页面清除一次模块日志</string>
+    <string name="page_firstrun_report_step3">确保需要汇报问题的功能开关处于开启状态，然后重启整机或作用域</string>
+    <string name="page_firstrun_report_step4">复现问题，推荐录屏或截图</string>
+    <string name="page_firstrun_report_step5">在本应用的设置页面导出日志</string>
+    <string name="page_firstrun_report_step6">在 GitHub 打开 Issue，说明问题、复现步骤，并上传截图、录屏和导出的日志</string>
     <!--重启菜单资源值-->
     <string name="page_home_soft_reboot">软重启</string>
     <string name="page_home_reboot">重启</string>

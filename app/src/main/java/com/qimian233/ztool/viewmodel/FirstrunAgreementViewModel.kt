@@ -8,11 +8,16 @@ import com.qimian233.ztool.data.home.FirstrunCheckState
 import com.qimian233.ztool.data.home.FirstrunPageSchema
 import com.qimian233.ztool.data.home.FirstrunSchemaRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+/** Seconds the report page keeps its continue button disabled on first display. */
+private const val REPORT_COUNTDOWN_SECONDS = 5
 
 class FirstrunAgreementViewModel(
     private val repository: FirstrunAgreementRepository,
@@ -21,6 +26,8 @@ class FirstrunAgreementViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(FirstrunAgreementUiState())
     val uiState: StateFlow<FirstrunAgreementUiState> = _uiState.asStateFlow()
+
+    private var reportCountdownJob: Job? = null
 
     fun refreshChecks() {
         _uiState.value = _uiState.value.copy(
@@ -45,6 +52,26 @@ class FirstrunAgreementViewModel(
     /** Records that the user passed the source-verify page at its current schema version. */
     fun completeSourceVerifyPage() {
         schemaRepository.markPageAccepted(FirstrunPageSchema.SOURCE_VERIFY)
+    }
+
+    /**
+     * Starts the report page countdown once per process. A finished countdown stays
+     * finished, so returning to the page never replays it within the app lifetime.
+     */
+    fun startReportCountdown() {
+        if (_uiState.value.reportCountdownFinished || reportCountdownJob?.isActive == true) return
+        _uiState.value = _uiState.value.copy(
+            reportCountdownRemaining = REPORT_COUNTDOWN_SECONDS
+        )
+        reportCountdownJob = viewModelScope.launch {
+            repeat(REPORT_COUNTDOWN_SECONDS) {
+                delay(1000)
+                _uiState.value = _uiState.value.copy(
+                    reportCountdownRemaining = _uiState.value.reportCountdownRemaining - 1
+                )
+            }
+            _uiState.value = _uiState.value.copy(reportCountdownFinished = true)
+        }
     }
 
     /**
@@ -88,5 +115,7 @@ data class FirstrunAgreementUiState(
     val accepted: Boolean = false,
     val declined: Boolean = false,
     val checkState: FirstrunCheckState = FirstrunCheckState(),
-    val agreementMarkdown: String = ""
+    val agreementMarkdown: String = "",
+    val reportCountdownRemaining: Int = REPORT_COUNTDOWN_SECONDS,
+    val reportCountdownFinished: Boolean = false
 )
