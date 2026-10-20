@@ -74,7 +74,7 @@ Core files (all Kotlin):
 
 0. If you are not yet familiar with this project's libxposed Hook patterns, read `docs/hook/libxposed_guide_ztool_ver.md` first before writing any Hook code.
 1. Create a Hook class extending `AppHookModule` (or `SystemHookModule` for system framework), in **Kotlin**.
-2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. **Return `ScopeKeys.CONSTANT.packageName` references from `getTargetPackages()`** — register any new target package in `ScopeKeys.kt` first (see "Scope Management") and add it to `scope.list`. For system-framework hooks, implement `handleSystemServerStarting(...)` too. Returning "hook_test" or "test_hook" from `getModuleName()` always enables a test hook without a frontend switch.
+2. Implement `getModuleName()`, `getTargetPackages()` and `handleLoadPackage(...)`. **Return `ScopeKeys.CONSTANT.packageName` references from `getTargetPackages()`** — register any new target package in `ScopeKeys.kt` first (see "Scope Management") and add it to `scope.list`. For system-framework hooks, implement `handleSystemServerStarting(...)` too. Returning `PreferenceKeys.TEST_HOOK.name` from `getModuleName()` always enables a test hook without a frontend switch.
 3. Read Hook settings using `PreferenceKeys` constants: `xposed.getRemotePreferences("xposed_module_config").getXxx(PreferenceKeys.CONSTANT_NAME.name, PreferenceKeys.CONSTANT_NAME.default)`. Do not hand-write key strings.
 4. Register the Hook class in `hook/base/HookManager.kt`.
 5. If the Hook needs a user-facing toggle, add the frontend state according to `docs/hook/add_frontend_item.md`. New backend module guide: `docs/hook/add_new_hook_module.md`.

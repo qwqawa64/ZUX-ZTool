@@ -6,15 +6,15 @@
 
 ## 1. 创建 Kotlin 类
 
-新 Hook 必须使用 **Kotlin**（`.kt`）编写，**不允许新增 Java 代码**。Java 仅限紧急修复既有 Java 基础设施（如 `BaseHookModule.java`、`HookManager.java`）。
+新 Hook 必须使用 **Kotlin**（`.kt`）编写，**不允许新增 Java 代码**。
 
 - 位置：`app/src/main/java/com/qimian233/ztool/hook/modules/<作用域>/`，按目标应用放入对应子包（如 `systemui/`、`launcher/`、`setting/`）。
 - 文件编码：显式使用 UTF-8（项目包含中文字符串）。
-- 测试 Hook：`getModuleName()` 返回 `"hook_test"` 或 `"test_hook"` 时恒启用，无需前端开关。
+- 测试 Hook：`getModuleName()` 返回 `PreferenceKeys.TEST_HOOK.name` 时恒启用，无需前端开关。
 
 ## 2. 继承 AppHookModule 或 SystemHookModule
 
-两个基类都是 Java 抽象类，Kotlin 类直接继承即可：
+直接按需继承即可：
 
 | 基类 | 适用场景 | 必须实现 |
 |---|---|---|
@@ -90,11 +90,11 @@ hookWithId(targetMethod, "example_hook_method") { chain ->
 
 ### findMethod / findField —— 反射查找
 
-均为 **public static** 工具方法，沿继承链**逐级向父类递归查找**，找到后自动 `setAccessible(true)`：
+沿继承链**逐级向父类递归查找**，找到后自动 `setAccessible(true)`：
 
 ```kotlin
-fun findMethod(startClass: Class<*>, name: String, vararg parameterTypes: Class<*>): Method
-fun findField(startClass: Class<*>, name: String): Field
+protected open fun findMethod(startClass: Class<*>, name: String, vararg parameterTypes: Class<*>): Method
+protected open fun findField(startClass: Class<*>, name: String): Field
 ```
 
 - `findMethod` 支持带签名查找（变长 `parameterTypes`），跨 Android 版本方法参数变化时优先用签名定位。
@@ -106,7 +106,7 @@ fun findField(startClass: Class<*>, name: String): Field
 远程配置来自宿主进程的 `xposed_module_config`，**只能读、不能写**。获取方式二选一：
 
 ```kotlin
-// 方式一（推荐）：BaseHookModule.getRemotePreferences() 合成的 Kotlin 属性
+// 方式一（推荐）：BaseHookModule 提供的 open val
 val prefs = remotePreferences
 
 // 方式二：XposedInterface 实例方法
@@ -122,10 +122,10 @@ val level = prefs.getInt(PreferenceKeys.EXAMPLE_HOOK_LEVEL.name, 0)
 
 ## 5. 注册到 HookManager
 
-在 `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.java` 的 `registerAllModules()` 中注册：
+在 `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.kt` 的 `registerAllModules()` 中注册：
 
-```java
-registerHookModule(new ExampleHook());
+```kotlin
+registerHookModule(ExampleHook())
 ```
 
 - 若类名与其它包冲突，使用全限定名（项目中有 `SplitScreenMandatory` 重名的先例）。
