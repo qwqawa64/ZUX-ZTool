@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
@@ -70,13 +69,11 @@ fun LauncherIconPreviewCard(
                 ) {
                     LauncherIconSample(
                         iconRes = R.mipmap.ic_launcher,
-                        label = stringResource(R.string.page_settings_theme_preview_default_icon_label),
                         selected = !useAlternativeIcon,
                         iconSize = iconSize
                     )
                     LauncherIconSample(
                         iconRes = R.mipmap.ic_launcher_alt,
-                        label = stringResource(R.string.page_settings_theme_preview_alternative_icon_label),
                         selected = useAlternativeIcon,
                         iconSize = iconSize
                     )
@@ -89,7 +86,6 @@ fun LauncherIconPreviewCard(
 @Composable
 private fun LauncherIconSample(
     @DrawableRes iconRes: Int,
-    label: String,
     selected: Boolean,
     iconSize: Dp
 ) {
@@ -132,18 +128,6 @@ private fun LauncherIconSample(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (selected) {
-                colors.onSurface
-            } else {
-                colors.onSurfaceVariant.copy(alpha = 0.7f)
-            },
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 
