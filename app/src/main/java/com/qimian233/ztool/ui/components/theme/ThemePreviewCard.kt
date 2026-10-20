@@ -52,6 +52,9 @@ private val MaxFrameWidth = 400.dp
 private val FrameGap = 24.dp
 
 private const val InfoListRowCount = 4
+
+/** One info row fewer while the capsule occupies the bottom of the frame. */
+private const val FloatingInfoListRowCount = 3
 private const val FeatureGridRows = 3
 private const val FeatureGridColumns = 2
 
@@ -224,11 +227,15 @@ private fun PreviewPageChrome(
     }
 }
 
-/** Bottom inset that keeps a page clear of the floating capsule bar. */
+/**
+ * Bottom inset that keeps a page clear of the floating capsule bar. The capsule's top
+ * edge is 0.15 × frame width above the frame bottom; the page's own content padding
+ * already supplies 0.045, so only the rest plus a small gap is added here.
+ */
 private fun Modifier.floatingNavigationInset(
     navigation: PreviewNavigation,
     frameWidth: Dp
-): Modifier = padding(bottom = if (navigation.isFloating) frameWidth * 0.15f else 0.dp)
+): Modifier = padding(bottom = if (navigation.isFloating) frameWidth * 0.115f else 0.dp)
 
 @Composable
 private fun PreviewHomePage(navigation: PreviewNavigation) {
@@ -244,6 +251,11 @@ private fun PreviewHomePage(navigation: PreviewNavigation) {
         ) {
             PreviewStatusCard(modifier = Modifier.fillMaxWidth())
             PreviewInfoList(
+                rowCount = if (navigation.isFloating) {
+                    FloatingInfoListRowCount
+                } else {
+                    InfoListRowCount
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -542,7 +554,10 @@ private fun PreviewStatusCard(modifier: Modifier = Modifier) {
 
 /** Home system-info rows: one surface container, icon plates and value bars. */
 @Composable
-private fun PreviewInfoList(modifier: Modifier = Modifier) {
+private fun PreviewInfoList(
+    rowCount: Int,
+    modifier: Modifier = Modifier
+) {
     val colors = LocalZToolColorScheme.current
     BoxWithConstraints(modifier = modifier) {
         val width = maxWidth
@@ -553,7 +568,7 @@ private fun PreviewInfoList(modifier: Modifier = Modifier) {
                 .background(colors.surfaceContainer)
                 .padding(horizontal = width * 0.04f)
         ) {
-            repeat(InfoListRowCount) { index ->
+            repeat(rowCount) { index ->
                 if (index > 0) {
                     Box(
                         modifier = Modifier
