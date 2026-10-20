@@ -27,7 +27,7 @@ mapping editor UI with friendly waveform names, and the impact-waveform hook.
 - [x] 7. `SearchIndex`: entries for the switch and the rule editor.
 - [x] 8. Hook: module name = enable key, continuous + impact rewrite, rule-driven.
 - [x] 9. Verification: `assembleDebug`, `SearchIndexConsistencyTest`, string checker.
-- [x] 10. Update `docs/research/lenovo-pen-haptic/waveform-kinds.md`; commit.
+- [x] 10. Update `../../research/lenovo-pen-haptic/waveform-kinds.md`; commit.
 
 ## Verification
 
