@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Migrate docs_archive -> docs/archive and active docs -> docs, with reference rewriting.
+"""
+IMPORTANT: Already done its task and deprecated.
+
+Migrate docs_archive -> docs/archive and active docs -> docs, with reference rewriting.
 
 Usage:
   python tools/migrate_docs.py scan    # only print references to be rewritten (dry run of ref scan)

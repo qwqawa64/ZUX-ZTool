@@ -79,8 +79,6 @@ Core files (all Kotlin):
 4. Register the Hook class in `hook/base/HookManager.kt`.
 5. If the Hook needs a user-facing toggle, add the frontend state according to `docs/hook/add_frontend_item.md`. New backend module guide: `docs/hook/add_new_hook_module.md`.
 
-Use `logger.<level>` for module logs when possible, see `docs/logging/migrate_and_use_new_logging_system.md`.
-
 ### Offline DexKit Index (DexIndex)
 
 DexKit lookups must NOT run inside `handleLoadPackage` (they break LSPosed hot reload — replay re-creates the bridge for the same APK and the native state conflicts). Instead, use the offline index pipeline:

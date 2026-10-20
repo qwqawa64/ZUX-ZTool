@@ -1,5 +1,8 @@
 # Migrate and Use the New Logging System
 
+> [!important]
+> Deprecated. See [libxposed_guide_ztool_ver.md](../hook/libxposed_guide_ztool_ver.md) for overall hook guide including logging guides.
+
 ## Overview
 
 The project implements `log(String msg)` and `logError(String msg, Throwable th)` in BaseHookModule.java for a long time. 
