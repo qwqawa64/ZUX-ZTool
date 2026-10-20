@@ -49,7 +49,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,7 +65,7 @@ import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.components.ZToolSettingsList
 import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
-import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import com.qimian233.ztool.ui.theme.moduleStatusPalette
 import com.qimian233.ztool.viewmodel.HomeUiState
 import com.qimian233.ztool.viewmodel.UpdateInfo
 
@@ -324,30 +323,9 @@ internal fun ModuleStatusCard(
     state: HomeUiState,
     onRefreshEnvironment: () -> Unit
 ) {
-    val themeSpec = LocalZToolThemeSpec.current
-    val isDefaultColor = !themeSpec.dynamicColorEnabled && !themeSpec.manualColorEnabled
     val bothActive = state.isModuleActive && state.isRootAvailable
     val anyActive = state.isModuleActive || state.isRootAvailable
-
-    val isDark = LocalZToolColorScheme.current.surface.luminance() < 0.5f
-    val containerColor = when {
-        bothActive && isDefaultColor -> if (isDark) Color(0xFF1B5E20).copy(alpha = 0.4f) else Color(0xFFA5D6A7)
-        !bothActive && anyActive -> if (isDark) Color(0xFFE65100).copy(alpha = 0.35f) else Color(0xFFFFE082)
-        !anyActive -> if (isDark) Color(0xFFB71C1C).copy(alpha = 0.4f) else Color(0xFFEF9A9A)
-        else -> LocalZToolColorScheme.current.primaryContainer
-    }
-    val contentColor = when {
-        bothActive && isDefaultColor -> if (isDark) Color(0xFFA5D6A7) else Color(0xFF1B5E20)
-        !bothActive && anyActive -> if (isDark) Color(0xFFFFE082) else Color(0xFFE65100)
-        !anyActive -> if (isDark) Color(0xFFEF9A9A) else Color(0xFFB71C1C)
-        else -> LocalZToolColorScheme.current.onPrimaryContainer
-    }
-    val iconColor = when {
-        bothActive && isDefaultColor -> if (isDark) Color(0xFF66BB6A) else Color(0xFF4CAF50)
-        !bothActive && anyActive -> if (isDark) Color(0xFFFFB300) else Color(0xFFFF8F00)
-        !anyActive -> if (isDark) Color(0xFFEF5350) else Color(0xFFE53935)
-        else -> LocalZToolColorScheme.current.primary
-    }
+    val palette = moduleStatusPalette(bothActive = bothActive, anyActive = anyActive)
 
     val statusText = when {
         bothActive -> stringResource(R.string.page_home_module_active)
@@ -377,7 +355,7 @@ internal fun ModuleStatusCard(
                 if (!bothActive) Modifier.clickable { onRefreshEnvironment() }
                 else Modifier.clickable(onClick = {})
             ),
-        containerColor = containerColor,
+        containerColor = palette.container,
         defaultElevation = 1.dp
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -391,13 +369,13 @@ internal fun ModuleStatusCard(
                             text = statusText,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = contentColor
+                            color = palette.content
                         )
                         if (state.apiVersion > 0) {
                             Spacer(modifier = Modifier.width(8.dp))
                             ApiVersionBadge(
                                 apiVersion = state.apiVersion,
-                                colorOnContainer = contentColor
+                                colorOnContainer = palette.content
                             )
                         }
                     }
@@ -406,7 +384,7 @@ internal fun ModuleStatusCard(
                         Text(
                             text = summaryText,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = contentColor.copy(alpha = 0.8f)
+                            color = palette.content.copy(alpha = 0.8f)
                         )
                     }
                     if (!bothActive) {
@@ -415,14 +393,14 @@ internal fun ModuleStatusCard(
                             Icon(
                                 imageVector = Icons.Rounded.Refresh,
                                 contentDescription = null,
-                                tint = contentColor.copy(alpha = 0.6f),
+                                tint = palette.content.copy(alpha = 0.6f),
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = stringResource(R.string.page_home_environment_tap_to_refresh),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = contentColor.copy(alpha = 0.6f)
+                                color = palette.content.copy(alpha = 0.6f)
                             )
                         }
                     }
@@ -430,7 +408,7 @@ internal fun ModuleStatusCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = iconColor,
+                    tint = palette.icon,
                     modifier = Modifier.size(32.dp)
                 )
             }

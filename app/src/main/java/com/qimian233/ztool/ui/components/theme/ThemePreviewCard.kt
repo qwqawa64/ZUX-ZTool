@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -24,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,8 +35,11 @@ import androidx.compose.ui.unit.dp
 import com.qimian233.ztool.R
 import com.qimian233.ztool.ui.components.ZToolCard
 import com.qimian233.ztool.ui.theme.FrontendStyle
+import com.qimian233.ztool.ui.theme.LocalEnableFloatingBottomBar
+import com.qimian233.ztool.ui.theme.LocalEnableFloatingBottomBarBlur
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.ui.theme.LocalZToolThemeSpec
+import com.qimian233.ztool.ui.theme.moduleStatusPalette
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val SpecimenPadding = 16.dp
@@ -49,13 +55,38 @@ private const val InfoListRowCount = 4
 private const val FeatureGridRows = 3
 private const val FeatureGridColumns = 2
 
+/** Destinations drawn in the navigation specimens; mirrors MainRoute.entriesInOrder. */
+private const val NavigationItemCount = 3
+
+/** Which navigation chrome a specimen frame shows; frames are always landscape. */
+private enum class PreviewNavigation {
+    Rail,
+    Capsule,
+    GlassCapsule;
+
+    val isFloating: Boolean
+        get() = this != Rail
+
+    val isGlass: Boolean
+        get() = this == GlassCapsule
+}
+
 /**
- * Appearance specimen: two side-by-side tablet frames, one showing the home page's
- * module-status card and one a features page. Surfaces are drawn from the live
+ * Appearance specimen: two side-by-side landscape tablet frames, one showing the home
+ * page's module-status card and one a features page. Surfaces are drawn from the live
  * palette; bars stand in for text so the specimen shows color, not UI copy.
  */
 @Composable
 fun ThemePreviewCard(modifier: Modifier = Modifier) {
+    val themeSpec = LocalZToolThemeSpec.current
+    val floatingBar = themeSpec.style == FrontendStyle.Miuix &&
+        LocalEnableFloatingBottomBar.current
+    val navigation = when {
+        !floatingBar -> PreviewNavigation.Rail
+        LocalEnableFloatingBottomBarBlur.current -> PreviewNavigation.GlassCapsule
+        else -> PreviewNavigation.Capsule
+    }
+
     ZToolCard(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -87,13 +118,13 @@ fun ThemePreviewCard(modifier: Modifier = Modifier) {
                         label = stringResource(R.string.page_settings_theme_preview_home_label),
                         modifier = Modifier.width(frameWidth)
                     ) {
-                        PreviewHomePage()
+                        PreviewHomePage(navigation = navigation)
                     }
                     PreviewFrameColumn(
                         label = stringResource(R.string.page_settings_theme_preview_features_label),
                         modifier = Modifier.width(frameWidth)
                     ) {
-                        PreviewFeaturePage()
+                        PreviewFeaturePage(navigation = navigation)
                     }
                 }
             }
@@ -159,58 +190,94 @@ private fun PreviewTabletFrame(content: @Composable () -> Unit) {
     }
 }
 
+/**
+ * App chrome around a specimen page: the landscape navigation rail beside the content,
+ * or the floating capsule bar over it.
+ */
 @Composable
-private fun PreviewHomePage() {
+private fun PreviewPageChrome(
+    navigation: PreviewNavigation,
+    content: @Composable ColumnScope.(frameWidth: Dp) -> Unit
+) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val width = maxWidth
-        val contentPadding = width * 0.045f
-        Column(modifier = Modifier.fillMaxSize()) {
-            PreviewTopBar(width = width)
+        val frameWidth = maxWidth
+        Row(modifier = Modifier.fillMaxSize()) {
+            if (!navigation.isFloating) {
+                PreviewNavigationRail(frameWidth = frameWidth)
+            }
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-                verticalArrangement = Arrangement.spacedBy(contentPadding * 0.7f)
+                    .weight(1f)
+                    .fillMaxHeight()
             ) {
-                PreviewStatusCard(modifier = Modifier.fillMaxWidth())
-                PreviewInfoList(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                )
+                PreviewTopBar(width = frameWidth)
+                content(frameWidth)
             }
+        }
+        if (navigation.isFloating) {
+            PreviewFloatingNavigationBar(
+                frameWidth = frameWidth,
+                glass = navigation.isGlass,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
+    }
+}
+
+/** Bottom inset that keeps a page clear of the floating capsule bar. */
+private fun Modifier.floatingNavigationInset(
+    navigation: PreviewNavigation,
+    frameWidth: Dp
+): Modifier = padding(bottom = if (navigation.isFloating) frameWidth * 0.15f else 0.dp)
+
+@Composable
+private fun PreviewHomePage(navigation: PreviewNavigation) {
+    PreviewPageChrome(navigation = navigation) { frameWidth ->
+        val contentPadding = frameWidth * 0.045f
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(contentPadding)
+                .floatingNavigationInset(navigation, frameWidth),
+            verticalArrangement = Arrangement.spacedBy(contentPadding * 0.7f)
+        ) {
+            PreviewStatusCard(modifier = Modifier.fillMaxWidth())
+            PreviewInfoList(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
         }
     }
 }
 
 @Composable
-private fun PreviewFeaturePage() {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val width = maxWidth
-        val contentPadding = width * 0.045f
-        val gap = width * 0.03f
-        Column(modifier = Modifier.fillMaxSize()) {
-            PreviewTopBar(width = width)
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-                verticalArrangement = Arrangement.spacedBy(gap)
-            ) {
-                repeat(FeatureGridRows) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(gap)
-                    ) {
-                        repeat(FeatureGridColumns) {
-                            PreviewFeatureTile(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                            )
-                        }
+private fun PreviewFeaturePage(navigation: PreviewNavigation) {
+    PreviewPageChrome(navigation = navigation) { frameWidth ->
+        val contentPadding = frameWidth * 0.045f
+        val gap = frameWidth * 0.03f
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(contentPadding)
+                .floatingNavigationInset(navigation, frameWidth),
+            verticalArrangement = Arrangement.spacedBy(gap)
+        ) {
+            repeat(FeatureGridRows) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(gap)
+                ) {
+                    repeat(FeatureGridColumns) {
+                        PreviewFeatureTile(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
                     }
                 }
             }
@@ -254,17 +321,186 @@ private fun PreviewTopBar(width: Dp) {
     }
 }
 
-/** Active module status: primary container with an on-container title stack. */
+/** Landscape navigation rail with three destinations, the first one selected. */
+@Composable
+private fun PreviewNavigationRail(frameWidth: Dp) {
+    val colors = LocalZToolColorScheme.current
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(frameWidth * 0.11f)
+            .background(colors.surface),
+        verticalArrangement = Arrangement.spacedBy(
+            frameWidth * 0.04f,
+            Alignment.CenterVertically
+        ),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        repeat(NavigationItemCount) { index ->
+            PreviewNavigationRailItem(
+                frameWidth = frameWidth,
+                selected = index == 0
+            )
+        }
+    }
+}
+
+@Composable
+private fun PreviewNavigationRailItem(frameWidth: Dp, selected: Boolean) {
+    val colors = LocalZToolColorScheme.current
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(frameWidth * 0.012f)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(frameWidth * 0.08f)
+                .height(frameWidth * 0.045f)
+                .clip(CircleShape)
+                .background(if (selected) colors.secondaryContainer else Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(frameWidth * 0.03f)
+                    .clip(RoundedCornerShape(frameWidth * 0.009f))
+                    .background(
+                        if (selected) colors.onSecondaryContainer else colors.onSurfaceVariant
+                    )
+            )
+        }
+        PreviewBar(
+            barWidth = frameWidth * 0.045f,
+            barHeight = frameWidth * 0.011f,
+            color = if (selected) colors.onSurface else colors.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Floating capsule navigation for the Miuix front end. The glass variant is a plain
+ * lens-like material: translucent fill, a light top sheen and a bright rim.
+ */
+@Composable
+private fun PreviewFloatingNavigationBar(
+    frameWidth: Dp,
+    glass: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val colors = LocalZToolColorScheme.current
+    Box(
+        modifier = modifier
+            .padding(bottom = frameWidth * 0.035f)
+            .width(frameWidth * 0.62f)
+            .height(frameWidth * 0.115f)
+            .shadow(elevation = if (glass) 3.dp else 2.dp, shape = CircleShape)
+            .clip(CircleShape)
+            .then(
+                if (glass) {
+                    Modifier
+                        .background(colors.surface.copy(alpha = 0.55f))
+                        .background(colors.onSurface.copy(alpha = 0.05f))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.5f),
+                                    Color.White.copy(alpha = 0.04f)
+                                )
+                            )
+                        )
+                        .border(
+                            width = frameWidth * 0.003f,
+                            brush = Brush.verticalGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.95f),
+                                    colors.onSurface.copy(alpha = 0.18f)
+                                )
+                            ),
+                            shape = CircleShape
+                        )
+                } else {
+                    Modifier
+                        .background(colors.surface.copy(alpha = 0.75f))
+                        .border(
+                            width = 1.dp,
+                            color = colors.outlineVariant.copy(alpha = 0.6f),
+                            shape = CircleShape
+                        )
+                }
+            )
+            .padding(
+                horizontal = frameWidth * 0.018f,
+                vertical = frameWidth * 0.012f
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(frameWidth * 0.014f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            repeat(NavigationItemCount) { index ->
+                PreviewFloatingNavigationTab(
+                    frameWidth = frameWidth,
+                    selected = index == 0,
+                    glass = glass,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewFloatingNavigationTab(
+    frameWidth: Dp,
+    selected: Boolean,
+    glass: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val colors = LocalZToolColorScheme.current
+    val contentColor = if (glass && selected) colors.primary else colors.onSurface
+    val indicatorColor = when {
+        selected && glass -> colors.onSurface.copy(alpha = 0.08f)
+        selected -> colors.primary.copy(alpha = 0.15f)
+        else -> Color.Transparent
+    }
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(CircleShape)
+            .background(indicatorColor),
+        verticalArrangement = Arrangement.spacedBy(
+            frameWidth * 0.008f,
+            Alignment.CenterVertically
+        ),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(frameWidth * 0.028f)
+                .clip(CircleShape)
+                .background(contentColor)
+        )
+        PreviewBar(
+            barWidth = frameWidth * 0.04f,
+            barHeight = frameWidth * 0.009f,
+            color = contentColor
+        )
+    }
+}
+
+/** Home module-status card in its fully active state, colored by the shared palette. */
 @Composable
 private fun PreviewStatusCard(modifier: Modifier = Modifier) {
-    val colors = LocalZToolColorScheme.current
+    val palette = moduleStatusPalette(bothActive = true, anyActive = true)
     BoxWithConstraints(modifier = modifier) {
         val width = maxWidth
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(width * 0.035f))
-                .background(colors.primaryContainer)
+                .background(palette.container)
                 .padding(horizontal = width * 0.045f, vertical = width * 0.04f),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -276,19 +512,21 @@ private fun PreviewStatusCard(modifier: Modifier = Modifier) {
                     PreviewBar(
                         barWidth = width * 0.34f,
                         barHeight = width * 0.03f,
-                        color = colors.onPrimaryContainer
+                        color = palette.content
                     )
                     Spacer(modifier = Modifier.width(width * 0.02f))
-                    PreviewBar(
-                        barWidth = width * 0.12f,
-                        barHeight = width * 0.026f,
-                        color = colors.onPrimaryContainer.copy(alpha = 0.2f)
+                    Box(
+                        modifier = Modifier
+                            .width(width * 0.14f)
+                            .height(width * 0.032f)
+                            .clip(RoundedCornerShape(width * 0.008f))
+                            .background(palette.content.copy(alpha = 0.15f))
                     )
                 }
                 PreviewBar(
                     barWidth = width * 0.26f,
                     barHeight = width * 0.02f,
-                    color = colors.onPrimaryContainer.copy(alpha = 0.65f)
+                    color = palette.content.copy(alpha = 0.8f)
                 )
             }
             Spacer(modifier = Modifier.width(width * 0.04f))
@@ -296,7 +534,7 @@ private fun PreviewStatusCard(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .size(width * 0.075f)
                     .clip(CircleShape)
-                    .background(colors.primary)
+                    .background(palette.icon)
             )
         }
     }
