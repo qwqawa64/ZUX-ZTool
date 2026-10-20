@@ -901,6 +901,9 @@
     <string name="page_settings_theme_preview_title">外观预览</string>
     <string name="page_settings_theme_preview_home_label">主页</string>
     <string name="page_settings_theme_preview_features_label">功能页</string>
+    <string name="page_settings_theme_preview_launcher_icon_title">启动器图标</string>
+    <string name="page_settings_theme_preview_default_icon_label">默认图标</string>
+    <string name="page_settings_theme_preview_alternative_icon_label">替代图标</string>
     <string name="page_settings_app_language_settings">应用语言</string>
     <string name="page_settings_open_app_language_settings_failed">无法打开应用语言设置</string>
     <string name="page_settings_frontend_style_title">主题风格</string>

@@ -103,7 +103,7 @@ fun ThemePreviewCard(modifier: Modifier = Modifier) {
 
 /** Page background of the current front end; the specimen screens sit on it. */
 @Composable
-private fun previewPageBackground(): Color {
+internal fun previewPageBackground(): Color {
     return if (LocalZToolThemeSpec.current.style == FrontendStyle.Miuix) {
         MiuixTheme.colorScheme.background
     } else {

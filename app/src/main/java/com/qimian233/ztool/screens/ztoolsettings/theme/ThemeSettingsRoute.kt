@@ -170,6 +170,10 @@ private fun ThemeSettingsScreen(
                 ThemePreviewCard(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
+                LauncherIconPreviewCard(
+                    useAlternativeIcon = state.themeSettings.useAlternativeIcon,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
                 ZToolSettingsList(
                     highlightRegistry = highlightRegistry,
                     sections = themeSettingsSections(

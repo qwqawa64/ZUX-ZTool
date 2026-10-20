@@ -810,6 +810,9 @@
     <string name="page_settings_theme_preview_title">Appearance preview</string>
     <string name="page_settings_theme_preview_home_label">Home</string>
     <string name="page_settings_theme_preview_features_label">Features</string>
+    <string name="page_settings_theme_preview_launcher_icon_title">Launcher icon</string>
+    <string name="page_settings_theme_preview_default_icon_label">Default</string>
+    <string name="page_settings_theme_preview_alternative_icon_label">Alternative</string>
     <string name="page_settings_app_language_settings">App language</string>
     <string name="page_settings_open_app_language_settings_failed">Unable to open app language settings</string>
     <string name="page_settings_frontend_style_title">Theme style</string>
