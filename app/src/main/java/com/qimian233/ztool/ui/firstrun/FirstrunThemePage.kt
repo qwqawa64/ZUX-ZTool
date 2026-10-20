@@ -106,7 +106,8 @@ internal fun FirstrunThemePage(
             nextEnabled = true,
             onNext = onNext,
             onDisagree = onBack,
-            negativeText = stringResource(R.string.page_firstrun_previous)
+            negativeText = stringResource(R.string.page_firstrun_previous),
+            negativeTonal = true
         )
     }
 }

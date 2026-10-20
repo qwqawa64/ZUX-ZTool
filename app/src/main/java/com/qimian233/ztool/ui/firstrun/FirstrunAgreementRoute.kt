@@ -577,7 +577,8 @@ private fun SourceVerifyPage(
             nextEnabled = verified,
             onNext = onNext,
             onDisagree = onBack,
-            negativeText = stringResource(R.string.page_firstrun_previous)
+            negativeText = stringResource(R.string.page_firstrun_previous),
+            negativeTonal = true
         )
     }
 }
@@ -707,7 +708,8 @@ private fun PermissionPage(
             nextEnabled = requiredGranted,
             onNext = onAgree,
             onDisagree = onBack,
-            negativeText = stringResource(R.string.page_firstrun_previous)
+            negativeText = stringResource(R.string.page_firstrun_previous),
+            negativeTonal = true
         )
     }
 }
@@ -853,7 +855,8 @@ internal fun BottomActionBar(
     nextEnabled: Boolean,
     onNext: (Offset) -> Unit,
     onDisagree: (Offset) -> Unit,
-    negativeText: String = stringResource(R.string.page_firstrun_agreement_dismiss)
+    negativeText: String = stringResource(R.string.page_firstrun_agreement_dismiss),
+    negativeTonal: Boolean = false
 ) {
     var nextButtonCenter by remember { mutableStateOf(Offset.Zero) }
     var backButtonCenter by remember { mutableStateOf(Offset.Zero) }
@@ -864,17 +867,28 @@ internal fun BottomActionBar(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ZToolTextButton(
-            text = negativeText,
-            onClick = { onDisagree(backButtonCenter) },
-            isPrimary = false,
-            modifier = Modifier
-                .weight(1f)
-                .onGloballyPositioned { coordinates ->
-                    backButtonCenter = coordinates.positionInRoot() +
-                            Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
-                }
-        )
+        val negativeModifier = Modifier
+            .weight(1f)
+            .onGloballyPositioned { coordinates ->
+                backButtonCenter = coordinates.positionInRoot() +
+                        Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
+            }
+        if (negativeTonal) {
+            ZToolButton(
+                onClick = { onDisagree(backButtonCenter) },
+                isPrimary = false,
+                modifier = negativeModifier
+            ) {
+                Text(negativeText)
+            }
+        } else {
+            ZToolTextButton(
+                text = negativeText,
+                onClick = { onDisagree(backButtonCenter) },
+                isPrimary = false,
+                modifier = negativeModifier
+            )
+        }
         ZToolButton(
             onClick = { onNext(nextButtonCenter) },
             enabled = nextEnabled,
