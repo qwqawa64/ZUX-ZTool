@@ -250,14 +250,16 @@ Hooking consequences:
 
 Everything downstream — grid, taskbar, all-apps, insets — is derived from the `DeviceProfile`
 built for a `WindowBounds`. If the launcher only ever sees `3200x2000`, then no grid trick will
-make the desktop fit a 2000x3200 panel. The cheapest decisive experiment is therefore a one-line
-probe hook that logs `DisplayController.Info.supportedBounds` (§9), and, if the portrait entry is
-missing:
+make the desktop fit a 2000x3200 panel.
 
-- hook the `DisplayController.Info` construction (or `WindowBounds` computation) so the current
-  display size is offered as a supported bound, or
-- hook `InvariantDeviceProfile.getDeviceProfile(...)` / `DeviceProfile.getBestMatch(...)` so the
-  portrait profile is chosen for a portrait panel.
+Two levers, in order (§11):
+
+1. **Rebuild on rotation.** `InvariantDeviceProfile.D` returns early for every flag except
+   density/navigation mode, so a rotation never rebuilds the profiles. A hook has to inject that
+   refresh (after `DisplayController.h` computed the new `Info`).
+2. **Feed it a portrait bound.** If `Info.supportedBounds` is landscape-only, add the portrait
+   `WindowBounds` (the set is mutable) or hook `WindowManagerProxy.getRealBounds` /
+   `estimateInternalDisplayBounds`.
 
 Launcher3 already carries the per-orientation slot machinery (`f8178c`, `*Landscape` arrays), so
 feeding it a portrait bound is the "native" fix and would make §6.1/§6.4 unnecessary.
@@ -521,11 +523,37 @@ What this settles:
    de-duplicates identical lines) or it was not rebuilt at all. Probe v3 distinguishes the two:
    `displayinfo` now carries `currentSize`/`rotation`, and `config` lines mark the
    `onConfigurationChanged` events.
-4. **`supportedBounds` could not be read** in this run (`supportedCount=null`): the field name in
-   `DisplayController$Info` is not `supportedBounds` as a plain field. Probe v3 falls back to
-   `getSupportedBounds()`, logs `infoClass`, and warns on every unresolved reflection target.
+4. **`supportedBounds` was unreadable** in that run (`supportedCount=null`): the field is a
+   `Set<WindowBounds>`, so a `List` cast dropped it. Probe v4 casts to `Collection`, prints every
+   entry plus `realBounds`, and stamps each `profile`/`displayinfo` line with a sequence number so
+   a rebuild can no longer be hidden by the de-duplicating gate.
 
-### 10.3 Capturing the probe output
+### 10.3 Third run (00:53) — a rotation changes nothing
+
+```
+00:53:53.901 taskbar recreateTaskbar context=null
+00:53:53.999 profile landscape=true … bounds=3200x2000   # taskbarHeight=195
+00:53:54.000 environment pcMode=1 pcProp=1 orientation=1 size=800x1280dp    ← panel is portrait
+00:53:54.000 displayinfo currentSize=Point(3200, 2000) rotation=1 …
+00:53:54.101 orientation WorkLauncher requested=-1 (was 0)                  ← was locked landscape
+00:53:54.164 hotseat 3200x415 … recentUsed=0x172 children=0
+00:53:54.736 hotseat 3200x415 … recentUsed=582x172 children=3
+00:53:55.357 config WorkLauncher orientation=2 size=1280x800dp             ← rotated to landscape
+00:53:55.392 profile landscape=true … bounds=3200x2000   # taskbarHeight=120
+00:53:55.667 config WorkLauncher orientation=1 size=800x1280dp             ← rotated back
+00:53:55.673 hotseat 2000x415 …                                            ← 2000 = portrait width
+00:54:06.168 hotseat 3200x415 …
+```
+
+- The panel **is** portrait at startup (`orientation=1`, `800x1280dp`) while the launcher still
+  builds a `3200x2000` profile and reports `Info.currentSize = Point(3200, 2000)`, `rotation=1`.
+- After the final rotation back to portrait the hotseat re-measures at 2000 px (the real window),
+  and **no new `profile` appears**. §11 explains why: the IDP refresh is gated on the wrong flags.
+- `orientation WorkLauncher requested=-1 (was 0)` — the activity *had* been locked to landscape
+  (`0`), and something in-process reset it to unspecified. So the launcher starts by asking for
+  landscape even though its manifest is `unspecified`.
+
+### 10.4 Capturing the probe output
 
 LSPosed with verbose logging writes module output to files, **not** to the module's logcat tag:
 
@@ -536,3 +564,48 @@ adb shell "su -c 'grep -h \"\[test_hook\]\" /data/adb/lspd/log/modules_*.log | t
 
 `logcat -s ZToolXposedModule` only shows the framework's own `D` lines (module dispatch), which is
 why the probe output appears "missing" there.
+
+## 11. Why a rotation never reaches the workspace
+
+The refresh chain, read from `DisplayController` and `InvariantDeviceProfile`:
+
+```
+Activity.onConfigurationChanged(Configuration)
+  → DisplayController.onConfigurationChanged(Configuration)      # ComponentCallbacks
+      early-returns unless rotation / densityDpi / fontScale / PortraitSize changed
+  → DisplayController.h(display)  (obfuscated private recompute)
+      builds a new Info, derives change flags, notifies on the main executor
+  → DisplayInfoChangeListener.onDisplayInfoChanged(context, info, flags)
+  → InvariantDeviceProfile.D(context, info, flags)
+```
+
+Change flags: `CHANGE_ACTIVE_SCREEN=1`, `CHANGE_ROTATION=2`, `CHANGE_DENSITY=4`,
+`CHANGE_SUPPORTED_BOUNDS=8`, `CHANGE_NAVIGATION_MODE=16`, `CHANGE_ALL=31`.
+
+`DisplayController.Info` (public fields): `currentSize`, `realBounds`, `rotation`,
+`supportedBounds` (**`Set<WindowBounds>`**, one entry per distinct supported bound),
+`normalizedDisplayInfo`, `cutout`, `fontScale`, `navigationMode`, `systemDensityDpi`,
+`getDensityDpi()`, `isTablet(bounds)` (= smallest side ≥ 500 dp), `smallestSizeDp(bounds)`.
+
+And the gate that matters:
+
+```java
+// InvariantDeviceProfile.D(context, info, flags)
+if (!Utilities.isWorkMode() || (flags & 20) == 0) return;
+H(context);   // re-resolve the grid and rebuild every DeviceProfile
+```
+
+`20 == CHANGE_DENSITY(4) | CHANGE_NAVIGATION_MODE(16)`. **In work mode the profile is rebuilt
+only for a density or navigation-mode change — a rotation (2) or a supported-bounds change (8)
+alone never rebuilds it.** That is exactly what §10.3 shows: a rotation produces a `config` line
+and a re-measured hotseat, but no new `profile`.
+
+Two consequences for the portrait feature:
+
+1. A hook must supply the missing refresh: notify `DisplayController` listeners (or call the
+   private `H`) once the display actually rotates, otherwise the workspace keeps the landscape
+   `DeviceProfile` forever.
+2. The refresh is only useful if `Info.supportedBounds` contains a portrait bound. Probe v4 prints
+   `supportedCount` and every entry; if the set is landscape-only, the fix belongs one level deeper
+   (`WindowManagerProxy.getRealBounds` / `estimateInternalDisplayBounds`, or adding a portrait
+   `WindowBounds` to the mutable `Set` right after `Info` is constructed).

@@ -12,6 +12,7 @@ import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Read-only diagnostic probe for the ZUI work desktop (`com.zui.desktoplauncher`).
@@ -31,6 +32,8 @@ class WorkDesktopProbe : AppHookModule() {
         arrayOf(ScopeKeys.DESKTOP_LAUNCHER.packageName)
 
     private var systemPropertiesGet: Method? = null
+
+    private val profileSequence = AtomicInteger(0)
 
     private val profileGate = Gate(MAX_PROFILE_LINES)
 
@@ -99,7 +102,8 @@ class WorkDesktopProbe : AppHookModule() {
                 chain.proceed()
                 runCatching {
                     val profile = chain.thisObject ?: return@runCatching
-                    val line = describeProfile(reflector, profile, toSmallString)
+                    val sequence = profileSequence.incrementAndGet()
+                    val line = "#$sequence " + describeProfile(reflector, profile, toSmallString)
                     if (profileGate.shouldLog(line)) logger.info("profile $line")
                     val context = chain.args[0] as? Context
                     if (context != null) {
@@ -110,8 +114,10 @@ class WorkDesktopProbe : AppHookModule() {
                     }
                     val info = reflector.call(profile, "getDisplayInfo")
                     if (info != null) {
-                        val infoLine = displayInfo.describe(info)
-                        if (displayInfoGate.shouldLog(infoLine)) logger.info("displayinfo $infoLine")
+                        val infoLine = "#$sequence " + displayInfo.describe(info)
+                        if (displayInfoGate.shouldLog(infoLine)) {
+                            logger.info("displayinfo $infoLine")
+                        }
                     }
                 }.onFailure { logger.error("probe: DeviceProfile dump failed", it) }
                 null
@@ -378,19 +384,23 @@ class WorkDesktopProbe : AppHookModule() {
     ) {
         fun describe(info: Any): String {
             val supported = (read(infoFields, "supportedBounds", info)
-                ?: runCatching { supportedBounds?.invoke(info) }.getOrNull()) as? List<*>
-            val bounds = supported?.joinToString("; ") { windowBounds ->
-                "bounds=${read(boundsFields, "bounds", windowBounds)}" +
-                    " available=${read(boundsFields, "availableSize", windowBounds)}" +
-                    " insets=${read(boundsFields, "insets", windowBounds)}" +
-                    " rotationHint=${read(boundsFields, "rotationHint", windowBounds)}" +
-                    " landscape=${runCatching { isLandscape?.invoke(windowBounds) }.getOrNull()}"
-            } ?: "unresolved"
+                ?: runCatching { supportedBounds?.invoke(info) }.getOrNull()) as? Collection<*>
+            val bounds = supported?.joinToString("; ") { describeBounds(it) } ?: "unresolved"
             return "currentSize=${read(infoFields, "currentSize", info)}" +
                 " rotation=${read(infoFields, "rotation", info)}" +
+                " realBounds=${describeBounds(read(infoFields, "realBounds", info))}" +
                 " density=${read(infoFields, "systemDensityDpi", info)}" +
-                " infoClass=${info.javaClass.simpleName}" +
                 " supportedCount=${supported?.size} [$bounds]"
+        }
+
+        private fun describeBounds(windowBounds: Any?): String {
+            if (windowBounds == null) return "null"
+            return "(" + read(boundsFields, "bounds", windowBounds) +
+                ", available=" + read(boundsFields, "availableSize", windowBounds) +
+                ", insets=" + read(boundsFields, "insets", windowBounds) +
+                ", hint=" + read(boundsFields, "rotationHint", windowBounds) +
+                ", landscape=" +
+                runCatching { isLandscape?.invoke(windowBounds) }.getOrNull() + ")"
         }
 
         private fun read(fields: Map<String, Field>, name: String, owner: Any?): Any? =
@@ -451,7 +461,10 @@ class WorkDesktopProbe : AppHookModule() {
             "numColumns", "numRows", "numFolderColumns", "numFolderRows",
             "numAllAppsColumns", "numShownHotseatIcons", "deviceType"
         )
-        val INFO_FIELDS = listOf("supportedBounds", "currentSize", "rotation", "systemDensityDpi")
+        val INFO_FIELDS = listOf(
+            "supportedBounds", "realBounds", "currentSize", "rotation",
+            "systemDensityDpi", "normalizedDisplayInfo"
+        )
         val WINDOW_BOUNDS_FIELDS = listOf("bounds", "availableSize", "insets", "rotationHint")
         val ALL_APPS_METHODS = listOf(
             "getCellCountX", "getCellCountY", "itemsPerPage", "getItemCount"
@@ -461,9 +474,9 @@ class WorkDesktopProbe : AppHookModule() {
         const val KEY_DP_PC_MODE = "zui_dp_display_pc_mode"
         const val KEY_LAYOUT_CONFIG = "extra_new_layout_config"
 
-        const val MAX_PROFILE_LINES = 12
+        const val MAX_PROFILE_LINES = 24
         const val MAX_ENVIRONMENT_LINES = 2
-        const val MAX_DISPLAY_INFO_LINES = 4
+        const val MAX_DISPLAY_INFO_LINES = 8
         const val MAX_ORIENTATION_LINES = 12
         const val MAX_CONFIG_LINES = 12
         const val MAX_ALL_APPS_LINES = 6
