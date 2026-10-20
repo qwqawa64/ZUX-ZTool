@@ -190,9 +190,9 @@ fun FirstrunAgreementRoute(
     }
 
     val navigateBack: (Offset) -> Unit = { tapAnchor ->
-        revealNavigation = true
         revealController.triggerReveal(
             onAction = {
+                revealNavigation = true
                 val index = pages.indexOf(currentPageState.value)
                 if (index <= 0) onAgreementDeclined() else currentPageState.value = pages[index - 1]
             },
@@ -207,9 +207,9 @@ fun FirstrunAgreementRoute(
      * instead (marks every registered page accepted) and the route closes.
      */
     val navigateForward: (Offset, (() -> Unit)?) -> Unit = { tapAnchor, markPage ->
-        revealNavigation = true
         revealController.triggerReveal(
             onAction = {
+                revealNavigation = true
                 markPage?.invoke()
                 val index = pages.indexOf(currentPageState.value)
                 if (index < 0 || index == pages.lastIndex) {
@@ -336,7 +336,9 @@ fun FirstrunAgreementRoute(
                             pageScrollState = themePageScrollState,
                             onFrontendStyleChanged = { style ->
                                 if (style != settingsUiState.themeSettings.frontendStyle) {
-                                    settingsViewModel.setFrontendStyle(style)
+                                    revealController.triggerReveal(
+                                        onAction = { settingsViewModel.setFrontendStyle(style) }
+                                    )
                                 }
                             },
                             onThemeModeChanged = settingsViewModel::setThemeMode,
