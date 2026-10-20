@@ -248,6 +248,22 @@ Hooking consequences:
 
 ## 6. Candidate hook points
 
+### 6.0 Bounds first (new top candidate after §10.1)
+
+Everything downstream — grid, taskbar, all-apps, insets — is derived from the `DeviceProfile`
+built for a `WindowBounds`. If the launcher only ever sees `3200x2000`, then no grid trick will
+make the desktop fit a 2000x3200 panel. The cheapest decisive experiment is therefore a one-line
+probe hook that logs `DisplayController.Info.supportedBounds` (§9), and, if the portrait entry is
+missing:
+
+- hook the `DisplayController.Info` construction (or `WindowBounds` computation) so the current
+  display size is offered as a supported bound, or
+- hook `InvariantDeviceProfile.getDeviceProfile(...)` / `DeviceProfile.getBestMatch(...)` so the
+  portrait profile is chosen for a portrait panel.
+
+Launcher3 already carries the per-orientation slot machinery (`f8178c`, `*Landscape` arrays), so
+feeding it a portrait bound is the "native" fix and would make §6.1/§6.4 unnecessary.
+
 ### 6.1 Work desktop grid (workspace columns/rows)
 
 `InvariantDeviceProfile` keeps `numColumns`, `numRows`, `numFolderColumns`, `numFolderRows`,
@@ -322,19 +338,23 @@ If it is the hotseat (`ZuiHotseat`), the seam is `resetCellSize(DeviceProfile)` 
 
 ## 7. Open questions (must be resolved before implementation)
 
-1. **Which component draws the PC bottom bar?** Code is contradictory (§2.5). Check on device in
-   PC mode: `dumpsys window windows | grep -i taskbar` and `dumpsys activity top`. A probe hook
-   logging `TaskbarManager.getCurrentActivityContext()` is the code-level answer. With PC mode off
-   it is already `null` and the hotseat is `GONE` (§10); only a real PC-mode run can decide.
+1. **Which component draws the PC bottom bar?** Code is contradictory (§2.5). With PC mode off
+   `TaskbarManager.getCurrentActivityContext()` is `null` and the hotseat is `GONE`; with PC mode on
+   it is *still* `null` but the hotseat becomes `INVISIBLE` with a populated recent-used container
+   (§10.1). The remaining check is `alpha`/surface: the probe now logs `setAlpha` and the parent
+   chain.
 2. ~~Grid change vs workspace DB.~~ Resolved: `GridSizeMigrationTask.migrateGridIfNeeded` compares
    the live grid with `KEY_WORKSPACE_SIZE`/`KEY_HOTSEAT_COUNT` and re-runs
    `MultiStepMigrationTask.migrate(old, new)` whenever they differ, then persists the new grid
    (§6.1). A per-orientation grid flip is therefore destructive; pick variant 1, 2 or 3 there.
-3. **Exact bounds.** First run suggests the work desktop is measured against `3200x2000` landscape
-   bounds while the display is portrait `800x1280dp` (§10) — i.e. the landscape window is the whole
-   problem. Confirm with the real PC-mode toggle and watch for a portrait `DeviceProfile` line.
+3. **Exact bounds.** Confirmed in real PC mode (§10.1): the only `DeviceProfile` is
+   `bounds=3200x2000`, `landscape=true` while the panel reports `orientation=1`, `800x1280dp`.
+   Next: the `displayinfo` line shows whether `DisplayController.Info.supportedBounds` even lists a
+   portrait entry — that decides between "hook the bounds source" and "transpose inside
+   `DeviceProfile`".
 4. **Launcher-side orientation requests.** Only `PcAllAppsActivity` declares `sensorLandscape`;
-   `WorkLauncher`/`NormalLauncher` are `unspecified`. Confirm nothing else re-locks rotation.
+   `WorkLauncher`/`NormalLauncher` are `unspecified`. The probe now logs every
+   `setRequestedOrientation` call, which also explains the three activity recreations (§10.1).
 5. **Where `migrateGridIfNeeded` is called from** (`ModelDbController`) and whether it runs before
    or after the first workspace bind — it decides whether a one-time migration is visible as a
    flicker or is silent.
@@ -359,17 +379,20 @@ key plus UI wiring must replace it before this ships as a feature.
 
 | Hook | What it prints |
 |---|---|
-| `DeviceProfile.<init>` (widest ctor) | one `profile …` line per supported window bound: `isLandscape/isTablet/isMultiDisplay/isTwoPanels/transpose/taskbarPresent`, `taskbarHeight`, `stashedTaskbarHeight`, `hotseatBarHeight`, `hotseatIcons`, `getInsets()`, `widthPx x heightPx`, the `InvariantDeviceProfile` grid (`numColumns x numRows`, folders, `numAllAppsColumns`, `deviceType`) and `toSmallString()`. Plus one `environment …` line: `zui_pc_mode`, `zui_dp_display_pc_mode`, `persist.sys.zui.pcmode`, orientation, dp size, density, `extra_new_layout_config`. |
-| `WorkLauncher.onCreate`, `PcAllAppsActivity.onCreate` | `activity <name>.onCreate` — tells which screen the following lines belong to |
+| `DeviceProfile.<init>` (widest ctor) | one `profile …` line per supported window bound: `isLandscape/isTablet/isMultiDisplay/isTwoPanels/transpose/taskbarPresent`, `taskbarHeight`, `stashedTaskbarHeight`, `hotseatBarHeight`, `hotseatIcons`, `getInsets()`, `widthPx x heightPx`, the `InvariantDeviceProfile` grid (`numColumns x numRows`, folders, `numAllAppsColumns`, `deviceType`) and `toSmallString()`. Plus one `environment …` line (`zui_pc_mode`, `zui_dp_display_pc_mode`, `persist.sys.zui.pcmode`, orientation, dp size, density, `extra_new_layout_config`) and one `displayinfo …` line: `DisplayController.Info.currentSize/rotation/density` and **every** `supportedBounds` entry with its `bounds/availableSize/insets/rotationHint/landscape`. |
+| `WorkLauncher.onCreate`, `PcAllAppsActivity.onCreate` | `activity <name>.onCreate window=<w>x<h> gravity=<g>` — which screen the following lines belong to |
+| `Activity.setRequestedOrientation(int)` | `orientation <activity> requested=<v> (was <v>)` — catches whoever re-locks landscape |
 | `PcAllAppsPagedView.setupContentDimensions(int)` | `allapps cols/rows/perPage/items/count/view=<measured px>` |
 | `TaskbarManager.recreateTaskbar()` | `taskbar recreateTaskbar context=<TaskbarActivityContext|TaskbarActivityContextDp|null>` |
 | `TaskbarActivityContext.createDefaultWindowLayoutParams(int, String)` | `taskbar class/gravity/width/height/defaultHeight/requestedHeight` |
-| `ZuiHotseat.onLayout(…)` | `hotseat wxh visibility=… recentUsed=wxh children=…` |
+| `ZuiHotseat.onLayout(…)` | `hotseat wxh visibility=… alpha=… parent=… recentUsed=wxh children=…` |
+| `ZuiHotseat.setAlpha(float)` | `hotseat set alpha=… visibility=…` — reveals surface-based rendering |
 
 Reading it:
 
 ```powershell
-adb logcat -d -b all | Select-String "\[test_hook\]"
+adb shell "su -c 'grep -h \"\[test_hook\]\" /data/adb/lspd/log/modules_*.log | tail -40'"
+adb logcat -d -b all | Select-String "\[test_hook\]"    # only with verbose log off
 ```
 
 - If `taskbar … context=…` lines appear while `hotseat recentUsed=null`, the bottom bar is the
@@ -421,3 +444,58 @@ What this already settles:
 
 Still open after this run: the PC-mode taskbar identity (Q1), the portrait `DeviceProfile`
 (only the landscape bound appeared), and the `allapps` grid once `PcAllAppsActivity` is opened.
+
+### 10.1 PC-mode run (same day, 23:54, `zui_pc_mode=1`, `persist.sys.zui.pcmode=1`)
+
+```
+taskbar recreateTaskbar context=null
+profile  landscape=true … taskbarPresent=false taskbarHeight=195 … bounds=3200x2000
+         | grid=12x6 folder=4x4 allAppsCols=6 deviceType=2 | … rotationHint:1
+environment pcMode=1 dpPcMode=0 pcProp=1 orientation=1 size=800x1280dp density=400
+activity WorkLauncher.onCreate
+hotseat 3200x415 visibility=4 recentUsed=0x172 children=0
+hotseat 2000x415 visibility=4 recentUsed=0x172 children=0
+hotseat 2000x415 visibility=4 recentUsed=582x172 children=3 visibility=0
+profile  … taskbarHeight=120 …                                  # second profile, same bounds
+allapps  cols=9 rows=4 perPage=36 items=0 count=60 view=0x0
+activity PcAllAppsActivity.onCreate                             # ×3 within 80 s
+hotseat 3200x415 visibility=4 recentUsed=582x172 children=3
+```
+
+What the real PC-mode run changes:
+
+1. **PC mode is on, the panel is portrait, and the desktop canvas is still landscape.**
+   `environment` says `orientation=1`, `800x1280dp`; every `profile` says `bounds=3200x2000`,
+   `landscape=true`, `rotationHint=1`, and no portrait profile is ever constructed. So the
+   launcher measures the desktop against a 3200x2000 canvas on a 2000x3200 screen — the right
+   third of the workspace and of the bottom bar simply falls outside the panel. **This is the
+   primary root cause candidate, ahead of the grid count**: even a perfect portrait grid would be
+   drawn on a landscape canvas.
+   Open sub-question: whether `DisplayController.Info.supportedBounds` contains a portrait entry
+   at all. The extended probe dumps it (`displayinfo …`), and if it does not, the correct hook is
+   at the bounds source, not at `DeviceProfile`.
+2. **Still no launcher taskbar in PC mode**: `recreateTaskbar context=null`. The bar that is
+   actually laid out is `ZuiHotseat` — `INVISIBLE` (visibility 4, not GONE) with a populated
+   recent-used container (`582x172`, 3 children). A view that is laid out but invisible is the
+   signature of ZUI rendering it through a `SurfaceControl` (`ZuiHotseat` has SurfaceControl code
+   paths). The extended probe logs `alpha`, `parent` and every `setAlpha(…)` call to settle it.
+3. **The all-apps drawer reproduces the overflow by construction**: `cols=9 rows=4 perPage=36`
+   are the same counts landscape would give, and 9 × 265 px = 2385 px on a 2000 px page.
+4. **`PcAllAppsActivity` is recreated three times in 80 s** (`23:55:06`, `23:56:17`,
+   `23:56:24`) — consistent with an orientation fight, since the activity declares
+   `sensorLandscape`. The extended probe logs every `setRequestedOrientation` call with the
+   requesting activity.
+5. `taskbarHeight` differs between two profiles for identical bounds (195 then 120) — two
+   `DeviceProfile` variants coexist (home vs in-app/taskbar presentation).
+
+### 10.2 Capturing the probe output
+
+LSPosed with verbose logging writes module output to files, **not** to the module's logcat tag:
+
+```powershell
+adb shell "su -c 'grep -h \"\[test_hook\]\" /data/adb/lspd/log/modules_*.log | tail -40'"
+# or the LSPosed manager's Log tab, which shows the same lines
+```
+
+`logcat -s ZToolXposedModule` only shows the framework's own `D` lines (module dispatch), which is
+why the probe output appears "missing" there.

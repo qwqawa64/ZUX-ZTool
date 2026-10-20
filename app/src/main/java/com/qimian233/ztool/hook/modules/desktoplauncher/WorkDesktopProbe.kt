@@ -36,6 +36,10 @@ class WorkDesktopProbe : AppHookModule() {
 
     private val environmentGate = Gate(MAX_ENVIRONMENT_LINES)
 
+    private val displayInfoGate = Gate(MAX_DISPLAY_INFO_LINES)
+
+    private val orientationGate = Gate(MAX_ORIENTATION_LINES)
+
     private val allAppsGate = Gate(MAX_ALL_APPS_LINES)
 
     private val taskbarGate = Gate(MAX_TASKBAR_LINES)
@@ -52,6 +56,7 @@ class WorkDesktopProbe : AppHookModule() {
         }.getOrNull()
         probeDeviceProfile(classLoader)
         probeActivities(classLoader)
+        probeRequestedOrientation(classLoader)
         probeAllApps(classLoader)
         probeTaskbar(classLoader)
         probeHotseat(classLoader)
@@ -75,6 +80,14 @@ class WorkDesktopProbe : AppHookModule() {
                 methods = resolveMethods(profileClass, PROFILE_METHODS),
                 nestedFields = resolveFields(classLoader.loadClass(IDP_CLASS), IDP_FIELDS)
             )
+            val displayInfo = DisplayInfoProbe(
+                infoFields = resolveFields(classLoader.loadClass(DISPLAY_INFO_CLASS), INFO_FIELDS),
+                boundsFields = resolveFields(
+                    classLoader.loadClass(WINDOW_BOUNDS_CLASS), WINDOW_BOUNDS_FIELDS),
+                isLandscape = runCatching {
+                    findMethod(classLoader.loadClass(WINDOW_BOUNDS_CLASS), "isLandscape")
+                }.getOrNull()
+            )
             val toSmallString = reflector.method("toSmallString")
             hookWithId(constructor, "probe_device_profile") { chain ->
                 chain.proceed()
@@ -88,6 +101,11 @@ class WorkDesktopProbe : AppHookModule() {
                         if (environmentGate.shouldLog(environment)) {
                             logger.info("environment $environment")
                         }
+                    }
+                    val info = reflector.call(profile, "getDisplayInfo")
+                    if (info != null) {
+                        val infoLine = displayInfo.describe(info)
+                        if (displayInfoGate.shouldLog(infoLine)) logger.info("displayinfo $infoLine")
                     }
                 }.onFailure { logger.error("probe: DeviceProfile dump failed", it) }
                 null
@@ -103,13 +121,43 @@ class WorkDesktopProbe : AppHookModule() {
                 val onCreate = findMethod(activityClass, "onCreate", Bundle::class.java)
                 hookWithId(onCreate, "probe_activity_${activityClass.simpleName}") { chain ->
                     chain.proceed()
-                    logger.info("activity ${activityClass.simpleName}.onCreate")
+                    runCatching {
+                        val window = (chain.thisObject as? android.app.Activity)?.window
+                        val params = window?.attributes
+                        logger.info(
+                            "activity ${activityClass.simpleName}.onCreate" +
+                                " window=${params?.width}x${params?.height}" +
+                                " gravity=${params?.gravity}"
+                        )
+                    }.onFailure { logger.error("probe: activity window dump failed", it) }
                     null
                 }
             }.onFailure {
                 logger.warn("probe: no onCreate on $className (${it.javaClass.simpleName})")
             }
         }
+    }
+
+    /** Logs every orientation request made by this process, to find who re-locks landscape. */
+    private fun probeRequestedOrientation(classLoader: ClassLoader) {
+        runCatching {
+            val activityClass = classLoader.loadClass(ACTIVITY_CLASS)
+            val setRequested = findMethod(
+                activityClass, "setRequestedOrientation", Int::class.javaPrimitiveType)
+            val getRequested = runCatching {
+                findMethod(activityClass, "getRequestedOrientation")
+            }.getOrNull()
+            hookWithId(setRequested, "probe_requested_orientation") { chain ->
+                runCatching {
+                    val activity = chain.thisObject
+                    val current = runCatching { getRequested?.invoke(activity) }.getOrNull()
+                    val line = "${activity?.javaClass?.simpleName} requested=${chain.args[0]}" +
+                        " (was $current)"
+                    if (orientationGate.shouldLog(line)) logger.info("orientation $line")
+                }.onFailure { logger.error("probe: orientation dump failed", it) }
+                chain.proceed()
+            }
+        }.onFailure { logger.error("probe: setRequestedOrientation hook not installed", it) }
     }
 
     /** Dumps the PC all-apps grid decided by `PcAllAppsPagedView.setupContentDimensions`. */
@@ -211,6 +259,8 @@ class WorkDesktopProbe : AppHookModule() {
                     val recent = recentUsedLayout.invoke(hotseat) as? ViewGroup
                     val line = "${hotseat.width}x${hotseat.height}" +
                         " visibility=${hotseat.visibility}" +
+                        " alpha=${hotseat.alpha}" +
+                        " parent=${hotseat.parent?.javaClass?.simpleName}" +
                         " recentUsed=" + (recent?.let {
                             "${it.width}x${it.height} children=${it.childCount}" +
                                 " visibility=${it.visibility}"
@@ -218,6 +268,20 @@ class WorkDesktopProbe : AppHookModule() {
                     if (hotseatGate.shouldLog(line)) logger.info("hotseat $line")
                 }.onFailure { logger.error("probe: hotseat dump failed", it) }
                 null
+            }
+            val setAlpha = runCatching {
+                findMethod(hotseatClass, "setAlpha", Float::class.javaPrimitiveType)
+            }.getOrNull()
+            if (setAlpha != null) {
+                hookWithId(setAlpha, "probe_hotseat_alpha") { chain ->
+                    chain.proceed()
+                    runCatching {
+                        val line = "alpha=${chain.args[0]}" +
+                            " visibility=${(chain.thisObject as? View)?.visibility}"
+                        if (hotseatGate.shouldLog("set$line")) logger.info("hotseat set $line")
+                    }.onFailure { logger.error("probe: hotseat alpha dump failed", it) }
+                    null
+                }
             }
         }.onFailure { logger.error("probe: ZuiHotseat hook not installed", it) }
     }
@@ -274,6 +338,31 @@ class WorkDesktopProbe : AppHookModule() {
             runCatching { name to findMethod(owner, name) }.getOrNull()
         }.toMap()
 
+    /** Reads the display bounds the launcher actually sees; `supportedBounds` is the key line. */
+    private class DisplayInfoProbe(
+        private val infoFields: Map<String, Field>,
+        private val boundsFields: Map<String, Field>,
+        private val isLandscape: Method?
+    ) {
+        fun describe(info: Any): String {
+            val supported = read(infoFields, "supportedBounds", info) as? List<*>
+            val bounds = supported?.joinToString("; ") { windowBounds ->
+                "bounds=${read(boundsFields, "bounds", windowBounds)}" +
+                    " available=${read(boundsFields, "availableSize", windowBounds)}" +
+                    " insets=${read(boundsFields, "insets", windowBounds)}" +
+                    " rotationHint=${read(boundsFields, "rotationHint", windowBounds)}" +
+                    " landscape=${runCatching { isLandscape?.invoke(windowBounds) }.getOrNull()}"
+            } ?: "null"
+            return "currentSize=${read(infoFields, "currentSize", info)}" +
+                " rotation=${read(infoFields, "rotation", info)}" +
+                " density=${read(infoFields, "systemDensityDpi", info)}" +
+                " supportedCount=${supported?.size} [$bounds]"
+        }
+
+        private fun read(fields: Map<String, Field>, name: String, owner: Any?): Any? =
+            runCatching { fields[name]?.get(owner) }.getOrNull()
+    }
+
     /** Resolves fields/methods once so hook bodies contain no reflective lookups. */
     private class Reflector(
         private val fields: Map<String, Field>,
@@ -313,6 +402,9 @@ class WorkDesktopProbe : AppHookModule() {
         const val TASKBAR_MANAGER_CLASS = "com.zui.desktoplauncher.taskbar.TaskbarManager"
         const val TASKBAR_CONTEXT_CLASS = "com.zui.desktoplauncher.taskbar.TaskbarActivityContext"
         const val HOTSEAT_CLASS = "com.zui.desktoplauncher.uiextend.ZuiHotseat"
+        const val DISPLAY_INFO_CLASS = "com.zui.desktoplauncher.util.DisplayController\$Info"
+        const val WINDOW_BOUNDS_CLASS = "com.zui.desktoplauncher.util.WindowBounds"
+        const val ACTIVITY_CLASS = "android.app.Activity"
 
         val PROFILE_FIELDS = listOf(
             "isLandscape", "isTablet", "isMultiDisplay", "isTwoPanels",
@@ -320,11 +412,13 @@ class WorkDesktopProbe : AppHookModule() {
             "stashedTaskbarHeight", "hotseatBarSizePx", "numShownHotseatIcons",
             "widthPx", "heightPx", "inv"
         )
-        val PROFILE_METHODS = listOf("toSmallString", "getInsets")
+        val PROFILE_METHODS = listOf("toSmallString", "getInsets", "getDisplayInfo")
         val IDP_FIELDS = listOf(
             "numColumns", "numRows", "numFolderColumns", "numFolderRows",
             "numAllAppsColumns", "numShownHotseatIcons", "deviceType"
         )
+        val INFO_FIELDS = listOf("supportedBounds", "currentSize", "rotation", "systemDensityDpi")
+        val WINDOW_BOUNDS_FIELDS = listOf("bounds", "availableSize", "insets", "rotationHint")
         val ALL_APPS_METHODS = listOf(
             "getCellCountX", "getCellCountY", "itemsPerPage", "getItemCount"
         )
@@ -335,8 +429,10 @@ class WorkDesktopProbe : AppHookModule() {
 
         const val MAX_PROFILE_LINES = 12
         const val MAX_ENVIRONMENT_LINES = 2
+        const val MAX_DISPLAY_INFO_LINES = 4
+        const val MAX_ORIENTATION_LINES = 12
         const val MAX_ALL_APPS_LINES = 6
         const val MAX_TASKBAR_LINES = 8
-        const val MAX_HOTSEAT_LINES = 6
+        const val MAX_HOTSEAT_LINES = 12
     }
 }
