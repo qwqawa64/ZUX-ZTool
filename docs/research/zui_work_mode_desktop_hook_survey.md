@@ -309,6 +309,10 @@ The single-column layout is data (§2.3), not geometry. Options: accept the left
 portrait (cheapest), or re-map `ItemInfo.cellX/cellY` in the loaded model
 (`model.ModelDbController` / the loader task) — a data mutation with its own risk.
 
+Measured on device: with the §12 bound fix, rotating the panel keeps every icon at its relative
+position, so **no grid migration is needed** — the desktop is already stable in both orientations.
+The visible defect is therefore not the grid but the label width (§14).
+
 ### 6.3 PC all-apps drawer
 
 **Implemented — see §13.** The three private counts (`cellCountX/cellCountY/itemsPerPage`) are
@@ -727,8 +731,40 @@ TB710FU in portrait: `itemsPerPage = 36`, `2000 / 265 = 7` → **6 columns x 6 r
 (6 x 265 = 1590 px of 2000; 6 x 312 = 1872 px of ~2700 usable). Landscape is untouched
 (`portrait` is false).
 
-Status: implemented and built; **on-device verification is pending** — the tablet was disconnected
-before the test run. Verification recipe: enable 竖屏电脑模式, enter PC mode, open the drawer; the
-probe should print `allapps cols=6 rows=6 perPage=36` and this module
-`PcAllAppsPortraitGrid: grid 6x6`. If 6x6 looks too empty vertically, the next step is to allow a
-different `itemsPerPage` by reflecting the final field (and re-running `setupContentDimensions`).
+Status: **verified on device** — the user reports 6x6 looks very good.
+
+## 14. Desktop icon labels: two lines (implemented)
+
+With the bounds fixed (§12), the remaining portrait defect is label truncation: a portrait desktop
+keeps the 12-column grid, so each cell is ~55 dp wide while the icon is 60 dp — single-line labels
+ellipsize at 3-4 CJK characters.
+
+The host already ships the machinery, in `BubbleTextView`:
+
+```java
+// onMeasure
+if (shouldUseTwoLine() && this.f8020c != null) {
+    CharSequence split = modifyTitleToSupportMultiLine(measuredWidth - paddings, this.f8020c,
+                                                        getPaint(), this.f8019b);
+    if (!TextUtils.equals(split, this.f8021d)) {
+        this.f8021d = split;
+        setText(split);
+        if (TextUtils.indexOf(split, LINE_SEPARATOR) != -1) { setSingleLine(false); setMaxLines(2); }
+        else                                                 { setSingleLine(true);  setMaxLines(1); }
+    }
+}
+```
+
+but `shouldUseTwoLine()` only enables it for `mDisplay == 1` (all apps,
+`ENABLE_TWOLINE_ALLAPPS`) and `mDisplay == 6` (device search, `ENABLE_TWOLINE_DEVICESEARCH`).
+Desktop icons are `mDisplay == 0`.
+
+`hook/modules/desktoplauncher/WorkspaceLabelTwoLine.kt` hooks `BubbleTextView.shouldUseTwoLine()`
+and returns `true` for workspace icons while `zui_pc_mode == 1` — **in both orientations on
+purpose**: the host only recomputes the split when the method is true, so gating it on portrait
+would leave a two-line label behind after rotating back to landscape. With it always true, the
+measured cell width decides the line count.
+
+Verified on TB710FU portrait: `KernelSU` renders as `Kernel` / `SU` instead of `Kern…`; labels that
+fit stay on one line, and the landscape layout is unchanged. No grid migration was involved — the
+user confirmed that icon positions are stable across rotation once the bound is fixed (§6.2).
