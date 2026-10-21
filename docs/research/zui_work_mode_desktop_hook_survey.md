@@ -40,9 +40,10 @@ with `zui_component_provenance_and_hookability.md` §2.3), and its
 in the APK is therefore the work/PC desktop; there is no phone-launcher behaviour in it. The
 normal home on this device is still `com.zui.launcher`.
 
-ZTool now has a scope (`ScopeKeys.DESKTOP_LAUNCHER`) and two modules in
-`hook/modules/desktoplauncher/`: the read-only probe (§9) and the bounds fix (§12).
-`com.zui.launcher` keeps its own separate hooks.
+ZTool has a scope (`ScopeKeys.DESKTOP_LAUNCHER`) and three modules in
+`hook/modules/desktoplauncher/` (bounds, all-apps grid, labels) plus one in
+`hook/modules/systemui/` for the taskbar — the full list is in §9.1. `com.zui.launcher` keeps its own
+separate hooks.
 
 ## 2. Why the desktop stays landscape-shaped
 
@@ -356,7 +357,7 @@ it, its seams were: `TaskbarActivityContext.createDefaultWindowLayoutParams(int,
    portrait entry — that decides between "hook the bounds source" and "transpose inside
    `DeviceProfile`".
 4. **Launcher-side orientation requests.** Only `PcAllAppsActivity` declares `sensorLandscape`;
-   `WorkLauncher`/`NormalLauncher` are `unspecified`. The probe now logs every
+   `WorkLauncher`/`NormalLauncher` are `unspecified`. The probe logged every
    `setRequestedOrientation` call, which also explains the three activity recreations (§10.1).
 5. **Where `migrateGridIfNeeded` is called from** (`ModelDbController`) and whether it runs before
    or after the first workspace bind — it decides whether a one-time migration is visible as a
@@ -369,18 +370,18 @@ it, its seams were: `TaskbarActivityContext.createDefaultWindowLayoutParams(int,
 
 1. ~~Add `ScopeKeys.DESKTOP_LAUNCHER` …~~ Done: `ScopeKeys.DESKTOP_LAUNCHER` (`AmStop`) and
    `com.zui.desktoplauncher` in `scope.list`.
-2. ~~Ship a probe-only hook~~ Done: `hook/modules/desktoplauncher/WorkDesktopProbe.kt` (§9).
-3. Then implement independently: §6.3 (all-apps) and §6.4 (bottom bar) are self-contained; §6.1
-   waits for Q2.
+2. ~~Ship a probe-only hook~~ Done, and since removed once the features were verified (§9).
+3. ~~Implement §6.3 / §6.4~~ Done: §13 (all-apps), §14 (labels), §16 (taskbar).
+4. §6.1 (workspace grid) is deliberately **not** taken: rotating keeps icon positions relative, so
+   no migration is needed; the label split (§14) covers the visible defect.
 
-## 9. The probe hook (`WorkDesktopProbe`)
+## 9. The probe hook (removed at finalisation)
 
-`com.qimian233.ztool.hook.modules.desktoplauncher.WorkDesktopProbe` is read-only: it hooks and
-logs, never changes behaviour. It is gated by `PreferenceKeys.TEST_HOOK` (`"test_hook"`), which
-`BaseHookModule.isEnabled()` always lets through, so it runs without any frontend switch — a real
-key plus UI wiring must replace it before this ships as a feature.
+`WorkDesktopProbe` was a read-only diagnostic module gated by `PreferenceKeys.TEST_HOOK`, used to
+answer §7 Q1–Q3. **It has been deleted** once the features below were verified; the logs it produced
+are quoted in §10 so the evidence stays readable. What it hooked, should it ever be needed again:
 
-| Hook | What it prints |
+| Hook | What it printed |
 |---|---|
 | `DeviceProfile.<init>` (widest ctor) | one `profile …` line per supported window bound: `isLandscape/isTablet/isMultiDisplay/isTwoPanels/transpose/taskbarPresent`, `taskbarHeight`, `stashedTaskbarHeight`, `hotseatBarHeight`, `hotseatIcons`, `getInsets()`, `widthPx x heightPx`, the `InvariantDeviceProfile` grid (`numColumns x numRows`, folders, `numAllAppsColumns`, `deviceType`) and `toSmallString()`. Plus one `environment …` line (`zui_pc_mode`, `zui_dp_display_pc_mode`, `persist.sys.zui.pcmode`, orientation, dp size, density, `extra_new_layout_config`) and one `displayinfo …` line: `DisplayController.Info.currentSize/rotation/density` and **every** `supportedBounds` entry with its `bounds/availableSize/insets/rotationHint/landscape`. |
 | `WorkLauncher.onCreate`, `PcAllAppsActivity.onCreate` | `activity <name>.onCreate window=<w>x<h> gravity=<g>` — which screen the following lines belong to |
@@ -388,24 +389,17 @@ key plus UI wiring must replace it before this ships as a feature.
 | `PcAllAppsPagedView.setupContentDimensions(int)` | `allapps cols/rows/perPage/items/count/view=<measured px>` |
 | `TaskbarManager.recreateTaskbar()` | `taskbar recreateTaskbar context=<TaskbarActivityContext|TaskbarActivityContextDp|null>` |
 | `TaskbarActivityContext.createDefaultWindowLayoutParams(int, String)` | `taskbar class/gravity/width/height/defaultHeight/requestedHeight` |
-| `ZuiHotseat.onLayout(…)` | `hotseat wxh visibility=… alpha=… parent=… recentUsed=wxh children=…` |
-| `ZuiHotseat.setAlpha(float)` | `hotseat set alpha=… visibility=…` — reveals surface-based rendering |
+| `ZuiHotseat.onLayout(…)` / `setAlpha(float)` | hotseat size, visibility, alpha, parent, recent-used container, and a one-shot view-tree dump |
 
-Reading it:
+### 9.1 Final module set (all under `PreferenceKeys.WORK_MODE_PORTRAIT`)
 
-```powershell
-adb shell "su -c 'grep -h \"\[test_hook\]\" /data/adb/lspd/log/modules_*.log | tail -40'"
-adb logcat -d -b all | Select-String "\[test_hook\]"    # only with verbose log off
-```
-
-- If `taskbar … context=…` lines appear while `hotseat recentUsed=null`, the bottom bar is the
-  taskbar (§2.5 first row) — Q1 answered.
-- `profile` lines come in pairs (portrait + landscape bounds); `bounds=` and `insets=` answer Q3,
-  and `transpose=false` on both validates §2.2.
-- `allapps` in portrait should print `cols=9 rows=4` on TB710FU, confirming §2.4.
-
-All lines are de-duplicated and capped per process, so the probe stays quiet after the first
-rebuilds.
+| Module | Scope | Purpose |
+|---|---|---|
+| `systemframework/WorkModePortrait` | `system` | release the PC-mode rotation lock and the orientation overrides (§2) |
+| `desktoplauncher/WorkDesktopPortrait` | `com.zui.desktoplauncher` | inject the portrait `WindowBounds` (§12) |
+| `desktoplauncher/PcAllAppsPortraitGrid` | `com.zui.desktoplauncher` | 6x6 all-apps grid (§13) |
+| `desktoplauncher/WorkspaceLabelTwoLine` | `com.zui.desktoplauncher` | width-aware label split (§14) |
+| `systemui/PcTaskbarCompactControls` | `com.android.systemui` | compact the taskbar's right-hand controls (§16) |
 
 ## 10. First probe run (TB710FU, 2026-10-20)
 
@@ -799,7 +793,7 @@ bound is fixed (§6.2).
 The bar's right-hand controls (search, volume, WLAN, control-center chevron, notifications, battery,
 clock) cannot be reached from `com.zui.desktoplauncher`. Evidence:
 
-- The probe now dumps the hotseat's view tree once (§9). In PC mode portrait:
+- The probe (since removed, §9) dumped the hotseat's view tree once. In PC mode portrait:
 
   ```
   ZuiHotseat#hotseat(2000x415,v4 INVISIBLE)

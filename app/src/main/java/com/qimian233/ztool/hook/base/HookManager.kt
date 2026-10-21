@@ -35,7 +35,6 @@ import com.qimian233.ztool.hook.modules.launcher.LauncherAppIconUnmaskHook
 import com.qimian233.ztool.hook.modules.launcher.misc.RecentTaskMemoryViewHook
 import com.qimian233.ztool.hook.modules.desktoplauncher.PcAllAppsPortraitGrid
 import com.qimian233.ztool.hook.modules.desktoplauncher.WorkDesktopPortrait
-import com.qimian233.ztool.hook.modules.desktoplauncher.WorkDesktopProbe
 import com.qimian233.ztool.hook.modules.desktoplauncher.WorkspaceLabelTwoLine
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDeviceAppListReporting
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDeviceAutoInstall
@@ -307,7 +306,6 @@ object HookManager {
         registerHookModule(BatchUninstall())
         registerHookModule(LauncherWideGridHook())
         registerHookModule(IconScaleOverrideHook())
-        registerHookModule(WorkDesktopProbe())
         registerHookModule(WorkDesktopPortrait())
         registerHookModule(PcAllAppsPortraitGrid())
         registerHookModule(WorkspaceLabelTwoLine())

@@ -843,7 +843,7 @@
     <string name="system_framework_keep_rotation_enable_title">保持屏幕方向为竖屏</string>
     <string name="system_framework_keep_rotation_enable_summary">将默认屏幕方向由横屏改为竖屏</string>
     <string name="system_framework_work_mode_portrait_title">工作模式支持竖屏</string>
-    <string name="system_framework_work_mode_portrait_summary">让工作（PC）桌面跟随设备方向旋转；声明了固定方向的应用保持原方向，重新进入工作模式后生效</string>
+    <string name="system_framework_work_mode_portrait_summary">让工作（PC）桌面跟随设备方向旋转，并把桌面、全部应用和底栏按竖屏排版；声明了固定方向的应用保持原方向，重新进入工作模式后生效</string>
     <string name="system_framework_disable_zui_applist_title">安全相关</string>
     <string name="system_framework_disable_flag_secure_title">强制允许截屏</string>
     <string name="system_framework_disable_flag_secure_summary">移除安全窗口标志，解决安全窗口截屏为全黑问题</string>
