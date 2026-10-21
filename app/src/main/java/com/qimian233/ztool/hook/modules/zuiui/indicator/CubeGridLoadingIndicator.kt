@@ -54,6 +54,9 @@ class CubeGridLoadingIndicator(
     }
 
     private companion object {
+        /** `cubic-bezier(0.42, 0, 0.58, 1)`, the CSS `ease-in-out` of the keyframes. */
+        val EASING = Easing.cubicBezier(0.42f, 0f, 0.58f, 1f)
+
         const val CELLS = 3
         const val PERIOD_MS = 1300L
         const val DELAY_STEP_MS = 100L
@@ -66,7 +69,6 @@ class CubeGridLoadingIndicator(
         const val GAP_FRACTION = 0.10f
         const val MIN_SCALE = 0.01f
 
-        /** Smoothstep, a close stand-in for the CSS `ease-in-out` curve. */
-        fun ease(t: Float): Float = t * t * (3f - 2f * t)
+        fun ease(t: Float): Float = EASING(t)
     }
 }

@@ -56,9 +56,12 @@ class CircularLoadingIndicator(color: Int) : LoadingIndicatorDrawable() {
     private fun phase(elapsedMs: Long, periodMs: Long): Float =
         (elapsedMs % periodMs).toFloat() / periodMs.toFloat()
 
-    private fun ease(t: Float): Float = t * t * (3f - 2f * t)
+    private fun ease(t: Float): Float = EASING(t)
 
     private companion object {
+        /** `cubic-bezier(0.4, 0, 0.2, 1)` from the MDC keyframes. */
+        val EASING = Easing.cubicBezier(0.4f, 0f, 0.2f, 1f)
+
         /** M2 draws a 4 dp stroke in a 48 dp box. */
         const val STROKE_FRACTION = 4f / 48f
         const val FULL_TURN = 360f

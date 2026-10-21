@@ -361,7 +361,7 @@ say so). Unrolled into a single arc:
 | semi-arc swing `s` | `265° → 130° → 265°` per `1333 ms`, eased |
 | visible sweep | `540° − 2s` → **280° down to 10°** |
 | start angle | `s + layer + container` |
-| stroke | `4/48` of the box, round caps |
+| stroke | `4/48` of the box (MDC uses butt caps; we use round) |
 
 The `540 − 2s` follows from the union of the two clipped semi-arcs: the left one covers
 `[s, 270°]` and the right one `[270°, 540° − s]`, so the pair spans `s … 540° − s`.
@@ -371,3 +371,13 @@ ring — the familiar breathing spinner.
 `CircularLoadingIndicator` implements those formulas directly. It is single-coloured, so
 the user's colour setting always applies; the M2 four-colour fade layers are dropped
 because the module owns one colour.
+
+The numbers were not transcribed by hand. `tools/web_frames` (see its README) drives
+headless Chrome, pauses `document.getAnimations()` at a chosen millisecond and reports
+the keyframes with their per-keyframe easing — which is how the easing got corrected:
+the first draft used a smoothstep stand-in and the arc came out ~20° short mid-cycle;
+the real curve is `cubic-bezier(0.4, 0, 0.2, 1)`, now evaluated exactly by
+`indicator/Easing.kt`. Same tool, same correction for the cube grid
+(`cubic-bezier(0.42, 0, 0.58, 1)`). Deliberate deviations: round caps instead of MDC's
+butt caps, and an arbitrary start-angle constant (absolute phase is invisible in a
+spinner; sweep range, rhythm and rotation speed are what match).
