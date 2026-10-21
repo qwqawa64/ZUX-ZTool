@@ -759,12 +759,37 @@ but `shouldUseTwoLine()` only enables it for `mDisplay == 1` (all apps,
 `ENABLE_TWOLINE_ALLAPPS`) and `mDisplay == 6` (device search, `ENABLE_TWOLINE_DEVICESEARCH`).
 Desktop icons are `mDisplay == 0`.
 
-`hook/modules/desktoplauncher/WorkspaceLabelTwoLine.kt` hooks `BubbleTextView.shouldUseTwoLine()`
-and returns `true` for workspace icons while `zui_pc_mode == 1` — **in both orientations on
-purpose**: the host only recomputes the split when the method is true, so gating it on portrait
-would leave a two-line label behind after rotating back to landscape. With it always true, the
-measured cell width decides the line count.
+**The host's splitter is also wrong for mixed names.** Once forced on for desktop icons it produced
 
-Verified on TB710FU portrait: `KernelSU` renders as `Kernel` / `SU` instead of `Kern…`; labels that
-fit stay on one line, and the landscape layout is unchanged. No grid migration was involved — the
-user confirmed that icon positions are stable across rotation once the bound is fixed (§6.2).
+```
+MT管理器      -> "M"          / "T管…"      (break after the first glyph)
+NoteIn一笔记   -> "Note…"                    (no break at all, single-line ellipsis)
+```
+
+so `modifyTitleToSupportMultiLine`'s breakpoint table is not usable here. The module therefore does
+its own split:
+
+- `BubbleTextView.applyLabel(ItemInfoWithIcon)` is hooked to keep the *original* title per view
+  (weak map), so later measures always split from the untruncated string.
+- `BubbleTextView.onMeasure(int, int)` is hooked **before** `proceed()`: the available width is
+  `MeasureSpec.getSize(widthSpec) - compoundPaddingLeft - compoundPaddingRight` (115 px for a
+  12-column portrait desktop on TB710FU), the title is split greedily at that width, and the split
+  is applied with `setMaxLines(2)` before the host measures.
+- The break prefers a boundary outside a Latin word: a split that lands between two Latin
+  letters/digits is moved back to the start of that run (`Layout Inspect` → `Layout` / `Inspect`).
+  CJK characters are always valid break points.
+- A title that already fits is returned by identity, which also lets the hook restore
+  `setMaxLines(1)` after rotating back to landscape.
+
+Measured on TB710FU portrait:
+
+```
+KernelSU       -> Kernel / SU
+Layout Inspect -> Layout / Inspect
+MT管理器        -> MT管   / 理器
+Notein一笔记    -> Notein / 一笔记
+```
+
+All complete, no ellipsis; `日历`, `设置`, `相机`, `飞牛`, `Via`, `微信` stay single-line. No grid
+migration was involved — the user confirmed that icon positions are stable across rotation once the
+bound is fixed (§6.2).
