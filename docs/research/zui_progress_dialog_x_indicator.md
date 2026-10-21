@@ -258,3 +258,56 @@ Open questions to settle on device during implementation:
   if Option B is chosen);
 * whether LSPosed injects into the `com.android.phone` process when only
   `com.android.settings` is scoped.
+
+## 7. Alternative style: SpinKit Cube Grid
+
+The replacement carrier from §2.1 is a plain `Drawable`, so any canvas animation that
+can be expressed as a function of time is available — including SpinKit's *Cube Grid*.
+Nothing has to be imported: SpinKit ships as CSS (and as a third-party Flutter port),
+so the animation is re-implemented, not depended on.
+
+Canonical spec — `spinkit@2.0.1`, class `.sk-grid` ([spinkit.css](https://cdn.jsdelivr.net/npm/spinkit@2.0.1/spinkit.css)):
+
+```css
+.sk-grid-cube { width: 33.33%; height: 33.33%; animation: sk-grid 1.3s infinite ease-in-out; }
+.sk-grid-cube:nth-child(1..9) delay: 0.2 0.3 0.4 / 0.1 0.2 0.3 / 0.0 0.1 0.2   /* seconds */
+@keyframes sk-grid {
+  0%, 70%, 100% { transform: scale3D(1, 1, 1); }
+  35%           { transform: scale3D(0, 0, 1); }
+}
+```
+
+So both axes are fully described by two numbers:
+
+| Parameter | Value | Meaning |
+|---|---|---|
+| period | 1300 ms | one cube's shrink→grow→hold cycle |
+| cell | `size / 3` | 9 cells, no gap in CSS |
+| delay | `(2 - row + col) * 100 ms` | diagonal wave starting at the **bottom-left** cell |
+| scale curve | `1 → 0` over 0–35%, `0 → 1` over 35–70%, `1` over 70–100% | `ease-in-out` = `cubic-bezier(0.42, 0, 0.58, 1)` |
+
+Sizing on this device (400 dpi, `sw800dp`, so the `sw400dp` qualifier wins): the box is
+**67 × 42 dp**, the grid is square, so it letterboxes to **42 × 42 dp** → cell 14 dp,
+cube **12.6 dp** with a 10% gap, or 14 dp without one.
+
+Two adjustments worth making at this size:
+
+* **Keep a gap.** CSS cells touch at `scale == 1`, and the curve holds `scale == 1` for
+  30% of the cycle, so a faithful no-gap grid flashes into a solid blue square. A 10%
+  inset keeps the 3×3 grid readable through the peak and does not change the wave.
+* **Optional: shorten the hold.** Moving the 70% keyframe down (e.g. 0/60/100) makes the
+  wave punchier; it is a single constant.
+
+Implementation notes, on top of the constraints in §2.1:
+
+* derive the phase from `SystemClock.uptimeMillis()` per frame instead of accumulating
+  deltas, so a dropped frame never slows the animation down;
+* re-arm with `scheduleSelf(...)` from inside `draw()`, and stop ticking in
+  `setVisible(false, ...)` — `ProgressBar` calls that on detach, otherwise a dismissed
+  dialog keeps a 60 fps callback alive;
+* nine `drawRect` calls per frame against a reused `Paint`/`RectF`; cheaper than the
+  34 PNG frames the stock drawable decodes;
+* the stock frames have night variants, so pick the cube colour from the current theme
+  (`colorAccent` / `textColorPrimary`) instead of hardcoding one;
+* if the system disables animations (`ValueAnimator.areAnimatorsEnabled() == false`),
+  draw the 3×3 grid at `scale == 1` and skip the ticker.
