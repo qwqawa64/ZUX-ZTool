@@ -311,17 +311,13 @@ portrait (cheapest), or re-map `ItemInfo.cellX/cellY` in the loaded model
 
 ### 6.3 PC all-apps drawer
 
-1. `PcAllAppsPagedView.setupContentDimensions(int)` — public void, runs on every bind; post-hook
-   recompute the portrait `cols/rows/itemsPerPage` and write all three private fields
-   (`itemsPerPage` drives page splitting). Most surgical.
-2. `PcAllAppsPagedView.calculateGridSize(...)` — public static, array out-param; rewrite
-   `[cols, rows]`. Page geometry only → pair with (1).
-3. `PcAllAppsPagedView.bindItems(...)` — public; use as the rebind trigger.
-4. Window half (mandatory): `Activity.setRequestedOrientation` (framework) or
-   `PcAllAppsActivity.getRequestedOrientation` → `SCREEN_ORIENTATION_UNSPECIFIED`.
+**Implemented — see §13.** The three private counts (`cellCountX/cellCountY/itemsPerPage`) are
+`final`, so the module re-factorises `itemsPerPage` through the public static
+`calculateGridSize` instead of writing them.
 
-`PcAllAppsActivity.getDeviceProfile()` is not useful (the `max()/min()` math ignores the swap),
-and `PcAllAppsContainerView.onDeviceProfileChanged` is an empty override.
+The window half (the activity's `sensorLandscape`) is handled by the system-side
+`WorkModePortrait` hook; `PcAllAppsActivity.getDeviceProfile()` is not useful (the `max()/min()`
+math ignores the swap), and `PcAllAppsContainerView.onDeviceProfileChanged` is an empty override.
 
 ### 6.4 Bottom bar
 
@@ -698,10 +694,41 @@ The bound fixes the *canvas*; the contents still come from landscape-tuned sourc
    derived from the bound. In a 2000 px-wide portrait window, 12 columns are ~53 dp apart against
    a 60 dp icon, so the workspace is cramped and the shipped single-column layout (§2.3) hides it.
    Making this portrait needs §6.1 (with its migration caveat).
-2. **PC all-apps drawer**: still `cols=9 rows=4` (§2.4, §10.2) — untouched by the bound fix.
+2. **PC all-apps drawer**: addressed separately in §13.
 3. **Hotseat grouping**: the bar now spans 2000 px, but `numShownHotseatIcons=6` and the
    recent-used block keep their landscape proportions.
 4. **`DisplayController.Info.realBounds` stays landscape** even after injection; only the
    `supportedBounds` set was corrected. Widgets/drag code that reads `realBounds` directly still
    sees 3200x2000, so a later revision may want to correct it too (it is a `final` field, so that
    needs field reflection).
+
+## 13. PC all-apps drawer: portrait grid (implemented)
+
+`hook/modules/desktoplauncher/PcAllAppsPortraitGrid.kt`, gated by the same
+`PreferenceKeys.WORK_MODE_PORTRAIT` switch.
+
+The three counts the host computes in `PcAllAppsPagedView.<init>` (`cellCountX`, `cellCountY`,
+`itemsPerPage`) are **`final`**, and `itemsPerPage` is the page-splitting threshold in the layout
+pass, so patching the fields would desynchronise paging. The module instead re-factorises
+`itemsPerPage` at the public static seam:
+
+1. The paged view's constructor is hooked to capture its live `DeviceProfile` (the field typed
+   `com.zui.desktoplauncher.DeviceProfile`) and `dimen/pc_allapps_cellwidth`, i.e. whether the
+   drawer is portrait and how many columns the panel can hold.
+2. `calculateGridSize(count, cellX, cellY, cellCountX, cellCountY, itemsPerPage, out)` is hooked
+   after `proceed()`; when portrait it rewrites `out[0] = columns`, `out[1] = ceil(count / columns)`,
+   where `columns` is the **largest divisor of `itemsPerPage` that fits `widthPx / cellWidth`**.
+
+Keeping `columns × rows == itemsPerPage` means `rankOnCurrentPage`, `getIconViewByItemInfo`,
+`getItemCount` and the `i5 >= itemsPerPage` page split all stay consistent — no final-field
+reflection.
+
+TB710FU in portrait: `itemsPerPage = 36`, `2000 / 265 = 7` → **6 columns x 6 rows**
+(6 x 265 = 1590 px of 2000; 6 x 312 = 1872 px of ~2700 usable). Landscape is untouched
+(`portrait` is false).
+
+Status: implemented and built; **on-device verification is pending** — the tablet was disconnected
+before the test run. Verification recipe: enable 竖屏电脑模式, enter PC mode, open the drawer; the
+probe should print `allapps cols=6 rows=6 perPage=36` and this module
+`PcAllAppsPortraitGrid: grid 6x6`. If 6x6 looks too empty vertically, the next step is to allow a
+different `itemsPerPage` by reflecting the final field (and re-running `setupContentDimensions`).

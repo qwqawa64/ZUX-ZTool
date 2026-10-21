@@ -32,6 +32,7 @@ import com.qimian233.ztool.hook.modules.launcher.misc.CleanGlobalSearch
 import com.qimian233.ztool.hook.modules.launcher.misc.DisableForceStop
 import com.qimian233.ztool.hook.modules.launcher.LauncherAppIconUnmaskHook
 import com.qimian233.ztool.hook.modules.launcher.misc.RecentTaskMemoryViewHook
+import com.qimian233.ztool.hook.modules.desktoplauncher.PcAllAppsPortraitGrid
 import com.qimian233.ztool.hook.modules.desktoplauncher.WorkDesktopPortrait
 import com.qimian233.ztool.hook.modules.desktoplauncher.WorkDesktopProbe
 import com.qimian233.ztool.hook.modules.lsfdevice.DisableLsfDeviceAppListReporting
@@ -306,6 +307,7 @@ object HookManager {
         registerHookModule(IconScaleOverrideHook())
         registerHookModule(WorkDesktopProbe())
         registerHookModule(WorkDesktopPortrait())
+        registerHookModule(PcAllAppsPortraitGrid())
 
         // Game Helper (com.zui.game.service)
         registerHookModule(AutoMistakeTouchHook())
