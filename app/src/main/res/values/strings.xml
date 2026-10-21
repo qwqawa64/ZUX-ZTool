@@ -830,8 +830,9 @@
     <string name="ui_components_loading_indicator_title">替换加载动画</string>
     <string name="ui_components_loading_indicator_summary">把 ZUI 进度对话框的旋转图标换成自绘加载动画</string>
     <string name="ui_components_loading_indicator_style_label">加载动画样式</string>
-    <string name="ui_components_loading_indicator_style_summary">方格动画：九个方块沿对角线依次缩放</string>
+    <string name="ui_components_loading_indicator_style_summary">方格：九个方块沿对角线缩放；圆圈：Material 风格的旋转圆弧</string>
     <string name="ui_components_loading_indicator_style_cube_grid">方格</string>
+    <string name="ui_components_loading_indicator_style_circular">圆圈</string>
     <string name="ui_components_loading_indicator_follow_system_title">动画配色跟随系统</string>
     <string name="ui_components_loading_indicator_follow_system_summary">取对话框主题的强调色，并随日夜模式变化</string>
     <string name="ui_components_loading_indicator_color_label">加载动画颜色</string>

@@ -326,6 +326,7 @@ Implementation notes, on top of the constraints in §2.1:
 * `LoadingIndicatorDrawable` (`hook/modules/zuiui/indicator/`) — the frame clock:
   square letterboxing, `Animatable` lifecycle, 16 ms ticker, no per-frame allocations.
 * `CubeGridLoadingIndicator` — the style from §7, 10% gap, keyframes unchanged.
+* `CircularLoadingIndicator` — the style from §9.
 * `ZuiLoadingIndicatorHook` — hooks `Dialog.setContentView(int)` and `(View)`, matches
   the dialog by class name and the bar by type, swaps the drawable, and restarts an
   already-installed one on re-show.
@@ -342,3 +343,31 @@ Implementation notes, on top of the constraints in §2.1:
 * The screen is split by control kind: a **对话框** section (button containers, divider,
   radius, colours) and a **加载对话框** section (switch, style, colour), so the next
   component family gets its own section instead of growing one list.
+
+## 9. Second style: Material 2 circle
+
+Material 3 ships no distinct "loading circle" — the M3 web components only expose
+`md-circular-progress`, which is the M2 indicator — so the second style is the M2 one.
+Source: `@material/circular-progress@14` (`_keyframes.scss`, `mdc.circular-progress.css`).
+
+The DOM trick is two half-width clippers, each holding a rotated semi-arc, plus a seam
+patch; the `left-spin`/`right-spin` keyframes *are* the expansion (the source comments
+say so). Unrolled into a single arc:
+
+| Quantity | Value |
+|---|---|
+| container rotation | `360° / 1568.235 ms`, linear |
+| spinner layer rotation | `1080° / 5332 ms` |
+| semi-arc swing `s` | `265° → 130° → 265°` per `1333 ms`, eased |
+| visible sweep | `540° − 2s` → **280° down to 10°** |
+| start angle | `s + layer + container` |
+| stroke | `4/48` of the box, round caps |
+
+The `540 − 2s` follows from the union of the two clipped semi-arcs: the left one covers
+`[s, 270°]` and the right one `[270°, 540° − s]`, so the pair spans `s … 540° − s`.
+At `s = 265°` that is a 10° sliver at 12 o'clock (the M2 "dot"); at `s = 130°` a 280°
+ring — the familiar breathing spinner.
+
+`CircularLoadingIndicator` implements those formulas directly. It is single-coloured, so
+the user's colour setting always applies; the M2 four-colour fade layers are dropped
+because the module owns one colour.

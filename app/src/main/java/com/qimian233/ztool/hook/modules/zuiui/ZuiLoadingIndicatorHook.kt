@@ -10,6 +10,7 @@ import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.zuiui.LoadingIndicatorStyle
 import com.qimian233.ztool.hook.base.AppHookModule
+import com.qimian233.ztool.hook.modules.zuiui.indicator.CircularLoadingIndicator
 import com.qimian233.ztool.hook.modules.zuiui.indicator.CubeGridLoadingIndicator
 import com.qimian233.ztool.hook.modules.zuiui.indicator.LoadingIndicatorDrawable
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
@@ -154,6 +155,7 @@ class ZuiLoadingIndicatorHook : AppHookModule() {
     private fun createIndicator(style: LoadingIndicatorStyle, color: Int): LoadingIndicatorDrawable =
         when (style) {
             LoadingIndicatorStyle.CUBE_GRID -> CubeGridLoadingIndicator(color)
+            LoadingIndicatorStyle.CIRCULAR -> CircularLoadingIndicator(color)
         }
 
     /** Styles with a built-in palette ignore the colour they are handed. */

@@ -14,7 +14,8 @@ enum class LoadingIndicatorStyle(
     val prefValue: String,
     @param:StringRes val labelRes: Int
 ) {
-    CUBE_GRID("cube_grid", R.string.ui_components_loading_indicator_style_cube_grid);
+    CUBE_GRID("cube_grid", R.string.ui_components_loading_indicator_style_cube_grid),
+    CIRCULAR("circular", R.string.ui_components_loading_indicator_style_circular);
 
     companion object {
         val DEFAULT = CUBE_GRID

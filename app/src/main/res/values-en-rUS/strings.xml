@@ -747,8 +747,9 @@
     <string name="ui_components_loading_indicator_title">Replace the loading animation</string>
     <string name="ui_components_loading_indicator_summary">Swaps the spinner of ZUI progress dialogs for a drawn loading animation.</string>
     <string name="ui_components_loading_indicator_style_label">Loading animation style</string>
-    <string name="ui_components_loading_indicator_style_summary">Cube grid: nine squares scaling in a diagonal wave.</string>
+    <string name="ui_components_loading_indicator_style_summary">Cube grid: nine squares scaling diagonally. Circle: a rotating Material-style arc.</string>
     <string name="ui_components_loading_indicator_style_cube_grid">Cube grid</string>
+    <string name="ui_components_loading_indicator_style_circular">Circle</string>
     <string name="ui_components_loading_indicator_follow_system_title">Follow system animation colors</string>
     <string name="ui_components_loading_indicator_follow_system_summary">Uses the dialog theme\'s accent color and follows day/night mode.</string>
     <string name="ui_components_loading_indicator_color_label">Animation color</string>
