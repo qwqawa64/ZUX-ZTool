@@ -94,6 +94,7 @@ fun ZuiDialogSkinRoute(
             scanState = scanState,
             onBack = onBack,
             onDialogSkinChanged = viewModel::setDialogSkinEnabled,
+            onHideDividerChanged = viewModel::setHideDividerEnabled,
             onScan = viewModel::startScan,
             onCancelScan = viewModel::cancelScan,
             onOpenRecommendations = viewModel::openRecommendations,
@@ -170,6 +171,7 @@ private fun ZuiDialogSkinScreen(
     scanState: ZuiComponentScanUiState,
     onBack: () -> Unit,
     onDialogSkinChanged: (Boolean) -> Unit,
+    onHideDividerChanged: (Boolean) -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit,
@@ -214,6 +216,7 @@ private fun ZuiDialogSkinScreen(
                         state = state,
                         scanState = scanState,
                         onDialogSkinChanged = onDialogSkinChanged,
+                        onHideDividerChanged = onHideDividerChanged,
                         onScan = onScan,
                         onCancelScan = onCancelScan,
                         onOpenRecommendations = onOpenRecommendations
@@ -231,6 +234,7 @@ private fun zuiDialogSkinSections(
     state: ZuiDialogSkinUiState,
     scanState: ZuiComponentScanUiState,
     onDialogSkinChanged: (Boolean) -> Unit,
+    onHideDividerChanged: (Boolean) -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit
@@ -253,6 +257,13 @@ private fun zuiDialogSkinSections(
                     checked = state.dialogSkinEnabled,
                     onCheckedChange = onDialogSkinChanged,
                     key = "ui_components_dialog_skin"
+                ),
+                SettingItem.Switch(
+                    title = stringResource(R.string.ui_components_dialog_hide_divider_title),
+                    summary = stringResource(R.string.ui_components_dialog_hide_divider_summary),
+                    checked = state.hideDividerEnabled,
+                    onCheckedChange = onHideDividerChanged,
+                    key = "ui_components_dialog_hide_divider"
                 )
             )
         ),

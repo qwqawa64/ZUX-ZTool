@@ -17,11 +17,20 @@ class ZuiDialogSkinRepository(
 
     fun loadState(): ZuiDialogSkinUiState =
         ZuiDialogSkinUiState(
-            dialogSkinEnabled = prefsUtils.loadBooleanSetting(KEY_DIALOG_SKIN, false)
+            dialogSkinEnabled = prefsUtils.loadBooleanSetting(
+                KEY_FILLED_BUTTONS, PreferenceKeys.ZUI_DIALOG_SKIN.default
+            ),
+            hideDividerEnabled = prefsUtils.loadBooleanSetting(
+                KEY_HIDE_DIVIDER, PreferenceKeys.ZUI_DIALOG_HIDE_DIVIDER.default
+            )
         )
 
     fun saveDialogSkinEnabled(enabled: Boolean) {
-        prefsUtils.saveBooleanSetting(KEY_DIALOG_SKIN, enabled)
+        prefsUtils.saveBooleanSetting(KEY_FILLED_BUTTONS, enabled)
+    }
+
+    fun saveHideDividerEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_HIDE_DIVIDER, enabled)
     }
 
     /** Frameworks below API 102 have no hot reload, so callers must be told instead. */
@@ -40,6 +49,7 @@ class ZuiDialogSkinRepository(
 
     private companion object {
         const val HOT_RELOAD_MIN_API = 102
-        val KEY_DIALOG_SKIN = PreferenceKeys.ZUI_DIALOG_SKIN.name
+        val KEY_FILLED_BUTTONS = PreferenceKeys.ZUI_DIALOG_SKIN.name
+        val KEY_HIDE_DIVIDER = PreferenceKeys.ZUI_DIALOG_HIDE_DIVIDER.name
     }
 }

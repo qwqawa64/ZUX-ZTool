@@ -57,6 +57,11 @@ class ZuiDialogSkinViewModel(
         repository.saveDialogSkinEnabled(enabled)
     }
 
+    fun setHideDividerEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(hideDividerEnabled = enabled)
+        repository.saveHideDividerEnabled(enabled)
+    }
+
     fun applyChanges(onUnsupported: () -> Unit, onResult: (HotReloadOutcome) -> Unit) {
         if (!repository.supportsHotReload()) {
             onUnsupported()
@@ -109,7 +114,8 @@ class ZuiDialogSkinViewModel(
 }
 
 data class ZuiDialogSkinUiState(
-    val dialogSkinEnabled: Boolean = false
+    val dialogSkinEnabled: Boolean = false,
+    val hideDividerEnabled: Boolean = false
 )
 
 /** Targets the module managed to reinstall itself into, and those it did not. */

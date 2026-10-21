@@ -1263,6 +1263,12 @@ object SearchIndex {
         ),
 
         uiComponents.item(
+            id = "ui_components_dialog_hide_divider",
+            titleRes = R.string.ui_components_dialog_hide_divider_title,
+            summaryRes = R.string.ui_components_dialog_hide_divider_summary
+        ),
+
+        uiComponents.item(
             id = "ui_components_scan",
             titleRes = R.string.ui_components_scan_title,
             summaryRes = R.string.ui_components_scan_summary_idle

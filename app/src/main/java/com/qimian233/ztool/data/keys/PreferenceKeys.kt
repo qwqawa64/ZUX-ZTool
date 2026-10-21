@@ -22,8 +22,10 @@ object PreferenceKeys {
     // for test hook only
     val TEST_HOOK = BoolKey("test_hook", false)
 
-    // Cross-app ZUI dialog skin; which apps it reaches comes from the LSPosed scope
+    // Cross-app ZUI dialog skin; which apps it reaches comes from the LSPosed scope.
+    // Both switches are independent: filled button containers and the panel separator.
     val ZUI_DIALOG_SKIN = BoolKey("zui_dialog_skin", false)
+    val ZUI_DIALOG_HIDE_DIVIDER = BoolKey("zui_dialog_hide_divider", false)
 
     val DISABLE_FLAG_SECURE = BoolKey("disable_flag_secure", false)
     val ALLOW_GET_PACKAGES = BoolKey("allow_get_packages", false)
@@ -396,6 +398,7 @@ object PreferenceKeys {
         SIDEBAR_DRAWER_EDITABLE,
         SIDEBAR_ALLAPPS_SECTIONS,
         SIDEBAR_ALLAPPS_SEARCH,
+        ZUI_DIALOG_SKIN, ZUI_DIALOG_HIDE_DIVIDER,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
         PEN_HAPTIC_WAVEFORM_REDIRECT,

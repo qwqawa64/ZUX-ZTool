@@ -731,8 +731,10 @@
 
     <string name="ui_components_app_name">UI components</string>
     <string name="ui_components_app_description">Restyle ZUI dialogs across system apps</string>
-    <string name="ui_components_dialog_skin_title">Dialog button container</string>
-    <string name="ui_components_dialog_skin_summary">Carries the dialog buttons on a tinted container and drops the separators between them.</string>
+    <string name="ui_components_dialog_skin_title">Filled button containers</string>
+    <string name="ui_components_dialog_skin_summary">Gives each dialog button its own filled container and drops the vertical separator between buttons.</string>
+    <string name="ui_components_dialog_hide_divider_title">Hide the divider above the buttons</string>
+    <string name="ui_components_dialog_hide_divider_summary">Removes the horizontal divider between the message and the button row.</string>
     <string name="ui_components_scope_hint">Which apps are affected follows the LSPosed scope. Scan the device to find apps that bundle ZUI frontend components but are not in the scope yet.</string>
     <string name="ui_components_scope_section_title">Scope</string>
     <string name="ui_components_scan_title">Scan for ZUI frontend components</string>

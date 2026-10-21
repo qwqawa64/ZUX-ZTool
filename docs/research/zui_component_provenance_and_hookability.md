@@ -451,8 +451,9 @@ spinner animation are all app-local and can be replaced directly.
    `ZuiEditModePanel` is a different implementation in launcher vs desktoplauncher. Wrap
    every lookup in `runCatching` and degrade to "leave the stock look" on failure.
 4. **Layout inflation identity.** `DialogController.installContent()` is defined *and
-   overridden* (`ActionController`, `FloatController`); hook the concrete subclass method
-   as well as the base, or hook `Window.setContentView(int)` instead. Do **not** hook
+   overridden* (`ActionController`, `FloatController`), and R8 may outline or inline its
+   body per APK (see `zui_dialog_button_style.md` §1). Hook `Dialog.show()` instead and
+   reach the panel through `android.R.id.button1`; do **not** hook
    `LayoutInflater.inflate` globally — it is extremely hot.
 5. **Re-entrancy.** A dialog is created and shown on many paths (including from
    `Application.onCreate`-time code); keep the hook idempotent and never assume the view
@@ -485,28 +486,25 @@ spinner animation are all app-local and can be replaced directly.
 
 ### 3.6 Recommended shape for a ZTool module
 
-A single `AppHookModule` per scope package, anchored on the controller layer, is enough to
-restyle every ZUI dialog of that app. Sketch (project libxposed patterns; see
+A single `AppHookModule` per scope package, anchored on the platform `Dialog.show()`, is
+enough to restyle every ZUI dialog of that app. Sketch (project libxposed patterns; see
 `docs/hook/libxposed_guide_ztool_ver.md`):
 
 ```kotlin
 override fun handleLoadPackage(param: PackageLoadedParam) {
-    val cl = param.defaultClassLoader
-    // Base controller: one setContentView for every zui.app.a dialog that does not
-    // override installContent (MessageDialog, ProgressDialogX, pickers).
-    // ActionController/FloatController override it -> register those too.
-    val install = runCatching {
-        cl.loadClass("com.zui.internal.app.DialogController")
-          .getDeclaredMethod("installContent")
-    }.getOrNull() ?: return
+    // Public platform method: no host method name to guess, and it returns after
+    // onCreate -> installContent, so the button texts/visibilities are final.
+    val show = runCatching { android.app.Dialog::class.java.getDeclaredMethod("show") }.getOrNull()
+        ?: return
 
-    hookWithId(install, "zui_dialog_skin") { chain ->
+    hookWithId(show, "zui_dialog_skin") { chain ->
         val result = chain.proceed()
-        runCatching {
-            // DialogController.mWindow is `public final Window` (DialogController.java:79)
-            val window = findField(chain.thisObject.javaClass, "mWindow")
-                .get(chain.thisObject) as? android.view.Window
-            window?.decorView?.let { restyle(it) }
+        val dialog = chain.thisObject as? android.app.Dialog
+        if (dialog != null && isZuiDialog(dialog)) {
+            runCatching {
+                // dialog.window is public API (DialogController.mWindow is not needed)
+                // android.R.id.button1's parent is the buttonPanel.
+            }
         }
         result
     }
@@ -515,11 +513,13 @@ override fun handleLoadPackage(param: PackageLoadedParam) {
 
 Rules that follow from the findings above:
 
-* Anchor on `com.zui.internal.app.*Controller` (stable, present in every consumer APK)
-  rather than on `zui.app.*` (pruned differently per APK).
+* Do **not** hook a minified controller method. `installContent` is outlined into a
+  private `c()` in `ZuiSettings` but inlined in `ZuiSystemUI`, so any controller-method
+  anchor works in one APK and silently does nothing in the next. `Dialog.show()` is the
+  only stable interception point; identify ZUI dialogs by the `zui.app.*` **class**
+  package, which survives obfuscation. Full analysis:
+  `zui_dialog_button_style.md`.
 * Resolve resources by **name** through the host `Resources`, never by hardcoded ID.
-* Hook `ActionController.installContent()` and `FloatController.installContent()` too —
-  they override the base method.
 * Guard every lookup with `runCatching`; if a class/method is missing, leave the stock look.
 * Do not hook `LayoutInflater.inflate`; it is a hot path shared by the whole process.
 
