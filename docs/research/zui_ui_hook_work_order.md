@@ -165,7 +165,10 @@ SystemUI, so controller-level anchors are more fragile than they look. Details i
   - 样式：`Widget.Zui.ProgressBar.Large`
   - token：`progressbar_loading_zui` `progressbar_rotate_zui` `progressbar_large_zui`
   - 覆盖：三端（**SystemUI 无 ProgressDialogX**）
-  - 备注：34 帧 `animation-list`，30ms/帧；SystemUI 用 `progressbar_loading_zui_legion`
+  - 备注：34 帧 `animation-list`，30ms/帧
+  - 调研：[zui_progress_dialog_x_indicator.md](zui_progress_dialog_x_indicator.md)。实测指示器是**框架 `ProgressBar` + 本地 `AnimationDrawable`**，
+    可直接 `setIndeterminateDrawable` 换成自绘 drawable；`isLegionStyleProduct()` 在本 build 恒 false，legion 帧不会出现；
+    更稳的锚点是 `Dialog.setContentView`（`ResetAppsHelper` 在 `show()` 之后替换内容），调用点与进程归属见该文档 §4–§5
 - [ ] **E-02 文案排版**
   - 锚点：A7 → `R.id.message`
   - token：`text_title_dialog_zui` `progress_dialog_padding_between_progressbar_and_textview_zui`
