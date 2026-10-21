@@ -833,3 +833,59 @@ Two separate widths are in play:
    2000 px, i.e. the pinned-app row is laid out with landscape spacing and the rightmost icons are
    clipped regardless of the cluster. That one *is* ours (`ZuiHotseat` / `DeviceProfile`
    `hotseatCellHeightPx`, `numShownHotseatIcons`, `hotseatBorderSpace`).
+
+## 16. PC taskbar: compact right-hand controls (implemented)
+
+### 16.1 The width budget lives in a layout string
+
+SystemUI inflates the PC nav bar from `R.string.config_navBarLayout_work2`
+(`NavigationBarInflaterView.getDefaultLayout()` returns it when `PcModeManager.isPcMode()` and the
+bar is on display 0). The sw720dp variant on TB710FU:
+
+```
+apps[50A],line[18A],space[16A],back[32A],space[16A],home[32A],space[16A],recent[32A],space[16A],tasks[F]
+;;
+line[18A],ime_switcher[50A],search[50A],line[18A],wifivolume_pc[150],line[18A],
+notification_pc[50A],battery_pc[58A],fm_clock_pc[108A]
+```
+
+`[NNA]` is a fixed width in dp, `[F]` fills the rest. The right group alone requests
+**520 dp = 1300 px** of a 2000 px bar, so `tasks[F]` (the running-app icons) got ~130 px.
+
+The views are the ones `ZuiNavigationBarView` exposes: `getSearchButton()`, `getVolumeButton()`,
+`getWifiButton()`, `getBatteryButton()`, `getClockButton()`, plus `notification_pc`,
+`wifivolume_pc`, `ime_switcher` and the `line` dividers. Their ripple max widths come from
+`dimen/work_nav_right_panel_max_width` (150 dp), `…_wifi_volume_max_width` (125 dp) and
+`…_clock_max_width` (83 dp), which stay as they are.
+
+### 16.2 The module
+
+`hook/modules/systemui/PcTaskbarCompactControls.kt`, gated by
+`PreferenceKeys.WORK_MODE_PORTRAIT` (SystemUI scope, needs a SystemUI restart to take effect).
+
+It hooks `getDefaultLayout()` after `proceed()`; if the returned string contains `tasks[F]` (the PC
+marker) it rewrites each `name[NN…]` with `min(NN, target)`, so every sw bucket keeps its own
+layout and only the numbers shrink:
+
+| segment | stock | compact |
+|---|---|---|
+| `line` (×3) | 18 | 10 |
+| `ime_switcher` | 50 | 40 |
+| `search` | 50 | 40 |
+| `wifivolume_pc` | 150 | 96 |
+| `notification_pc` | 50 | 40 |
+| `battery_pc` | 58 | 48 |
+| `fm_clock_pc` | 108 | 100 |
+
+Measured on TB710FU portrait: the right group drops from ~1300 px to ~870 px, the search icon moves
+from x≈1470 to x≈1030, and `tasks[F]` gains **~440 px** — three app icons fit where two did, with
+the whole cluster (volume / wifi / rotate / list / battery / clock+date) still complete. The string
+is chosen by smallest width, not orientation, so the landscape bar gets the same compaction; there
+`tasks[F]` simply grows, which is harmless.
+
+### 16.3 Left open
+
+The launcher-side `ShortcutAndWidgetContainer` is still 2306 px (it is laid out by `ZuiHotseat`
+from landscape `DeviceProfile` spacing). With the cluster compacted the row no longer looks
+clipped, so this is cosmetic-only for now; fixing it needs the launcher APK loaded in the
+decompiler again.

@@ -9,6 +9,7 @@ import com.qimian233.ztool.hook.modules.gametool.DisableGameAudioApp
 import com.qimian233.ztool.hook.modules.gametool.SocTemperatureFix
 import com.qimian233.ztool.hook.modules.launcher.LauncherFreeformEntryHook
 import com.qimian233.ztool.hook.modules.systemui.FreeformFullscreenThresholdHook
+import com.qimian233.ztool.hook.modules.systemui.PcTaskbarCompactControls
 import com.qimian233.ztool.hook.modules.systemui.FreeformBottomEdgeResizeHook
 import com.qimian233.ztool.hook.modules.systemui.FreeformCornerHandleIndicatorHook
 import com.qimian233.ztool.hook.modules.systemui.FreeformEdgeBubbleDragLimitHook
@@ -310,6 +311,7 @@ object HookManager {
         registerHookModule(WorkDesktopPortrait())
         registerHookModule(PcAllAppsPortraitGrid())
         registerHookModule(WorkspaceLabelTwoLine())
+        registerHookModule(PcTaskbarCompactControls())
 
         // Game Helper (com.zui.game.service)
         registerHookModule(AutoMistakeTouchHook())
