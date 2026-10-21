@@ -730,7 +730,7 @@
     <string name="freeform_hub_restart_button">Reboot system</string>
 
     <string name="ui_components_app_name">UI components</string>
-    <string name="ui_components_app_description">Restyle ZUI dialogs across system apps</string>
+    <string name="ui_components_app_description">Restyle ZUI frontend components across system apps</string>
     <string name="ui_components_dialog_skin_title">Filled button containers</string>
     <string name="ui_components_dialog_skin_summary">Gives each dialog button its own filled container and drops the vertical separator between buttons.</string>
     <string name="ui_components_dialog_hide_divider_title">Hide the divider above the buttons</string>

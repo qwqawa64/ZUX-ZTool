@@ -7,7 +7,7 @@ import com.qimian233.ztool.data.zuiui.PendingScopeApp
 import com.qimian233.ztool.data.zuiui.ScopeRequestOutcome
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanManager
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanRepository
-import com.qimian233.ztool.data.zuiui.ZuiDialogSkinRepository
+import com.qimian233.ztool.data.zuiui.ZuiUiComponentsRepository
 import com.qimian233.ztool.ui.components.normalizeArgbColorTextOrNull
 import com.qimian233.ztool.ui.components.sanitizeArgbColorText
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,13 +15,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class ZuiDialogSkinViewModel(
-    private val repository: ZuiDialogSkinRepository,
+class ZuiUiComponentsViewModel(
+    private val repository: ZuiUiComponentsRepository,
     private val scanRepository: ZuiComponentScanRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ZuiDialogSkinUiState())
-    val uiState: StateFlow<ZuiDialogSkinUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(ZuiUiComponentsUiState())
+    val uiState: StateFlow<ZuiUiComponentsUiState> = _uiState.asStateFlow()
 
     private val _scanState = MutableStateFlow(ZuiComponentScanUiState())
     val scanState: StateFlow<ZuiComponentScanUiState> = _scanState.asStateFlow()
@@ -74,7 +74,7 @@ class ZuiDialogSkinViewModel(
     fun setButtonRadius(radiusDp: Int) {
         _uiState.value = _uiState.value.copy(
             buttonRadiusDp = radiusDp.coerceIn(
-                ZuiDialogSkinRepository.RADIUS_MIN, ZuiDialogSkinRepository.RADIUS_MAX
+                ZuiUiComponentsRepository.RADIUS_MIN, ZuiUiComponentsRepository.RADIUS_MAX
             )
         )
     }
@@ -162,7 +162,7 @@ class ZuiDialogSkinViewModel(
     }
 }
 
-data class ZuiDialogSkinUiState(
+data class ZuiUiComponentsUiState(
     val dialogSkinEnabled: Boolean = false,
     val hideDividerEnabled: Boolean = false,
     val followSystemColors: Boolean = PreferenceKeys.ZUI_DIALOG_FOLLOW_SYSTEM_COLORS.default,

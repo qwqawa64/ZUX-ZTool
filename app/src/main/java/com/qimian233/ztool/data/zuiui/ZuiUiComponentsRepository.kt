@@ -4,19 +4,19 @@ import android.content.Context
 import com.qimian233.ztool.data.advanced.AdvancedSettingsRepository
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.utils.ModulePreferencesUtils
-import com.qimian233.ztool.viewmodel.ZuiDialogSkinUiState
+import com.qimian233.ztool.viewmodel.ZuiUiComponentsUiState
 
 /**
- * Persistence and apply action for the cross-app ZUI dialog skin.
+ * Persistence and apply action for the cross-app ZUI frontend component styling.
  */
-class ZuiDialogSkinRepository(
+class ZuiUiComponentsRepository(
     context: Context,
     private val advancedSettings: AdvancedSettingsRepository = AdvancedSettingsRepository()
 ) {
     private val prefsUtils = ModulePreferencesUtils(context)
 
-    fun loadState(): ZuiDialogSkinUiState =
-        ZuiDialogSkinUiState(
+    fun loadState(): ZuiUiComponentsUiState =
+        ZuiUiComponentsUiState(
             dialogSkinEnabled = prefsUtils.loadBooleanSetting(
                 KEY_FILLED_BUTTONS.name, KEY_FILLED_BUTTONS.default
             ),

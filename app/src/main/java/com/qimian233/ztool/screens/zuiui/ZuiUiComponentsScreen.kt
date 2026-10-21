@@ -37,7 +37,7 @@ import com.qimian233.ztool.R
 import com.qimian233.ztool.data.zuiui.PendingScopeApp
 import com.qimian233.ztool.data.zuiui.ScopeRequestOutcome
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanRepository
-import com.qimian233.ztool.data.zuiui.ZuiDialogSkinRepository
+import com.qimian233.ztool.data.zuiui.ZuiUiComponentsRepository
 import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
@@ -51,26 +51,26 @@ import com.qimian233.ztool.ui.components.ZToolTextButton
 import com.qimian233.ztool.ui.components.ZToolTopAppBar
 import com.qimian233.ztool.ui.theme.LocalZToolColorScheme
 import com.qimian233.ztool.viewmodel.ZuiComponentScanUiState
-import com.qimian233.ztool.viewmodel.ZuiDialogSkinUiState
-import com.qimian233.ztool.viewmodel.ZuiDialogSkinViewModel
+import com.qimian233.ztool.viewmodel.ZuiUiComponentsUiState
+import com.qimian233.ztool.viewmodel.ZuiUiComponentsViewModel
 
 @Composable
-fun ZuiDialogSkinRoute(
+fun ZuiUiComponentsRoute(
     title: String,
     onBack: () -> Unit,
     targetId: String? = null
 ) {
     val context = LocalContext.current
     val owner = LocalViewModelStoreOwner.current
-        ?: error("ZuiDialogSkinRoute requires a ViewModelStoreOwner")
+        ?: error("ZuiUiComponentsRoute requires a ViewModelStoreOwner")
     val viewModel = remember(owner) {
         ViewModelProvider(
             owner,
-            ZuiDialogSkinViewModelFactory(
-                ZuiDialogSkinRepository(context.applicationContext),
+            ZuiUiComponentsViewModelFactory(
+                ZuiUiComponentsRepository(context.applicationContext),
                 ZuiComponentScanRepository(context.applicationContext)
             )
-        )[ZuiDialogSkinViewModel::class.java]
+        )[ZuiUiComponentsViewModel::class.java]
     }
 
     LaunchedEffect(viewModel) {
@@ -89,7 +89,7 @@ fun ZuiDialogSkinRoute(
         registry = highlightRegistry,
         onConsumed = { }
     ) {
-        ZuiDialogSkinScreen(
+        ZuiUiComponentsScreen(
             title = title,
             state = uiState,
             scanState = scanState,
@@ -159,23 +159,23 @@ fun ZuiDialogSkinRoute(
     }
 }
 
-private class ZuiDialogSkinViewModelFactory(
-    private val repository: ZuiDialogSkinRepository,
+private class ZuiUiComponentsViewModelFactory(
+    private val repository: ZuiUiComponentsRepository,
     private val scanRepository: ZuiComponentScanRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ZuiDialogSkinViewModel::class.java)) {
-            return ZuiDialogSkinViewModel(repository, scanRepository) as T
+        if (modelClass.isAssignableFrom(ZuiUiComponentsViewModel::class.java)) {
+            return ZuiUiComponentsViewModel(repository, scanRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }
 
 @Composable
-private fun ZuiDialogSkinScreen(
+private fun ZuiUiComponentsScreen(
     title: String,
-    state: ZuiDialogSkinUiState,
+    state: ZuiUiComponentsUiState,
     scanState: ZuiComponentScanUiState,
     onBack: () -> Unit,
     onDialogSkinChanged: (Boolean) -> Unit,
@@ -227,7 +227,7 @@ private fun ZuiDialogSkinScreen(
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
                 ZToolSettingsList(
-                    sections = zuiDialogSkinSections(
+                    sections = zuiUiComponentsSections(
                         state = state,
                         scanState = scanState,
                         onDialogSkinChanged = onDialogSkinChanged,
@@ -252,8 +252,8 @@ private fun ZuiDialogSkinScreen(
 }
 
 @Composable
-private fun zuiDialogSkinSections(
-    state: ZuiDialogSkinUiState,
+private fun zuiUiComponentsSections(
+    state: ZuiUiComponentsUiState,
     scanState: ZuiComponentScanUiState,
     onDialogSkinChanged: (Boolean) -> Unit,
     onHideDividerChanged: (Boolean) -> Unit,
@@ -361,10 +361,10 @@ private fun zuiDialogSkinSections(
                                 R.string.ui_components_dialog_radius_value,
                                 state.buttonRadiusDp
                             ),
-                            valueRange = ZuiDialogSkinRepository.RADIUS_MIN.toFloat()..
-                                ZuiDialogSkinRepository.RADIUS_MAX.toFloat(),
-                            steps = ZuiDialogSkinRepository.RADIUS_MAX -
-                                ZuiDialogSkinRepository.RADIUS_MIN - 1,
+                            valueRange = ZuiUiComponentsRepository.RADIUS_MIN.toFloat()..
+                                ZuiUiComponentsRepository.RADIUS_MAX.toFloat(),
+                            steps = ZuiUiComponentsRepository.RADIUS_MAX -
+                                ZuiUiComponentsRepository.RADIUS_MIN - 1,
                             onValueChange = { onButtonRadiusChanged(it.toInt()) },
                             onValueChangeFinished = onButtonRadiusCommit,
                             key = "ui_components_dialog_radius"

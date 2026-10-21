@@ -813,7 +813,7 @@
     <string name="freeform_hub_restart_button">重启系统</string>
 
     <string name="ui_components_app_name">用户界面组件</string>
-    <string name="ui_components_app_description">统一调整系统内 ZUI 对话框的外观</string>
+    <string name="ui_components_app_description">统一调整系统内 ZUI 前端组件的外观</string>
     <string name="ui_components_dialog_skin_title">按钮填色容器</string>
     <string name="ui_components_dialog_skin_summary">每个按钮使用独立的填色容器，并去掉按钮之间的竖分割线</string>
     <string name="ui_components_dialog_hide_divider_title">隐藏按钮区上方分割线</string>

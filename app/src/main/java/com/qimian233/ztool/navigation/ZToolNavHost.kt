@@ -51,8 +51,7 @@ import com.qimian233.ztool.screens.systemui.misc.SystemUiMiscSettingsRoute
 import com.qimian233.ztool.screens.systemui.statusbar.StatusBarSettingsRoute
 import com.qimian233.ztool.screens.zuisetting.SettingsDetailRoute
 import com.qimian233.ztool.screens.zuisetting.magicwindowsearch.SearchPageRoute
-import com.qimian233.ztool.screens.zuiui.ZuiDialogSkinRoute
-import com.qimian233.ztool.search.SearchIndex
+import com.qimian233.ztool.screens.zuiui.ZuiUiComponentsRoute
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.collect
 
@@ -770,7 +769,7 @@ internal fun MainRouteNavHost(
             popExitTransition = horizontalPopExit,
             arguments = highlightTargetArguments
         ) { backStackEntry ->
-            ZuiDialogSkinRoute(
+            ZuiUiComponentsRoute(
                 title = stringResource(R.string.ui_components_app_name),
                 onBack = {
                     if (!navController.popBackStack()) {
