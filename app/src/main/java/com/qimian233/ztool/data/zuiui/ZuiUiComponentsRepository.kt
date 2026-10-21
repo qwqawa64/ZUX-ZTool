@@ -48,7 +48,18 @@ class ZuiUiComponentsRepository(
             ),
             loadingIndicatorColorText = prefsUtils.loadIntegerSetting(
                 KEY_LOADING_INDICATOR_COLOR.name, KEY_LOADING_INDICATOR_COLOR.default
-            ).opaque().toArgbText()
+            ).opaque().toArgbText(),
+            switchStyleEnabled = prefsUtils.loadBooleanSetting(
+                KEY_SWITCH_STYLE.name, KEY_SWITCH_STYLE.default
+            ),
+            switchStyle = SwitchStyle.fromPref(
+                prefsUtils.loadStringSetting(
+                    KEY_SWITCH_STYLE_KIND.name, KEY_SWITCH_STYLE_KIND.default
+                )
+            ),
+            switchMark = SwitchMark.fromPref(
+                prefsUtils.loadStringSetting(KEY_SWITCH_MARK.name, KEY_SWITCH_MARK.default)
+            )
         )
 
     fun saveDialogSkinEnabled(enabled: Boolean) {
@@ -91,6 +102,18 @@ class ZuiUiComponentsRepository(
         prefsUtils.saveIntegerSetting(KEY_LOADING_INDICATOR_COLOR.name, argb.opaque())
     }
 
+    fun saveSwitchStyleEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_SWITCH_STYLE.name, enabled)
+    }
+
+    fun saveSwitchStyle(style: SwitchStyle) {
+        prefsUtils.saveStringSetting(KEY_SWITCH_STYLE_KIND.name, style.prefValue)
+    }
+
+    fun saveSwitchMark(mark: SwitchMark) {
+        prefsUtils.saveStringSetting(KEY_SWITCH_MARK.name, mark.prefValue)
+    }
+
     /** Frameworks below API 102 have no hot reload, so callers must be told instead. */
     fun supportsHotReload(): Boolean = advancedSettings.getApiVersion() >= HOT_RELOAD_MIN_API
 
@@ -123,6 +146,9 @@ class ZuiUiComponentsRepository(
         private val KEY_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS =
             PreferenceKeys.ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS
         private val KEY_LOADING_INDICATOR_COLOR = PreferenceKeys.ZUI_LOADING_INDICATOR_COLOR
+        private val KEY_SWITCH_STYLE = PreferenceKeys.ZUI_SWITCH_STYLE
+        private val KEY_SWITCH_STYLE_KIND = PreferenceKeys.ZUI_SWITCH_STYLE_KIND
+        private val KEY_SWITCH_MARK = PreferenceKeys.ZUI_SWITCH_MARK
 
         /** The pills are opaque by design, so a restored translucent value is normalised. */
         private fun Int.opaque(): Int = this or 0xFF000000.toInt()

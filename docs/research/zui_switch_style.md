@@ -7,10 +7,12 @@ Answer in one line: **yes — the class is public and unminified, shipped by eve
 and its constructors plus the inherited `android.widget.Switch` public setters are sufficient
 to restyle every instance without touching any minified internal.**
 
-The analysis is read-only. Reference APKs live in `F:\USER\Jadx项目\Lenovo`; the
+The analysis in §1–2 is read-only. Reference APKs live in `F:\USER\Jadx项目\Lenovo`; the
 `com.android.settings` copy on the attached device (17.5.0.260902) was pulled and checked
 against the reference (17.5.0.251204) for the resources and descriptors this note relies on.
-No code was changed; work-order item G-01 stays unticked.
+The implementation lives in `ZuiSwitchStyleHook` (see §6). Device checks so far: indicator
+check-on, and M3 on/off with check, cross and both marks; light theme, RTL and the launcher
+scopes are still to be exercised.
 
 ---
 
@@ -239,9 +241,10 @@ whole switch inside the track drawable.**
 
 * track: rounded rect 52×32dp, radius 16dp; colour animated between
   `colorPrimary` (on) and a surface-variant/outline pair (off), disabled alpha applied;
-* thumb: circle whose centre and radius animate between
-  off `(16dp, 16dp, r=8dp)` and on `(36dp, 16dp, r=12dp)` on `state_checked` change
-  (`scheduleSelf` ticker or `ValueAnimator`, ~200ms eased);
+* thumb: a constant 24dp circle whose centre animates between off `(16dp, r=12dp)` and on
+  `(36dp, r=12dp)` on `state_checked` change (`scheduleSelf` ticker, ~200ms eased). Stock M3
+  shrinks the off thumb to 16dp, but a constant size keeps the optional check and cross
+  marks identical, which is what the ZTool option wants;
 * optional 16dp check inside the on-thumb (M3-expressive look), which also satisfies the
   "check when on" requirement for this style;
 * state handling from `getState()`: `state_enabled`, `state_pressed` (M3 grows the thumb
@@ -291,25 +294,27 @@ the loading-indicator hook already uses the same `themeColor()` helper.
 * Hook module: `hook/modules/zuiui/ZuiSwitchStyleHook.kt` (registered in
   `HookManager.registerZuiWidgetModules()`), targets
   `ScopeKeys.SETTINGS`, `SYSTEM_UI`, `LAUNCHER`, `DESKTOP_LAUNCHER`; `supportsPackage()`
-  returns true so the member set means "user scoped it", exactly like the loading indicator.
-* Drawables: `hook/modules/zuiui/switch/GlyphThumbDrawable.kt`,
-  `GlyphTrackDrawable.kt`, `M3SwitchDrawable.kt`, `TransparentDrawable.kt`.
-* Preference keys: one `StringKey` (`zui_switch_style`: `off` / `indicator_thumb` /
-  `indicator_track` / `m3`) plus optional colour keys if the check/cross should be
-  user-coloured. Follow `docs/preference_key/add_new_preference_key_zh-cn.md`.
-* Frontend: one dropdown in the existing ZUI UI components page
-  (`ZuiUiComponentsViewModel` / `ZuiUiComponentsRepository`), plus the search index entry.
+  returns true so any scoped app that bundles `zui.widget.Switch` is covered.
+* Drawables: `hook/modules/zuiui/switch/SwitchStyleDrawables.kt` — `GlyphThumbDrawable`,
+  `TransparentThumbDrawable`, `M3SwitchDrawable`, the glyph and theme-colour helpers.
+* Preference keys: `ZUI_SWITCH_STYLE` (Bool master), `ZUI_SWITCH_STYLE_KIND`
+  (`indicator` / `m3`) and `ZUI_SWITCH_MARK` (`none` / `check` / `cross` / `both`), mirrored
+  by `SwitchStyle` / `SwitchMark` in `data/zuiui/SwitchStyle.kt`.
+* Frontend: the "开关" section of the existing ZUI UI components page
+  (`ZuiUiComponentsViewModel` / `ZuiUiComponentsRepository`), with matching search entries.
 * Verification (device): WLAN main switch, Display preference rows, a disabled switch, dark
   and light theme, an RTL locale, scrolling a long preference list (view recycling), and one
   launcher/desktoplauncher settings page; screenshot diff against the stock layout.
 
 ---
 
-## 7. Open questions
+## 7. Decisions taken
 
-1. Indicator semantics: "both coexist" as A2 (both glyphs on the track, one dimmed) or as
-   "both glyphs are selectable, one at a time" (A1)? A1 is the safer, more legible default.
-2. Should the M3 mode also show a check inside the selected thumb (M3-expressive), or keep
-   the plain Material 3 thumb?
-3. Colour policy: follow theme (`colorPrimary` / accent) or expose explicit colour pickers,
-   as the loading indicator does?
+1. Indicator semantics: `check` draws a check only when on, `cross` draws a cross only when
+   off, `both` uses the corresponding glyph in each state. Variant A1 (glyph in the thumb)
+   is the implemented one; the track-drawn dual-glyph variant was not built.
+2. The M3 thumb keeps a constant 24dp size in both states (stock M3 shrinks it to 16dp off),
+   so the check and cross marks stay the same size; the M3 style honours the same mark option
+   as the indicator.
+3. Colours follow the host accent (`colorAccent`) with fixed M3 baseline neutrals for the
+   off track, outline and thumb; there are no colour pickers.

@@ -35,6 +35,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
 import com.qimian233.ztool.data.zuiui.LoadingIndicatorStyle
+import com.qimian233.ztool.data.zuiui.SwitchMark
+import com.qimian233.ztool.data.zuiui.SwitchStyle
 import com.qimian233.ztool.data.zuiui.PendingScopeApp
 import com.qimian233.ztool.data.zuiui.ScopeRequestOutcome
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanRepository
@@ -110,6 +112,9 @@ fun ZuiUiComponentsRoute(
             onLoadingIndicatorFollowSystemChanged = viewModel::setLoadingIndicatorFollowSystemColors,
             onLoadingIndicatorColorTextChanged = viewModel::setLoadingIndicatorColorText,
             onLoadingIndicatorColorCommit = viewModel::commitLoadingIndicatorColor,
+            onSwitchStyleEnabledChanged = viewModel::setSwitchStyleEnabled,
+            onSwitchStyleChanged = viewModel::setSwitchStyle,
+            onSwitchMarkChanged = viewModel::setSwitchMark,
             onScan = viewModel::startScan,
             onCancelScan = viewModel::cancelScan,
             onOpenRecommendations = viewModel::openRecommendations,
@@ -206,6 +211,9 @@ private fun ZuiUiComponentsScreen(
     onLoadingIndicatorFollowSystemChanged: (Boolean) -> Unit,
     onLoadingIndicatorColorTextChanged: (String) -> Unit,
     onLoadingIndicatorColorCommit: () -> Unit,
+    onSwitchStyleEnabledChanged: (Boolean) -> Unit,
+    onSwitchStyleChanged: (SwitchStyle) -> Unit,
+    onSwitchMarkChanged: (SwitchMark) -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit,
@@ -263,6 +271,9 @@ private fun ZuiUiComponentsScreen(
                         onLoadingIndicatorFollowSystemChanged = onLoadingIndicatorFollowSystemChanged,
                         onLoadingIndicatorColorTextChanged = onLoadingIndicatorColorTextChanged,
                         onLoadingIndicatorColorCommit = onLoadingIndicatorColorCommit,
+                        onSwitchStyleEnabledChanged = onSwitchStyleEnabledChanged,
+                        onSwitchStyleChanged = onSwitchStyleChanged,
+                        onSwitchMarkChanged = onSwitchMarkChanged,
                         onScan = onScan,
                         onCancelScan = onCancelScan,
                         onOpenRecommendations = onOpenRecommendations
@@ -293,6 +304,9 @@ private fun zuiUiComponentsSections(
     onLoadingIndicatorFollowSystemChanged: (Boolean) -> Unit,
     onLoadingIndicatorColorTextChanged: (String) -> Unit,
     onLoadingIndicatorColorCommit: () -> Unit,
+    onSwitchStyleEnabledChanged: (Boolean) -> Unit,
+    onSwitchStyleChanged: (SwitchStyle) -> Unit,
+    onSwitchMarkChanged: (SwitchMark) -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit
@@ -466,6 +480,50 @@ private fun zuiUiComponentsSections(
                             )
                         )
                     }
+                }
+            }
+        ),
+        SettingSection(
+            title = stringResource(R.string.ui_components_switch_section_title),
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.ui_components_switch_title),
+                        summary = stringResource(R.string.ui_components_switch_summary),
+                        checked = state.switchStyleEnabled,
+                        onCheckedChange = onSwitchStyleEnabledChanged,
+                        key = "ui_components_switch_style"
+                    )
+                )
+                if (state.switchStyleEnabled) {
+                    val styleLabels = SwitchStyle.entries.associateWith {
+                        stringResource(it.labelRes)
+                    }
+                    val markLabels = SwitchMark.entries.associateWith {
+                        stringResource(it.labelRes)
+                    }
+                    add(
+                        SettingItem.Dropdown(
+                            label = stringResource(R.string.ui_components_switch_style_label),
+                            summary = stringResource(R.string.ui_components_switch_style_summary),
+                            value = styleLabels.getValue(state.switchStyle),
+                            options = SwitchStyle.entries,
+                            optionLabel = { styleLabels.getValue(it) },
+                            onOptionSelected = onSwitchStyleChanged,
+                            key = "ui_components_switch_style_kind"
+                        )
+                    )
+                    add(
+                        SettingItem.Dropdown(
+                            label = stringResource(R.string.ui_components_switch_mark_label),
+                            summary = stringResource(R.string.ui_components_switch_mark_summary),
+                            value = markLabels.getValue(state.switchMark),
+                            options = SwitchMark.entries,
+                            optionLabel = { markLabels.getValue(it) },
+                            onOptionSelected = onSwitchMarkChanged,
+                            key = "ui_components_switch_mark"
+                        )
+                    )
                 }
             }
         ),

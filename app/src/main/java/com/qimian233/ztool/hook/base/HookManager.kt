@@ -149,6 +149,7 @@ import com.qimian233.ztool.hook.modules.systemui.wallpaper.DesktopLiveWallpaperH
 import com.qimian233.ztool.hook.modules.wallpaper.ChargeAnimationFixModule
 import com.qimian233.ztool.hook.modules.zuiui.ZuiDialogSkinHook
 import com.qimian233.ztool.hook.modules.zuiui.ZuiLoadingIndicatorHook
+import com.qimian233.ztool.hook.modules.zuiui.ZuiSwitchStyleHook
 
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface
@@ -257,12 +258,13 @@ object HookManager {
     }
 
     /**
-     * Shared ZUI widget hooks: Settings, SystemUI, Launcher, ZUI Safe Center
-     * and Package Installer.
+     * Shared ZUI widget hooks: dialogs, the loading indicator and switch styling. The
+     * switch hook matches its host class, so any scoped app that bundles it is covered.
      */
     private fun registerZuiWidgetModules() {
         registerHookModule(ZuiDialogSkinHook())
         registerHookModule(ZuiLoadingIndicatorHook())
+        registerHookModule(ZuiSwitchStyleHook())
     }
 
     /** SystemUI hooks: `ScopeKeys.SYSTEM_UI`, including freeform window and taskbar controls. */

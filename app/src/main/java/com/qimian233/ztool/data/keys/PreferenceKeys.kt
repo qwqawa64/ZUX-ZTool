@@ -32,6 +32,9 @@ object PreferenceKeys {
     // Replaces the ProgressDialogX spinner. The switch gates the whole replacement; the
     // style string picks which animation the hook installs, so adding a style needs no new key.
     val ZUI_LOADING_INDICATOR = BoolKey("zui_loading_indicator", false)
+    // Restyles `zui.widget.Switch`: the switch gates the module, the two strings below pick
+    // the indicator/M3 look and which mark (check on / cross off / both) is drawn.
+    val ZUI_SWITCH_STYLE = BoolKey("zui_switch_style", false)
     // Indicator colour: the host accent unless this switch is off, in which case the ARGB
     // value below is used. Styles with a built-in palette ignore it silently.
     val ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS =
@@ -398,6 +401,9 @@ object PreferenceKeys {
     val DESKTOP_LIVE_WALLPAPER_SCALE_MODE = StringKey("desktop_live_wallpaper_scale_mode", "fit")
     // Enum name from LoadingIndicatorStyle; an unknown value falls back to the default style.
     val ZUI_LOADING_INDICATOR_STYLE = StringKey("zui_loading_indicator_style", "cube_grid")
+    // Enum names from SwitchStyle / SwitchMark; unknown values fall back to the defaults.
+    val ZUI_SWITCH_STYLE_KIND = StringKey("zui_switch_style_kind", "indicator")
+    val ZUI_SWITCH_MARK = StringKey("zui_switch_mark", "check")
 
     // Lists grouped by type — used by ModulePreferencesUtils backup/restore
     // and by hook-side loop matching
@@ -419,6 +425,7 @@ object PreferenceKeys {
         SIDEBAR_ALLAPPS_SEARCH,
         ZUI_DIALOG_SKIN, ZUI_DIALOG_HIDE_DIVIDER, ZUI_DIALOG_FOLLOW_SYSTEM_COLORS,
         ZUI_LOADING_INDICATOR, ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS,
+        ZUI_SWITCH_STYLE,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
         PEN_HAPTIC_WAVEFORM_REDIRECT,
@@ -538,6 +545,7 @@ object PreferenceKeys {
         PEN_HAPTIC_WAVEFORM_REDIRECT_RULES,
         HALF_WIDTH_PUNCT_SIGNS, SOGOU_ENTER_KEY_MODE,
         ZUI_LOADING_INDICATOR_STYLE,
+        ZUI_SWITCH_STYLE_KIND, ZUI_SWITCH_MARK,
         CUSTOM_CONTROL_CENTER_DATE_FORMAT,
         API_URL, REGULAR,
         CUSTOM_STATUSBAR_CLOCK_FORMAT,

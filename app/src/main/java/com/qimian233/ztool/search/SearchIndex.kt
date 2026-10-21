@@ -1323,6 +1323,28 @@ object SearchIndex {
         ),
 
         uiComponents.item(
+            id = "ui_components_switch_style",
+            titleRes = R.string.ui_components_switch_title,
+            summaryRes = R.string.ui_components_switch_summary
+        ),
+
+        uiComponents.item(
+            id = "ui_components_switch_style_kind",
+            titleRes = R.string.ui_components_switch_style_label,
+            summaryRes = R.string.ui_components_switch_style_summary,
+            parentTitleRes = R.string.ui_components_switch_title,
+            parentKey = "ui_components_switch_style"
+        ),
+
+        uiComponents.item(
+            id = "ui_components_switch_mark",
+            titleRes = R.string.ui_components_switch_mark_label,
+            summaryRes = R.string.ui_components_switch_mark_summary,
+            parentTitleRes = R.string.ui_components_switch_title,
+            parentKey = "ui_components_switch_style"
+        ),
+
+        uiComponents.item(
             id = "ui_components_scan",
             titleRes = R.string.ui_components_scan_title,
             summaryRes = R.string.ui_components_scan_summary_idle

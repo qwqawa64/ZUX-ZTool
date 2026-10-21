@@ -6,6 +6,8 @@ import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.zuiui.LoadingIndicatorStyle
 import com.qimian233.ztool.data.zuiui.PendingScopeApp
 import com.qimian233.ztool.data.zuiui.ScopeRequestOutcome
+import com.qimian233.ztool.data.zuiui.SwitchMark
+import com.qimian233.ztool.data.zuiui.SwitchStyle
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanManager
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanRepository
 import com.qimian233.ztool.data.zuiui.ZuiUiComponentsRepository
@@ -90,6 +92,21 @@ class ZuiUiComponentsViewModel(
         _uiState.value = _uiState.value.copy(
             loadingIndicatorColorText = value.sanitizeArgbColorText()
         )
+    }
+
+    fun setSwitchStyleEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(switchStyleEnabled = enabled)
+        repository.saveSwitchStyleEnabled(enabled)
+    }
+
+    fun setSwitchStyle(style: SwitchStyle) {
+        _uiState.value = _uiState.value.copy(switchStyle = style)
+        repository.saveSwitchStyle(style)
+    }
+
+    fun setSwitchMark(mark: SwitchMark) {
+        _uiState.value = _uiState.value.copy(switchMark = mark)
+        repository.saveSwitchMark(mark)
     }
 
     fun commitLoadingIndicatorColor() {
@@ -207,7 +224,10 @@ data class ZuiUiComponentsUiState(
     val loadingIndicatorFollowSystemColors: Boolean =
         PreferenceKeys.ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS.default,
     val loadingIndicatorColorText: String =
-        PreferenceKeys.ZUI_LOADING_INDICATOR_COLOR.default.toArgbText()
+        PreferenceKeys.ZUI_LOADING_INDICATOR_COLOR.default.toArgbText(),
+    val switchStyleEnabled: Boolean = PreferenceKeys.ZUI_SWITCH_STYLE.default,
+    val switchStyle: SwitchStyle = SwitchStyle.DEFAULT,
+    val switchMark: SwitchMark = SwitchMark.DEFAULT
 )
 
 /** Targets the module managed to reinstall itself into, and those it did not. */
