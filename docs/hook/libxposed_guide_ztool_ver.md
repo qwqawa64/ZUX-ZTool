@@ -89,14 +89,42 @@ Hook 类要实现三个方法：
 ### 注册你的 Hook
 未被注册的 Hook 类不会被 ZTool 自动调度派发。你需要在
 [HookManager.kt](../../app/src/main/java/com/qimian233/ztool/hook/base/HookManager.kt)
-的 `private fun registerAllModules(xposed: XposedInterface)` 方法中进行注册：
+中注册你的 Hook。注册按目标作用域分区：每个作用域对应一个私有 `registerXxxModules()`
+方法，`registerAllModules(xposed: XposedInterface)` 只负责依次调用这些方法并注入
+`XposedInterface`。请把注册语句写进作用域匹配的那个方法：
+
 ```kotlin
 registerHookModule(ClassName())
 ```
-例如 `registerHookModule(DisableAllVirusScans())` 。如果你使用 Android Studio 或者 IDEA ，则应当会自动完成对应导入。
+例如 `registerHookModule(DisableAllVirusScans())` 应写进 `registerSafeCenterModules()` 。如果你使用 Android Studio 或者 IDEA ，则应当会自动完成对应导入。
+
+| 注册方法 | 作用域 |
+|---|---|
+| `registerSystemServerModules()` | `ScopeKeys.SYSTEM_SERVER`（`system`，含 PackageManager 核心补丁） |
+| `registerAndroidFrameworkModules()` | `ScopeKeys.ANDROID_SYSTEM`（`android`） |
+| `registerAllProcessModules()` | `ScopeKeys.UNRESTRICTED`（`all`，仅限 `AiInputExpand`） |
+| `registerZuiWidgetModules()` | 多应用 ZUI 控件（Settings / SystemUI / Launcher / SafeCenter / PackageInstaller） |
+| `registerSystemUIModules()` | `ScopeKeys.SYSTEM_UI`（含自由窗口与任务栏控件） |
+| `registerSettingsModules()` | `ScopeKeys.SETTINGS` |
+| `registerPermissionControllerModules()` | `ScopeKeys.PERMISSION_CONTROLLER`（兼及 Settings / ZUI Safe Center） |
+| `registerPackageInstallerModules()` | `ScopeKeys.PACKAGE_INSTALLER` |
+| `registerLauncherModules()` | `ScopeKeys.LAUNCHER` |
+| `registerDesktopLauncherModules()` | `ScopeKeys.DESKTOP_LAUNCHER` |
+| `registerGameServiceModules()` | `ScopeKeys.GAME_SERVICE` |
+| `registerOtaModules()` | `ScopeKeys.OTA` |
+| `registerWallpaperSettingsModules()` | `ScopeKeys.WALLPAPER_SETTINGS` |
+| `registerDocumentsUIModules()` | `ScopeKeys.DOCUMENTS_UI` |
+| `registerFreeformSidebarModules()` | `ScopeKeys.FREEFORM_SIDEBAR` |
+| `registerSafeCenterModules()` | `ScopeKeys.LENOVO_SAFE_CENTER` / `ScopeKeys.ZUI_SAFE_CENTER` |
+| `registerMobileDesktopModules()` | `ScopeKeys.MOBILE_DESKTOP` |
+| `registerTbEngineModules()` | `ScopeKeys.TB_ENGINE` |
+| `registerLenovoDeviceServiceModules()` | `ScopeKeys.LENOVO_DEVICE_SERVICE` |
+| `registerTabPushoutModules()` | `ScopeKeys.TAB_PUSHOUT` |
+| `registerZuiPerformanceModules()` | `ScopeKeys.ZUI_PERFORMANCE` |
+| `registerSogouImeModules()` | `ScopeKeys.SOGOU_OEM_IME` |
 
 > [!tip]
-> 注意：registerAllModules 中的模块注册按照作用域进行分区，注册时请参见其中注释以了解详细信息。
+> 不要在 `registerAllModules()` 中直接写 `registerHookModule(...)`，也不要把 Hook 塞进与目标作用域不符的方法。目标作用域还没有对应方法时，新增 `registerXxxModules()` 并在 `registerAllModules()` 中调用。一个 Hook 覆盖多个作用域时，放进其主要作用域的方法，并在该方法 KDoc 中注明其余作用域。
 
 
 ## 查找实例和查找用基础设施

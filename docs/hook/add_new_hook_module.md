@@ -122,13 +122,41 @@ val level = prefs.getInt(PreferenceKeys.EXAMPLE_HOOK_LEVEL.name, 0)
 
 ## 5. 注册到 HookManager
 
-在 `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.kt` 的 `registerAllModules()` 中注册：
+在 `app/src/main/java/com/qimian233/ztool/hook/base/HookManager.kt` 中，模块注册按目标作用域划分为多个私有方法：每个方法只注册同一作用域的 Hook，再由 `registerAllModules()` 统一调用。请把 Hook 注册到作用域匹配的那个方法里：
 
 ```kotlin
 registerHookModule(ExampleHook())
 ```
 
-- 若类名与其它包冲突，使用全限定名（项目中有 `SplitScreenMandatory` 重名的先例）。
+| 注册方法 | 作用域（`ScopeKeys`） |
+|---|---|
+| `registerSystemServerModules()` | `SYSTEM_SERVER`（`system`，含 PackageManager 核心补丁） |
+| `registerAndroidFrameworkModules()` | `ANDROID_SYSTEM`（`android`） |
+| `registerAllProcessModules()` | `UNRESTRICTED`（`all`，仅限 `AiInputExpand`） |
+| `registerZuiWidgetModules()` | 多应用 ZUI 控件（Settings / SystemUI / Launcher / SafeCenter / PackageInstaller） |
+| `registerSystemUIModules()` | `SYSTEM_UI`（含自由窗口与任务栏控件） |
+| `registerSettingsModules()` | `SETTINGS` |
+| `registerPermissionControllerModules()` | `PERMISSION_CONTROLLER`（兼及 Settings / ZUI Safe Center） |
+| `registerPackageInstallerModules()` | `PACKAGE_INSTALLER` |
+| `registerLauncherModules()` | `LAUNCHER` |
+| `registerDesktopLauncherModules()` | `DESKTOP_LAUNCHER` |
+| `registerGameServiceModules()` | `GAME_SERVICE` |
+| `registerOtaModules()` | `OTA` |
+| `registerWallpaperSettingsModules()` | `WALLPAPER_SETTINGS` |
+| `registerDocumentsUIModules()` | `DOCUMENTS_UI` |
+| `registerFreeformSidebarModules()` | `FREEFORM_SIDEBAR` |
+| `registerSafeCenterModules()` | `LENOVO_SAFE_CENTER` / `ZUI_SAFE_CENTER` |
+| `registerMobileDesktopModules()` | `MOBILE_DESKTOP` |
+| `registerTbEngineModules()` | `TB_ENGINE` |
+| `registerLenovoDeviceServiceModules()` | `LENOVO_DEVICE_SERVICE` |
+| `registerTabPushoutModules()` | `TAB_PUSHOUT` |
+| `registerZuiPerformanceModules()` | `ZUI_PERFORMANCE` |
+| `registerSogouImeModules()` | `SOGOU_OEM_IME` |
+
+- 不要在 `registerAllModules()` 里直接写 `registerHookModule(...)`：它只负责调用各作用域方法并注入 `XposedInterface`。
+- 目标作用域尚无对应方法时，新增一个 `registerXxxModules()` 私有方法并在 `registerAllModules()` 中调用，不要把 Hook 塞进不相关的作用域方法。
+- 一个 Hook 同时覆盖多个作用域时，注册到其主要作用域的方法，并在该方法的 KDoc 中注明其余作用域（参考 `registerSettingsModules()` 与 `registerPermissionControllerModules()`）。
+- 若类名与其它包冲突，使用 `import ... as ...` 别名（项目中有 `SplitScreenMandatory` 重名的先例，已在 Settings / 系统框架两个方法中分别注册）。
 - 注册后 Hook 才会被 `HookInit` 分发执行。
 
 ## 6. 作用域声明（构建期）
@@ -139,7 +167,7 @@ registerHookModule(ExampleHook())
 
 ## 7. 接入完成后的检查清单
 
-1. Hook 类是否已注册到 `HookManager.registerAllModules()`。
+1. Hook 类是否已注册到 `HookManager` 中作用域匹配的注册方法，且该方法已被 `registerAllModules()` 调用。
 2. `getTargetPackages()` 是否引用 `ScopeKeys` 常量，目标包是否已加入构建期 `scope.list`。
 3. 前端保存的 SharedPreferences 键是否与 Hook 侧读取完全一致（同一 `PreferenceKeys` 常量）。
 4. 前端默认值是否与 `PreferenceKeys` 中注册的默认值一致。

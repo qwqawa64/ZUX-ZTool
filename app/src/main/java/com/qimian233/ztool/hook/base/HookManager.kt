@@ -154,11 +154,9 @@ import io.github.libxposed.api.XposedModuleInterface
 
 /**
  * Hook module manager (libxposed version, Kotlin).
- * <p>
- * Modules are split by process type into systemServerModules and appModules,
- * dispatched by [com.qimian233.ztool.hook.HookInit] in the corresponding
- * lifecycle callbacks.
- * </p>
+ *
+ * Registration is split into one private method per target scope; [registerAllModules]
+ * calls all of them. Dispatch is driven by [com.qimian233.ztool.hook.HookInit].
  */
 object HookManager {
 
@@ -180,16 +178,48 @@ object HookManager {
      * Shared by [initialize] and [reinitializeForHotReload].
      */
     private fun registerAllModules(xposed: XposedInterface) {
-        // system server or framework (android and framework)
+        registerSystemServerModules()
+        registerAndroidFrameworkModules()
+        registerAllProcessModules()
+        registerZuiWidgetModules()
+        registerSystemUIModules()
+        registerSettingsModules()
+        registerPermissionControllerModules()
+        registerPackageInstallerModules()
+        registerLauncherModules()
+        registerDesktopLauncherModules()
+        registerGameServiceModules()
+        registerOtaModules()
+        registerWallpaperSettingsModules()
+        registerDocumentsUIModules()
+        registerFreeformSidebarModules()
+        registerSafeCenterModules()
+        registerMobileDesktopModules()
+        registerTbEngineModules()
+        registerLenovoDeviceServiceModules()
+        registerTabPushoutModules()
+        registerZuiPerformanceModules()
+        registerSogouImeModules()
+
+        // Inject the XposedInterface
+        for (module in hookModules) {
+            module.setXposedInterface(xposed)
+        }
+
+        initialized = true
+    }
+
+    /**
+     * System server hooks: `ScopeKeys.SYSTEM_SERVER` (`system`), including the
+     * package manager core patch set.
+     */
+    private fun registerSystemServerModules() {
         registerHookModule(DisableFlagSecure())
         registerHookModule(AllowGetPackages())
         registerHookModule(AllowAllRestrictedSettings())
         registerHookModule(AllowUntrustedTouch())
         registerHookModule(ForceScreenOnOffAnimation())
         registerHookModule(DisableVolumeWarnDialog())
-        registerHookModule(AiInputExpand())
-        registerHookModule(HalfWidthPunctHook())
-        registerHookModule(SogouEnterKeyHook())
         registerHookModule(KeepRotation())
         registerHookModule(WorkModePortrait())
         registerHookModule(AllowRelativeAppLaunch())
@@ -197,15 +227,10 @@ object HookManager {
         registerHookModule(FreeformEdgeBubbleHook())
         registerHookModule(FreeformKeepAliveSystemHook())
         registerHookModule(DisableHbmThermalLimit())
-        registerHookModule(FineVolumeSteps())
-        registerHookModule(VolumeKeyNonlinearRamp())
         registerHookModule(ClipboardAccessToastHook())
         registerHookModule(SystemSplitScreenMandatory())
 
-        // all APPs with ZUI UI components
-        registerHookModule(ZuiDialogSkinHook())
-
-        // Core patch, targets system server
+        // Package manager core patches
         registerHookModule(PackageManagerDowngradeHook())
         registerHookModule(PackageManagerSignatureBypassHook())
         registerHookModule(PackageManagerVerificationAgentHook())
@@ -214,9 +239,32 @@ object HookManager {
         registerHookModule(PackageManagerSharedUserBypassHook())
         registerHookModule(PackageManagerHiddenApiHook())
         registerHookModule(PackageManagerArscBypassHook())
-        registerHookModule(PenHapticWaveformRedirectHook())
+    }
 
-        // System UI (com.android.systemui)
+    /** System framework hooks: `ScopeKeys.ANDROID_SYSTEM` (`android`). */
+    private fun registerAndroidFrameworkModules() {
+        registerHookModule(FineVolumeSteps())
+        registerHookModule(VolumeKeyNonlinearRamp())
+        registerHookModule(PenHapticWaveformRedirectHook())
+        registerHookModule(OwnerInfoSystemHook())
+        registerHookModule(DisableGameAudio())
+    }
+
+    /** Every-process hooks: `ScopeKeys.UNRESTRICTED` (`all`). */
+    private fun registerAllProcessModules() {
+        registerHookModule(AiInputExpand())
+    }
+
+    /**
+     * Shared ZUI widget hooks: Settings, SystemUI, Launcher, ZUI Safe Center
+     * and Package Installer.
+     */
+    private fun registerZuiWidgetModules() {
+        registerHookModule(ZuiDialogSkinHook())
+    }
+
+    /** SystemUI hooks: `ScopeKeys.SYSTEM_UI`, including freeform window and taskbar controls. */
+    private fun registerSystemUIModules() {
         registerHookModule(StatusBarClockSecondsHook())
         registerHookModule(CustomStatusBarClock())
         registerHookModule(SystemUIChargeWattsHook())
@@ -258,12 +306,20 @@ object HookManager {
         registerHookModule(MediaOutputDialogCenterHook())
         registerHookModule(DesktopLiveWallpaperHook())
 
-        // Android Settings (com.android.settings)
+        // Freeform window chrome
+        registerHookModule(FreeformFullscreenThresholdHook())
+        registerHookModule(FreeformBottomEdgeResizeHook())
+        registerHookModule(FreeformCornerHandleIndicatorHook())
+        registerHookModule(FreeformEdgeBubbleDragLimitHook())
+        registerHookModule(FreeformForeheadOverlayHook())
+        registerHookModule(PcTaskbarCompactControls())
+    }
+
+    /** Settings hooks: `ScopeKeys.SETTINGS`; AllowDisplayDolbyHook also targets SystemUI. */
+    private fun registerSettingsModules() {
         registerHookModule(OneVisionCompletion())
         registerHookModule(AllowDisplayDolbyHook())
-        registerHookModule(PermissionControllerHook())
         registerHookModule(OwnerInfoSettingsHook())
-        registerHookModule(OwnerInfoSystemHook())
         registerHookModule(SettingSplitScreenMandatory())
         registerHookModule(AppInfoHeaderDetailsHook())
         registerHookModule(CustomizeAboutDeviceInfo())
@@ -271,24 +327,31 @@ object HookManager {
         registerHookModule(HideOtaUpdateHint())
         registerHookModule(LocaleListEditorHook())
         registerHookModule(SettingsAppIconUnmaskHook())
+    }
 
-        // Package Installer (com.android.packageinstaller)
+    /**
+     * Permission controller hooks: `ScopeKeys.PERMISSION_CONTROLLER`;
+     * PermissionControllerHook also targets Settings and ZUI Safe Center.
+     */
+    private fun registerPermissionControllerModules() {
+        registerHookModule(PermissionControllerHook())
+    }
+
+    /** Package installer hooks: `ScopeKeys.PACKAGE_INSTALLER`. */
+    private fun registerPackageInstallerModules() {
         registerHookModule(PackageInstallerHookScan())
         registerHookModule(PackageInstallerPermissionHook())
         registerHookModule(SkipInstallWarnPage())
         registerHookModule(DisableInstallerAdvertisement())
         registerHookModule(PackageInstallerStyleHook())
         registerHookModule(PackageInstallerNoDeleteModule())
+    }
 
-        // Launcher (com.zui.launcher)
+    /** Launcher hooks: `ScopeKeys.LAUNCHER`. */
+    private fun registerLauncherModules() {
         registerHookModule(DisableForceStop())
         registerHookModule(ZuiLauncherHotseatHook())
         registerHookModule(LauncherFreeformEntryHook())
-        registerHookModule(FreeformFullscreenThresholdHook())
-        registerHookModule(FreeformBottomEdgeResizeHook())
-        registerHookModule(FreeformCornerHandleIndicatorHook())
-        registerHookModule(FreeformEdgeBubbleDragLimitHook())
-        registerHookModule(FreeformForeheadOverlayHook())
         registerHookModule(FreeformKeepAliveLauncherHook())
         registerHookModule(LauncherAppIconUnmaskHook())
         registerHookModule(CustomGridSize())
@@ -306,68 +369,93 @@ object HookManager {
         registerHookModule(BatchUninstall())
         registerHookModule(LauncherWideGridHook())
         registerHookModule(IconScaleOverrideHook())
+    }
+
+    /** Desktop launcher (PC mode) hooks: `ScopeKeys.DESKTOP_LAUNCHER`. */
+    private fun registerDesktopLauncherModules() {
         registerHookModule(WorkDesktopPortrait())
         registerHookModule(PcAllAppsPortraitGrid())
         registerHookModule(WorkspaceLabelTwoLine())
-        registerHookModule(PcTaskbarCompactControls())
+    }
 
-        // Game Helper (com.zui.game.service)
+    /** Game Helper hooks: `ScopeKeys.GAME_SERVICE`. */
+    private fun registerGameServiceModules() {
         registerHookModule(AutoMistakeTouchHook())
-        registerHookModule(DisableGameAudio())
         registerHookModule(DisableGameAudioApp())
         registerHookModule(DeviceModelDisguiseHook())
         registerHookModule(CpuFrequencyFix())
         registerHookModule(SocTemperatureFix())
+    }
 
-        // Lenovo OTA (com.lenovo.ota)
+    /** Lenovo OTA hooks: `ScopeKeys.OTA`. */
+    private fun registerOtaModules() {
         registerHookModule(DisableOtaCheck())
-        registerHookModule(LenovoOTAHook())
         registerHookModule(NoAutoOtaInstall())
         registerHookModule(BlockOtaInstallDialog())
         registerHookModule(HideOtaNotifications())
+    }
 
-        // Wallpaper settings (com.zui.wallpapersettings)
+    /** Wallpaper settings hooks: `ScopeKeys.WALLPAPER_SETTINGS`. */
+    private fun registerWallpaperSettingsModules() {
         registerHookModule(ChargeAnimationFixModule())
+    }
 
-        // DocumentsUI (com.android.documentsui)
+    /** DocumentsUI hooks: `ScopeKeys.DOCUMENTS_UI`. */
+    private fun registerDocumentsUIModules() {
         registerHookModule(DocumentsUIBypass())
+    }
 
-        // ZUX freeform sidebar (com.zui.freeform.sidebar)
+    /** Freeform sidebar hooks: `ScopeKeys.FREEFORM_SIDEBAR`. */
+    private fun registerFreeformSidebarModules() {
         registerHookModule(SidebarDrawerHook())
+    }
 
-        // Safe Center, including com.lenovo.safecenter and com.zui.safecenter
+    /** Safe Center hooks: `ScopeKeys.LENOVO_SAFE_CENTER` and `ScopeKeys.ZUI_SAFE_CENTER`. */
+    private fun registerSafeCenterModules() {
         registerHookModule(DisableAllVirusScans())
         registerHookModule(EnableAutorunByDefault())
+    }
 
-        // Motorola mobile desktop (com.motorola.mobiledesktop)
+    /** Motorola mobile desktop hooks: `ScopeKeys.MOBILE_DESKTOP`. */
+    private fun registerMobileDesktopModules() {
         registerHookModule(AutoAcceptFileTransferHook())
         registerHookModule(BypassShareWarningHook())
         registerHookModule(DisableNearbyShareAutoOffHook())
+    }
 
-        // Lenovo TB Engine (UDS, com.lenovo.tbengine)
+    /** Lenovo TB Engine hooks: `ScopeKeys.TB_ENGINE`, including the local OTA signer. */
+    private fun registerTbEngineModules() {
         registerHookModule(DisableTbEngineAutoDownload())
         registerHookModule(DisableTbEngineAutoInstall())
         registerHookModule(DisableTbEngineAppUpdate())
         registerHookModule(DisableTbEnginePush())
         registerHookModule(DisableTbEngineReporting())
         registerHookModule(SignTbEngineLocalOta())
+        registerHookModule(LenovoOTAHook())
+    }
 
-        // Lenovo device service (com.lenovo.lsf.device)
+    /** Lenovo device service hooks: `ScopeKeys.LENOVO_DEVICE_SERVICE`. */
+    private fun registerLenovoDeviceServiceModules() {
         registerHookModule(DisableLsfDevicePush())
         registerHookModule(DisableLsfDeviceAutoInstall())
         registerHookModule(DisableLsfDeviceAppListReporting())
-        registerHookModule(DisableTabPushoutSdacRegister())
+    }
 
-        // ZUI performance service (com.zui.pp)
+    /** Tab push-out hooks: `ScopeKeys.TAB_PUSHOUT`. */
+    private fun registerTabPushoutModules() {
+        registerHookModule(DisableTabPushoutSdacRegister())
+    }
+
+    /** ZUI performance service hooks: `ScopeKeys.ZUI_PERFORMANCE`. */
+    private fun registerZuiPerformanceModules() {
         registerHookModule(BlockPowerPolicySync())
         registerHookModule(BlockGamePolicyUpdate())
+    }
 
-        // Inject the XposedInterface
-        for (module in hookModules) {
-            module.setXposedInterface(xposed)
-        }
-
-        initialized = true
+    /** Sogou OEM input method hooks: `ScopeKeys.SOGOU_OEM_IME`. */
+    private fun registerSogouImeModules() {
+        registerHookModule(HalfWidthPunctHook())
+        registerHookModule(SogouEnterKeyHook())
     }
 
     fun registerHookModule(module: BaseHookModule) {
