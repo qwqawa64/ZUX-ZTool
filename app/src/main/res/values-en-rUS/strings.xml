@@ -735,6 +735,15 @@
     <string name="ui_components_dialog_skin_summary">Gives each dialog button its own filled container and drops the vertical separator between buttons.</string>
     <string name="ui_components_dialog_hide_divider_title">Hide the divider above the buttons</string>
     <string name="ui_components_dialog_hide_divider_summary">Removes the horizontal divider between the message and the button row.</string>
+    <string name="ui_components_dialog_follow_system_title">Follow system button colors</string>
+    <string name="ui_components_dialog_follow_system_summary">Uses the dialog theme\'s accent and surface colors, and follows day/night mode.</string>
+    <string name="ui_components_dialog_radius_title">Button corner radius</string>
+    <string name="ui_components_dialog_radius_summary">Corner radius of the filled containers; larger values turn them into pills.</string>
+    <string name="ui_components_dialog_radius_value">%1$d dp</string>
+    <string name="ui_components_dialog_positive_color_label">Positive button fill</string>
+    <string name="ui_components_dialog_positive_color_summary">ARGB hex; opacity is forced to FF.</string>
+    <string name="ui_components_dialog_negative_color_label">Negative button fill</string>
+    <string name="ui_components_dialog_negative_color_summary">ARGB hex; opacity is forced to FF.</string>
     <string name="ui_components_scope_hint">Which apps are affected follows the LSPosed scope. Scan the device to find apps that bundle ZUI frontend components but are not in the scope yet.</string>
     <string name="ui_components_scope_section_title">Scope</string>
     <string name="ui_components_scan_title">Scan for ZUI frontend components</string>

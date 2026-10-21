@@ -75,31 +75,53 @@ Consequences used by the hook:
 ## 4. Filled pill style
 
 The reference screenshot (Miuix-style dialog) has two inset, filled, rounded
-buttons: a tinted primary and a neutral secondary, with no separators. ZUI
-already ships that button family, so the hook reuses it instead of inventing
-colors:
+buttons: a tinted primary and a neutral secondary, with no separators.
 
-| Role | Resource (resolved by name from the dialog's own `Resources`) |
+### 4.1 Why the pills are built locally
+
+ZUI ships `button_colored_big_background_zui` / `button_normal_big_background_zui`,
+but both bake the radius and the fill into the drawable, so a user-selectable
+radius and fill cannot be expressed by reusing them. The hook therefore builds a
+`StateListDrawable` per button and only borrows the host's *colours*:
+
+| Role | Source (resolved by name from the dialog's own `Resources`) |
 |---|---|
-| primary fill | `drawable/button_colored_big_background_zui` (accent gradient, pressed/disabled states) |
-| primary text | `color/button_colored_text_color_zui` (white) |
-| neutral fill | `drawable/button_normal_big_background_zui` (surface + 1 px stroke) |
-| neutral text | `color/button_normal_text_color_zui` (`#333333` / `#FFFFFF` night) |
-| corner radius | `dimen/button_big_radius_zui` (baked into the drawables) |
-| min height | `dimen/button_big_min_height_zui` (48 dp) |
+| default primary fill | `color/system_primary_color_zui` — the colored big-button gradient is `start == end ==` this colour, so a flat fill is pixel-equivalent |
+| default neutral fill | `color/system_button_normal_zui` — same colour the host neutral button uses |
 | panel body colour | `color/dialog_background_zui` (aliases `system_dialog_background_zui`) |
-| bottom rounding | `dimen/dialog_radius_zui` (20 dp) |
+| panel bottom rounding | `dimen/dialog_radius_zui` (20 dp) |
+| pill min height | `dimen/button_big_min_height_zui` (48 dp) |
 
-Presence was verified in `ZuiSettings`, `ZuiSystemUI`, `ZuiPackageInstaller`,
-`ZuiLauncher` resource tables. Missing drawables degrade to a flat
-`GradientDrawable` pill filled with `android.R.attr.colorAccent` (primary) or a
-12 % white / 8 % black overlay (neutral).
+No drawable is parsed or replaced: the host `*_zui` colour aliases exist in
+`ZuiSettings`, `ZuiSystemUI`, `ZuiPackageInstaller` and `ZuiLauncher` (checked
+resource tables), and a missing alias falls back to `android.R.attr.colorAccent`
+(primary) / a 12 % white or 8 % black overlay (neutral).
 
-The neutral text colour must switch away from the dialog default:
-`dialog_btn_text_color_zui` resolves to `system_primary_color_zui` (accent) for
-*all* dialog buttons, which is unreadable on the neutral pill.
+### 4.2 User knobs
 
-### Geometry
+| Preference | Meaning |
+|---|---|
+| `zui_dialog_follow_system_colors` (bool, default on) | on: the two colours above; off: the two ARGB values below |
+| `zui_dialog_button_radius_dp` (int, default 22) | `button_big_radius_zui` is 22 dp in every checked APK; 0 = square, ≥ half the height renders as a pill |
+| `zui_dialog_positive_color` / `zui_dialog_negative_color` (int, ARGB) | used only when the switch is off; alpha is forced to `FF` so contrast stays predictable |
+
+`button1` is positive, `button2` negative, and `button3` (three-button layouts)
+shares the negative fill.
+
+### 4.3 Text and state feedback
+
+* Text colour is chosen by WCAG relative luminance (`> 0.45` → near-black
+  `#1F1F1F`, else white). This reproduces the host's white accent text and its
+  `#333333` / `#FFFFFF` neutral text on the default fills, and keeps custom light
+  fills readable. It also removes the two `color/…_text_color_zui` lookups.
+* Pressed / focused / disabled states are generated. Feedback blends 12 % (press)
+  or 6 % (focus) toward white on dark fills and toward black on light fills, so it
+  cannot vanish into the fill; disabled uses 40 % alpha and the text 45 %.
+* The dialog's own accent-coloured button text (`dialog_btn_text_color_zui`
+  resolves to `system_primary_color_zui` for *all* buttons) is deliberately not
+  reused: it is unreadable on the neutral pill.
+
+### 4.4 Geometry
 
 Measured on the reference dialog against its 20 dp corner radius: outer margin
 ≈ 24–32 dp, gap ≈ 12–16 dp, row inset ≈ 12 dp vertically. The hook uses 24 dp
@@ -108,11 +130,12 @@ for the outer edge. The panel padding is what keeps the dialog's rounded bottom
 corners: the stock bottom rounding lives on `btn_dialog_zui`, which the pills
 replace, so the panel background is repainted as the body colour with the bottom
 radius re-applied. Square bottom corners would otherwise show the opaque panel
-against the rounded window background.
+against the rounded window background. The pill radius is independent of that
+bottom radius.
 
 ## 5. Failure behaviour
 
 Every lookup is `runCatching`-guarded, and the whole skin runs after
-`chain.proceed()` inside the hook body. If the panel, a dimen or a drawable is
-missing, the dialog keeps the stock look for that element; nothing is thrown into
-the host process.
+`chain.proceed()` inside the hook body. If the panel or a dimen is missing, the
+dialog keeps the stock look for that element; nothing is thrown into the host
+process.

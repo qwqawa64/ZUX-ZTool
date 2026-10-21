@@ -2,11 +2,14 @@ package com.qimian233.ztool.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.zuiui.PendingScopeApp
 import com.qimian233.ztool.data.zuiui.ScopeRequestOutcome
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanManager
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanRepository
 import com.qimian233.ztool.data.zuiui.ZuiDialogSkinRepository
+import com.qimian233.ztool.ui.components.normalizeArgbColorTextOrNull
+import com.qimian233.ztool.ui.components.sanitizeArgbColorText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,6 +65,52 @@ class ZuiDialogSkinViewModel(
         repository.saveHideDividerEnabled(enabled)
     }
 
+    fun setFollowSystemColors(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(followSystemColors = enabled)
+        repository.saveFollowSystemColors(enabled)
+    }
+
+    /** Live slider feedback; [commitButtonRadius] writes only when the drag ends. */
+    fun setButtonRadius(radiusDp: Int) {
+        _uiState.value = _uiState.value.copy(
+            buttonRadiusDp = radiusDp.coerceIn(
+                ZuiDialogSkinRepository.RADIUS_MIN, ZuiDialogSkinRepository.RADIUS_MAX
+            )
+        )
+    }
+
+    fun commitButtonRadius() {
+        repository.saveButtonRadius(_uiState.value.buttonRadiusDp)
+    }
+
+    fun setPositiveColorText(value: String) {
+        _uiState.value = _uiState.value.copy(positiveColorText = value.sanitizeArgbColorText())
+    }
+
+    fun setNegativeColorText(value: String) {
+        _uiState.value = _uiState.value.copy(negativeColorText = value.sanitizeArgbColorText())
+    }
+
+    fun commitPositiveColor() {
+        val text = _uiState.value.positiveColorText
+        val argb = parseOpaqueColor(text) ?: return
+        repository.savePositiveColor(argb)
+        _uiState.value = _uiState.value.copy(positiveColorText = argb.toArgbText())
+    }
+
+    fun commitNegativeColor() {
+        val text = _uiState.value.negativeColorText
+        val argb = parseOpaqueColor(text) ?: return
+        repository.saveNegativeColor(argb)
+        _uiState.value = _uiState.value.copy(negativeColorText = argb.toArgbText())
+    }
+
+    /** 8-digit hex after normalisation; alpha is forced opaque to match the hook. */
+    private fun parseOpaqueColor(text: String): Int? {
+        val normalized = text.normalizeArgbColorTextOrNull() ?: return null
+        return normalized.toLong(16).toInt() or 0xFF000000.toInt()
+    }
+
     fun applyChanges(onUnsupported: () -> Unit, onResult: (HotReloadOutcome) -> Unit) {
         if (!repository.supportsHotReload()) {
             onUnsupported()
@@ -115,7 +164,11 @@ class ZuiDialogSkinViewModel(
 
 data class ZuiDialogSkinUiState(
     val dialogSkinEnabled: Boolean = false,
-    val hideDividerEnabled: Boolean = false
+    val hideDividerEnabled: Boolean = false,
+    val followSystemColors: Boolean = PreferenceKeys.ZUI_DIALOG_FOLLOW_SYSTEM_COLORS.default,
+    val buttonRadiusDp: Int = PreferenceKeys.ZUI_DIALOG_BUTTON_RADIUS.default,
+    val positiveColorText: String = PreferenceKeys.ZUI_DIALOG_POSITIVE_COLOR.default.toArgbText(),
+    val negativeColorText: String = PreferenceKeys.ZUI_DIALOG_NEGATIVE_COLOR.default.toArgbText()
 )
 
 /** Targets the module managed to reinstall itself into, and those it did not. */
@@ -135,3 +188,5 @@ data class ZuiComponentScanUiState(
     val pending: List<PendingScopeApp> = emptyList(),
     val showRecommendationDialog: Boolean = false
 )
+
+private fun Int.toArgbText(): String = "%08X".format(this)

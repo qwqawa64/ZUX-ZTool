@@ -26,6 +26,9 @@ object PreferenceKeys {
     // Both switches are independent: filled button containers and the panel separator.
     val ZUI_DIALOG_SKIN = BoolKey("zui_dialog_skin", false)
     val ZUI_DIALOG_HIDE_DIVIDER = BoolKey("zui_dialog_hide_divider", false)
+    // Pill appearance: colors come from the host theme unless this switch is turned off,
+    // in which case the two ARGB values below are used verbatim.
+    val ZUI_DIALOG_FOLLOW_SYSTEM_COLORS = BoolKey("zui_dialog_follow_system_colors", true)
 
     val DISABLE_FLAG_SECURE = BoolKey("disable_flag_secure", false)
     val ALLOW_GET_PACKAGES = BoolKey("allow_get_packages", false)
@@ -293,6 +296,11 @@ object PreferenceKeys {
     val CUSTOM_LAUNCHER_ROW = IntKey("CustomLauncherRow", 4)
     val CUSTOM_LAUNCHER_COLUMN = IntKey("CustomLauncherColumn", 6)
     val CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR = IntKey("Custom_StatusBarClockTextColor", 0xFFFFFFFF.toInt())
+    // ZUI dialog pills: corner radius in dp (0 = square, > half the button height = pill)
+    // and the two fills used when ZUI_DIALOG_FOLLOW_SYSTEM_COLORS is off.
+    val ZUI_DIALOG_BUTTON_RADIUS = IntKey("zui_dialog_button_radius_dp", 22)
+    val ZUI_DIALOG_POSITIVE_COLOR = IntKey("zui_dialog_positive_color", 0xFF3482FF.toInt())
+    val ZUI_DIALOG_NEGATIVE_COLOR = IntKey("zui_dialog_negative_color", 0xFF454545.toInt())
     val NOTIFY_NUM_SIZE = IntKey("notify_num_size", 4)
     val CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR = IntKey("Custom_ControlCenterDateTextColor", 0xFFFFFFFF.toInt())
     val TILE_ROUND_CORNER_RADIUS = IntKey("tile_round_corner_radius", 96)
@@ -398,7 +406,7 @@ object PreferenceKeys {
         SIDEBAR_DRAWER_EDITABLE,
         SIDEBAR_ALLAPPS_SECTIONS,
         SIDEBAR_ALLAPPS_SEARCH,
-        ZUI_DIALOG_SKIN, ZUI_DIALOG_HIDE_DIVIDER,
+        ZUI_DIALOG_SKIN, ZUI_DIALOG_HIDE_DIVIDER, ZUI_DIALOG_FOLLOW_SYSTEM_COLORS,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
         PEN_HAPTIC_WAVEFORM_REDIRECT,
@@ -479,6 +487,7 @@ object PreferenceKeys {
     val intKeys: List<IntKey> = listOf(
         LOG_LEVEL, CUSTOM_LAUNCHER_ROW, CUSTOM_LAUNCHER_COLUMN,
         CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR, NOTIFY_NUM_SIZE,
+        ZUI_DIALOG_BUTTON_RADIUS, ZUI_DIALOG_POSITIVE_COLOR, ZUI_DIALOG_NEGATIVE_COLOR,
         CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR,
         TILE_ROUND_CORNER_RADIUS, HEAD_UP_ROUND_CORNER_RADIUS,
         CUSTOM_QS_ACTIVE_COLOR_VAL, CUSTOM_LABEL_ACTIVE_COLOR_VAL,

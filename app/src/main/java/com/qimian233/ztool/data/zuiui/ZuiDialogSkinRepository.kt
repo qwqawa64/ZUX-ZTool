@@ -18,19 +18,46 @@ class ZuiDialogSkinRepository(
     fun loadState(): ZuiDialogSkinUiState =
         ZuiDialogSkinUiState(
             dialogSkinEnabled = prefsUtils.loadBooleanSetting(
-                KEY_FILLED_BUTTONS, PreferenceKeys.ZUI_DIALOG_SKIN.default
+                KEY_FILLED_BUTTONS.name, KEY_FILLED_BUTTONS.default
             ),
             hideDividerEnabled = prefsUtils.loadBooleanSetting(
-                KEY_HIDE_DIVIDER, PreferenceKeys.ZUI_DIALOG_HIDE_DIVIDER.default
-            )
+                KEY_HIDE_DIVIDER.name, KEY_HIDE_DIVIDER.default
+            ),
+            followSystemColors = prefsUtils.loadBooleanSetting(
+                KEY_FOLLOW_SYSTEM.name, KEY_FOLLOW_SYSTEM.default
+            ),
+            buttonRadiusDp = prefsUtils.loadIntegerSetting(KEY_RADIUS.name, KEY_RADIUS.default)
+                .coerceIn(RADIUS_MIN, RADIUS_MAX),
+            positiveColorText = prefsUtils.loadIntegerSetting(
+                KEY_POSITIVE_COLOR.name, KEY_POSITIVE_COLOR.default
+            ).opaque().toArgbText(),
+            negativeColorText = prefsUtils.loadIntegerSetting(
+                KEY_NEGATIVE_COLOR.name, KEY_NEGATIVE_COLOR.default
+            ).opaque().toArgbText()
         )
 
     fun saveDialogSkinEnabled(enabled: Boolean) {
-        prefsUtils.saveBooleanSetting(KEY_FILLED_BUTTONS, enabled)
+        prefsUtils.saveBooleanSetting(KEY_FILLED_BUTTONS.name, enabled)
     }
 
     fun saveHideDividerEnabled(enabled: Boolean) {
-        prefsUtils.saveBooleanSetting(KEY_HIDE_DIVIDER, enabled)
+        prefsUtils.saveBooleanSetting(KEY_HIDE_DIVIDER.name, enabled)
+    }
+
+    fun saveFollowSystemColors(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_FOLLOW_SYSTEM.name, enabled)
+    }
+
+    fun saveButtonRadius(radiusDp: Int) {
+        prefsUtils.saveIntegerSetting(KEY_RADIUS.name, radiusDp.coerceIn(RADIUS_MIN, RADIUS_MAX))
+    }
+
+    fun savePositiveColor(argb: Int) {
+        prefsUtils.saveIntegerSetting(KEY_POSITIVE_COLOR.name, argb.opaque())
+    }
+
+    fun saveNegativeColor(argb: Int) {
+        prefsUtils.saveIntegerSetting(KEY_NEGATIVE_COLOR.name, argb.opaque())
     }
 
     /** Frameworks below API 102 have no hot reload, so callers must be told instead. */
@@ -47,9 +74,23 @@ class ZuiDialogSkinRepository(
         )
     }
 
-    private companion object {
-        const val HOT_RELOAD_MIN_API = 102
-        val KEY_FILLED_BUTTONS = PreferenceKeys.ZUI_DIALOG_SKIN.name
-        val KEY_HIDE_DIVIDER = PreferenceKeys.ZUI_DIALOG_HIDE_DIVIDER.name
+    companion object {
+        /** Slider bounds, shared with the ViewModel and the hook-side clamp. */
+        const val RADIUS_MIN = 0
+        const val RADIUS_MAX = 32
+
+        private const val HOT_RELOAD_MIN_API = 102
+
+        private val KEY_FILLED_BUTTONS = PreferenceKeys.ZUI_DIALOG_SKIN
+        private val KEY_HIDE_DIVIDER = PreferenceKeys.ZUI_DIALOG_HIDE_DIVIDER
+        private val KEY_FOLLOW_SYSTEM = PreferenceKeys.ZUI_DIALOG_FOLLOW_SYSTEM_COLORS
+        private val KEY_RADIUS = PreferenceKeys.ZUI_DIALOG_BUTTON_RADIUS
+        private val KEY_POSITIVE_COLOR = PreferenceKeys.ZUI_DIALOG_POSITIVE_COLOR
+        private val KEY_NEGATIVE_COLOR = PreferenceKeys.ZUI_DIALOG_NEGATIVE_COLOR
+
+        /** The pills are opaque by design, so a restored translucent value is normalised. */
+        private fun Int.opaque(): Int = this or 0xFF000000.toInt()
+
+        private fun Int.toArgbText(): String = "%08X".format(this)
     }
 }

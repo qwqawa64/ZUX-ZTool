@@ -1269,6 +1269,30 @@ object SearchIndex {
         ),
 
         uiComponents.item(
+            id = "ui_components_dialog_follow_system",
+            titleRes = R.string.ui_components_dialog_follow_system_title,
+            summaryRes = R.string.ui_components_dialog_follow_system_summary
+        ),
+
+        uiComponents.item(
+            id = "ui_components_dialog_radius",
+            titleRes = R.string.ui_components_dialog_radius_title,
+            summaryRes = R.string.ui_components_dialog_radius_summary
+        ),
+
+        uiComponents.item(
+            id = "ui_components_dialog_positive_color",
+            titleRes = R.string.ui_components_dialog_positive_color_label,
+            summaryRes = R.string.ui_components_dialog_positive_color_summary
+        ),
+
+        uiComponents.item(
+            id = "ui_components_dialog_negative_color",
+            titleRes = R.string.ui_components_dialog_negative_color_label,
+            summaryRes = R.string.ui_components_dialog_negative_color_summary
+        ),
+
+        uiComponents.item(
             id = "ui_components_scan",
             titleRes = R.string.ui_components_scan_title,
             summaryRes = R.string.ui_components_scan_summary_idle

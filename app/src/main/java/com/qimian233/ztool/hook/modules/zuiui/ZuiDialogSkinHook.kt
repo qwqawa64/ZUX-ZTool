@@ -7,6 +7,7 @@ import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -16,13 +17,15 @@ import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
+import kotlin.math.pow
 
 /**
  * Restyles the button row of ZUI dialogs in every scoped app.
  *
  * Hooks `android.app.Dialog.show()` instead of a minified controller routine, and
  * recognises ZUI dialogs by their `zui.app.*` class hierarchy. The two visual
- * changes are independent switches. See `docs/research/zui_dialog_button_style.md`.
+ * changes are independent switches; the pills also honour a radius and colour
+ * preference. See `docs/research/zui_dialog_button_style.md`.
  */
 class ZuiDialogSkinHook : AppHookModule() {
 
@@ -44,40 +47,55 @@ class ZuiDialogSkinHook : AppHookModule() {
     override fun supportsPackage(packageName: String?): Boolean = true
 
     /** Either visual change keeps the module alive; each one has its own switch. */
-    override fun isEnabled(): Boolean = readSwitches().let { it.hideDivider || it.filledButtons }
+    override fun isEnabled(): Boolean = readSettings().let { it.hideDivider || it.filledButtons }
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {
         // One process reports several loaded packages; the skin is a per-process concern.
         if (installed) return
-        val switches = readSwitches()
-        if (!switches.hideDivider && !switches.filledButtons) return
+        val settings = readSettings()
+        if (!settings.hideDivider && !settings.filledButtons) return
 
         val show = runCatching { Dialog::class.java.getDeclaredMethod("show") }.getOrNull() ?: return
         hookWithId(show, "zui_dialog_skin") { chain ->
             val result = chain.proceed()
             val dialog = chain.thisObject as? Dialog
             if (dialog != null && isZuiDialog(dialog)) {
-                runCatching { skin(dialog, switches) }
+                runCatching { skin(dialog, settings) }
                     .onFailure { logger.warn("ZUI dialog skin skipped: " + it.message) }
             }
             result
         }
         installed = true
         logger.info(
-            "ZUI dialog skin installed: divider=" + switches.hideDivider +
-                " filled=" + switches.filledButtons
+            "ZUI dialog skin installed: divider=" + settings.hideDivider +
+                " filled=" + settings.filledButtons +
+                " radius=" + settings.radiusDp +
+                " followSystem=" + settings.followSystemColors
         )
     }
 
-    /** Reads both switches once per process; any remote-preferences failure disables the module. */
-    private fun readSwitches(): Switches = runCatching {
+    /** Reads every knob once per process; any remote-preferences failure disables the module. */
+    private fun readSettings(): Settings = runCatching {
         val prefs = xposed.getRemotePreferences(PREFS_NAME)
-        Switches(
+        Settings(
             hideDivider = prefs.getBoolean(KEY_HIDE_DIVIDER.name, KEY_HIDE_DIVIDER.default),
-            filledButtons = prefs.getBoolean(KEY_FILLED_BUTTONS.name, KEY_FILLED_BUTTONS.default)
+            filledButtons = prefs.getBoolean(KEY_FILLED_BUTTONS.name, KEY_FILLED_BUTTONS.default),
+            radiusDp = prefs.getInt(KEY_RADIUS.name, KEY_RADIUS.default).coerceIn(RADIUS_MIN_DP, RADIUS_MAX_DP),
+            followSystemColors = prefs.getBoolean(KEY_FOLLOW_SYSTEM.name, KEY_FOLLOW_SYSTEM.default),
+            positiveColor = prefs.getInt(KEY_POSITIVE_COLOR.name, KEY_POSITIVE_COLOR.default),
+            negativeColor = prefs.getInt(KEY_NEGATIVE_COLOR.name, KEY_NEGATIVE_COLOR.default)
         )
-    }.getOrDefault(Switches(false, false))
+    }.getOrDefault(defaultSettings())
+
+    private fun defaultSettings(): Settings = Settings(
+        hideDivider = false,
+        filledButtons = false,
+        radiusDp = KEY_RADIUS.default,
+        followSystemColors = KEY_FOLLOW_SYSTEM.default,
+        positiveColor = KEY_POSITIVE_COLOR.default,
+        negativeColor = KEY_NEGATIVE_COLOR.default
+    )
 
     /** ZUI dialogs all extend `zui.app.a`, which in turn extends the platform [Dialog]. */
     private fun isZuiDialog(dialog: Dialog): Boolean {
@@ -89,13 +107,13 @@ class ZuiDialogSkinHook : AppHookModule() {
         return false
     }
 
-    private fun skin(dialog: Dialog, switches: Switches) {
+    private fun skin(dialog: Dialog, settings: Settings) {
         val window = dialog.window ?: return
         // android.R.id.button1 is public API, so the panel is reached without any app-local id.
         val primary = window.findViewById<View>(android.R.id.button1) as? Button ?: return
         val panel = primary.parent as? ViewGroup ?: return
-        if (switches.hideDivider) hideMessageSeparator(panel)
-        if (switches.filledButtons) applyFilledButtons(panel)
+        if (settings.hideDivider) hideMessageSeparator(panel)
+        if (settings.filledButtons) applyFilledButtons(panel, settings)
     }
 
     /**
@@ -110,7 +128,7 @@ class ZuiDialogSkinHook : AppHookModule() {
         if (separator.javaClass === View::class.java) separator.visibility = View.GONE
     }
 
-    private fun applyFilledButtons(panel: ViewGroup) {
+    private fun applyFilledButtons(panel: ViewGroup, settings: Settings) {
         val resources = panel.resources
         val theme = panel.context.theme
         val packageName = panel.context.packageName
@@ -124,8 +142,25 @@ class ZuiDialogSkinHook : AppHookModule() {
         )
         panelBackground(resources, theme, packageName)?.let { panel.background = it }
 
-        val coloredFill = accentColor(theme)
-        val neutralFill = if (isNight(resources)) NEUTRAL_OVERLAY_DARK else NEUTRAL_OVERLAY_LIGHT
+        val positive = opaque(
+            if (settings.followSystemColors) {
+                themedColor(resources, theme, packageName, SYSTEM_POSITIVE_COLOR, accentColor(theme))
+            } else {
+                settings.positiveColor
+            }
+        )
+        val negative = opaque(
+            if (settings.followSystemColors) {
+                themedColor(
+                    resources, theme, packageName, SYSTEM_NEGATIVE_COLOR,
+                    if (isNight(resources)) NEUTRAL_OVERLAY_DARK else NEUTRAL_OVERLAY_LIGHT
+                )
+            } else {
+                settings.negativeColor
+            }
+        )
+        val radius = settings.radiusDp * density
+
         val textPadding = (BUTTON_PADDING_DP * density).toInt()
         val minHeight = dimension(resources, packageName, "button_big_min_height_zui", BUTTON_MIN_HEIGHT_DP).toInt()
 
@@ -138,21 +173,9 @@ class ZuiDialogSkinHook : AppHookModule() {
                 continue
             }
             buttons += child
-            val primary = child.id == android.R.id.button1
-            child.background = buttonBackground(
-                resources,
-                theme,
-                packageName,
-                if (primary) COLORED_BACKGROUND else NEUTRAL_BACKGROUND,
-                if (primary) coloredFill else neutralFill
-            )
-            val textColors = buttonTextColors(
-                resources,
-                theme,
-                packageName,
-                if (primary) COLORED_TEXT else NEUTRAL_TEXT
-            ) ?: if (primary) ColorStateList.valueOf(Color.WHITE) else null
-            if (textColors != null) child.setTextColor(textColors)
+            val fill = if (child.id == android.R.id.button1) positive else negative
+            child.background = pillBackground(fill, radius)
+            child.setTextColor(pillTextColors(fill))
             child.setPadding(textPadding, child.paddingTop, textPadding, child.paddingBottom)
             child.minimumHeight = minHeight
         }
@@ -175,33 +198,72 @@ class ZuiDialogSkinHook : AppHookModule() {
         }
     }
 
-    /** Reuses the host's own filled-button drawable; a flat pill is the fallback. */
-    private fun buttonBackground(
+    /** One pill per state: the host drawables cannot carry a custom radius or fill. */
+    private fun pillBackground(fill: Int, radius: Float): Drawable = StateListDrawable().apply {
+        addState(intArrayOf(-android.R.attr.state_enabled), pill(withAlpha(fill, DISABLED_FILL_ALPHA), radius))
+        addState(
+            intArrayOf(android.R.attr.state_enabled, android.R.attr.state_pressed),
+            pill(feedbackColor(fill, PRESSED_FEEDBACK), radius)
+        )
+        addState(
+            intArrayOf(android.R.attr.state_enabled, android.R.attr.state_focused),
+            pill(feedbackColor(fill, FOCUSED_FEEDBACK), radius)
+        )
+        addState(intArrayOf(), pill(fill, radius))
+    }
+
+    private fun pill(fill: Int, radius: Float): GradientDrawable = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        setColor(fill)
+        cornerRadius = radius
+    }
+
+    /** White or near-black, whichever reads better on the pill; disabled keeps the same hue. */
+    private fun pillTextColors(fill: Int): ColorStateList {
+        val base = if (relativeLuminance(fill) > LIGHT_FILL_LUMINANCE) DARK_TEXT_COLOR else Color.WHITE
+        return ColorStateList(
+            arrayOf(intArrayOf(-android.R.attr.state_enabled), intArrayOf()),
+            intArrayOf(withAlpha(base, DISABLED_TEXT_ALPHA), base)
+        )
+    }
+
+    /** Press feedback moves away from the fill's own lightness so it never disappears. */
+    private fun feedbackColor(fill: Int, amount: Float): Int {
+        val target = if (relativeLuminance(fill) > LIGHT_FILL_LUMINANCE) Color.BLACK else Color.WHITE
+        return blend(fill, target, amount)
+    }
+
+    private fun blend(from: Int, to: Int, amount: Float): Int {
+        fun mix(a: Int, b: Int): Int = (a + (b - a) * amount).toInt().coerceIn(0, 255)
+        return Color.argb(
+            Color.alpha(from),
+            mix(Color.red(from), Color.red(to)),
+            mix(Color.green(from), Color.green(to)),
+            mix(Color.blue(from), Color.blue(to))
+        )
+    }
+
+    /** WCAG relative luminance; the 0.45 cut-off matches when ZUI's own light text should flip. */
+    private fun relativeLuminance(color: Int): Double {
+        fun channel(value: Int): Double {
+            val ratio = value / 255.0
+            return if (ratio <= 0.03928) ratio / 12.92 else ((ratio + 0.055) / 1.055).pow(2.4)
+        }
+        return 0.2126 * channel(Color.red(color)) +
+            0.7152 * channel(Color.green(color)) +
+            0.0722 * channel(Color.blue(color))
+    }
+
+    private fun themedColor(
         resources: Resources,
         theme: Resources.Theme,
         packageName: String,
         name: String,
-        fallbackFill: Int
-    ): Drawable {
-        val id = resources.getIdentifier(name, "drawable", packageName)
-        if (id != 0) {
-            runCatching { resources.getDrawable(id, theme) }.getOrNull()?.let { return it }
-        }
-        return GradientDrawable().apply {
-            setColor(fallbackFill)
-            cornerRadius = dimension(resources, packageName, "dialog_radius_zui", RADIUS_FALLBACK_DP)
-        }
-    }
-
-    private fun buttonTextColors(
-        resources: Resources,
-        theme: Resources.Theme,
-        packageName: String,
-        name: String
-    ): ColorStateList? {
+        fallback: Int
+    ): Int {
         val id = resources.getIdentifier(name, "color", packageName)
-        if (id == 0) return null
-        return runCatching { resources.getColorStateList(id, theme) }.getOrNull()
+        if (id == 0) return fallback
+        return runCatching { resources.getColor(id, theme) }.getOrDefault(fallback)
     }
 
     private fun applyGaps(panel: ViewGroup, buttons: List<Button>) {
@@ -248,15 +310,29 @@ class ZuiDialogSkinHook : AppHookModule() {
         (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
 
-    private data class Switches(val hideDivider: Boolean, val filledButtons: Boolean)
+    private fun opaque(color: Int): Int = color or 0xFF000000.toInt()
+
+    private fun withAlpha(color: Int, alpha: Float): Int = Color.argb(
+        (Color.alpha(color) * alpha).toInt().coerceIn(0, 255),
+        Color.red(color),
+        Color.green(color),
+        Color.blue(color)
+    )
+
+    private data class Settings(
+        val hideDivider: Boolean,
+        val filledButtons: Boolean,
+        val radiusDp: Int,
+        val followSystemColors: Boolean,
+        val positiveColor: Int,
+        val negativeColor: Int
+    )
 
     private companion object {
         const val ZUI_DIALOG_PACKAGE = "zui.app."
 
-        const val COLORED_BACKGROUND = "button_colored_big_background_zui"
-        const val NEUTRAL_BACKGROUND = "button_normal_big_background_zui"
-        const val COLORED_TEXT = "button_colored_text_color_zui"
-        const val NEUTRAL_TEXT = "button_normal_text_color_zui"
+        const val SYSTEM_POSITIVE_COLOR = "system_primary_color_zui"
+        const val SYSTEM_NEGATIVE_COLOR = "system_button_normal_zui"
         const val BODY_COLOR = "dialog_background_zui"
 
         /** Sub-feature switch for the horizontal separator above the button row. */
@@ -264,6 +340,15 @@ class ZuiDialogSkinHook : AppHookModule() {
 
         /** The existing switch, now scoped to the filled button containers. */
         val KEY_FILLED_BUTTONS = PreferenceKeys.ZUI_DIALOG_SKIN
+
+        val KEY_FOLLOW_SYSTEM = PreferenceKeys.ZUI_DIALOG_FOLLOW_SYSTEM_COLORS
+        val KEY_RADIUS = PreferenceKeys.ZUI_DIALOG_BUTTON_RADIUS
+        val KEY_POSITIVE_COLOR = PreferenceKeys.ZUI_DIALOG_POSITIVE_COLOR
+        val KEY_NEGATIVE_COLOR = PreferenceKeys.ZUI_DIALOG_NEGATIVE_COLOR
+
+        /** Clamp shared with the settings slider. */
+        const val RADIUS_MIN_DP = 0
+        const val RADIUS_MAX_DP = 32
 
         /** Screen margins and the gap between two pills, in dp. */
         const val PANEL_SIDE_DP = 24f
@@ -275,10 +360,19 @@ class ZuiDialogSkinHook : AppHookModule() {
         const val BUTTON_MIN_HEIGHT_DP = 48f
         const val RADIUS_FALLBACK_DP = 20f
 
-        /** 12% white / 8% black: the neutral pill when the host drawable is unreachable. */
+        /** 12% white / 8% black: the neutral pill when follow-system cannot resolve a colour. */
         const val NEUTRAL_OVERLAY_DARK = 0x1FFFFFFF
         const val NEUTRAL_OVERLAY_LIGHT = 0x14000000
 
         const val ACCENT_FALLBACK = 0xFF1979FF.toInt()
+        const val DARK_TEXT_COLOR = 0xFF1F1F1F.toInt()
+
+        /** Relative luminance above which a fill counts as light and gets dark text. */
+        const val LIGHT_FILL_LUMINANCE = 0.45
+
+        const val PRESSED_FEEDBACK = 0.12f
+        const val FOCUSED_FEEDBACK = 0.06f
+        const val DISABLED_FILL_ALPHA = 0.4f
+        const val DISABLED_TEXT_ALPHA = 0.45f
     }
 }

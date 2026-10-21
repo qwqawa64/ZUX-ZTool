@@ -42,6 +42,7 @@ import com.qimian233.ztool.ui.components.HighlightAnchorRegistry
 import com.qimian233.ztool.ui.components.HighlightController
 import com.qimian233.ztool.ui.components.SettingItem
 import com.qimian233.ztool.ui.components.SettingSection
+import com.qimian233.ztool.ui.components.ZToolArgbColorTextFieldRow
 import com.qimian233.ztool.ui.components.ZToolDialog
 import com.qimian233.ztool.ui.components.ZToolExtendedFloatingActionButton
 import com.qimian233.ztool.ui.components.ZToolScaffold
@@ -95,6 +96,13 @@ fun ZuiDialogSkinRoute(
             onBack = onBack,
             onDialogSkinChanged = viewModel::setDialogSkinEnabled,
             onHideDividerChanged = viewModel::setHideDividerEnabled,
+            onFollowSystemColorsChanged = viewModel::setFollowSystemColors,
+            onButtonRadiusChanged = viewModel::setButtonRadius,
+            onButtonRadiusCommit = viewModel::commitButtonRadius,
+            onPositiveColorTextChanged = viewModel::setPositiveColorText,
+            onPositiveColorCommit = viewModel::commitPositiveColor,
+            onNegativeColorTextChanged = viewModel::setNegativeColorText,
+            onNegativeColorCommit = viewModel::commitNegativeColor,
             onScan = viewModel::startScan,
             onCancelScan = viewModel::cancelScan,
             onOpenRecommendations = viewModel::openRecommendations,
@@ -172,6 +180,13 @@ private fun ZuiDialogSkinScreen(
     onBack: () -> Unit,
     onDialogSkinChanged: (Boolean) -> Unit,
     onHideDividerChanged: (Boolean) -> Unit,
+    onFollowSystemColorsChanged: (Boolean) -> Unit,
+    onButtonRadiusChanged: (Int) -> Unit,
+    onButtonRadiusCommit: () -> Unit,
+    onPositiveColorTextChanged: (String) -> Unit,
+    onPositiveColorCommit: () -> Unit,
+    onNegativeColorTextChanged: (String) -> Unit,
+    onNegativeColorCommit: () -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit,
@@ -217,6 +232,13 @@ private fun ZuiDialogSkinScreen(
                         scanState = scanState,
                         onDialogSkinChanged = onDialogSkinChanged,
                         onHideDividerChanged = onHideDividerChanged,
+                        onFollowSystemColorsChanged = onFollowSystemColorsChanged,
+                        onButtonRadiusChanged = onButtonRadiusChanged,
+                        onButtonRadiusCommit = onButtonRadiusCommit,
+                        onPositiveColorTextChanged = onPositiveColorTextChanged,
+                        onPositiveColorCommit = onPositiveColorCommit,
+                        onNegativeColorTextChanged = onNegativeColorTextChanged,
+                        onNegativeColorCommit = onNegativeColorCommit,
                         onScan = onScan,
                         onCancelScan = onCancelScan,
                         onOpenRecommendations = onOpenRecommendations
@@ -235,6 +257,13 @@ private fun zuiDialogSkinSections(
     scanState: ZuiComponentScanUiState,
     onDialogSkinChanged: (Boolean) -> Unit,
     onHideDividerChanged: (Boolean) -> Unit,
+    onFollowSystemColorsChanged: (Boolean) -> Unit,
+    onButtonRadiusChanged: (Int) -> Unit,
+    onButtonRadiusCommit: () -> Unit,
+    onPositiveColorTextChanged: (String) -> Unit,
+    onPositiveColorCommit: () -> Unit,
+    onNegativeColorTextChanged: (String) -> Unit,
+    onNegativeColorCommit: () -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit
@@ -250,22 +279,99 @@ private fun zuiDialogSkinSections(
         ),
         SettingSection(
             title = stringResource(R.string.ui_components_app_name),
-            items = listOf(
-                SettingItem.Switch(
-                    title = stringResource(R.string.ui_components_dialog_skin_title),
-                    summary = stringResource(R.string.ui_components_dialog_skin_summary),
-                    checked = state.dialogSkinEnabled,
-                    onCheckedChange = onDialogSkinChanged,
-                    key = "ui_components_dialog_skin"
-                ),
-                SettingItem.Switch(
-                    title = stringResource(R.string.ui_components_dialog_hide_divider_title),
-                    summary = stringResource(R.string.ui_components_dialog_hide_divider_summary),
-                    checked = state.hideDividerEnabled,
-                    onCheckedChange = onHideDividerChanged,
-                    key = "ui_components_dialog_hide_divider"
+            items = buildList {
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.ui_components_dialog_skin_title),
+                        summary = stringResource(R.string.ui_components_dialog_skin_summary),
+                        checked = state.dialogSkinEnabled,
+                        onCheckedChange = onDialogSkinChanged,
+                        key = "ui_components_dialog_skin"
+                    )
                 )
-            )
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.ui_components_dialog_hide_divider_title),
+                        summary = stringResource(R.string.ui_components_dialog_hide_divider_summary),
+                        checked = state.hideDividerEnabled,
+                        onCheckedChange = onHideDividerChanged,
+                        key = "ui_components_dialog_hide_divider"
+                    )
+                )
+                if (state.dialogSkinEnabled) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.ui_components_dialog_follow_system_title),
+                            summary = stringResource(R.string.ui_components_dialog_follow_system_summary),
+                            checked = state.followSystemColors,
+                            onCheckedChange = onFollowSystemColorsChanged,
+                            key = "ui_components_dialog_follow_system"
+                        )
+                    )
+                    if (!state.followSystemColors) {
+                        add(
+                            SettingItem.Custom(
+                                key = "ui_components_dialog_positive_color",
+                                content = {
+                                    ZToolArgbColorTextFieldRow(
+                                        label = stringResource(
+                                            R.string.ui_components_dialog_positive_color_label
+                                        ),
+                                        value = state.positiveColorText,
+                                        onValueChange = onPositiveColorTextChanged,
+                                        summary = stringResource(
+                                            R.string.ui_components_dialog_positive_color_summary
+                                        ),
+                                        errorText = stringResource(
+                                            R.string.system_ui_common_argb_color_input_error
+                                        ),
+                                        onEditingFinished = onPositiveColorCommit
+                                    )
+                                }
+                            )
+                        )
+                        add(
+                            SettingItem.Custom(
+                                key = "ui_components_dialog_negative_color",
+                                content = {
+                                    ZToolArgbColorTextFieldRow(
+                                        label = stringResource(
+                                            R.string.ui_components_dialog_negative_color_label
+                                        ),
+                                        value = state.negativeColorText,
+                                        onValueChange = onNegativeColorTextChanged,
+                                        summary = stringResource(
+                                            R.string.ui_components_dialog_negative_color_summary
+                                        ),
+                                        errorText = stringResource(
+                                            R.string.system_ui_common_argb_color_input_error
+                                        ),
+                                        onEditingFinished = onNegativeColorCommit
+                                    )
+                                }
+                            )
+                        )
+                    }
+                    add(
+                        SettingItem.Slider(
+                            title = stringResource(R.string.ui_components_dialog_radius_title),
+                            summary = stringResource(R.string.ui_components_dialog_radius_summary),
+                            value = state.buttonRadiusDp.toFloat(),
+                            valueText = stringResource(
+                                R.string.ui_components_dialog_radius_value,
+                                state.buttonRadiusDp
+                            ),
+                            valueRange = ZuiDialogSkinRepository.RADIUS_MIN.toFloat()..
+                                ZuiDialogSkinRepository.RADIUS_MAX.toFloat(),
+                            steps = ZuiDialogSkinRepository.RADIUS_MAX -
+                                ZuiDialogSkinRepository.RADIUS_MIN - 1,
+                            onValueChange = { onButtonRadiusChanged(it.toInt()) },
+                            onValueChangeFinished = onButtonRadiusCommit,
+                            key = "ui_components_dialog_radius"
+                        )
+                    )
+                }
+            }
         ),
         SettingSection(
             title = stringResource(R.string.ui_components_scope_section_title),
