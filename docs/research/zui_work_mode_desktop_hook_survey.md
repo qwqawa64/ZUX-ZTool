@@ -793,3 +793,43 @@ Notein一笔记    -> Notein / 一笔记
 All complete, no ellipsis; `日历`, `设置`, `相机`, `飞牛`, `Via`, `微信` stay single-line. No grid
 migration was involved — the user confirmed that icon positions are stable across rotation once the
 bound is fixed (§6.2).
+
+## 15. The bottom-right status cluster is SystemUI's, not the launcher's
+
+The bar's right-hand controls (search, volume, WLAN, control-center chevron, notifications, battery,
+clock) cannot be reached from `com.zui.desktoplauncher`. Evidence:
+
+- The probe now dumps the hotseat's view tree once (§9). In PC mode portrait:
+
+  ```
+  ZuiHotseat#hotseat(2000x415,v4 INVISIBLE)
+    ShortcutAndWidgetContainer#-(2306x172)   ← pinned-app row, 306 px wider than the screen
+    View#-(0x0)
+    View#-(262x195)
+    HotseatRecentUsedContainer#-(0x172)
+    ImageButton#-(172x172)                   ← all-apps entry
+  ```
+
+  and its parent `DragLayer` holds only `AccessibilityActionsView`, `Workspace`,
+  `PageIndicatorDots`, `ZuiEditModePanel`, `DropTargetBar2`, `DeleteDropTarget2`,
+  `SecondaryDropTarget`, `ScrimView`, `ZuiHotseat`, `LauncherRecentsView`. **No status cluster.**
+- `uiautomator dump` sees only `com.zui.desktoplauncher` nodes, and none of them is a status icon.
+- The remaining window at that height is SystemUI's `NavigationBar0`, frame `[0,3050][2000,3200]`.
+- SystemUI's own dex (extracted from `/system_ext/priv-app/ZuiSystemUI/ZuiSystemUI.apk`) carries a
+  whole PC-mode package: `com.android.systemui.pcmode.nav.*` (`MWorkNavManager`, `NavUtils`,
+  `MyRecyclerView`, `CommonAdapter`, `FixAdapter`, `NavItemRelativeLayout`,
+  `panel.NavPanelManager`, `panel.NavVolumeManager`, `panel.AppVolumeAdapter`, …) plus
+  `pcmode.view.XFButton` and the `pc_nav_fix_layout_1..4` / `nav_workmode_poppanel` layouts.
+
+So shrinking those controls is a **SystemUI** change (`com.android.systemui` is already a ZTool
+scope), and it needs SystemUI's code loaded in the decompiler — the JADX MCP only exposes the APK
+currently open, which is `ZuiLauncherPC.apk`.
+
+Two separate widths are in play:
+
+1. **SystemUI cluster** (the user's suggestion): the number/size of the right-hand controls, which
+   currently eats roughly the last third of the 2000 px bar.
+2. **Launcher icon row**: `ShortcutAndWidgetContainer` measures **2306 px** while the window is
+   2000 px, i.e. the pinned-app row is laid out with landscape spacing and the rightmost icons are
+   clipped regardless of the cluster. That one *is* ours (`ZuiHotseat` / `DeviceProfile`
+   `hotseatCellHeightPx`, `numShownHotseatIcons`, `hotseatBorderSpace`).

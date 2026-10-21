@@ -51,6 +51,8 @@ class WorkDesktopProbe : AppHookModule() {
 
     private val hotseatGate = Gate(MAX_HOTSEAT_LINES)
 
+    private val hierarchyDumped = java.util.concurrent.atomic.AtomicBoolean(false)
+
     @Throws(Throwable::class)
     override fun handleLoadPackage(param: PackageLoadedParam) {
         val classLoader = param.defaultClassLoader
@@ -299,6 +301,14 @@ class WorkDesktopProbe : AppHookModule() {
                                 " visibility=${it.visibility}"
                         } ?: "null")
                     if (hotseatGate.shouldLog(line)) logger.info("hotseat $line")
+                    if (hierarchyDumped.compareAndSet(false, true)) {
+                        val tree = StringBuilder()
+                        describeHierarchy(hotseat, 0, tree)
+                        logger.info("hotseat hierarchy $tree")
+                        val parentTree = StringBuilder()
+                        (hotseat.parent as? View)?.let { describeHierarchy(it, 0, parentTree) }
+                        logger.info("hotseat parent hierarchy $parentTree")
+                    }
                 }.onFailure { logger.error("probe: hotseat dump failed", it) }
                 null
             }
@@ -343,6 +353,22 @@ class WorkDesktopProbe : AppHookModule() {
             " idpHotseatIcons=${reflector.nested(idp, "numShownHotseatIcons")}" +
             " deviceType=${reflector.nested(idp, "deviceType")}" +
             " | $small"
+    }
+
+    /** Flattens a view tree into one log line: `Class#id(w x h,v…) ; child …`. */
+    private fun describeHierarchy(view: View, depth: Int, out: StringBuilder) {
+        if (depth > MAX_HIERARCHY_DEPTH || out.length > MAX_HIERARCHY_CHARS) return
+        if (out.isNotEmpty()) out.append(" ; ")
+        val id = runCatching { view.resources.getResourceEntryName(view.id) }.getOrNull() ?: "-"
+        out.append(view.javaClass.simpleName).append('#').append(id)
+            .append('(').append(view.width).append('x').append(view.height)
+            .append(",v").append(view.visibility).append(')')
+        if (view is ViewGroup) {
+            val count = minOf(view.childCount, MAX_HIERARCHY_CHILDREN)
+            for (index in 0 until count) {
+                describeHierarchy(view.getChildAt(index), depth + 1, out)
+            }
+        }
     }
 
     private fun describeEnvironment(context: Context): String {
@@ -482,5 +508,8 @@ class WorkDesktopProbe : AppHookModule() {
         const val MAX_ALL_APPS_LINES = 6
         const val MAX_TASKBAR_LINES = 8
         const val MAX_HOTSEAT_LINES = 12
+        const val MAX_HIERARCHY_DEPTH = 3
+        const val MAX_HIERARCHY_CHILDREN = 8
+        const val MAX_HIERARCHY_CHARS = 900
     }
 }
