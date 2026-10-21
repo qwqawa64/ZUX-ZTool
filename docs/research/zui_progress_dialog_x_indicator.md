@@ -136,9 +136,13 @@ Constraints to respect:
 
 1. **The box is not square.** 45×28 dp (67×42 dp at `sw400dp`, i.e. this tablet).
    The view is `wrap_content` and only `min/maxWidth`/`min/maxHeight` give it a size,
-   so the drawable ends up in a wide rectangle. A circle must letterbox itself:
-   centre a square of `min(w, h)` and derive the stroke width from it, instead of
-   assuming the bounds are square.
+   so the drawable ends up in a wide rectangle. `ProgressBar.updateDrawableBounds()`
+   hands the indeterminate drawable the content rect (view size minus padding) and only
+   preserves the aspect ratio when `indeterminateOnly` is set **and** the drawable is not
+   an `AnimationDrawable`; `Widget.Zui.ProgressBar.Large` sets `android:indeterminate`
+   but not `indeterminateOnly`, and the stock artwork is an `AnimationDrawable`, so the
+   stock frames really are stretched. A circle must letterbox itself: centre a square of
+   `min(w, h)` and derive the stroke width from it, instead of assuming square bounds.
 2. **The framework will not start a drawable installed after attach.**
    `ProgressBar.startAnimation()` runs once from `onAttachedToWindow()`, before our
    hook replaces the drawable. A self-animating `Drawable` sidesteps this; a frame
@@ -252,12 +256,16 @@ decision with it.
 
 Open questions to settle on device during implementation:
 
-* does `ProgressBar` letterbox or stretch the indeterminate drawable on this build —
-  confirms the square-fitting math in §2.1 (1);
 * whether `CircularProgressIndicator` renders under `Theme.Zui` at all (only relevant
-  if Option B is chosen);
-* whether LSPosed injects into the `com.android.phone` process when only
-  `com.android.settings` is scoped.
+  if Option B is chosen).
+
+Settled already:
+
+* `ProgressBar` stretches the indeterminate drawable to the content rect (§2.1 (1)), so
+  the replacement letterboxes itself; no on-device check needed.
+* `com.android.phone` is **accepted as a gap** — the switch only reaches the
+  `com.android.settings` process, so the `NetworkSelectActivity` dialogs keep the stock
+  spinner and no scope entry is added.
 
 ## 7. Alternative style: SpinKit Cube Grid
 
@@ -300,14 +308,28 @@ Two adjustments worth making at this size:
 
 Implementation notes, on top of the constraints in §2.1:
 
-* derive the phase from `SystemClock.uptimeMillis()` per frame instead of accumulating
+* derive the phase from `SystemClock.uptimeMillis()` each frame instead of accumulating
   deltas, so a dropped frame never slows the animation down;
-* re-arm with `scheduleSelf(...)` from inside `draw()`, and stop ticking in
-  `setVisible(false, ...)` — `ProgressBar` calls that on detach, otherwise a dismissed
-  dialog keeps a 60 fps callback alive;
+* implement `Animatable`: `ProgressBar` calls `startAnimation()` on attach and
+  `stopAnimation()` on detach, and the `Animatable` branch is the only one that avoids
+  its legacy fallback (an `AlphaAnimation` that fades the whole view). `start()`/`stop()`
+  carry the ticker, `setVisible()` is the secondary trigger;
 * nine `drawRect` calls per frame against a reused `Paint`/`RectF`; cheaper than the
   34 PNG frames the stock drawable decodes;
-* the stock frames have night variants, so pick the cube colour from the current theme
-  (`colorAccent` / `textColorPrimary`) instead of hardcoding one;
-* if the system disables animations (`ValueAnimator.areAnimatorsEnabled() == false`),
-  draw the 3×3 grid at `scale == 1` and skip the ticker.
+* colour comes from the host theme (`colorAccent`, then `textColorPrimary`, then a fixed
+  fallback), so day/night is inherited rather than switched on `uiMode`;
+* `areAnimatorsEnabled()` is deliberately **not** honoured — the stock `AnimationDrawable`
+  ignores it too, and a frozen progress dialog reads as a hung one.
+
+## 8. What was built
+
+* `LoadingIndicatorDrawable` (`hook/modules/zuiui/indicator/`) — the frame clock:
+  square letterboxing, `Animatable` lifecycle, 16 ms ticker, no per-frame allocations.
+* `CubeGridLoadingIndicator` — the style from §7, 10% gap, keyframes unchanged.
+* `ZuiLoadingIndicatorHook` — hooks `Dialog.setContentView(int)` and `(View)`, matches
+  the dialog by class name and the bar by type, swaps the drawable, and restarts an
+  already-installed one on re-show.
+* `PreferenceKeys.ZUI_LOADING_INDICATOR` (switch, module name) and
+  `ZUI_LOADING_INDICATOR_STYLE` (string); `LoadingIndicatorStyle` maps the latter and
+  falls back to `DEFAULT` on an unknown value, so a stale preference never disables the
+  hook. Adding a style = enum entry + string + one `when` branch in the hook factory.

@@ -148,6 +148,7 @@ import com.qimian233.ztool.hook.modules.systemui.statusbar.SystemUINetworkSpeedd
 import com.qimian233.ztool.hook.modules.systemui.wallpaper.DesktopLiveWallpaperHook
 import com.qimian233.ztool.hook.modules.wallpaper.ChargeAnimationFixModule
 import com.qimian233.ztool.hook.modules.zuiui.ZuiDialogSkinHook
+import com.qimian233.ztool.hook.modules.zuiui.ZuiLoadingIndicatorHook
 
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface
@@ -261,6 +262,7 @@ object HookManager {
      */
     private fun registerZuiWidgetModules() {
         registerHookModule(ZuiDialogSkinHook())
+        registerHookModule(ZuiLoadingIndicatorHook())
     }
 
     /** SystemUI hooks: `ScopeKeys.SYSTEM_UI`, including freeform window and taskbar controls. */

@@ -34,6 +34,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.qimian233.ztool.R
+import com.qimian233.ztool.data.zuiui.LoadingIndicatorStyle
 import com.qimian233.ztool.data.zuiui.PendingScopeApp
 import com.qimian233.ztool.data.zuiui.ScopeRequestOutcome
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanRepository
@@ -104,6 +105,8 @@ fun ZuiUiComponentsRoute(
             onPositiveColorCommit = viewModel::commitPositiveColor,
             onNegativeColorTextChanged = viewModel::setNegativeColorText,
             onNegativeColorCommit = viewModel::commitNegativeColor,
+            onLoadingIndicatorChanged = viewModel::setLoadingIndicatorEnabled,
+            onLoadingIndicatorStyleChanged = viewModel::setLoadingIndicatorStyle,
             onScan = viewModel::startScan,
             onCancelScan = viewModel::cancelScan,
             onOpenRecommendations = viewModel::openRecommendations,
@@ -195,6 +198,8 @@ private fun ZuiUiComponentsScreen(
     onPositiveColorCommit: () -> Unit,
     onNegativeColorTextChanged: (String) -> Unit,
     onNegativeColorCommit: () -> Unit,
+    onLoadingIndicatorChanged: (Boolean) -> Unit,
+    onLoadingIndicatorStyleChanged: (LoadingIndicatorStyle) -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit,
@@ -247,6 +252,8 @@ private fun ZuiUiComponentsScreen(
                         onPositiveColorCommit = onPositiveColorCommit,
                         onNegativeColorTextChanged = onNegativeColorTextChanged,
                         onNegativeColorCommit = onNegativeColorCommit,
+                        onLoadingIndicatorChanged = onLoadingIndicatorChanged,
+                        onLoadingIndicatorStyleChanged = onLoadingIndicatorStyleChanged,
                         onScan = onScan,
                         onCancelScan = onCancelScan,
                         onOpenRecommendations = onOpenRecommendations
@@ -272,6 +279,8 @@ private fun zuiUiComponentsSections(
     onPositiveColorCommit: () -> Unit,
     onNegativeColorTextChanged: (String) -> Unit,
     onNegativeColorCommit: () -> Unit,
+    onLoadingIndicatorChanged: (Boolean) -> Unit,
+    onLoadingIndicatorStyleChanged: (LoadingIndicatorStyle) -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit
@@ -376,6 +385,32 @@ private fun zuiUiComponentsSections(
                             onValueChange = { onButtonRadiusChanged(it.toInt()) },
                             onValueChangeFinished = onButtonRadiusCommit,
                             key = "ui_components_dialog_radius"
+                        )
+                    )
+                }
+                add(
+                    SettingItem.Switch(
+                        title = stringResource(R.string.ui_components_loading_indicator_title),
+                        summary = stringResource(R.string.ui_components_loading_indicator_summary),
+                        checked = state.loadingIndicatorEnabled,
+                        onCheckedChange = onLoadingIndicatorChanged,
+                        key = "ui_components_loading_indicator"
+                    )
+                )
+                if (state.loadingIndicatorEnabled) {
+                    // Adding a style only needs a new LoadingIndicatorStyle entry plus its string.
+                    val styleLabels = LoadingIndicatorStyle.entries.associateWith {
+                        stringResource(it.labelRes)
+                    }
+                    add(
+                        SettingItem.Dropdown(
+                            label = stringResource(R.string.ui_components_loading_indicator_style_label),
+                            summary = stringResource(R.string.ui_components_loading_indicator_style_summary),
+                            value = styleLabels.getValue(state.loadingIndicatorStyle),
+                            options = LoadingIndicatorStyle.entries,
+                            optionLabel = { styleLabels.getValue(it) },
+                            onOptionSelected = onLoadingIndicatorStyleChanged,
+                            key = "ui_components_loading_indicator_style"
                         )
                     )
                 }

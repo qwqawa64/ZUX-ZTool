@@ -3,6 +3,7 @@ package com.qimian233.ztool.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qimian233.ztool.data.keys.PreferenceKeys
+import com.qimian233.ztool.data.zuiui.LoadingIndicatorStyle
 import com.qimian233.ztool.data.zuiui.PendingScopeApp
 import com.qimian233.ztool.data.zuiui.ScopeRequestOutcome
 import com.qimian233.ztool.data.zuiui.ZuiComponentScanManager
@@ -68,6 +69,16 @@ class ZuiUiComponentsViewModel(
     fun setFollowSystemColors(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(followSystemColors = enabled)
         repository.saveFollowSystemColors(enabled)
+    }
+
+    fun setLoadingIndicatorEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(loadingIndicatorEnabled = enabled)
+        repository.saveLoadingIndicatorEnabled(enabled)
+    }
+
+    fun setLoadingIndicatorStyle(style: LoadingIndicatorStyle) {
+        _uiState.value = _uiState.value.copy(loadingIndicatorStyle = style)
+        repository.saveLoadingIndicatorStyle(style)
     }
 
     /** Live slider feedback; [commitButtonRadius] writes only when the drag ends. */
@@ -173,7 +184,9 @@ data class ZuiUiComponentsUiState(
     val followSystemColors: Boolean = PreferenceKeys.ZUI_DIALOG_FOLLOW_SYSTEM_COLORS.default,
     val buttonRadiusDp: Int = PreferenceKeys.ZUI_DIALOG_BUTTON_RADIUS.default,
     val positiveColorText: String = PreferenceKeys.ZUI_DIALOG_POSITIVE_COLOR.default.toArgbText(),
-    val negativeColorText: String = PreferenceKeys.ZUI_DIALOG_NEGATIVE_COLOR.default.toArgbText()
+    val negativeColorText: String = PreferenceKeys.ZUI_DIALOG_NEGATIVE_COLOR.default.toArgbText(),
+    val loadingIndicatorEnabled: Boolean = PreferenceKeys.ZUI_LOADING_INDICATOR.default,
+    val loadingIndicatorStyle: LoadingIndicatorStyle = LoadingIndicatorStyle.DEFAULT
 )
 
 /** Targets the module managed to reinstall itself into, and those it did not. */

@@ -1293,6 +1293,20 @@ object SearchIndex {
         ),
 
         uiComponents.item(
+            id = "ui_components_loading_indicator",
+            titleRes = R.string.ui_components_loading_indicator_title,
+            summaryRes = R.string.ui_components_loading_indicator_summary
+        ),
+
+        uiComponents.item(
+            id = "ui_components_loading_indicator_style",
+            titleRes = R.string.ui_components_loading_indicator_style_label,
+            summaryRes = R.string.ui_components_loading_indicator_style_summary,
+            parentTitleRes = R.string.ui_components_loading_indicator_title,
+            parentKey = "ui_components_loading_indicator"
+        ),
+
+        uiComponents.item(
             id = "ui_components_scan",
             titleRes = R.string.ui_components_scan_title,
             summaryRes = R.string.ui_components_scan_summary_idle

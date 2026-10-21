@@ -33,7 +33,15 @@ class ZuiUiComponentsRepository(
             ).opaque().toArgbText(),
             negativeColorText = prefsUtils.loadIntegerSetting(
                 KEY_NEGATIVE_COLOR.name, KEY_NEGATIVE_COLOR.default
-            ).opaque().toArgbText()
+            ).opaque().toArgbText(),
+            loadingIndicatorEnabled = prefsUtils.loadBooleanSetting(
+                KEY_LOADING_INDICATOR.name, KEY_LOADING_INDICATOR.default
+            ),
+            loadingIndicatorStyle = LoadingIndicatorStyle.fromPref(
+                prefsUtils.loadStringSetting(
+                    KEY_LOADING_INDICATOR_STYLE.name, KEY_LOADING_INDICATOR_STYLE.default
+                )
+            )
         )
 
     fun saveDialogSkinEnabled(enabled: Boolean) {
@@ -58,6 +66,14 @@ class ZuiUiComponentsRepository(
 
     fun saveNegativeColor(argb: Int) {
         prefsUtils.saveIntegerSetting(KEY_NEGATIVE_COLOR.name, argb.opaque())
+    }
+
+    fun saveLoadingIndicatorEnabled(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LOADING_INDICATOR.name, enabled)
+    }
+
+    fun saveLoadingIndicatorStyle(style: LoadingIndicatorStyle) {
+        prefsUtils.saveStringSetting(KEY_LOADING_INDICATOR_STYLE.name, style.prefValue)
     }
 
     /** Frameworks below API 102 have no hot reload, so callers must be told instead. */
@@ -87,6 +103,8 @@ class ZuiUiComponentsRepository(
         private val KEY_RADIUS = PreferenceKeys.ZUI_DIALOG_BUTTON_RADIUS
         private val KEY_POSITIVE_COLOR = PreferenceKeys.ZUI_DIALOG_POSITIVE_COLOR
         private val KEY_NEGATIVE_COLOR = PreferenceKeys.ZUI_DIALOG_NEGATIVE_COLOR
+        private val KEY_LOADING_INDICATOR = PreferenceKeys.ZUI_LOADING_INDICATOR
+        private val KEY_LOADING_INDICATOR_STYLE = PreferenceKeys.ZUI_LOADING_INDICATOR_STYLE
 
         /** The pills are opaque by design, so a restored translucent value is normalised. */
         private fun Int.opaque(): Int = this or 0xFF000000.toInt()

@@ -29,6 +29,9 @@ object PreferenceKeys {
     // Pill appearance: colors come from the host theme unless this switch is turned off,
     // in which case the two ARGB values below are used verbatim.
     val ZUI_DIALOG_FOLLOW_SYSTEM_COLORS = BoolKey("zui_dialog_follow_system_colors", true)
+    // Replaces the ProgressDialogX spinner. The switch gates the whole replacement; the
+    // style string picks which animation the hook installs, so adding a style needs no new key.
+    val ZUI_LOADING_INDICATOR = BoolKey("zui_loading_indicator", false)
 
     val DISABLE_FLAG_SECURE = BoolKey("disable_flag_secure", false)
     val ALLOW_GET_PACKAGES = BoolKey("allow_get_packages", false)
@@ -387,6 +390,8 @@ object PreferenceKeys {
     val CHARGE_WATTS_SELECTED_OPTION = StringKey("charge_watts_selected_option", "")
     val SYSTEMUI_REALWATTS_CUSTOM_FORMAT = StringKey("systemui_realwatts_custom_format", "")
     val DESKTOP_LIVE_WALLPAPER_SCALE_MODE = StringKey("desktop_live_wallpaper_scale_mode", "fit")
+    // Enum name from LoadingIndicatorStyle; an unknown value falls back to the default style.
+    val ZUI_LOADING_INDICATOR_STYLE = StringKey("zui_loading_indicator_style", "cube_grid")
 
     // Lists grouped by type — used by ModulePreferencesUtils backup/restore
     // and by hook-side loop matching
@@ -407,6 +412,7 @@ object PreferenceKeys {
         SIDEBAR_ALLAPPS_SECTIONS,
         SIDEBAR_ALLAPPS_SEARCH,
         ZUI_DIALOG_SKIN, ZUI_DIALOG_HIDE_DIVIDER, ZUI_DIALOG_FOLLOW_SYSTEM_COLORS,
+        ZUI_LOADING_INDICATOR,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
         PEN_HAPTIC_WAVEFORM_REDIRECT,
@@ -524,6 +530,7 @@ object PreferenceKeys {
         AI_INPUT_EXPAND_SIGNS,
         PEN_HAPTIC_WAVEFORM_REDIRECT_RULES,
         HALF_WIDTH_PUNCT_SIGNS, SOGOU_ENTER_KEY_MODE,
+        ZUI_LOADING_INDICATOR_STYLE,
         CUSTOM_CONTROL_CENTER_DATE_FORMAT,
         API_URL, REGULAR,
         CUSTOM_STATUSBAR_CLOCK_FORMAT,
