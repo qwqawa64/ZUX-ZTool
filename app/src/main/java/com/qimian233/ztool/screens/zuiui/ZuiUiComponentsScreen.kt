@@ -82,6 +82,7 @@ fun ZuiUiComponentsRoute(
     val scanState by viewModel.scanState.collectAsState()
     val scrollState = rememberScrollState()
     val highlightRegistry = remember { HighlightAnchorRegistry() }
+    val reloadStartingMessage = stringResource(R.string.ui_components_reload_starting_message)
 
     HighlightController(
         highlightTargetId = targetId,
@@ -108,6 +109,13 @@ fun ZuiUiComponentsRoute(
             onOpenRecommendations = viewModel::openRecommendations,
             onApply = {
                 viewModel.applyChanges(
+                    onStart = {
+                        Toast.makeText(
+                            context,
+                            reloadStartingMessage,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
                     onUnsupported = {
                         Toast.makeText(
                             context,

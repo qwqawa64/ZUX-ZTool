@@ -111,11 +111,16 @@ class ZuiUiComponentsViewModel(
         return normalized.toLong(16).toInt() or 0xFF000000.toInt()
     }
 
-    fun applyChanges(onUnsupported: () -> Unit, onResult: (HotReloadOutcome) -> Unit) {
+    fun applyChanges(
+        onStart: () -> Unit,
+        onUnsupported: () -> Unit,
+        onResult: (HotReloadOutcome) -> Unit
+    ) {
         if (!repository.supportsHotReload()) {
             onUnsupported()
             return
         }
+        onStart()
         repository.applyByHotReload { succeeded, failed ->
             onResult(HotReloadOutcome(succeeded, failed))
         }

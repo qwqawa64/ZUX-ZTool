@@ -761,6 +761,7 @@
     <string name="ui_components_recommend_failed">Scope request failed: %1$s</string>
     <string name="ui_components_recommend_unavailable">The module is not active, so the scope cannot be requested.</string>
     <string name="ui_components_reload_button">Hot reload</string>
+    <string name="ui_components_reload_starting_message">Starting hot reload</string>
     <string name="ui_components_reload_result_message">Hot reload finished: %1$d succeeded, %2$d failed</string>
     <string name="ui_components_reload_unsupported_message">This framework does not support hot reload</string>
     <string name="sogou_ime_punct_section_title">Punctuation</string>

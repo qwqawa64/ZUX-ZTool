@@ -844,6 +844,7 @@
     <string name="ui_components_recommend_failed">作用域申请失败：%1$s</string>
     <string name="ui_components_recommend_unavailable">模块未激活，无法申请作用域</string>
     <string name="ui_components_reload_button">热重载</string>
+    <string name="ui_components_reload_starting_message">开始热重载</string>
     <string name="ui_components_reload_result_message">热重载完成：成功 %1$d 个，失败 %2$d 个</string>
     <string name="ui_components_reload_unsupported_message">当前框架不支持热重载</string>
     <string name="sogou_ime_punct_section_title">标点符号</string>
