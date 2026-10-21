@@ -91,7 +91,14 @@ class ZuiLoadingIndicatorHook : AppHookModule() {
         val style = LoadingIndicatorStyle.fromPref(
             prefs.getString(KEY_STYLE.name, KEY_STYLE.default)
         )
-        if (enabled) Settings(style) else null
+        val settings = Settings(
+            style = style,
+            followSystemColors = prefs.getBoolean(
+                KEY_FOLLOW_SYSTEM_COLORS.name, KEY_FOLLOW_SYSTEM_COLORS.default
+            ),
+            color = prefs.getInt(KEY_COLOR.name, KEY_COLOR.default)
+        )
+        if (enabled) settings else null
     }.getOrNull()
 
     private fun safeRestyle(dialog: Dialog) {
@@ -113,7 +120,7 @@ class ZuiLoadingIndicatorHook : AppHookModule() {
                 current.start()
                 continue
             }
-            val indicator = createIndicator(settings.style, indicatorColor(bar.context))
+            val indicator = createIndicator(settings.style, indicatorColor(bar.context, settings))
             bar.setIndeterminateDrawable(indicator)
             indicator.start()
         }
@@ -149,11 +156,13 @@ class ZuiLoadingIndicatorHook : AppHookModule() {
             LoadingIndicatorStyle.CUBE_GRID -> CubeGridLoadingIndicator(color)
         }
 
-    private fun indicatorColor(context: Context): Int {
-        val resolved = themeColor(context, android.R.attr.colorAccent)
+    /** Styles with a built-in palette ignore the colour they are handed. */
+    private fun indicatorColor(context: Context, settings: Settings): Int {
+        if (!settings.followSystemColors) return settings.color or 0xFF000000.toInt()
+        val themed = themeColor(context, android.R.attr.colorAccent)
             ?: themeColor(context, android.R.attr.textColorPrimary)
-            ?: FALLBACK_COLOR
-        return resolved or 0xFF000000.toInt()
+            ?: settings.color
+        return themed or 0xFF000000.toInt()
     }
 
     private fun themeColor(context: Context, attr: Int): Int? {
@@ -167,17 +176,20 @@ class ZuiLoadingIndicatorHook : AppHookModule() {
         return if (isColor) value.data else null
     }
 
-    private data class Settings(val style: LoadingIndicatorStyle)
+    private data class Settings(
+        val style: LoadingIndicatorStyle,
+        val followSystemColors: Boolean,
+        val color: Int
+    )
 
     private companion object {
         const val HOOK_ID_CONTENT_LAYOUT = "zui_loading_indicator_content_layout"
         const val HOOK_ID_CONTENT_VIEW = "zui_loading_indicator_content_view"
         const val PROGRESS_DIALOG_X = "zui.app.ProgressDialogX"
 
-        /** Matches the ZUI accent used by the dialog pill default. */
-        const val FALLBACK_COLOR = 0xFF3482FF.toInt()
-
         val KEY_ENABLED = PreferenceKeys.ZUI_LOADING_INDICATOR
         val KEY_STYLE = PreferenceKeys.ZUI_LOADING_INDICATOR_STYLE
+        val KEY_FOLLOW_SYSTEM_COLORS = PreferenceKeys.ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS
+        val KEY_COLOR = PreferenceKeys.ZUI_LOADING_INDICATOR_COLOR
     }
 }

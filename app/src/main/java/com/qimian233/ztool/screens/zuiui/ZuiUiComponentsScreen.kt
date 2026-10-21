@@ -107,6 +107,9 @@ fun ZuiUiComponentsRoute(
             onNegativeColorCommit = viewModel::commitNegativeColor,
             onLoadingIndicatorChanged = viewModel::setLoadingIndicatorEnabled,
             onLoadingIndicatorStyleChanged = viewModel::setLoadingIndicatorStyle,
+            onLoadingIndicatorFollowSystemChanged = viewModel::setLoadingIndicatorFollowSystemColors,
+            onLoadingIndicatorColorTextChanged = viewModel::setLoadingIndicatorColorText,
+            onLoadingIndicatorColorCommit = viewModel::commitLoadingIndicatorColor,
             onScan = viewModel::startScan,
             onCancelScan = viewModel::cancelScan,
             onOpenRecommendations = viewModel::openRecommendations,
@@ -200,6 +203,9 @@ private fun ZuiUiComponentsScreen(
     onNegativeColorCommit: () -> Unit,
     onLoadingIndicatorChanged: (Boolean) -> Unit,
     onLoadingIndicatorStyleChanged: (LoadingIndicatorStyle) -> Unit,
+    onLoadingIndicatorFollowSystemChanged: (Boolean) -> Unit,
+    onLoadingIndicatorColorTextChanged: (String) -> Unit,
+    onLoadingIndicatorColorCommit: () -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit,
@@ -254,6 +260,9 @@ private fun ZuiUiComponentsScreen(
                         onNegativeColorCommit = onNegativeColorCommit,
                         onLoadingIndicatorChanged = onLoadingIndicatorChanged,
                         onLoadingIndicatorStyleChanged = onLoadingIndicatorStyleChanged,
+                        onLoadingIndicatorFollowSystemChanged = onLoadingIndicatorFollowSystemChanged,
+                        onLoadingIndicatorColorTextChanged = onLoadingIndicatorColorTextChanged,
+                        onLoadingIndicatorColorCommit = onLoadingIndicatorColorCommit,
                         onScan = onScan,
                         onCancelScan = onCancelScan,
                         onOpenRecommendations = onOpenRecommendations
@@ -281,6 +290,9 @@ private fun zuiUiComponentsSections(
     onNegativeColorCommit: () -> Unit,
     onLoadingIndicatorChanged: (Boolean) -> Unit,
     onLoadingIndicatorStyleChanged: (LoadingIndicatorStyle) -> Unit,
+    onLoadingIndicatorFollowSystemChanged: (Boolean) -> Unit,
+    onLoadingIndicatorColorTextChanged: (String) -> Unit,
+    onLoadingIndicatorColorCommit: () -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit
@@ -295,7 +307,7 @@ private fun zuiUiComponentsSections(
             )
         ),
         SettingSection(
-            title = stringResource(R.string.ui_components_app_name),
+            title = stringResource(R.string.ui_components_dialog_section_title),
             items = buildList {
                 add(
                     SettingItem.Switch(
@@ -388,6 +400,11 @@ private fun zuiUiComponentsSections(
                         )
                     )
                 }
+            }
+        ),
+        SettingSection(
+            title = stringResource(R.string.ui_components_loading_dialog_section_title),
+            items = buildList {
                 add(
                     SettingItem.Switch(
                         title = stringResource(R.string.ui_components_loading_indicator_title),
@@ -413,6 +430,42 @@ private fun zuiUiComponentsSections(
                             key = "ui_components_loading_indicator_style"
                         )
                     )
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(
+                                R.string.ui_components_loading_indicator_follow_system_title
+                            ),
+                            summary = stringResource(
+                                R.string.ui_components_loading_indicator_follow_system_summary
+                            ),
+                            checked = state.loadingIndicatorFollowSystemColors,
+                            onCheckedChange = onLoadingIndicatorFollowSystemChanged,
+                            key = "ui_components_loading_indicator_follow_system"
+                        )
+                    )
+                    if (!state.loadingIndicatorFollowSystemColors) {
+                        add(
+                            SettingItem.Custom(
+                                key = "ui_components_loading_indicator_color",
+                                content = {
+                                    ZToolArgbColorTextFieldRow(
+                                        label = stringResource(
+                                            R.string.ui_components_loading_indicator_color_label
+                                        ),
+                                        value = state.loadingIndicatorColorText,
+                                        onValueChange = onLoadingIndicatorColorTextChanged,
+                                        summary = stringResource(
+                                            R.string.ui_components_loading_indicator_color_summary
+                                        ),
+                                        errorText = stringResource(
+                                            R.string.system_ui_common_argb_color_input_error
+                                        ),
+                                        onEditingFinished = onLoadingIndicatorColorCommit
+                                    )
+                                }
+                            )
+                        )
+                    }
                 }
             }
         ),

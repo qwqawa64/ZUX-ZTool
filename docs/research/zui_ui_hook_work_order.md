@@ -170,7 +170,8 @@ SystemUI, so controller-level anchors are more fragile than they look. Details i
     可直接 `setIndeterminateDrawable` 换成自绘 drawable；`isLegionStyleProduct()` 在本 build 恒 false，legion 帧不会出现；
     更稳的锚点是 `Dialog.setContentView`（`ResetAppsHelper` 在 `show()` 之后替换内容），调用点与进程归属见该文档 §4–§5
   - 状态：已实现、未上机验证。`ZuiLoadingIndicatorHook` + `LoadingIndicatorStyle`（当前只有 Cube Grid），
-    「替换加载动画」开关决定是否替换，样式下拉决定用哪种动画；`com.android.phone` 进程（`NetworkSelectActivity`）已确认留空
+    「替换加载动画」开关决定是否替换，样式下拉决定用哪种动画，颜色可跟随系统或自选；
+    `com.android.phone` 进程（`NetworkSelectActivity`）已确认留空
 - [ ] **E-02 文案排版**
   - 锚点：A7 → `R.id.message`
   - token：`text_title_dialog_zui` `progress_dialog_padding_between_progressbar_and_textview_zui`

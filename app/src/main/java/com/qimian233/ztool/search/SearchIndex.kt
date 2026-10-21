@@ -1307,6 +1307,22 @@ object SearchIndex {
         ),
 
         uiComponents.item(
+            id = "ui_components_loading_indicator_follow_system",
+            titleRes = R.string.ui_components_loading_indicator_follow_system_title,
+            summaryRes = R.string.ui_components_loading_indicator_follow_system_summary,
+            parentTitleRes = R.string.ui_components_loading_indicator_title,
+            parentKey = "ui_components_loading_indicator"
+        ),
+
+        uiComponents.item(
+            id = "ui_components_loading_indicator_color",
+            titleRes = R.string.ui_components_loading_indicator_color_label,
+            summaryRes = R.string.ui_components_loading_indicator_color_summary,
+            parentTitleRes = R.string.ui_components_loading_indicator_title,
+            parentKey = "ui_components_loading_indicator"
+        ),
+
+        uiComponents.item(
             id = "ui_components_scan",
             titleRes = R.string.ui_components_scan_title,
             summaryRes = R.string.ui_components_scan_summary_idle

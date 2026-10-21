@@ -81,6 +81,23 @@ class ZuiUiComponentsViewModel(
         repository.saveLoadingIndicatorStyle(style)
     }
 
+    fun setLoadingIndicatorFollowSystemColors(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(loadingIndicatorFollowSystemColors = enabled)
+        repository.saveLoadingIndicatorFollowSystemColors(enabled)
+    }
+
+    fun setLoadingIndicatorColorText(value: String) {
+        _uiState.value = _uiState.value.copy(
+            loadingIndicatorColorText = value.sanitizeArgbColorText()
+        )
+    }
+
+    fun commitLoadingIndicatorColor() {
+        val argb = parseOpaqueColor(_uiState.value.loadingIndicatorColorText) ?: return
+        repository.saveLoadingIndicatorColor(argb)
+        _uiState.value = _uiState.value.copy(loadingIndicatorColorText = argb.toArgbText())
+    }
+
     /** Live slider feedback; [commitButtonRadius] writes only when the drag ends. */
     fun setButtonRadius(radiusDp: Int) {
         _uiState.value = _uiState.value.copy(
@@ -186,7 +203,11 @@ data class ZuiUiComponentsUiState(
     val positiveColorText: String = PreferenceKeys.ZUI_DIALOG_POSITIVE_COLOR.default.toArgbText(),
     val negativeColorText: String = PreferenceKeys.ZUI_DIALOG_NEGATIVE_COLOR.default.toArgbText(),
     val loadingIndicatorEnabled: Boolean = PreferenceKeys.ZUI_LOADING_INDICATOR.default,
-    val loadingIndicatorStyle: LoadingIndicatorStyle = LoadingIndicatorStyle.DEFAULT
+    val loadingIndicatorStyle: LoadingIndicatorStyle = LoadingIndicatorStyle.DEFAULT,
+    val loadingIndicatorFollowSystemColors: Boolean =
+        PreferenceKeys.ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS.default,
+    val loadingIndicatorColorText: String =
+        PreferenceKeys.ZUI_LOADING_INDICATOR_COLOR.default.toArgbText()
 )
 
 /** Targets the module managed to reinstall itself into, and those it did not. */

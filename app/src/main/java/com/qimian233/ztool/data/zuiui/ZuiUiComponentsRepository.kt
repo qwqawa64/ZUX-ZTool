@@ -41,7 +41,14 @@ class ZuiUiComponentsRepository(
                 prefsUtils.loadStringSetting(
                     KEY_LOADING_INDICATOR_STYLE.name, KEY_LOADING_INDICATOR_STYLE.default
                 )
-            )
+            ),
+            loadingIndicatorFollowSystemColors = prefsUtils.loadBooleanSetting(
+                KEY_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS.name,
+                KEY_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS.default
+            ),
+            loadingIndicatorColorText = prefsUtils.loadIntegerSetting(
+                KEY_LOADING_INDICATOR_COLOR.name, KEY_LOADING_INDICATOR_COLOR.default
+            ).opaque().toArgbText()
         )
 
     fun saveDialogSkinEnabled(enabled: Boolean) {
@@ -76,6 +83,14 @@ class ZuiUiComponentsRepository(
         prefsUtils.saveStringSetting(KEY_LOADING_INDICATOR_STYLE.name, style.prefValue)
     }
 
+    fun saveLoadingIndicatorFollowSystemColors(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS.name, enabled)
+    }
+
+    fun saveLoadingIndicatorColor(argb: Int) {
+        prefsUtils.saveIntegerSetting(KEY_LOADING_INDICATOR_COLOR.name, argb.opaque())
+    }
+
     /** Frameworks below API 102 have no hot reload, so callers must be told instead. */
     fun supportsHotReload(): Boolean = advancedSettings.getApiVersion() >= HOT_RELOAD_MIN_API
 
@@ -105,6 +120,9 @@ class ZuiUiComponentsRepository(
         private val KEY_NEGATIVE_COLOR = PreferenceKeys.ZUI_DIALOG_NEGATIVE_COLOR
         private val KEY_LOADING_INDICATOR = PreferenceKeys.ZUI_LOADING_INDICATOR
         private val KEY_LOADING_INDICATOR_STYLE = PreferenceKeys.ZUI_LOADING_INDICATOR_STYLE
+        private val KEY_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS =
+            PreferenceKeys.ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS
+        private val KEY_LOADING_INDICATOR_COLOR = PreferenceKeys.ZUI_LOADING_INDICATOR_COLOR
 
         /** The pills are opaque by design, so a restored translucent value is normalised. */
         private fun Int.opaque(): Int = this or 0xFF000000.toInt()

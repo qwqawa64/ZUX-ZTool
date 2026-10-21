@@ -329,7 +329,16 @@ Implementation notes, on top of the constraints in §2.1:
 * `ZuiLoadingIndicatorHook` — hooks `Dialog.setContentView(int)` and `(View)`, matches
   the dialog by class name and the bar by type, swaps the drawable, and restarts an
   already-installed one on re-show.
-* `PreferenceKeys.ZUI_LOADING_INDICATOR` (switch, module name) and
-  `ZUI_LOADING_INDICATOR_STYLE` (string); `LoadingIndicatorStyle` maps the latter and
-  falls back to `DEFAULT` on an unknown value, so a stale preference never disables the
-  hook. Adding a style = enum entry + string + one `when` branch in the hook factory.
+* `PreferenceKeys.ZUI_LOADING_INDICATOR` (switch, module name),
+  `ZUI_LOADING_INDICATOR_STYLE` (string), `ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS`
+  (switch) and `ZUI_LOADING_INDICATOR_COLOR` (ARGB);
+  `LoadingIndicatorStyle` maps the style and falls back to `DEFAULT` on an unknown value,
+  so a stale preference never disables the hook. Adding a style = enum entry + string +
+  one `when` branch in the hook factory.
+* Colour follows the dialog-pill pattern: system mode takes the dialog theme's accent
+  (`colorAccent`, then `textColorPrimary`), custom mode takes the user's ARGB value.
+  A style that ships its own palette just ignores the colour it is handed — silent by
+  design; the only UI hint is the sentence in the colour row's summary.
+* The screen is split by control kind: a **对话框** section (button containers, divider,
+  radius, colours) and a **加载对话框** section (switch, style, colour), so the next
+  component family gets its own section instead of growing one list.
