@@ -41,9 +41,15 @@ A tick-list of every hookable ZUI component style, one item per unit of work. De
 | **A10** | `com.lenovo.common.widget.ZuiPreferenceDialogFragmentCompat.onCreateDialog` | same, settings only |
 | **A11** | `com.lenovo.common.roundedcorner.LenovoRoundedCorner.initRoundedCorner` | settings-only preference card corners |
 | **A12** | `ZuiGlobalActionsDialog.handleShow()` / `ZuiShutdownContainerView.onFinishInflate()` | SystemUI power menu — not a `Dialog` |
+| **A13** | `android.app.Dialog.show()` + `zui.app.*` class check | every ZUI dialog, returns after `onCreate` → `installContent`; obfuscation-proof, used by `ZuiDialogSkinHook` |
 
 Layers 2 (resource) and 3 (theme attribute) from provenance §3.2 / §3.3 are alternatives to
 Layer 1 for any item below.
+
+A13 (`Dialog.show()`) is what the shipped shell hook (`ZuiDialogSkinHook`) actually uses:
+`installContent`'s body is outlined into a private helper in ZUI Settings but inlined in
+SystemUI, so controller-level anchors are more fragile than they look. Details in
+[zui_dialog_button_style.md](zui_dialog_button_style.md) §1–2.
 
 ## A. Shared dialog shell
 
@@ -51,20 +57,22 @@ Layer 1 for any item below.
   - 锚点：A1（重写 `dialog_background_zui` 的解析，早于 framework 值）
   - 说明：`system_dialog_background_zui` 别名到 `@android:color/system_accent1_10`（夜间 `system_neutral2_700`），
     是**唯一**落在 APK 之外的观感输入。改它要么在 Layer 2 拦 app 本地的别名，要么在 `android` 作用域拦框架取色
-  - 备注：`ZuiDialogSkinHook` 的 `containerOverlay()` 只给**按钮区**叠色，对话框自身表面未动，此项仍未完成
+  - 备注：`ZuiDialogSkinHook` 只重绘**按钮区** panel 的背景（承担对话框底部圆角），对话框自身表面未动，此项仍未完成
 - [ ] **A-02 对话框背景与圆角**
   - 锚点：A1 → `R.id.parentPanel`
   - 样式：`Theme.Zui.BaseDialog` 的 `android:windowBackground`
   - token：`dialog_background_zui` `dialog_background_inset_zui` `dialog_background_radius_zui` `dialog_radius_zui`
   - 覆盖：四端
 - [x] **A-03 按钮区容器（填色 + 去掉按钮间分割线）**
-  - 锚点：A1 → `R.id.buttonPanel`（`findViewById(android.R.id.button1).parent`）
+  - 锚点：A13 → `android.R.id.button1` 的 parent（`R.id.buttonPanel`）
   - token：`button_background_zui` `dialog_button_background_normal_zui` `btn_dialog_zui` `dialog_radius_zui`
-  - 状态：已由 `ZuiDialogSkinHook` 实现；底部圆角 20dp 落在**按钮**背景上，不在 panel 上
-- [ ] **A-04 内容区与按钮区之间的分割线**
-  - 锚点：A1 → `R.id.divider`
+  - 状态：已由 `ZuiDialogSkinHook` 实现。按钮改为本地自建 pill（圆角、填色、配色跟随系统均可配），
+    panel 背景只负责对话框底部圆角；按钮间竖分割线由“非 Button 子视图一律隐藏”去掉
+- [x] **A-04 内容区与按钮区之间的分割线**
+  - 锚点：A13 → buttonPanel 的前一个同级裸 `View`（不用 `R.id.divider`：资源 id 每个 APK 都不同）
   - token：`divider_width_zui`（2px）
-  - 备注：用户已表示后期迭代
+  - 状态：已由 `ZuiDialogSkinHook` 的 `zui_dialog_hide_divider` 开关实现（默认关），设备上已用
+    “强行停止”对话框验证
 - [ ] **A-05 标题排版与颜色**
   - 锚点：A1 / A4 → `R.id.alertTitle`、`R.id.title_template`
   - 样式：`Theme.Zui.MessageDialog` 的 `android:windowTitleStyle` / `android:titleTextColor`
@@ -83,10 +91,13 @@ Layer 1 for any item below.
   - 锚点：A1 → 遍历 `buttonPanel` 的 `Button` 子视图
   - token：`dialog_btn_text_color_zui` `dialog_button_text_normal_zui` `dialog_button_text_disabled_zui`
   - 覆盖：四端
+  - 备注：pill 样式下 `ZuiDialogSkinHook` 已按填色亮度推导 normal/disabled 文本色（不读这三个 token），
+    非 pill 对话框与 pressed 态未覆盖
 - [ ] **A-09 对话框按钮尺寸与内边距**
   - 锚点：A1
   - token：`button_min_width_zui` `button_min_height_zui` `button_padding_horizontal_zui` `button_padding_vertical_zui` `alert_dialog_button_bar_height_zui`
   - 覆盖：四端
+  - 备注：pill 样式下已设置最小高度（`button_big_min_height_zui`）与水平内边距，其余 token 未覆盖
 
 ## B. MessageDialog
 
