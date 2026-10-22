@@ -12,6 +12,7 @@ import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.PorterDuff
 import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import android.util.TypedValue
@@ -294,19 +295,19 @@ internal class M3SwitchDrawable(
     }
 
     override fun draw(canvas: Canvas) {
-        val area = bounds
-        val width = area.width().toFloat()
-        val height = area.height().toFloat()
+        val area = visibleArea() ?: return
+        val width = area.width()
+        val height = area.height()
         if (width <= 0f || height <= 0f) return
 
         val alpha = when {
             !enabled -> (userAlpha * DISABLED_ALPHA / 255f).toInt()
             else -> userAlpha
         }
-        val left = area.left.toFloat()
-        val top = area.top.toFloat()
-        val right = left + width
-        val bottom = top + height
+        val left = area.left
+        val top = area.top
+        val right = area.right
+        val bottom = area.bottom
         val radius = height / 2f
         val progress = position.coerceIn(0f, 1f)
 
@@ -341,6 +342,29 @@ internal class M3SwitchDrawable(
         canvas.drawCircle(centerX, centerY, thumbRadius, thumbPaint)
 
         drawMark(canvas, centerX, centerY, thumbRadius, alpha)
+    }
+
+    /**
+     * The 52dp box can be wider than a narrow host slot; clip the drawing to the view
+     * rectangle so the view's canvas clip does not cut off the left cap.
+     */
+    private fun visibleArea(): RectF? {
+        val host = callback as? View
+        var left = bounds.left.toFloat()
+        var top = bounds.top.toFloat()
+        var right = bounds.right.toFloat()
+        var bottom = bounds.bottom.toFloat()
+        if (host != null) {
+            if (left < 0f) left = 0f
+            if (top < 0f) top = 0f
+            if (right > host.width) right = host.width.toFloat()
+            if (bottom > host.height) bottom = host.height.toFloat()
+        }
+        return if (right - left >= 1f && bottom - top >= 1f) {
+            RectF(left, top, right, bottom)
+        } else {
+            null
+        }
     }
 
     private fun drawMark(canvas: Canvas, centerX: Float, centerY: Float, radius: Float, alpha: Int) {

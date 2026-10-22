@@ -262,7 +262,9 @@ whole switch inside the track drawable.**
   `getLayoutDirection() == LAYOUT_DIRECTION_RTL`.
 
 The drawable is the track, so it receives the view's drawable state and can invalidate itself
-through the switch (`verifyDrawable(track) == true`).
+through the switch (`verifyDrawable(track) == true`). Before drawing it intersects its bounds
+with the host view rectangle: when a narrow slot (launcher) clips the 52dp box at the view
+edge, only the visible part is painted, which keeps the left cap round instead of flat.
 
 Colour sourcing: the on/off track colours come from the host's
 `switch_track_background_zui` state list, the thumb from `switch_thumb_zui`, and the outline
@@ -281,9 +283,11 @@ resources.
    expressive main switch bar) are still out of scope; the latter is already M3.
 2. **Pruned APKs.** The ZUI colour resources may be missing; the fallbacks keep the drawn
    switch usable instead of failing the hook.
-3. **Forced 52dp width.** All four preference widget layouts reserve 58dp (desktoplauncher
-   wraps), and `MainSwitchBar` is wrap-content, so 52dp fits. A hypothetical tighter slot
-   would clip; the M3 drawable should clamp the drawn width to `min(52dp, bounds.width())`.
+3. **Narrow slots.** The launcher's 58dp widget slot carries ~8dp of end padding, leaving
+   about 50dp, so the forced 52dp box overflowed the view and its left cap was clipped. The M3
+   drawable now intersects its bounds with the host view rectangle and draws in the visible
+   part (right edge anchored), so the pill narrows instead of losing a cap; the touch and
+   measurement boxes are unchanged.
 4. **`switch_thumb_zui_anim` is stateful.** Wrapping it must preserve its callback, or the
    checked/unchecked cross-fade stops; A1's `Drawable.Callback` forwarding is required, not
    cosmetic.
