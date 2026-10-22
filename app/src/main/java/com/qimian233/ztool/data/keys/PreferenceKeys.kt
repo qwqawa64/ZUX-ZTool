@@ -32,9 +32,11 @@ object PreferenceKeys {
     // Replaces the ProgressDialogX spinner. The switch gates the whole replacement; the
     // style string picks which animation the hook installs, so adding a style needs no new key.
     val ZUI_LOADING_INDICATOR = BoolKey("zui_loading_indicator", false)
-    // Restyles `zui.widget.Switch`: the switch gates the module, the two strings below pick
-    // the indicator/M3 look and which mark (check on / cross off / both) is drawn.
+    // Restyles `zui.widget.Switch` (and plain `android.widget.Switch`): the switch gates the
+    // module, the two strings below pick the indicator/M3 look and which marks are drawn.
     val ZUI_SWITCH_STYLE = BoolKey("zui_switch_style", false)
+    // M3 track accent: the stock ZUI/system track colour unless the user supplies an ARGB.
+    val ZUI_SWITCH_FOLLOW_SYSTEM_COLORS = BoolKey("zui_switch_follow_system_colors", true)
     // Indicator colour: the host accent unless this switch is off, in which case the ARGB
     // value below is used. Styles with a built-in palette ignore it silently.
     val ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS =
@@ -313,6 +315,8 @@ object PreferenceKeys {
     val ZUI_DIALOG_NEGATIVE_COLOR = IntKey("zui_dialog_negative_color", 0xFF454545.toInt())
     // Single-colour loading animations; ignored by styles that ship their own palette.
     val ZUI_LOADING_INDICATOR_COLOR = IntKey("zui_loading_indicator_color", 0xFF3482FF.toInt())
+    // M3 switch track accent used when ZUI_SWITCH_FOLLOW_SYSTEM_COLORS is off.
+    val ZUI_SWITCH_TRACK_COLOR = IntKey("zui_switch_track_color", 0xFF3482FF.toInt())
     val NOTIFY_NUM_SIZE = IntKey("notify_num_size", 4)
     val CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR = IntKey("Custom_ControlCenterDateTextColor", 0xFFFFFFFF.toInt())
     val TILE_ROUND_CORNER_RADIUS = IntKey("tile_round_corner_radius", 96)
@@ -425,7 +429,7 @@ object PreferenceKeys {
         SIDEBAR_ALLAPPS_SEARCH,
         ZUI_DIALOG_SKIN, ZUI_DIALOG_HIDE_DIVIDER, ZUI_DIALOG_FOLLOW_SYSTEM_COLORS,
         ZUI_LOADING_INDICATOR, ZUI_LOADING_INDICATOR_FOLLOW_SYSTEM_COLORS,
-        ZUI_SWITCH_STYLE,
+        ZUI_SWITCH_STYLE, ZUI_SWITCH_FOLLOW_SYSTEM_COLORS,
         DISABLE_HBM_THERMAL_LIMIT, FINE_VOLUME_STEPS, FIX_NIGHT_MODE_OVERRIDE,
         VOLUME_KEY_NONLINEAR, DISABLE_SAFE_VOLUME_WARNING, VOLUME_SLIDER_FIDELITY,
         PEN_HAPTIC_WAVEFORM_REDIRECT,
@@ -508,6 +512,7 @@ object PreferenceKeys {
         CUSTOM_STATUSBAR_CLOCK_TEXT_COLOR, NOTIFY_NUM_SIZE,
         ZUI_DIALOG_BUTTON_RADIUS, ZUI_DIALOG_POSITIVE_COLOR, ZUI_DIALOG_NEGATIVE_COLOR,
         ZUI_LOADING_INDICATOR_COLOR,
+        ZUI_SWITCH_TRACK_COLOR,
         CUSTOM_CONTROL_CENTER_DATE_TEXT_COLOR,
         TILE_ROUND_CORNER_RADIUS, HEAD_UP_ROUND_CORNER_RADIUS,
         CUSTOM_QS_ACTIVE_COLOR_VAL, CUSTOM_LABEL_ACTIVE_COLOR_VAL,

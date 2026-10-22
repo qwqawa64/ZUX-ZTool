@@ -429,7 +429,7 @@ internal class M3SwitchDrawable(
     }
 }
 
-/** Reads a theme colour by attribute, falling back when the host theme does not define it. */
+/** Colour lookups against the host theme and by resource name, all with explicit fallbacks. */
 internal object SwitchThemeColors {
 
     fun color(context: Context, attr: Int, fallback: Int): Int {
@@ -446,10 +446,29 @@ internal object SwitchThemeColors {
     fun isNight(context: Context): Boolean =
         (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
+
+    /** Resolves a host resource by name; pruned APKs simply return null. */
+    fun colorStateList(context: Context, name: String): ColorStateList? {
+        val id = context.resources.getIdentifier(name, "color", context.packageName)
+        if (id == 0) return null
+        return runCatching { context.getColorStateList(id) }.getOrNull()
+    }
+
+    fun themeColorStateList(context: Context, attr: Int): ColorStateList? {
+        val value = TypedValue()
+        if (!context.theme.resolveAttribute(attr, value, true)) return null
+        if (value.resourceId != 0) {
+            return runCatching { context.getColorStateList(value.resourceId) }.getOrNull()
+        }
+        val isColor = value.type >= TypedValue.TYPE_FIRST_COLOR_INT &&
+            value.type <= TypedValue.TYPE_LAST_COLOR_INT
+        return if (isColor) ColorStateList.valueOf(value.data) else null
+    }
 }
 
-/** Defaults when a ZUI theme lacks the accent; the value matches the module blue. */
+/** Defaults when a ZUI theme lacks the accent or outline. */
 internal object SwitchFallbackColors {
     const val ACCENT = 0xFF3482FF.toInt()
     const val CROSS = 0xFF7A7A7A.toInt()
+    const val OUTLINE = 0xFF79747E.toInt()
 }

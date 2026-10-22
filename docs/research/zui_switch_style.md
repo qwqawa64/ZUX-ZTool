@@ -1,18 +1,20 @@
 # ZUI Switch (G-01): stable hook point, indicator and M3 restyle designs
 
-Question this note answers: **does `zui.widget.Switch` have a stable hook point that can change
-its style**, enough for (1) a check/cross indicator and (2) an M3-style replacement?
+Question this note answers: **does the ZUI switch have a stable hook point that can change its
+style**, enough for (1) a check/cross indicator and (2) an M3-style replacement?
 
-Answer in one line: **yes — the class is public and unminified, shipped by every in-scope APK,
-and its constructors plus the inherited `android.widget.Switch` public setters are sufficient
-to restyle every instance without touching any minified internal.**
+Answer in one line: **yes — `zui.widget.Switch` is a thin subclass of the platform
+`android.widget.Switch`, so hooking the base class's constructors plus its public setters
+restyles both the ZUI rows and the plain platform switches Settings uses elsewhere, without
+touching any minified internal.**
 
 The analysis in §1–2 is read-only. Reference APKs live in `F:\USER\Jadx项目\Lenovo`; the
 `com.android.settings` copy on the attached device (17.5.0.260902) was pulled and checked
 against the reference (17.5.0.251204) for the resources and descriptors this note relies on.
-The implementation lives in `ZuiSwitchStyleHook` (see §6). Device checks so far: indicator
-check-on, and M3 on/off with check, cross and both marks; light theme, RTL and the launcher
-scopes are still to be exercised.
+The implementation lives in `ZuiSwitchStyleHook` (see §6). Device checks: dark and light
+themes, indicator check, M3 with check/cross/both, a custom track colour, and the plain
+`android.widget.Switch` on the Wi-Fi network-detail page; RTL and the launcher scopes are
+still to be exercised.
 
 ---
 
@@ -114,20 +116,30 @@ the 58dp slot with ~14dp slack on the start side (LTR). This matches the resourc
 `mSwitchWidth = max(40, 2 × 22) = 44dp`; `mSwitchHeight = max(track 24, thumb 32) = 32dp`,
 with the layer-list's `gravity=center_vertical` keeping the visible pill 24dp tall.
 
+### 1.6 Plain platform switches are not all `zui.widget.Switch`
+
+The Wi-Fi network-detail page (connected network → details) uses the AOSP
+`preference_widget_switch` layout, whose bare `<Switch>` resolves to `android.widget.Switch`,
+not the ZUI widget layout. That switch kept the stock look while the ZUI rows were restyled,
+so the hook anchors on the platform base class instead of the ZUI subclass. On the device the
+auto-connect node reports `class="android.widget.Switch"`.
+
+A `zui.widget.Switch` construction is still covered: the base constructor hook runs while
+`zui.widget.Switch`'s `super(...)` executes, and the subclass body afterwards only handles
+vibration/alignment, never the thumb or track.
+
 ---
 
 ## 2. The hook point
 
 ### 2.1 Anchor
 
-Hook **every declared constructor of `zui.widget.Switch`** after
-`chain.proceed()`, then restyle `chain.thisObject` (this is the same constructor-hook shape
-already used by `CustomQsRoundCorner`). Resolve the class from the host loader by name:
+Hook **every declared constructor of `android.widget.Switch`** after `chain.proceed()`, then
+restyle `chain.thisObject` (the constructor-hook shape already used by `CustomQsRoundCorner`):
 
 ```kotlin
-val cls = runCatching { param.classLoader.loadClass("zui.widget.Switch") }.getOrNull()
-    ?: return                       // pruned consumer: keep the stock look
-cls.declaredConstructors.forEachIndexed { index, ctor ->
+val ctors = android.widget.Switch::class.java.declaredConstructors
+ctors.forEachIndexed { index, ctor ->
     hookWithId(ctor, "zui_switch_ctor_$index") { chain ->
         val result = chain.proceed()
         runCatching { restyle(chain.thisObject as android.widget.Switch) }
@@ -138,13 +150,11 @@ cls.declaredConstructors.forEachIndexed { index, ctor ->
 
 Why this is stable:
 
-* The class name is public and survives R8; constructors cannot be renamed independently of
-  the class, and host code (`SwitchPreference`, `MainSwitchBar`, layouts) instantiates the
-  class by that name.
-* It is present in all four in-scope APKs, including the builds installed on the device.
-* `loadClass` + `declaredConstructors` tolerates a build that adds or drops an overload;
-  a missing class degrades to the stock switch instead of failing.
-* No resource ID, nine-patch padding or minified member is hardcoded.
+* The platform class exists on every Android build; no host-specific class name to resolve.
+* `declaredConstructors` tolerates a build that adds or drops an overload.
+* The subclass hook is not needed: `zui.widget.Switch` cannot bypass its `super(...)`.
+* No resource ID, nine-patch padding or minified member is hardcoded; every colour/resource
+  lookup is by name with a fallback.
 
 ### 2.2 Public API surface the restyle uses
 
@@ -239,8 +249,8 @@ whole switch inside the track drawable.**
 
 `M3SwitchDrawable` draws:
 
-* track: rounded rect 52×32dp, radius 16dp; colour animated between
-  `colorPrimary` (on) and a surface-variant/outline pair (off), disabled alpha applied;
+* track: rounded rect 52×32dp, radius 16dp; colour animated between the follow-system
+  on colour (or the user ARGB) and the stock ZUI off colour, disabled alpha applied;
 * thumb: a constant 24dp circle whose centre animates between off `(16dp, r=12dp)` and on
   `(36dp, r=12dp)` on `state_checked` change (`scheduleSelf` ticker, ~200ms eased). Stock M3
   shrinks the off thumb to 16dp, but a constant size keeps the optional check and cross
@@ -254,22 +264,23 @@ whole switch inside the track drawable.**
 The drawable is the track, so it receives the view's drawable state and can invalidate itself
 through the switch (`verifyDrawable(track) == true`).
 
-Colour sourcing: `android.R.attr.colorPrimary` / `colorOnPrimary` / `colorOutline` /
-`colorSurfaceVariant` from the host theme, with `android.R.color.system_accent1_*` /
-`system_neutral*` fallbacks. `SystemUI`'s and Settings' themes both expose these attributes;
-the loading-indicator hook already uses the same `themeColor()` helper.
+Colour sourcing: the on/off track colours come from the host's
+`switch_track_background_zui` state list, the thumb from `switch_thumb_zui`, and the outline
+from the theme's `textColorSecondary`. These are the same resources the stock ZUI switch uses,
+so dynamic colour and day/night mode apply. `ZUI_SWITCH_FOLLOW_SYSTEM_COLORS` off replaces the
+on colour with `ZUI_SWITCH_TRACK_COLOR`; the off track, outline and thumb stay system-derived.
+Fixed M3 baseline colours remain only as last-resort fallbacks when a pruned APK lacks the
+resources.
 
 ---
 
 ## 5. Constraints and degradation
 
-1. **Only `zui.widget.Switch` is covered.** Stock `android.widget.Switch`, `SwitchCompat` and
-   `MaterialSwitch` instances are not ZUI-styled and are out of scope; the expressive
-   `settingslib_expressive_main_switch_bar` already uses `MaterialSwitch` and should be left
-   alone. A bare `<Switch>` tag is not necessarily a `zui.widget.Switch` (it depends on which
-   view inflater the host installs); the explicit `zui.widget.Switch` tags in the preference
-   widget layout and in ordinary layouts always are.
-2. **Pruned APKs.** If `zui.widget.Switch` is missing, skip; never assume resources exist.
+1. **Platform `android.widget.Switch` is the anchor.** Plain Material/AOSP switches, including
+   the Wi-Fi network-detail one, are covered. `SwitchCompat` and `MaterialSwitch` (the
+   expressive main switch bar) are still out of scope; the latter is already M3.
+2. **Pruned APKs.** The ZUI colour resources may be missing; the fallbacks keep the drawn
+   switch usable instead of failing the hook.
 3. **Forced 52dp width.** All four preference widget layouts reserve 58dp (desktoplauncher
    wraps), and `MainSwitchBar` is wrap-content, so 52dp fits. A hypothetical tighter slot
    would clip; the M3 drawable should clamp the drawn width to `min(52dp, bounds.width())`.
@@ -294,12 +305,13 @@ the loading-indicator hook already uses the same `themeColor()` helper.
 * Hook module: `hook/modules/zuiui/ZuiSwitchStyleHook.kt` (registered in
   `HookManager.registerZuiWidgetModules()`), targets
   `ScopeKeys.SETTINGS`, `SYSTEM_UI`, `LAUNCHER`, `DESKTOP_LAUNCHER`; `supportsPackage()`
-  returns true so any scoped app that bundles `zui.widget.Switch` is covered.
+  returns true and the anchor is the platform switch class, so any scoped app is covered.
 * Drawables: `hook/modules/zuiui/switch/SwitchStyleDrawables.kt` — `GlyphThumbDrawable`,
   `TransparentThumbDrawable`, `M3SwitchDrawable`, the glyph and theme-colour helpers.
 * Preference keys: `ZUI_SWITCH_STYLE` (Bool master), `ZUI_SWITCH_STYLE_KIND`
-  (`indicator` / `m3`) and `ZUI_SWITCH_MARK` (`none` / `check` / `cross` / `both`), mirrored
-  by `SwitchStyle` / `SwitchMark` in `data/zuiui/SwitchStyle.kt`.
+  (`indicator` / `m3`), `ZUI_SWITCH_MARK` (`none` / `check` / `cross` / `both`),
+  `ZUI_SWITCH_FOLLOW_SYSTEM_COLORS` and `ZUI_SWITCH_TRACK_COLOR`, mirrored by
+  `SwitchStyle` / `SwitchMark` in `data/zuiui/SwitchStyle.kt`.
 * Frontend: the "开关" section of the existing ZUI UI components page
   (`ZuiUiComponentsViewModel` / `ZuiUiComponentsRepository`), with matching search entries.
 * Verification (device): WLAN main switch, Display preference rows, a disabled switch, dark
@@ -316,5 +328,8 @@ the loading-indicator hook already uses the same `themeColor()` helper.
 2. The M3 thumb keeps a constant 24dp size in both states (stock M3 shrinks it to 16dp off),
    so the check and cross marks stay the same size; the M3 style honours the same mark option
    as the indicator.
-3. Colours follow the host accent (`colorAccent`) with fixed M3 baseline neutrals for the
-   off track, outline and thumb; there are no colour pickers.
+3. Colours: follow-system mode derives the on/off track, thumb and outline from the host's
+   `switch_track_background_zui`, `switch_thumb_zui` and `textColorSecondary`, so dynamic colour
+   and day/night apply. Turning follow-system off replaces only the on-track colour with
+   `ZUI_SWITCH_TRACK_COLOR`; the off state stays system-derived. The check glyph uses the same
+   on-track colour, the cross a contrast grey.

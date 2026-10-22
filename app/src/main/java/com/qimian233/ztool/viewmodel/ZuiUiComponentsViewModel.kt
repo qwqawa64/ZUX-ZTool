@@ -109,6 +109,23 @@ class ZuiUiComponentsViewModel(
         repository.saveSwitchMark(mark)
     }
 
+    fun setSwitchFollowSystemColors(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(switchFollowSystemColors = enabled)
+        repository.saveSwitchFollowSystemColors(enabled)
+    }
+
+    fun setSwitchTrackColorText(value: String) {
+        _uiState.value = _uiState.value.copy(
+            switchTrackColorText = value.sanitizeArgbColorText()
+        )
+    }
+
+    fun commitSwitchTrackColor() {
+        val argb = parseOpaqueColor(_uiState.value.switchTrackColorText) ?: return
+        repository.saveSwitchTrackColor(argb)
+        _uiState.value = _uiState.value.copy(switchTrackColorText = argb.toArgbText())
+    }
+
     fun commitLoadingIndicatorColor() {
         val argb = parseOpaqueColor(_uiState.value.loadingIndicatorColorText) ?: return
         repository.saveLoadingIndicatorColor(argb)
@@ -227,7 +244,11 @@ data class ZuiUiComponentsUiState(
         PreferenceKeys.ZUI_LOADING_INDICATOR_COLOR.default.toArgbText(),
     val switchStyleEnabled: Boolean = PreferenceKeys.ZUI_SWITCH_STYLE.default,
     val switchStyle: SwitchStyle = SwitchStyle.DEFAULT,
-    val switchMark: SwitchMark = SwitchMark.DEFAULT
+    val switchMark: SwitchMark = SwitchMark.DEFAULT,
+    val switchFollowSystemColors: Boolean =
+        PreferenceKeys.ZUI_SWITCH_FOLLOW_SYSTEM_COLORS.default,
+    val switchTrackColorText: String =
+        PreferenceKeys.ZUI_SWITCH_TRACK_COLOR.default.toArgbText()
 )
 
 /** Targets the module managed to reinstall itself into, and those it did not. */

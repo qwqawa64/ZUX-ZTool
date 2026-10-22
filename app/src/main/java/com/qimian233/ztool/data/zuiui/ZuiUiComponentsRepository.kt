@@ -59,7 +59,14 @@ class ZuiUiComponentsRepository(
             ),
             switchMark = SwitchMark.fromPref(
                 prefsUtils.loadStringSetting(KEY_SWITCH_MARK.name, KEY_SWITCH_MARK.default)
-            )
+            ),
+            switchFollowSystemColors = prefsUtils.loadBooleanSetting(
+                KEY_SWITCH_FOLLOW_SYSTEM_COLORS.name,
+                KEY_SWITCH_FOLLOW_SYSTEM_COLORS.default
+            ),
+            switchTrackColorText = prefsUtils.loadIntegerSetting(
+                KEY_SWITCH_TRACK_COLOR.name, KEY_SWITCH_TRACK_COLOR.default
+            ).opaque().toArgbText()
         )
 
     fun saveDialogSkinEnabled(enabled: Boolean) {
@@ -114,6 +121,14 @@ class ZuiUiComponentsRepository(
         prefsUtils.saveStringSetting(KEY_SWITCH_MARK.name, mark.prefValue)
     }
 
+    fun saveSwitchFollowSystemColors(enabled: Boolean) {
+        prefsUtils.saveBooleanSetting(KEY_SWITCH_FOLLOW_SYSTEM_COLORS.name, enabled)
+    }
+
+    fun saveSwitchTrackColor(argb: Int) {
+        prefsUtils.saveIntegerSetting(KEY_SWITCH_TRACK_COLOR.name, argb.opaque())
+    }
+
     /** Frameworks below API 102 have no hot reload, so callers must be told instead. */
     fun supportsHotReload(): Boolean = advancedSettings.getApiVersion() >= HOT_RELOAD_MIN_API
 
@@ -149,6 +164,9 @@ class ZuiUiComponentsRepository(
         private val KEY_SWITCH_STYLE = PreferenceKeys.ZUI_SWITCH_STYLE
         private val KEY_SWITCH_STYLE_KIND = PreferenceKeys.ZUI_SWITCH_STYLE_KIND
         private val KEY_SWITCH_MARK = PreferenceKeys.ZUI_SWITCH_MARK
+        private val KEY_SWITCH_FOLLOW_SYSTEM_COLORS =
+            PreferenceKeys.ZUI_SWITCH_FOLLOW_SYSTEM_COLORS
+        private val KEY_SWITCH_TRACK_COLOR = PreferenceKeys.ZUI_SWITCH_TRACK_COLOR
 
         /** The pills are opaque by design, so a restored translucent value is normalised. */
         private fun Int.opaque(): Int = this or 0xFF000000.toInt()

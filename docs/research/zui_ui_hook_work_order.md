@@ -211,10 +211,10 @@ SystemUI, so controller-level anchors are more fragile than they look. Details i
   - 样式：`Widget.Zui.CompoundButton.Switch`
   - token：`switch_thumb_zui` `switch_track_zui` `switch_track_background_zui` `ic_switch_track_*_zui` `ic_btn_switch_thumb_*_zui` `switch_thumb_padding_left_zui` `switch_thumb_padding_right_zui`
   - 覆盖：四端
-  - 调研：[zui_switch_style.md](zui_switch_style.md)。钩点确认：`zui.widget.Switch` 为公开未混淆类，
-    四个安装版 APK 均定义该类。已实现 `ZuiSwitchStyleHook`：勾/叉包 thumb drawable；M3 用
-    `setSwitchMinWidth(52dp)` + 透明 thumb + 自绘 track（thumb 两态等大，勾叉同尺寸）。
-    深色模式下已上机验证勾/叉与 M3 两态；浅色、RTL、launcher/desktoplauncher 回归待补
+  - 调研：[zui_switch_style.md](zui_switch_style.md)。钩点为 `android.widget.Switch` 全部构造器，
+    同时覆盖 `zui.widget.Switch` 与 AOSP Wi-Fi 详情页的裸 Switch。已实现勾/叉 thumb drawable、
+    M3 自绘 track（thumb 两态等大），轨道配色可跟随系统或自定义 ARGB。日夜模式、勾/叉/M3、
+    自定义颜色与网络详情页已验证；RTL、launcher/desktoplauncher 回归待补
 - [ ] **G-02 CheckBox**
   - 锚点：A8
   - 样式：`Widget.Zui.CompoundButton.CheckBox`

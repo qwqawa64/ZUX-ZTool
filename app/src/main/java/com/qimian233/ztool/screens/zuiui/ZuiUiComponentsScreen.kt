@@ -115,6 +115,9 @@ fun ZuiUiComponentsRoute(
             onSwitchStyleEnabledChanged = viewModel::setSwitchStyleEnabled,
             onSwitchStyleChanged = viewModel::setSwitchStyle,
             onSwitchMarkChanged = viewModel::setSwitchMark,
+            onSwitchFollowSystemChanged = viewModel::setSwitchFollowSystemColors,
+            onSwitchTrackColorTextChanged = viewModel::setSwitchTrackColorText,
+            onSwitchTrackColorCommit = viewModel::commitSwitchTrackColor,
             onScan = viewModel::startScan,
             onCancelScan = viewModel::cancelScan,
             onOpenRecommendations = viewModel::openRecommendations,
@@ -214,6 +217,9 @@ private fun ZuiUiComponentsScreen(
     onSwitchStyleEnabledChanged: (Boolean) -> Unit,
     onSwitchStyleChanged: (SwitchStyle) -> Unit,
     onSwitchMarkChanged: (SwitchMark) -> Unit,
+    onSwitchFollowSystemChanged: (Boolean) -> Unit,
+    onSwitchTrackColorTextChanged: (String) -> Unit,
+    onSwitchTrackColorCommit: () -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit,
@@ -274,6 +280,9 @@ private fun ZuiUiComponentsScreen(
                         onSwitchStyleEnabledChanged = onSwitchStyleEnabledChanged,
                         onSwitchStyleChanged = onSwitchStyleChanged,
                         onSwitchMarkChanged = onSwitchMarkChanged,
+                        onSwitchFollowSystemChanged = onSwitchFollowSystemChanged,
+                        onSwitchTrackColorTextChanged = onSwitchTrackColorTextChanged,
+                        onSwitchTrackColorCommit = onSwitchTrackColorCommit,
                         onScan = onScan,
                         onCancelScan = onCancelScan,
                         onOpenRecommendations = onOpenRecommendations
@@ -307,6 +316,9 @@ private fun zuiUiComponentsSections(
     onSwitchStyleEnabledChanged: (Boolean) -> Unit,
     onSwitchStyleChanged: (SwitchStyle) -> Unit,
     onSwitchMarkChanged: (SwitchMark) -> Unit,
+    onSwitchFollowSystemChanged: (Boolean) -> Unit,
+    onSwitchTrackColorTextChanged: (String) -> Unit,
+    onSwitchTrackColorCommit: () -> Unit,
     onScan: () -> Unit,
     onCancelScan: () -> Unit,
     onOpenRecommendations: () -> Unit
@@ -524,6 +536,44 @@ private fun zuiUiComponentsSections(
                             key = "ui_components_switch_mark"
                         )
                     )
+                    if (state.switchStyle == SwitchStyle.M3) {
+                        add(
+                            SettingItem.Switch(
+                                title = stringResource(
+                                    R.string.ui_components_switch_follow_system_title
+                                ),
+                                summary = stringResource(
+                                    R.string.ui_components_switch_follow_system_summary
+                                ),
+                                checked = state.switchFollowSystemColors,
+                                onCheckedChange = onSwitchFollowSystemChanged,
+                                key = "ui_components_switch_follow_system"
+                            )
+                        )
+                        if (!state.switchFollowSystemColors) {
+                            add(
+                                SettingItem.Custom(
+                                    key = "ui_components_switch_track_color",
+                                    content = {
+                                        ZToolArgbColorTextFieldRow(
+                                            label = stringResource(
+                                                R.string.ui_components_switch_color_label
+                                            ),
+                                            value = state.switchTrackColorText,
+                                            onValueChange = onSwitchTrackColorTextChanged,
+                                            summary = stringResource(
+                                                R.string.ui_components_switch_color_summary
+                                            ),
+                                            errorText = stringResource(
+                                                R.string.system_ui_common_argb_color_input_error
+                                            ),
+                                            onEditingFinished = onSwitchTrackColorCommit
+                                        )
+                                    }
+                                )
+                            )
+                        }
+                    }
                 }
             }
         ),

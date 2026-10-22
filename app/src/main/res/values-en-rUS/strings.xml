@@ -766,6 +766,10 @@
     <string name="ui_components_switch_mark_check">Check when on</string>
     <string name="ui_components_switch_mark_cross">Cross when off</string>
     <string name="ui_components_switch_mark_both">Check and cross</string>
+    <string name="ui_components_switch_follow_system_title">Follow system track colors</string>
+    <string name="ui_components_switch_follow_system_summary">Uses the ZUI switch track colors and follows dynamic color and day/night mode.</string>
+    <string name="ui_components_switch_color_label">Track color</string>
+    <string name="ui_components_switch_color_summary">ARGB hex; opacity is forced to FF. Only the on-state track is coloured.</string>
     <string name="ui_components_switch_section_title">Switches</string>
     <string name="ui_components_dialog_section_title">Dialogs</string>
     <string name="ui_components_loading_dialog_section_title">Loading dialogs</string>

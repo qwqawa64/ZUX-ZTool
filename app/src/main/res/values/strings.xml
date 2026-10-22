@@ -849,6 +849,10 @@
     <string name="ui_components_switch_mark_check">仅开启时显示对勾</string>
     <string name="ui_components_switch_mark_cross">仅关闭时显示叉号</string>
     <string name="ui_components_switch_mark_both">对勾与叉号</string>
+    <string name="ui_components_switch_follow_system_title">轨道配色跟随系统</string>
+    <string name="ui_components_switch_follow_system_summary">取 ZUI 开关轨道的系统色，并随动态取色与日夜模式变化</string>
+    <string name="ui_components_switch_color_label">轨道颜色</string>
+    <string name="ui_components_switch_color_summary">ARGB 十六进制，不透明度固定为 FF；仅影响开启时的轨道</string>
     <string name="ui_components_switch_section_title">开关</string>
     <string name="ui_components_dialog_section_title">对话框</string>
     <string name="ui_components_loading_dialog_section_title">加载对话框</string>

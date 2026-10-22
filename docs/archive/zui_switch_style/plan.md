@@ -1,12 +1,15 @@
 # ZUI Switch restyle — implementation plan
 
-Status: implemented (`ZuiSwitchStyleHook` + the "开关" settings section). Dark-mode device
-checks done for indicator check-on and M3 with check, cross and both; light theme, RTL and the
-launcher/desktoplauncher scopes are still to be exercised.
+Status: implemented (`ZuiSwitchStyleHook` + the "开关" settings section). Follow-ups landed
+during device testing: the anchor moved to the platform `android.widget.Switch` (covers the
+AOSP Wi-Fi detail switch), the M3 thumb is a constant 24dp so the marks match, and the track
+colour follows the stock ZUI switch palette or a user ARGB. Verified on device: dark and
+light themes, indicator check, M3 check/cross/both, custom colour, and the network-detail
+switch; RTL and the launcher/desktoplauncher scopes are still to be exercised.
 
 Implements work-order item G-01 per `docs/research/zui_switch_style.md`.
-Anchor: every declared constructor of `zui.widget.Switch` (Settings / SystemUI /
-launcher / desktoplauncher). Two user-selectable styles plus a mark option:
+Anchor: every declared constructor of `android.widget.Switch` (covers `zui.widget.Switch`).
+Two user-selectable styles plus a mark and colour option:
 
 * `indicator` — keep the ZUI track; wrap the thumb drawable and draw
   check-when-on / cross-when-off according to the mark option.
@@ -21,6 +24,8 @@ launcher / desktoplauncher). Two user-selectable styles plus a mark option:
 | `zui_switch_style` | Bool (master) | `false` |
 | `zui_switch_style_kind` | String (`indicator` / `m3`) | `indicator` |
 | `zui_switch_mark` | String (`none` / `check` / `cross` / `both`) | `check` |
+| `zui_switch_follow_system_colors` | Bool (`m3` track accent) | `true` |
+| `zui_switch_track_color` | Int ARGB (`m3` accent override) | `0xFF3482FF` |
 
 ## Files
 
