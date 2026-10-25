@@ -160,7 +160,7 @@ SystemUI, so controller-level anchors are more fragile than they look. Details i
 
 ## E. ProgressDialogX
 
-- [ ] **E-01 旋转指示器**
+- [x] **E-01 旋转指示器**
   - 锚点：A7 / A8（`zui.widget.ProgressBar` 构造）
   - 样式：`Widget.Zui.ProgressBar.Large`
   - token：`progressbar_loading_zui` `progressbar_rotate_zui` `progressbar_large_zui`
