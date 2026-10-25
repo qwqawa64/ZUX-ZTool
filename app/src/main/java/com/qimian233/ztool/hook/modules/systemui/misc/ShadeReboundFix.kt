@@ -1,5 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.misc
 
+import android.annotation.SuppressLint
+import android.os.Build
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
@@ -25,6 +27,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
  * mechanism. Once a ZUI release ships a proper fix, gate this hook off by
  * version in the UI switch (frontend-side version gating).
  */
+@SuppressLint("PrivateApi")
 class ShadeReboundFix : AppHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.SHADE_REBOUND_FIX.name
@@ -33,6 +36,10 @@ class ShadeReboundFix : AppHookModule() {
 
     override fun handleLoadPackage(param: PackageLoadedParam) {
         if (param.packageName != ScopeKeys.SYSTEM_UI.packageName) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
+            logger.info("No need to enable shade rebound fix on android 17 and above.")
+            return
+        }
 
         val cl = param.defaultClassLoader
         val featureClass = try {
@@ -44,7 +51,7 @@ class ShadeReboundFix : AppHookModule() {
 
         try {
             val animEnable = featureClass.getDeclaredMethod("animEnable")
-            hookWithId(animEnable, "shade_rebound_aosp_fallback") { chain ->
+            hookWithId(animEnable, "shade_rebound_aosp_fallback") {
                 logger.trace("QsReboundFeature.animEnable -> false (AOSP fallback)")
                 false
             }
