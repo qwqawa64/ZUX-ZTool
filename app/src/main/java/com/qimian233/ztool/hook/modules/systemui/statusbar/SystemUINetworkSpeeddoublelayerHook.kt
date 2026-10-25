@@ -3,6 +3,7 @@ package com.qimian233.ztool.hook.modules.systemui.statusbar
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.TrafficStats
+import android.os.Build
 import android.os.Message
 import android.text.Html
 import android.util.AttributeSet
@@ -117,7 +118,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
             hookWithId(handleMessageMethod, "handle_message") { chain ->
                 val handler = chain.thisObject
                 val handlerCls = handler.javaClass
-                val this0Field: Field = handlerCls.getDeclaredField("this\$0")
+                val this0Field: Field = handlerCls.getDeclaredField($$"this$0")
                 this0Field.isAccessible = true
                 val networkSpeedView = this0Field.get(handler)
                     ?: return@hookWithId chain.proceed()
@@ -318,7 +319,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
         // Fallback: iterate common inner class indexes
         for (i in 1..10) {
             try {
-                val cls = classLoader.loadClass(NETWORK_SPEED_VIEW_CLASS + "$" + i)
+                val cls = classLoader.loadClass("$NETWORK_SPEED_VIEW_CLASS$$i")
                 // Verify it is a Handler subclass (has the handleMessage method)
                 try {
                     cls.getDeclaredMethod("handleMessage", Message::class.java)
@@ -333,8 +334,7 @@ class SystemUINetworkSpeeddoublelayerHook : AppHookModule() {
     }
 
     companion object {
-        private const val PREFS_NAME = "xposed_module_config"
         private val SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
-        private const val NETWORK_SPEED_VIEW_CLASS = "com.android.systemui.zui.NetworkSpeedView"
+        private var NETWORK_SPEED_VIEW_CLASS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) "com.android.systemui.statusbar.view.NetworkSpeedView" else "com.android.systemui.zui.NetworkSpeedView"
     }
 }
