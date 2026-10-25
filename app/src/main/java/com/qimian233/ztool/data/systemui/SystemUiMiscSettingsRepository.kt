@@ -10,12 +10,19 @@ class SystemUiMiscSettingsRepository(context: Context) {
     private val prefsUtils = ModulePreferencesUtils(context)
 
     fun loadState(): SystemUiMiscSettingsUiState {
+        // ZUXOS 2.0 (Android 17) ships the native rebound fix; force the hook off there.
+        val shadeReboundFixed = android.os.Build.VERSION.SDK_INT >= SHADE_REBOUND_FIXED_SDK
+        if (shadeReboundFixed) {
+            saveShadeReboundFix(false)
+        }
         return SystemUiMiscSettingsUiState(
             guestModeController = prefsUtils.loadBooleanSetting(KEY_GUEST_MODE_CONTROLLER, false),
             disableBiometricErrorVibration = prefsUtils.loadBooleanSetting(KEY_DISABLE_BIOMETRIC_ERROR_VIBRATION, false),
             bypassFaceAuthTimeout = prefsUtils.loadBooleanSetting(KEY_BYPASS_FACE_AUTH_TIMEOUT, false),
             aospScrollCapture = prefsUtils.loadBooleanSetting(KEY_FORCE_LONG_SCREENSHOT_AOSP, false),
-            shadeReboundFix = prefsUtils.loadBooleanSetting(KEY_SHADE_REBOUND_FIX, false),
+            shadeReboundFix = if (shadeReboundFixed) false
+            else prefsUtils.loadBooleanSetting(KEY_SHADE_REBOUND_FIX, false),
+            shadeReboundFixFixed = shadeReboundFixed,
             freeformFullscreenThreshold = prefsUtils.loadBooleanSetting(
                 KEY_LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD,
                 false
@@ -98,6 +105,7 @@ class SystemUiMiscSettingsRepository(context: Context) {
         private val KEY_BYPASS_FACE_AUTH_TIMEOUT = PreferenceKeys.BYPASS_FACE_AUTH_TIMEOUT.name
         private val KEY_FORCE_LONG_SCREENSHOT_AOSP = PreferenceKeys.FORCE_LONG_SCREENSHOT_AOSP.name
         private val KEY_SHADE_REBOUND_FIX = PreferenceKeys.SHADE_REBOUND_FIX.name
+        private const val SHADE_REBOUND_FIXED_SDK = 37
         private val KEY_LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD =
             PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD.name
         private val KEY_LAUNCHER_FREEFORM_FULLSCREEN_WIDTH_PERCENT =
@@ -132,6 +140,7 @@ data class SystemUiMiscSettingsUiState(
     val bypassFaceAuthTimeout: Boolean = false,
     val aospScrollCapture: Boolean = false,
     val shadeReboundFix: Boolean = false,
+    val shadeReboundFixFixed: Boolean = false,
     val freeformFullscreenThreshold: Boolean = false,
     val freeformFullscreenWidthPercent: Int = 85,
     val freeformFullscreenHeightPercent: Int = 85,
