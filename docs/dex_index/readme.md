@@ -46,7 +46,7 @@ com.qimian233.ztool.dexindex/
   MobileDesktopDexIndexer.kt // com.motorola.mobiledesktop 作用域（2 模块查询）
   DexIndexRegistry.kt    // indexers 注册表（作用域 → Indexer 唯一映射）
   DexIndexManager.kt     // app 侧执行器：bridge/原子写/指纹/异常隔离
-  DexIndexReceiver.kt    // 模块安装/更新触发
+  DexIndexReceiver.kt    // 模块安装/更新触发（先判 needsReindex，索引已新鲜则不重建）
 
 com.qimian233.ztool.hook.base/
   DexIndexStore.kt       // hook 侧只读工具（唯一依赖 libxposed 的索引类）
