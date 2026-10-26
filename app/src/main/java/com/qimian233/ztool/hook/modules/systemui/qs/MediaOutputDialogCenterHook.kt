@@ -2,36 +2,32 @@ package com.qimian233.ztool.hook.modules.systemui.qs
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.os.UserHandle
+import android.view.Gravity
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 
 /**
- * Media output dialog centering + theme color fix: fixes two problems when
- * MediaOutputDialog is launched from the "media output" tile - the window sticks
- * to the left screen edge and the theme color is always the default yellow.
+ * Centers the media output dialog opened from the ZTool tile and restores its dynamic colors.
  *
- * Root cause: the tile path launches the dialog with a null package name, so
- * getGravity() keeps its hardcoded LEFT gravity and the dynamic-color chain never
- * starts (no MediaController binding means no album art), falling back to the
- * default legacy color scheme.
- *
- * Fix (three hooks, controlled by a single module switch):
- * - onReceive: set an intra-thread flag during LAUNCH_SYSTEM_MEDIA_OUTPUT_DIALOG
- *   (used by the gravity hook);
- * - getGravity: return CENTER when the flag is set;
- * - createAndShow: when pkg == null, query the current active media session and
- *   inject the package name; if no session is found, keep the original arguments
- *   (empty-state dialog).
+ * The tile path passes a null package name, so no media session gets bound. While the receiver
+ * flag is set, the active session package is injected and the album-art color chain re-enabled.
+ * Legacy `MediaOutputBaseDialog.getGravity` and the current
+ * `MediaOutputDialogDelegate.createDialog` gravity paths are both installed.
  */
 @SuppressLint("PrivateApi")
 class MediaOutputDialogCenterHook : AppHookModule() {
 
     // Intra-thread flag: only visible within the main-thread call stack, avoiding any cross-thread synchronization
     private val launchViaTileBroadcast = ThreadLocal.withInitial { false }
+
+    private val receiverContext = ThreadLocal<Context?>()
 
     override fun getModuleName(): String = PreferenceKeys.MEDIA_OUTPUT_DIALOG_CENTER.name
 
@@ -41,7 +37,7 @@ class MediaOutputDialogCenterHook : AppHookModule() {
         val classLoader = param.defaultClassLoader
 
         val receiverOk = hookReceiver(classLoader)
-        val gravityOk = hookGetGravity(classLoader)
+        val gravityOk = hookGetGravity(classLoader) or hookCreateDialog(classLoader)
         val pkgOk = hookCreateAndShow(classLoader)
 
         if (receiverOk && gravityOk && pkgOk) {
@@ -55,8 +51,8 @@ class MediaOutputDialogCenterHook : AppHookModule() {
     }
 
     /**
-     * Maintain the flag around onReceive. onReceive is the standard BroadcastReceiver
-     * override with a stable signature across versions; MediaOutputDialogReceiver is not obfuscated.
+     * Maintain the flag and the receiver context around onReceive; both are consumed by the
+     * createAndShow hook, which runs synchronously inside the same broadcast dispatch.
      */
     private fun hookReceiver(classLoader: ClassLoader): Boolean {
         return try {
@@ -67,10 +63,12 @@ class MediaOutputDialogCenterHook : AppHookModule() {
             )
             hookWithId(onReceive, "media_output_dialog_receiver") { chain ->
                 launchViaTileBroadcast.set(true)
+                receiverContext.set(chain.args.getOrNull(0) as? Context)
                 try {
                     chain.proceed()
                 } finally {
                     launchViaTileBroadcast.set(false)
+                    receiverContext.remove()
                 }
             }
             true
@@ -81,93 +79,149 @@ class MediaOutputDialogCenterHook : AppHookModule() {
     }
 
     /**
-     * Override gravity. getGravity() is a virtual method of SystemUIDialog that is
-     * final-overridden by MediaOutputBaseDialog; look it up on the subclass by explicit signature.
+     * Legacy firmware kept the gravity in MediaOutputBaseDialog.getGravity; keep this path as a
+     * fallback because the class was removed on Android 17 (MediaOutputDialogDelegate instead).
      */
     private fun hookGetGravity(classLoader: ClassLoader): Boolean {
         return try {
             val dialogClass = classLoader.loadClass(BASE_DIALOG_CLASS)
             val getGravity = findMethod(dialogClass, "getGravity")
-            hookWithId(getGravity, "media_output_dialog_gravity") { chain ->
-                val isLaunchViaTile: Boolean =
-                    launchViaTileBroadcast.get() ?: return@hookWithId chain.proceed()
-                if (isLaunchViaTile) {
-                    android.view.Gravity.CENTER
+            hookWithId(getGravity, "media_output_dialog_get_gravity") { chain ->
+                if (launchViaTileBroadcast.get() == true) {
+                    Gravity.CENTER
                 } else {
                     chain.proceed()
                 }
             }
             true
         } catch (t: Throwable) {
-            logger.error("Hook MediaOutputBaseDialog.getGravity failed", t)
+            logger.debug("MediaOutputBaseDialog.getGravity absent: ${t.message}")
             false
         }
     }
 
     /**
-     * Tile path upgrade: when createAndShow(pkg, ...)'s pkg is null, query the active
-     * media session to fill in the package name, and enable includePlaybackAndAppMetadata
-     * (args[3]) to use the full metadata path.
-     * The normal path (chip click carries its own package name) and the empty state
-     * (no active session) keep the original arguments.
+     * Current path: SystemUIDialog.updateWindowSize applies mCustomGravity when the dialog is
+     * shown. The tile launch has no transition controller, so forcing CENTER on the dialog
+     * returned by the delegate covers firmware that keeps a non-centered default.
      */
-    private fun hookCreateAndShow(classLoader: ClassLoader): Boolean {
+    private fun hookCreateDialog(classLoader: ClassLoader): Boolean {
         return try {
-            val managerClass = classLoader.loadClass(MANAGER_CLASS)
-            val createAndShow = findMethod(
-                managerClass, "createAndShow",
-                String::class.java,                    // packageName
-                Boolean::class.javaPrimitiveType!!,    // aboveStatusBar
-                classLoader.loadClass(CONTROLLER_CLASS), // DialogTransitionAnimator.Controller
-                Boolean::class.javaPrimitiveType!!,    // includePlaybackAndAppMetadata
-                UserHandle::class.java,                // userHandle
-                android.media.session.MediaSession.Token::class.java // token
-            )
-            hookWithId(createAndShow, "media_output_create_and_show") { chain ->
-                val args = chain.args
-                if (args[0] != null) {
-                    return@hookWithId chain.proceed()
+            val delegateClass = classLoader.loadClass(DELEGATE_CLASS)
+            val createDialog = findMethod(delegateClass, "createDialog")
+            hookWithId(createDialog, "media_output_dialog_create_dialog") { chain ->
+                val dialog = chain.proceed()
+                if (launchViaTileBroadcast.get() == true && dialog != null) {
+                    try {
+                        findField(dialog.javaClass, "mCustomGravity")
+                            .setInt(dialog, Gravity.CENTER)
+                    } catch (t: Throwable) {
+                        logger.warn("SystemUIDialog.mCustomGravity unavailable: ${t.message}")
+                    }
                 }
-                val pkg =
-                    findActiveMediaPackage(chain.thisObject) ?: return@hookWithId chain.proceed()
-                logger.debug("Inject active media package: $pkg")
-                chain.proceed(
-                    arrayOf(
-                        pkg,
-                        args[1],
-                        args[2],
-                        true,   // includePlaybackAndAppMetadata: enable album-art coloring and playback metadata
-                        args[4],
-                        args[5]
-                    )
-                )
+                dialog
             }
             true
         } catch (t: Throwable) {
-            logger.error("Hook MediaOutputDialogManager.createAndShow failed", t)
+            logger.debug("MediaOutputDialogDelegate.createDialog absent: ${t.message}")
             false
         }
     }
 
     /**
-     * Query the package name of the most recently active media session.
-     * getActiveSessionsForUser is a hidden API (not in the public SDK layer; SystemUI
-     * itself uses it for full queries, available within the privileged process), so it
-     * is invoked via reflection.
-     * No filtering by playback state: consistent with the normal path semantics - the
-     * media card is shown and can open the dialog even when paused; simply take the
-     * first session from the system list (list is sorted with media-button sessions first).
-     *
-     * @param manager MediaOutputDialogManager instance (its context is used to get the service)
+     * Fills the package name when the caller passed none (tile and volume long-press paths).
+     * Android 17 moved the package to argument 1; the legacy six-argument signature remains
+     * supported as a fallback.
+     */
+    private fun hookCreateAndShow(classLoader: ClassLoader): Boolean {
+        val managerClass = try {
+            classLoader.loadClass(MANAGER_CLASS)
+        } catch (t: Throwable) {
+            logger.error("$MANAGER_CLASS not found", t)
+            return false
+        }
+        val layout = findCreateAndShow(classLoader, managerClass) ?: return false
+        hookWithId(layout.method, "media_output_create_and_show") { chain ->
+            val args = chain.args
+            if (args.getOrNull(layout.pkgIndex) != null) {
+                return@hookWithId chain.proceed()
+            }
+            val pkg = findActiveMediaPackage(chain.thisObject)
+                ?: return@hookWithId chain.proceed()
+            val updated = args.toMutableList()
+            updated[layout.pkgIndex] = pkg
+            // Enable album-art coloring and turn off the system-color shortcut so the bound
+            // MediaController actually drives the color scheme.
+            layout.metadataIndex?.let { updated[it] = true }
+            layout.systemColorsIndex?.let { updated[it] = false }
+            logger.debug("Inject active media package: $pkg")
+            chain.proceed(updated.toTypedArray())
+        }
+        return true
+    }
+
+    /**
+     * Resolves createAndShow for the current firmware: eight arguments with UserHandle first on
+     * Android 17, six arguments with the package name first on older builds.
+     */
+    private fun findCreateAndShow(
+        classLoader: ClassLoader,
+        managerClass: Class<*>
+    ): CreateAndShowLayout? {
+        val controllerClass = try {
+            classLoader.loadClass(CONTROLLER_CLASS)
+        } catch (t: Throwable) {
+            logger.error("$CONTROLLER_CLASS not found", t)
+            return null
+        }
+        val switchingTypeClass = runCatching {
+            classLoader.loadClass(SWITCHING_TYPE_CLASS)
+        }.getOrNull()
+        if (switchingTypeClass != null) {
+            val method = runCatching {
+                findMethod(
+                    managerClass, "createAndShow",
+                    UserHandle::class.java,
+                    String::class.java,
+                    Boolean::class.javaPrimitiveType!!,
+                    controllerClass,
+                    Boolean::class.javaPrimitiveType!!,
+                    MediaSession.Token::class.java,
+                    switchingTypeClass,
+                    Boolean::class.javaPrimitiveType!!
+                )
+            }.getOrNull()
+            if (method != null) return CreateAndShowLayout(method, 1, 4, 7)
+        }
+        val legacy = runCatching {
+            findMethod(
+                managerClass, "createAndShow",
+                String::class.java,
+                Boolean::class.javaPrimitiveType!!,
+                controllerClass,
+                Boolean::class.javaPrimitiveType!!,
+                UserHandle::class.java,
+                MediaSession.Token::class.java
+            )
+        }.getOrNull() ?: run {
+            logger.error("MediaOutputDialogManager.createAndShow not found")
+            return null
+        }
+        return CreateAndShowLayout(legacy, 0, 3, null)
+    }
+
+    /**
+     * Package name of the most recently active media session, or null when unavailable.
+     * Uses the hidden getActiveSessionsForUser (SystemUI holds MEDIA_CONTENT_CONTROL).
      */
     private fun findActiveMediaPackage(manager: Any?): String? {
-        if (manager == null) return null
+        val context = resolveContext(manager) ?: run {
+            logger.warn("Media output dialog context unavailable; keeping original arguments")
+            return null
+        }
         return try {
-            val contextField = findField(manager.javaClass, "context")
-            val context = contextField.get(manager) as Context
             val sm = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
-            val current = android.os.Process.myUserHandle()
-            // hidden API: getActiveSessionsForUser(ComponentName, UserHandle)
+            val user = android.os.Process.myUserHandle()
             val method = MediaSessionManager::class.java.methods.firstOrNull {
                 it.name == "getActiveSessionsForUser"
             } ?: run {
@@ -175,7 +229,7 @@ class MediaOutputDialogCenterHook : AppHookModule() {
                 return null
             }
             @Suppress("UNCHECKED_CAST")
-            val sessions = method.invoke(sm, null, current) as List<android.media.session.MediaController>
+            val sessions = method.invoke(sm, null, user) as List<android.media.session.MediaController>
             sessions.firstOrNull()?.packageName
         } catch (t: Throwable) {
             logger.warn("findActiveMediaPackage failed: ${t.message}")
@@ -183,13 +237,60 @@ class MediaOutputDialogCenterHook : AppHookModule() {
         }
     }
 
+    /**
+     * Context for the session query: the receiver's own context on the broadcast path, then the
+     * manager context (legacy layout) or the last delegate's context (Android 17 layout).
+     */
+    private fun resolveContext(manager: Any?): Context? {
+        receiverContext.get()?.let { return it }
+        if (manager == null) return null
+        contextFieldOf(manager.javaClass)?.let { field ->
+            (runCatching { field.get(manager) }.getOrNull() as? Context)?.let { return it }
+        }
+        val delegate = runCatching {
+            findField(manager.javaClass, "mediaOutputDialogDelegate").get(manager)
+        }.getOrNull()
+        if (delegate != null) {
+            contextFieldOf(delegate.javaClass)?.let { field ->
+                (runCatching { field.get(delegate) }.getOrNull() as? Context)?.let { return it }
+            }
+        }
+        return null
+    }
+
+    private fun contextFieldOf(owner: Class<*>): Field? {
+        var type: Class<*>? = owner
+        while (type != null) {
+            type.declaredFields.firstOrNull {
+                Context::class.java.isAssignableFrom(it.type)
+            }?.let {
+                it.isAccessible = true
+                return it
+            }
+            type = type.superclass
+        }
+        return null
+    }
+
+    /** Argument layout of the resolved MediaOutputDialogManager.createAndShow. */
+    private class CreateAndShowLayout(
+        val method: Method,
+        val pkgIndex: Int,
+        val metadataIndex: Int?,
+        val systemColorsIndex: Int?
+    )
+
     private companion object {
         const val RECEIVER_CLASS =
             "com.android.systemui.media.dialog.MediaOutputDialogReceiver"
         const val BASE_DIALOG_CLASS =
             "com.android.systemui.media.dialog.MediaOutputBaseDialog"
+        const val DELEGATE_CLASS =
+            "com.android.systemui.media.dialog.MediaOutputDialogDelegate"
         const val MANAGER_CLASS =
             "com.android.systemui.media.dialog.MediaOutputDialogManager"
+        const val SWITCHING_TYPE_CLASS =
+            "com.android.systemui.media.dialog.MediaSwitchingType"
         const val CONTROLLER_CLASS =
             $$"com.android.systemui.animation.DialogTransitionAnimator$Controller"
     }
