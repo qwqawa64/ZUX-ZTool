@@ -3,15 +3,16 @@ package com.qimian233.ztool.hook.modules.systemframework
 import android.annotation.SuppressLint
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.SystemHookModule
-import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface
+import java.util.HashMap
 
 /**
- * Forced Split Screen hook module (system framework side)
- * Clears the split screen blacklist by hooking OneModeService to enable forced split screen
+ * Forced split screen hook module (system framework side).
  *
- * Shares the same preference key name [Split_Screen_mandatory] with
- * setting.SplitScreenMandatory, ensuring both sides are enabled/disabled together.
+ * Clears the split screen blacklist through `OneModeService.initLocalBlackList` on ZUXOS 2.0
+ * and older; ZUXOS 2.5 (Android 17) removed that service from system_server, so the module
+ * logs one warning and skips instead of failing.
+ * Shares the preference key `Split_Screen_mandatory` with the settings side.
  */
 @SuppressLint("PrivateApi")
 class SplitScreenMandatory : SystemHookModule() {
@@ -21,35 +22,42 @@ class SplitScreenMandatory : SystemHookModule() {
 
     override fun handleSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {
         val classLoader = param.classLoader
-        try {
-            val m = classLoader
-                .loadClass("com.android.server.wm.OneModeService")
-                .getDeclaredMethod("initLocalBlackList")
-            hookWithId(m, "hook_50") { chain: XposedInterface.Chain? ->
-                // Check at runtime whether the module is enabled, supporting dynamic toggling
-                if (!isEnabled()) {
-                    return@hookWithId chain!!.proceed()
-                }
-
-                // Get the OneModeService instance
-                val instance = chain!!.thisObject
-
-                // Get the mLocalmap field (HashMap storing the split screen blacklist)
-                val field = instance.javaClass.getDeclaredField("mLocalmap")
-                field.isAccessible = true
-                val mLocalmap = field.get(instance) as HashMap<*, *>?
-
-                // Clear mLocalmap to ensure the split screen blacklist is empty
-                if (mLocalmap != null) {
-                    mLocalmap.clear()
-                    logger.debug("Successfully cleared split screen blacklist")
-                }
-                null
-            }
-
-            logger.info("Successfully hooked OneModeService.initLocalBlackList")
-        } catch (t: Throwable) {
-            logger.error("Failed to hook OneModeService", t)
+        val oneModeServiceClass = LEGACY_ONE_MODE_SERVICES.firstNotNullOfOrNull { className ->
+            runCatching { classLoader.loadClass(className) }.getOrNull()
         }
+        if (oneModeServiceClass == null) {
+            logger.warn("OneModeService absent from system_server; split screen blacklist hook skipped")
+            return
+        }
+
+        val initBlackList = runCatching {
+            findMethod(oneModeServiceClass, "initLocalBlackList")
+        }.getOrNull()
+        val localMapField = runCatching {
+            findField(oneModeServiceClass, "mLocalmap")
+        }.getOrNull()
+        if (initBlackList == null || localMapField == null) {
+            logger.warn("OneModeService has no initLocalBlackList/mLocalmap; split screen blacklist hook skipped")
+            return
+        }
+
+        hookWithId(initBlackList, "hook_50") { chain ->
+            if (!isEnabled()) {
+                return@hookWithId chain.proceed()
+            }
+            val localMap = localMapField.get(chain.thisObject) as? HashMap<*, *>
+            if (localMap != null) {
+                localMap.clear()
+                logger.debug("Successfully cleared split screen blacklist")
+            }
+            null
+        }
+
+        logger.info("Successfully hooked OneModeService.initLocalBlackList")
+    }
+
+    companion object {
+        // ZUXOS 2.0 and older shipped OneModeService in system_server; ZUXOS 2.5 no longer does
+        private val LEGACY_ONE_MODE_SERVICES = listOf("com.android.server.wm.OneModeService")
     }
 }
