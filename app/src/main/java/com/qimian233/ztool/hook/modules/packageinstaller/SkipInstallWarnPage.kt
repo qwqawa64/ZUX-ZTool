@@ -31,28 +31,19 @@ class SkipInstallWarnPage : AppHookModule() {
             val activityExtraClass = classLoader.loadClass(
                 "com.android.packageinstaller.PackageInstallerActivityExtra"
             )
-            val onResume = activityExtraClass.getDeclaredMethod("onResume")
+            val onResume = findMethod(activityExtraClass, "onResume")
             hookWithId(onResume, "on_resume") { chain ->
                 val result = chain.proceed()
                 val activity = chain.thisObject
 
                 // Delay execution to ensure the UI is fully loaded
                 Handler(Looper.getMainLooper()).postDelayed({
-                    try {
-                        // Call handleDirectInstallInFindSameAppCase directly
-                        activity.javaClass.getDeclaredMethod("handleDirectInstallInFindSameAppCase")
-                            .invoke(activity)
-                        logger.debug("Successfully called handleDirectInstallInFindSameAppCase")
-                    } catch (_: Exception) {
-                        // If the method above does not exist, try onDirectInstall
-                        try {
-                            val onDirectInstallMethod = activity.javaClass.getDeclaredMethod("onDirectInstall")
-                            onDirectInstallMethod.isAccessible = true
-                            onDirectInstallMethod.invoke(activity)
-                            logger.debug("Successfully called onDirectInstall")
-                        } catch (e2: Exception) {
-                            logger.error("Both installation methods failed", e2)
-                        }
+                    val invoked =
+                        invokeInstallStep(activity, activityExtraClass, METHOD_HANDLE_DIRECT_INSTALL) ||
+                            invokeInstallStep(activity, activityExtraClass, METHOD_ON_DIRECT_INSTALL)
+                    if (!invoked && !installStepWarningLogged) {
+                        installStepWarningLogged = true
+                        logger.warn("Neither $METHOD_HANDLE_DIRECT_INSTALL nor $METHOD_ON_DIRECT_INSTALL is invokable")
                     }
                 }, 50) // Execute immediately
                 result
@@ -62,5 +53,36 @@ class SkipInstallWarnPage : AppHookModule() {
         } catch (t: Throwable) {
             logger.error("Failed to hook PackageInstallerActivityExtra", t)
         }
+    }
+
+    /**
+     * Invokes a no-arg install step, resolving it on the hooked class before the runtime class.
+     *
+     * @return true when the method was found and invoked
+     */
+    private fun invokeInstallStep(activity: Any?, owner: Class<*>, methodName: String): Boolean {
+        val target = activity ?: return false
+        val candidates = if (target.javaClass == owner) {
+            arrayOf(owner)
+        } else {
+            arrayOf(owner, target.javaClass)
+        }
+        for (candidate in candidates) {
+            try {
+                findMethod(candidate, methodName).invoke(target)
+                logger.debug("Successfully called $methodName")
+                return true
+            } catch (_: Throwable) {
+            }
+        }
+        return false
+    }
+
+    private var installStepWarningLogged = false
+
+    companion object {
+        // Both methods are private in the Android 17 PackageInstallerActivityExtra
+        private const val METHOD_HANDLE_DIRECT_INSTALL = "handleDirectInstallInFindSameAppCase"
+        private const val METHOD_ON_DIRECT_INSTALL = "onDirectInstall"
     }
 }
