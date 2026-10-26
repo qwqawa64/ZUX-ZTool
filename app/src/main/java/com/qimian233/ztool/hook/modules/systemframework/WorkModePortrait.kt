@@ -1,6 +1,8 @@
 package com.qimian233.ztool.hook.modules.systemframework
 
+import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
+import android.os.Build
 import android.os.SystemClock
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -18,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * AppCompat policy), the launch-bounds force orientation, and the DisplayContent
  * shortcut. Each is bypassed while enabled; apps with a fixed orientation keep it.
  */
+@SuppressLint("PrivateApi")
 class WorkModePortrait : SystemHookModule() {
 
     override fun getModuleName(): String = PreferenceKeys.WORK_MODE_PORTRAIT.name
@@ -76,10 +79,16 @@ class WorkModePortrait : SystemHookModule() {
 
     private fun hookPcModeForceOrientation(classLoader: ClassLoader) {
         try {
-            val internalClass = classLoader.loadClass(
+
+            val internalClass = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN)
+                classLoader.loadClass("com.android.server.wm.OVDesktopController")
+            else
+                classLoader.loadClass(
                 "com.android.server.wm.OVDesktopController\$OVDesktopControllerInternal")
-            val getForceOrientation = findMethod(
-                internalClass, "getPCModeAppForceOrientation", String::class.java)
+            val getForceOrientation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN)
+                findMethod(internalClass, "getPCModeAppForceOrientationInternal", String::class.java)
+            else
+                findMethod(internalClass, "getPCModeAppForceOrientation", String::class.java)
             hookWithId(
                 getForceOrientation,
                 "work_mode_portrait_force_orientation"

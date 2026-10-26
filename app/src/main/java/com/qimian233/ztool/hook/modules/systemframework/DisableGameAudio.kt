@@ -63,66 +63,73 @@ class DisableGameAudio : SystemHookModule() {
     }
 
     /**
-     * Method 2: hook ZuiGameAppStateListener in PhoneWindowManager
-     * Intercepts game mode related settings
+     * Method 2: observes the Zui game app state listener held by PhoneWindowManager.
+     * The listener is resolved from the `mZuiGameAppStateListener` field, because the
+     * anonymous implementation class name differs between ZUI versions.
      */
     private fun hookPhoneWindowManager(classLoader: ClassLoader) {
-        try {
-            var targetClass: Class<*>?
-            targetClass = try {
-                classLoader.loadClass($$"com.android.server.policy.PhoneWindowManager$ZuiGameAppStateListener")
-            } catch (_: ClassNotFoundException) {
-                null
-            }
-            if (targetClass == null) {
+        val pwmClass = runCatching {
+            classLoader.loadClass("com.android.server.policy.PhoneWindowManager")
+        }.getOrNull()
+        if (pwmClass != null) {
+            val listenerField = runCatching { findField(pwmClass, "mZuiGameAppStateListener") }.getOrNull()
+            val initGameMode = runCatching { findMethod(pwmClass, "initGameMode") }.getOrNull()
+            if (listenerField != null && initGameMode != null) {
                 try {
-                    targetClass =
-                        classLoader.loadClass("com.android.server.policy.PhoneWindowManager$2")
-                } catch (_: ClassNotFoundException) {
-                    logger.error("Unable to find PhoneWindowManager internal class")
-                }
-                if (targetClass == null) {
-                    logger.error("Failed to find target class for PhoneWindowManager")
+                    hookWithId(initGameMode, "pwm_init_game_mode") { chain ->
+                        val listener = listenerField.get(chain.thisObject)
+                        if (listener != null) {
+                            if (hookGameAppStateListener(listener.javaClass)) {
+                                logger.info("Hooked ${listener.javaClass.name} game app listener")
+                            } else {
+                                logger.warn("Game app listener ${listener.javaClass.name} has no hookable callbacks")
+                            }
+                        }
+                        chain.proceed()
+                    }
+                    logger.info("Hooked PhoneWindowManager.initGameMode for Zui game app listener")
                     return
-                } else {
-                    logger.info("Found alternative class for PhoneWindowManager")
+                } catch (t: Throwable) {
+                    logger.error("Failed to hook PhoneWindowManager.initGameMode", t)
                 }
-            } else {
-                logger.info("Found target class for PhoneWindowManager")
             }
-            // Hook ZuiGameAppStateListener's onGameAppStart method
-            val onGameAppStartMethod = targetClass.getDeclaredMethod(
-                "onGameAppStart",
-                String::class.java,
-                String::class.java
-            )
-            hookWithId(
-                onGameAppStartMethod,
-                "on_game_app_start"
-            ) { chain ->
-                val pkgName = chain.args[0] as String
-                logger.debug("ZuiGameAppStateListener.onGameAppStart for: $pkgName")
+        }
+
+        for (className in LEGACY_LISTENER_CLASSES) {
+            val listenerClass = runCatching { classLoader.loadClass(className) }.getOrNull() ?: continue
+            if (hookGameAppStateListener(listenerClass)) {
+                logger.info("Hooked legacy listener $className")
+                return
+            }
+        }
+        logger.warn("Zui game app state listener not found; game audio listener hook skipped")
+    }
+
+    /**
+     * Hooks `onGameAppStart` and `onGameAppExit` if the class provides both.
+     *
+     * @return true when both methods were hooked
+     */
+    private fun hookGameAppStateListener(listenerClass: Class<*>): Boolean {
+        val onGameAppStart = runCatching {
+            findMethod(listenerClass, "onGameAppStart", String::class.java, String::class.java)
+        }.getOrNull() ?: return false
+        val onGameAppExit = runCatching {
+            findMethod(listenerClass, "onGameAppExit", String::class.java, String::class.java)
+        }.getOrNull() ?: return false
+        return try {
+            hookWithId(onGameAppStart, "on_game_app_start") { chain ->
+                logger.debug("ZuiGameAppStateListener.onGameAppStart for: ${chain.args[0]}")
                 chain.proceed()
             }
-
-            // Hook ZuiGameAppStateListener's onGameAppExit method
-            val onGameAppExitMethod = targetClass.getDeclaredMethod(
-                "onGameAppExit",
-                String::class.java,
-                String::class.java
-            )
-            hookWithId(
-                onGameAppExitMethod,
-                "on_game_app_exit"
-            ) { chain ->
-                val pkgName = chain.args[0] as String
-                logger.debug("ZuiGameAppStateListener.onGameAppExit for: $pkgName")
+            hookWithId(onGameAppExit, "on_game_app_exit") { chain ->
+                logger.debug("ZuiGameAppStateListener.onGameAppExit for: ${chain.args[0]}")
                 chain.proceed()
             }
-
-            logger.info("Successfully hooked PhoneWindowManager")
-        } catch (e: Exception) {
-            logger.error("Failed to hook PhoneWindowManager due to unknown reason: ", e)
+            true
+        } catch (t: Throwable) {
+            logger.error("Failed to hook ${listenerClass.name} game app listener", t)
+            false
         }
     }
 
@@ -159,5 +166,11 @@ class DisableGameAudio : SystemHookModule() {
 
     companion object {
         private const val TARGET_PROPERTY = "sys.audio.game_name"
+
+        // Candidate names used by ZUI builds that declared the listener as a named inner class
+        private val LEGACY_LISTENER_CLASSES = listOf(
+            $$"com.android.server.policy.PhoneWindowManager$ZuiGameAppStateListener",
+            $$"com.android.server.policy.PhoneWindowManager$2"
+        )
     }
 }

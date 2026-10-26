@@ -48,16 +48,18 @@ object DexIndexManager {
     }
 
     /**
-     * Whether this scope needs reindexing: schemaVersion mismatch (structure
-     * upgrade), missing/corrupt existing file, or apk fingerprint
-     * (path + update time + signature) changed.
+     * Whether this scope needs reindexing: an unresolvable target is never stale; otherwise a
+     * missing/corrupt file, a schemaVersion or system-fingerprint mismatch, or a changed apk
+     * fingerprint (path + update time + signature) requires a rebuild.
      */
     fun needsReindex(context: Context, scopePackage: String): Boolean {
-        val schema = readStoredSchemaVersion(context, scopePackage)
-        if (schema == null || schema != DexIndexConstants.SCHEMA_VERSION) return true
-        val target = readStoredFingerprint(context, scopePackage) ?: return true
+        // Resolve the target first: a scope that is not installed has nothing to index, and
+        // treating it as stale would rescan every scope on every launch.
         val current = currentFingerprint(context, scopePackage) ?: return false
-        return target != current
+        val stored = readStoredIndex(context, scopePackage) ?: return true
+        if (stored.schemaVersion != DexIndexConstants.SCHEMA_VERSION) return true
+        if (stored.systemFingerprint != Build.FINGERPRINT) return true
+        return stored.fingerprint != current
     }
 
     /** Timestamp (ms) of the last successful index; returns 0 if never indexed. */
@@ -149,6 +151,7 @@ object DexIndexManager {
         val root = JsonObject()
         root.addProperty(DexIndexConstants.JSON_SCHEMA_VERSION, DexIndexConstants.SCHEMA_VERSION)
         root.addProperty(DexIndexConstants.JSON_GENERATED_AT, System.currentTimeMillis())
+        root.addProperty(DexIndexConstants.JSON_SYSTEM_FINGERPRINT, Build.FINGERPRINT)
         currentFingerprint(context, scopePackage)?.let { fp ->
             val apk = JsonObject()
             apk.addProperty(DexIndexConstants.JSON_PATH, fp.path)
@@ -166,28 +169,24 @@ object DexIndexManager {
         }
     }
 
-    /** Reads the stored file's schemaVersion; returns null when missing/corrupt. */
-    private fun readStoredSchemaVersion(context: Context, scopePackage: String): Int? {
+    /** Reads the stored index's staleness metadata in one parse; null when missing/corrupt. */
+    private fun readStoredIndex(context: Context, scopePackage: String): StoredIndex? {
         return try {
             val file = File(indexDir(context), DexIndexConstants.fileName(scopePackage))
             if (!file.exists()) return null
-            JsonParser.parseString(file.readText()).asJsonObject
-                .get(DexIndexConstants.JSON_SCHEMA_VERSION)?.asInt
-        } catch (_: Throwable) {
-            null
-        }
-    }
-
-    private fun readStoredFingerprint(context: Context, scopePackage: String): Fingerprint? {
-        return try {
-            val file = File(indexDir(context), DexIndexConstants.fileName(scopePackage))
-            if (!file.exists()) return null
-            val apk = JsonParser.parseString(file.readText()).asJsonObject
-                .getAsJsonObject(DexIndexConstants.JSON_APK) ?: return null
-            Fingerprint(
-                path = apk.get(DexIndexConstants.JSON_PATH).asString,
-                lastUpdateTime = apk.get(DexIndexConstants.JSON_LAST_UPDATE_TIME).asLong,
-                signatureHash = apk.get(DexIndexConstants.JSON_SIGNATURE_HASH).asString,
+            val root = JsonParser.parseString(file.readText()).asJsonObject
+            StoredIndex(
+                schemaVersion = root.get(DexIndexConstants.JSON_SCHEMA_VERSION)?.asInt,
+                systemFingerprint = root.get(DexIndexConstants.JSON_SYSTEM_FINGERPRINT)
+                    ?.takeIf { !it.isJsonNull }
+                    ?.asString,
+                fingerprint = root.getAsJsonObject(DexIndexConstants.JSON_APK)?.let { apk ->
+                    Fingerprint(
+                        path = apk.get(DexIndexConstants.JSON_PATH).asString,
+                        lastUpdateTime = apk.get(DexIndexConstants.JSON_LAST_UPDATE_TIME).asLong,
+                        signatureHash = apk.get(DexIndexConstants.JSON_SIGNATURE_HASH).asString,
+                    )
+                },
             )
         } catch (_: Throwable) {
             null
@@ -227,6 +226,12 @@ object DexIndexManager {
         val path: String,
         val lastUpdateTime: Long,
         val signatureHash: String,
+    )
+
+    private data class StoredIndex(
+        val schemaVersion: Int?,
+        val systemFingerprint: String?,
+        val fingerprint: Fingerprint?,
     )
 }
 

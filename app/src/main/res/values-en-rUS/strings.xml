@@ -484,6 +484,7 @@
     <string name="system_ui_misc_aosp_scroll_capture_summary">Use AOSP screenshot infrastructure to keep long screenshot available. Does not guarantee good capture results.</string>
     <string name="system_ui_misc_shade_rebound_fix_title">Fix shade rebound delay</string>
     <string name="system_ui_misc_shade_rebound_fix_summary">Replace the ZUI custom spring fling with the standard AOSP shade animation to remove the delayed rebound.</string>
+    <string name="system_ui_misc_shade_rebound_fix_fixed_summary">ZUXOS 2.0 has fixed this issue; this switch is no longer needed.</string>
     <string name="system_ui_status_bar_clock_settings_title">Status bar clock</string>
     <string name="system_ui_status_bar_display_seconds_title">Show seconds</string>
     <string name="system_ui_status_bar_custom_clock_title">Custom clock</string>

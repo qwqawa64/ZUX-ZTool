@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.launcher.grid
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.view.View
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
@@ -9,28 +10,12 @@ import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 
 /**
- * No-label mode for the ZUI Launcher app drawer.
+ * Drawer no-label mode; companion of [LauncherNoLabelMode] with an inverted gate.
  *
- * Companion module of [LauncherNoLabelMode], but with an inverted gate:
- * labels are hidden ONLY when the hooked call originates from the drawer
- * UI, i.e. the call stack contains frames from the all-apps list or the
- * prediction row (com.android.launcher3.allapps / appprediction).
- *
- * Hook points are the same as [LauncherNoLabelMode]: BubbleTextView for
- * non-ZUI apps and ActiveIconView for ZUI system apps.
- *
- * Additionally, drawer ActiveIconView labels are force-hidden at
- * onAttachedToWindow and applyFrom* bind time: the drawer never calls
- * setTextVisibility/setTextAlpha on ActiveIconView, so the visibility-call
- * hooks never fire on the drawer path and freshly inflated icons would
- * otherwise keep their labels. The attach/bind hooks gate on the parent
- * drawer containers, so desktop, taskbar and folder icons remain handled
- * by the visibility-call hooks only.
- *
- * The two modules can coexist: LauncherNoLabelMode skips drawer callers
- * while this module only handles drawer callers. Hook ids are prefixed
- * with "drawer_" because both modules hook the same executables and ids
- * must stay unique per hook.
+ * Hides drawer labels for calls from the all-apps list and prediction row, and
+ * at attach/bind time inside drawer containers. Hook ids use the "drawer_"
+ * prefix because both modules hook the same executables.
+ * See docs/research/launcher_no_label_mode.md.
  */
 @SuppressLint("PrivateApi")
 class LauncherDrawerNoLabelMode : AppHookModule() {
@@ -43,14 +28,12 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
         installBubbleTextViewVisibilityHook(param)
         installActiveIconViewVisibilityHook(param)
         installActiveIconViewDrawerLabelHook(param)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
+            installBubbleTextViewDrawerLabelHook(param)
+        }
     }
 
-    /**
-     * Check whether the current call stack comes from the app drawer UI
-     * (all apps list or prediction row). The no-label logic is applied
-     * only when this returns true; any other caller (desktop, folder,
-     * popups...) keeps the original label behavior.
-     */
+    /** Whether the call stack comes from the app drawer UI. */
     private fun isFromDrawerPath(): Boolean {
         return Thread.currentThread().stackTrace.any { frame ->
             frame.className.startsWith("com.android.launcher3.allapps.") ||
@@ -58,17 +41,13 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
         }
     }
 
-    /**
-     * Hook BubbleTextView.setTextVisibility and setTextAlpha so that labels
-     * on drawer BubbleTextView icons (non-ZUI apps) are always hidden.
-     */
+    /** Forces drawer BubbleTextView label visibility and alpha to stay hidden. */
     fun installBubbleTextViewVisibilityHook(param: XposedModuleInterface.PackageLoadedParam) {
         try {
             val loader: ClassLoader = param.defaultClassLoader
             val bubbleTextViewClass: Class<*> =
                 loader.loadClass("com.android.launcher3.BubbleTextView")
 
-            // Force setTextVisibility to always hide, but only for drawer callers
             val setTextVisibilityMethod: Method = findMethod(
                 bubbleTextViewClass, "setTextVisibility",
                 Boolean::class.javaPrimitiveType
@@ -82,8 +61,6 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
                 }
             }
 
-            // Force setTextAlpha to always stay at 0 (hidden), but only for
-            // drawer callers
             val setTextAlphaMethod: Method = findMethod(
                 bubbleTextViewClass, "setTextAlpha",
                 Float::class.javaPrimitiveType
@@ -103,18 +80,13 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
         }
     }
 
-    /**
-     * Hook ActiveIconView.setTextVisibility, setTextAlpha and
-     * setIgnoreSetAlphaVisible so that labels on drawer ActiveIconView
-     * icons (ZUI system apps) are always hidden.
-     */
+    /** Forces drawer ActiveIconView labels, alpha and the alpha-ignore flag to stay hidden. */
     fun installActiveIconViewVisibilityHook(param: XposedModuleInterface.PackageLoadedParam) {
         try {
             val loader: ClassLoader = param.defaultClassLoader
             val activeIconViewClass: Class<*> =
                 loader.loadClass("com.zui.launcher.ActiveIconView")
 
-            // Force setTextVisibility to always hide, but only for drawer callers
             val setTextVisibilityMethod: Method = findMethod(
                 activeIconViewClass, "setTextVisibility",
                 Boolean::class.javaPrimitiveType
@@ -128,8 +100,6 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
                 }
             }
 
-            // Force setTextAlpha to always stay at 0 (hidden), but only for
-            // drawer callers
             val setTextAlphaMethod: Method = findMethod(
                 activeIconViewClass, "setTextAlpha",
                 Float::class.javaPrimitiveType
@@ -143,9 +113,6 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
                 }
             }
 
-            // Prevent setIgnoreSetAlphaVisible from being set to true for
-            // drawer callers, so setTextAlpha always flows through to
-            // setTextVisibility
             val setIgnoreMethod: Method = findMethod(
                 activeIconViewClass, "setIgnoreSetAlphaVisible",
                 Boolean::class.javaPrimitiveType
@@ -166,18 +133,8 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
     }
 
     /**
-     * Force-hide ActiveIconView labels that the visibility-call hooks above
-     * can never reach: drawer ActiveIconViews are born with a visible label
-     * and their bind path only sets the title text, so hide them at the two
-     * moments the drawer owns:
-     *
-     * - onAttachedToWindow: the parent is only known here for freshly
-     *   created icons;
-     * - applyFrom* rebinds: notifyDataSetChanged rebinds already-attached
-     *   views without re-attaching them, which the attach hook cannot see.
-     *
-     * Both hooks gate on the parent drawer container, so desktop, taskbar
-     * and folder icons are untouched.
+     * Hides ActiveIconView labels at attach and rebind time when the parent is
+     * a drawer container.
      */
     fun installActiveIconViewDrawerLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
         try {
@@ -198,8 +155,7 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
                 if (allAppsRecyclerViewClass.isInstance(parent) ||
                     predictionRowViewClass.isInstance(parent)
                 ) {
-                    // Re-enters the setTextVisibility hooks once; both gates
-                    // pass the call through and the original hides the label.
+                    // Re-enters the same hooks once; their drawer gate passes the call through.
                     setTextVisibilityMethod.invoke(iconView, java.lang.Boolean.valueOf(false))
                 }
             }
@@ -244,6 +200,76 @@ class LauncherDrawerNoLabelMode : AppHookModule() {
             logger.info("ActiveIconView drawer label hooks installed successfully!")
         } catch (e: Throwable) {
             logger.error("Exception caught in ActiveIconView drawer label hook: ", e)
+        }
+    }
+
+    /**
+     * Android 17+ only. Force-hides drawer BubbleTextView labels at attach and
+     * bind time, mirroring the ActiveIconView path above.
+     */
+    fun installBubbleTextViewDrawerLabelHook(param: XposedModuleInterface.PackageLoadedParam) {
+        try {
+            val loader: ClassLoader = param.defaultClassLoader
+            val bubbleTextViewClass: Class<*> =
+                loader.loadClass("com.android.launcher3.BubbleTextView")
+            val allAppsRecyclerViewClass: Class<*> =
+                loader.loadClass("com.android.launcher3.allapps.AllAppsRecyclerView")
+            val predictionRowViewClass: Class<*> =
+                loader.loadClass("com.android.launcher3.appprediction.PredictionRowView")
+            val setTextVisibilityMethod: Method = findMethod(
+                bubbleTextViewClass, "setTextVisibility",
+                Boolean::class.javaPrimitiveType
+            )
+
+            fun hideLabelIfInDrawer(iconView: View) {
+                val parent = iconView.parent ?: return
+                if (allAppsRecyclerViewClass.isInstance(parent) ||
+                    predictionRowViewClass.isInstance(parent)
+                ) {
+                    setTextVisibilityMethod.invoke(iconView, java.lang.Boolean.valueOf(false))
+                }
+            }
+
+            val attachMethod: Method = findMethod(bubbleTextViewClass, "onAttachedToWindow")
+            hookWithId(attachMethod, "drawer_bubble_text_attach") { chain ->
+                chain.proceed()
+                (chain.thisObject as? View)?.let { hideLabelIfInDrawer(it) }
+            }
+
+            val appInfoClass: Class<*> =
+                loader.loadClass("com.android.launcher3.model.data.AppInfo")
+            val workspaceItemInfoClass: Class<*> =
+                loader.loadClass("com.android.launcher3.model.data.WorkspaceItemInfo")
+            val itemInfoWithIconClass: Class<*> =
+                loader.loadClass("com.android.launcher3.model.data.ItemInfoWithIcon")
+
+            val applyFromApplicationInfoMethod: Method = findMethod(
+                bubbleTextViewClass, "applyFromApplicationInfo", appInfoClass
+            )
+            hookWithId(applyFromApplicationInfoMethod, "drawer_bubble_text_bind_appinfo") { chain ->
+                chain.proceed()
+                (chain.thisObject as? View)?.let { hideLabelIfInDrawer(it) }
+            }
+
+            val applyFromWorkspaceItemMethod: Method = findMethod(
+                bubbleTextViewClass, "applyFromWorkspaceItem", workspaceItemInfoClass
+            )
+            hookWithId(applyFromWorkspaceItemMethod, "drawer_bubble_text_bind_workspaceitem") { chain ->
+                chain.proceed()
+                (chain.thisObject as? View)?.let { hideLabelIfInDrawer(it) }
+            }
+
+            val applyFromItemInfoWithIconMethod: Method = findMethod(
+                bubbleTextViewClass, "applyFromItemInfoWithIcon", itemInfoWithIconClass
+            )
+            hookWithId(applyFromItemInfoWithIconMethod, "drawer_bubble_text_bind_itemwithicon") { chain ->
+                chain.proceed()
+                (chain.thisObject as? View)?.let { hideLabelIfInDrawer(it) }
+            }
+
+            logger.info("BubbleTextView drawer label hooks installed successfully!")
+        } catch (e: Throwable) {
+            logger.error("Exception caught in BubbleTextView drawer label hook: ", e)
         }
     }
 

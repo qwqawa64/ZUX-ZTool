@@ -26,6 +26,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -298,25 +299,28 @@ class VolumeSliderLongPressHook : AppHookModule() {
     }
 
     /**
-     * SystemUIDialog implements ViewRootImpl.ConfigChangedCallback: on rotation
-     * its onConfigurationChanged() calls updateWindowSize(), which force-sets
-     * the window to the stock dialog size (fixed width, WRAP_CONTENT height) —
-     * collapsing our fullscreen transparent root, so the panel visually
-     * disappears. Re-assert the fullscreen layout after every stock run for
-     * our panel dialog only; insets still drive the panel margins via the
-     * root's OnApplyWindowInsetsListener.
+     * SystemUIDialog calls updateWindowSize from onConfigurationChanged and onCreate,
+     * force-setting the stock dialog size (fixed width, WRAP_CONTENT height) —
+     * collapsing our fullscreen transparent root. Re-assert the fullscreen layout
+     * after every stock run for our panel dialog only; insets still drive the
+     * panel margins via the root's OnApplyWindowInsetsListener.
      */
     private fun hookUpdateWindowSize() {
         val classLoader = systemUiClassLoader ?: return
         try {
             val dialogClass = classLoader.loadClass(SYSTEM_UI_DIALOG_CLASS)
-            val update = findMethod(dialogClass, "updateWindowSize")
+            val update = findUpdateWindowSize(dialogClass)
+            if (update == null) {
+                logger.warn("volume panel: SystemUIDialog has no updateWindowSize() or (Window) overload")
+                return
+            }
             hookWithId(update, "volume_panel_dialog_window_size") { chain ->
                 chain.proceed()
                 if (chain.thisObject === currentDialog) {
                     try {
-                        val window = (chain.thisObject as Dialog).window
-                        window?.setLayout(
+                        val target = chain.args.firstOrNull() as? Window
+                            ?: (chain.thisObject as Dialog).window
+                        target?.setLayout(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT
                         )
@@ -327,10 +331,24 @@ class VolumeSliderLongPressHook : AppHookModule() {
                 }
                 null
             }
-            logger.info("volume panel: SystemUIDialog.updateWindowSize hook installed")
+            val signature = if (update.parameterCount == 0) "()" else "(Window)"
+            logger.info("volume panel: SystemUIDialog.updateWindowSize$signature hook installed")
         } catch (t: Throwable) {
             logger.warn("volume panel: updateWindowSize hook failed: ${t.message}")
         }
+    }
+
+    /** Candidate signatures: no-arg on older builds, `(Window)` on Android 17. */
+    private fun findUpdateWindowSize(dialogClass: Class<*>): Method? {
+        val candidates = listOf<List<Class<*>?>>(emptyList(), listOf(Window::class.java))
+        for (parameterTypes in candidates) {
+            try {
+                return findMethod(dialogClass, "updateWindowSize", *parameterTypes.toTypedArray())
+            } catch (_: NoSuchMethodException) {
+                // try the next candidate signature
+            }
+        }
+        return null
     }
 
     private fun readDialogAppPackages(): List<Any> {

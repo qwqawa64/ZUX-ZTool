@@ -31,8 +31,16 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
 
     private fun hookDisplayPowerControllerAnimation(classLoader: ClassLoader) {
         try {
-            val animateMethod = classLoader.loadClass(DISPLAY_POWER_CONTROLLER)
-                .getDeclaredMethod(
+            val animateMethod = try {
+                classLoader.loadClass(DISPLAY_POWER_CONTROLLER).getDeclaredMethod(
+                    "animateScreenStateChange",
+                    Int::class.javaPrimitiveType,
+                    Int::class.javaPrimitiveType,
+                    Boolean::class.javaPrimitiveType
+                )
+            } catch (_: NoSuchMethodException) {
+                logger.warn("Fall back to android 16 and older signature")
+                classLoader.loadClass(DISPLAY_POWER_CONTROLLER).getDeclaredMethod(
                     "animateScreenStateChange",
                     Int::class.javaPrimitiveType,
                     Int::class.javaPrimitiveType,
@@ -40,6 +48,7 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
                     Boolean::class.javaPrimitiveType,
                     Boolean::class.javaPrimitiveType
                 )
+            }
             hookWithId(animateMethod, "animate_screen_state") { chain ->
                 val controller = chain.thisObject
                 applyAnimationDurations(controller)
@@ -48,7 +57,14 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
                 }
                 val powerState = fieldValue(controller, "mPowerState")
                 val onAnimator = fieldValue(controller, "mColorFadeOnAnimator")
-                val colorFadeLevel = powerState?.let { runCatching { findMethod(it.javaClass, "getColorFadeLevel").invoke(it) }.getOrNull() } as? Float ?: 1.0f
+                val colorFadeLevel = powerState?.let {
+                    runCatching {
+                        findMethod(
+                            it.javaClass,
+                            "getColorFadeLevel"
+                        ).invoke(it)
+                    }.getOrNull()
+                } as? Float ?: 1.0f
                 val fadeWasLive = fieldValue(powerState, "mColorFadePrepared") as? Boolean == true
                 chain.proceed()
                 // The host dismisses the prepared fade on most screen-on paths and does so even
@@ -89,7 +105,7 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
         runCatching {
             findMethod(animator.javaClass, "setDuration", Long::class.javaPrimitiveType)
                 .invoke(animator, durationMs)
-        }.onFailure { logger.error("Failed to set the duration of " + name, it) }
+        }.onFailure { logger.error("Failed to set the duration of $name", it) }
     }
 
     /**
@@ -104,7 +120,14 @@ class ForceScreenOnOffAnimation : SystemHookModule() {
         onAnimator: Any,
         colorFadeLevel: Float
     ): Boolean {
-        if (powerState.let { runCatching { findMethod(it.javaClass, "getScreenState").invoke(it) }.getOrNull() } as? Int != DISPLAY_STATE_ON) {
+        if (powerState.let {
+                runCatching {
+                    findMethod(
+                        it.javaClass,
+                        "getScreenState"
+                    ).invoke(it)
+                }.getOrNull()
+            } as? Int != DISPLAY_STATE_ON) {
             logger.debug("Screen-on color fade was dropped without the display turning on")
             return false
         }

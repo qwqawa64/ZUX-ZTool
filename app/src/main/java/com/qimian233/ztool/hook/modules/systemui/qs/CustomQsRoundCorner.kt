@@ -8,6 +8,7 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.RippleDrawable
 import android.graphics.drawable.StateListDrawable
+import android.os.Build
 import android.util.AttributeSet
 import android.widget.ProgressBar
 import com.qimian233.ztool.data.keys.PreferenceKeys
@@ -19,7 +20,6 @@ import java.lang.reflect.Method
 
 @SuppressLint("PrivateApi")
 class CustomQsRoundCorner : AppHookModule() {
-
     private var headUpTileRoundCornerRadius = 32
     private var normalTileRoundCornerRadius = 96
 
@@ -89,7 +89,10 @@ class CustomQsRoundCorner : AppHookModule() {
         }
 
         val updateBrightnessSliderMethod: Method =
-            toggleSliderViewClass.getDeclaredMethod("updateBrightnessSlider")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN)
+                toggleSliderViewClass.getDeclaredMethod("updateBrightnessSlider", Boolean::class.java)
+            else
+                toggleSliderViewClass.getDeclaredMethod("updateBrightnessSlider")
         hookWithId(updateBrightnessSliderMethod, "update_brightness_slider") { chain ->
             val result = chain.proceed()
             logger.debug("updateBrightnessSlider afterHookedMethod called!")

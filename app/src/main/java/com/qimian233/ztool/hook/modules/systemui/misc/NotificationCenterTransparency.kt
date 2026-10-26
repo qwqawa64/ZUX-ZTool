@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.misc
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.view.View
 import android.view.ViewGroup
 import com.qimian233.ztool.data.keys.PreferenceKeys
@@ -69,8 +70,8 @@ class NotificationCenterTransparency : AppHookModule() {
             hookWithId(setBlurIntMethod, "set_blur_int") { chain ->
                 chain.proceed(arrayOf(scaleBlur(chain.args[0] as Int)))
             }
-        } catch (t: Throwable) {
-            logger.error("Failed to hook setNotificationPanelBlurBehind(int)", t)
+        } catch (_: Throwable) {
+            logger.error("Failed to hook setNotificationPanelBlurBehind(int), this is normal for ZUXOS.")
         }
 
         try {
@@ -93,8 +94,11 @@ class NotificationCenterTransparency : AppHookModule() {
         }
 
         try {
-            val animateBlurMethod: Method = classLoader
-                .loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
+            val animateBlurMethod: Method = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN)
+                classLoader.loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
+                .getDeclaredMethod("animateBlur", Boolean::class.javaPrimitiveType, Float::class.javaPrimitiveType)
+            else
+                classLoader.loadClass("com.android.systemui.statusbar.NotificationShadeDepthController")
                 .getDeclaredMethod("animateBlur", Float::class.javaPrimitiveType, Boolean::class.javaPrimitiveType)
             hookWithId(animateBlurMethod, "animate_blur") { chain ->
                 val newBlur = scaleBlur(chain.args[0] as Float)

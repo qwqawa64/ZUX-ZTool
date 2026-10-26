@@ -12,6 +12,7 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
@@ -60,27 +61,9 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
             logger.error("$GEOMETRY_CLASS not found", t)
             return
         }
-        val calculateCtrlType = try {
-            findMethod(
-                geometryClass,
-                "calculateCtrlType",
-                Float::class.javaPrimitiveType,
-                Float::class.javaPrimitiveType,
-                Boolean::class.javaPrimitiveType,
-                Boolean::class.javaPrimitiveType
-            )
-        } catch (t: Throwable) {
-            logger.error("DragResizeWindowGeometry.calculateCtrlType not found", t)
-            return
-        }
+        val calculateCtrlType = resolveCtrlTypeMethod(geometryClass) ?: return
 
-        val isUnderPcMode = try {
-            loader.loadClass("com.android.wm.shell.util.OvcShellUtils")
-                .getMethod("isUnderPcMode")
-        } catch (t: Throwable) {
-            logger.warn("OvcShellUtils.isUnderPcMode not found; transform always: ${t.message}")
-            null
-        }
+        val isUnderPcMode = resolvePcModeMethod(loader)
 
         hookWithId(calculateCtrlType, "freeform_bottom_edge_resize") { chain ->
             try {
@@ -110,10 +93,61 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         logger.info("Freeform bottom edge resize installed")
     }
 
+    /**
+     * Resolves the edge ctrl-type calculator. Android 17 exposes
+     * `calculateEdgeResizeCtrlType(float, float)`; older builds only had the four-argument
+     * `calculateCtrlType`.
+     */
+    private fun resolveCtrlTypeMethod(geometryClass: Class<*>): Method? {
+        runCatching {
+            findMethod(
+                geometryClass,
+                "calculateEdgeResizeCtrlType",
+                Float::class.javaPrimitiveType,
+                Float::class.javaPrimitiveType
+            )
+        }.getOrNull()?.let { return it }
+        return runCatching {
+            findMethod(
+                geometryClass,
+                "calculateCtrlType",
+                Float::class.javaPrimitiveType,
+                Float::class.javaPrimitiveType,
+                Boolean::class.javaPrimitiveType!!,
+                Boolean::class.javaPrimitiveType!!
+            )
+        }.getOrNull() ?: run {
+            logger.error("DragResizeWindowGeometry ctrl-type method not found")
+            null
+        }
+    }
+
+    /**
+     * PC-mode probe. Android 17 dropped the no-argument `OvcShellUtils.isUnderPcMode()`, so the
+     * equivalent `OvcPcModeUtils.isUnderPcMode()` is tried first and the legacy one second.
+     */
+    private fun resolvePcModeMethod(loader: ClassLoader): Method? {
+        for ((owner, name) in PC_MODE_CANDIDATES) {
+            val method = runCatching {
+                loader.loadClass(owner).getDeclaredMethod(name).apply { isAccessible = true }
+            }.getOrNull()
+            if (method != null) return method
+        }
+        logger.warn("PC mode check unavailable; bottom edge transform always applied")
+        return null
+    }
+
     private fun installVelocityClose(loader: ClassLoader) {
         logger.info("Installing freeform bottom edge velocity close")
         val injectorClass = loadClass(loader, INJECTOR_CLASS) ?: return
-        val positionerClass = loadClass(loader, POSITIONER_CLASS) ?: return
+        val positionerClass = try {
+            loader.loadClass(POSITIONER_CLASS)
+        } catch (t: Throwable) {
+            logger.warn(
+                "$POSITIONER_CLASS absent; fast-drag close and fullscreen are skipped on this build"
+            )
+            return
+        }
         val decorationClass = loadClass(loader, DECORATION_CLASS) ?: return
 
         val injectorCtrl = field(injectorClass, "mCtrlType") ?: return
@@ -489,5 +523,9 @@ class FreeformBottomEdgeResizeHook : AppHookModule() {
         const val REMOVE_TRANSITION = 2
         // Original freeform quick-swipe threshold.
         const val CLOSE_SPEED_DP_PER_SECOND = 500f
+        val PC_MODE_CANDIDATES = listOf(
+            "com.android.wm.shell.ov.utils.OvcPcModeUtils" to "isUnderPcMode",
+            "com.android.wm.shell.util.OvcShellUtils" to "isUnderPcMode"
+        )
     }
 }

@@ -12,15 +12,11 @@ import java.util.jar.Attributes
 import java.util.zip.ZipEntry
 
 /**
- * Bypasses the install-time signature verification chain:
- * - services layer: verifySignatures returns false directly, assertMinSignatureSchemeIsValid short-circuits
- * - framework layer: ApkSignatureVerifier V1 failure recovery, minimum signature scheme
- *   requirement zeroed, ApkSigningBlockUtils verity integrity short-circuited
- * - libcore layer: StrictJarVerifier JAR digests and certificate rollback protection, MessageDigest.isEqual
- *
- * Forges signatures after V1 verification fails: when the digest bypass is enabled,
- * certificates are extracted from the APK itself first, falling back to a placeholder
- * signature if extraction fails.
+ * Bypasses install-time signature verification in three layers: services (verifySignatures,
+ * minimum signature scheme), framework (ApkSignatureVerifier V1 recovery, verity checks),
+ * and libcore (StrictJarVerifier digests, MessageDigest.isEqual).
+ * Forges signatures after V1 failure: certificates are read from the APK itself when the
+ * digest bypass is enabled, falling back to a placeholder signature.
  */
 @SuppressLint("PrivateApi")
 class PackageManagerSignatureBypassHook : SystemHookModule() {
@@ -143,8 +139,14 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
     }
 
     private fun hookApkSignatureVerifier(classLoader: ClassLoader, digestEnabled: Boolean) {
+        val verifierClass = runCatching {
+            classLoader.loadClass("android.util.apk.ApkSignatureVerifier")
+        }.getOrNull()
+        if (verifierClass == null) {
+            logger.warn("ApkSignatureVerifier unavailable; signature verification hooks skipped")
+            return
+        }
         try {
-            val verifierClass = classLoader.loadClass("android.util.apk.ApkSignatureVerifier")
             val minSchemeMethod = findMethod(
                 verifierClass, "getMinimumSignatureSchemeVersionForTargetSdk",
                 Int::class.javaPrimitiveType
@@ -153,67 +155,35 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
         } catch (e: Throwable) {
             logger.error("Failed hooking getMinimumSignatureSchemeVersionForTargetSdk", e)
         }
+
+        val support = runCatching {
+            resolveV1RecoverySupport(classLoader, verifierClass)
+        }.getOrNull()
+        if (support == null) {
+            logger.warn("ParseInput.reset or V1 verification internals unavailable; recovery hook skipped")
+            return
+        }
         try {
-            val verifierClass = classLoader.loadClass("android.util.apk.ApkSignatureVerifier")
-            val parseResultClass =
-                classLoader.loadClass("android.content.pm.parsing.result.ParseResult")
-            val parseInputClass =
-                classLoader.loadClass("android.content.pm.parsing.result.ParseInput")
-            val isError = parseResultClass.getMethod("isError")
-            val getErrorCode = parseResultClass.getMethod("getErrorCode")
-            val getResult = parseResultClass.getMethod("getResult")
-            val reset = parseInputClass.getMethod("reset")
-            val success = parseInputClass.getMethod("success", Any::class.java)
-
-            val signingDetailsClass = classLoader.loadClass("android.content.pm.SigningDetails")
-            val signingDetailsCtor = signingDetailsClass.getDeclaredConstructor(
-                emptyArray<Signature>().javaClass,
-                Int::class.javaPrimitiveType
-            ).apply { isAccessible = true }
-            val withDigestsClass = classLoader.loadClass(
-                $$"android.util.apk.ApkSignatureVerifier$SigningDetailsWithDigests"
-            )
-            val withDigestsCtor = withDigestsClass.getDeclaredConstructor(
-                signingDetailsClass, Map::class.java
-            ).apply { isAccessible = true }
-
-            val strictJarFileClass = classLoader.loadClass("android.util.jar.StrictJarFile")
-            val jarFileCtor = strictJarFileClass.getDeclaredConstructor(
-                String::class.java,
-                Boolean::class.javaPrimitiveType,
-                Boolean::class.javaPrimitiveType
-            ).apply { isAccessible = true }
-            val findEntry = findMethod(strictJarFileClass, "findEntry", String::class.java)
-            val close = findMethod(strictJarFileClass, "close")
-            val loadCertificates = verifierClass.declaredMethods.first {
-                it.name == "loadCertificates"
-            }
-            val convertToSignatures = verifierClass.declaredMethods.first {
-                it.name == "convertToSignatures"
-            }
-
-            val verifyV1 = verifierClass.declaredMethods.first { it.name == "verifyV1Signature" }
-            hookWithId(verifyV1, "pkgmgr_v1_signature_recovery") { chain ->
+            hookWithId(support.verifyV1Signature, "pkgmgr_v1_signature_recovery") { chain ->
                 val original = chain.proceed()
                 try {
                     val parseResult = original ?: return@hookWithId original
-                    if (!(isError.invoke(parseResult) as Boolean)) return@hookWithId original
-                    val errorCode = getErrorCode.invoke(parseResult) as Int
-                    if (errorCode != INSTALL_PARSE_FAILED_NO_CERTIFICATES) {
+                    if (!(support.isError.invoke(parseResult) as Boolean)) {
+                        return@hookWithId original
+                    }
+                    if ((support.getErrorCode.invoke(parseResult) as Int) != INSTALL_PARSE_FAILED_NO_CERTIFICATES) {
                         return@hookWithId original
                     }
                     val apkPath = chain.getArg(1) as String
-                    val signatures = collectRecoverySignatures(
-                        digestEnabled, apkPath, chain.getArg(0),
-                        jarFileCtor, findEntry, close, loadCertificates,
-                        convertToSignatures, isError, getResult
-                    )
-                    val signingDetails = signingDetailsCtor.newInstance(signatures, 1)
-                    val wrapped = withDigestsCtor.newInstance(signingDetails, null as Any?)
                     val input = chain.getArg(0)
-                    reset.invoke(input)
+                    val signatures =
+                        collectRecoverySignatures(digestEnabled, apkPath, input, support)
+                    val signingDetails = support.signingDetailsCtor.newInstance(signatures, 1)
+                    val wrapped = support.withDigestsCtor.newInstance(signingDetails, null as Any?)
+                    support.resetParseInput.invoke(input)
+                    val recovered = support.success.invoke(input, wrapped)
                     logger.info("Recovered V1 signature verification for $apkPath")
-                    success.invoke(input, wrapped)
+                    recovered
                 } catch (t: Throwable) {
                     logger.error("Failed to recover V1 signature verification", t)
                     original
@@ -221,49 +191,122 @@ class PackageManagerSignatureBypassHook : SystemHookModule() {
             }
             logger.info("Hooked ApkSignatureVerifier.verifyV1Signature recovery")
         } catch (e: Throwable) {
-            logger.error("Failed hooking ApkSignatureVerifier", e)
+            logger.error("Failed hooking ApkSignatureVerifier V1 recovery", e)
         }
+    }
+
+    /**
+     * Resolves every reflective handle needed to turn a failed V1 result into a success result.
+     *
+     * @return null when the build no longer exposes an equivalent reset/success path
+     */
+    private fun resolveV1RecoverySupport(
+        classLoader: ClassLoader,
+        verifierClass: Class<*>
+    ): V1RecoverySupport? {
+        val parseResultClass = classLoader.loadClass("android.content.pm.parsing.result.ParseResult")
+        val parseInputClass = classLoader.loadClass("android.content.pm.parsing.result.ParseInput")
+        val strictJarFileClass = classLoader.loadClass("android.util.jar.StrictJarFile")
+        val signingDetailsClass = classLoader.loadClass("android.content.pm.SigningDetails")
+        val withDigestsClass = classLoader.loadClass(
+            $$"android.util.apk.ApkSignatureVerifier$SigningDetailsWithDigests"
+        )
+
+        // Older builds declare reset() on the ParseInput interface; Android 17 keeps it on ParseTypeImpl only
+        val resetParseInput = runCatching { parseInputClass.getMethod("reset") }.getOrNull()
+            ?: runCatching {
+                classLoader.loadClass(PARSE_TYPE_IMPL_CLASS).getMethod("reset")
+            }.getOrNull()
+            ?: return null
+
+        return V1RecoverySupport(
+            isError = parseResultClass.getMethod("isError"),
+            getErrorCode = parseResultClass.getMethod("getErrorCode"),
+            getResult = parseResultClass.getMethod("getResult"),
+            success = parseInputClass.getMethod("success", Any::class.java),
+            resetParseInput = resetParseInput,
+            signingDetailsCtor = signingDetailsClass.getDeclaredConstructor(
+                emptyArray<Signature>().javaClass,
+                Int::class.javaPrimitiveType
+            ).apply { isAccessible = true },
+            withDigestsCtor = withDigestsClass.getDeclaredConstructor(
+                signingDetailsClass, Map::class.java
+            ).apply { isAccessible = true },
+            strictJarFileCtor = strictJarFileClass.getDeclaredConstructor(
+                String::class.java,
+                Boolean::class.javaPrimitiveType,
+                Boolean::class.javaPrimitiveType
+            ).apply { isAccessible = true },
+            findEntry = findMethod(strictJarFileClass, "findEntry", String::class.java),
+            closeJarFile = findMethod(strictJarFileClass, "close"),
+            // Both certificate helpers are private static inside ApkSignatureVerifier
+            loadCertificates = verifierClass.declaredMethods.first {
+                it.name == "loadCertificates"
+            }.apply { isAccessible = true },
+            convertToSignatures = verifierClass.declaredMethods.first {
+                it.name == "convertToSignatures"
+            }.apply { isAccessible = true },
+            verifyV1Signature = findMethod(
+                verifierClass, "verifyV1Signature",
+                parseInputClass, String::class.java, Boolean::class.javaPrimitiveType
+            )
+        )
     }
 
     private fun collectRecoverySignatures(
         digestEnabled: Boolean,
         apkPath: String,
         parseInput: Any,
-        jarFileCtor: Constructor<*>,
-        findEntry: Method,
-        close: Method,
-        loadCertificates: Method,
-        convertToSignatures: Method,
-        isError: Method,
-        getResult: Method
+        support: V1RecoverySupport
     ): Array<Signature> {
         // Parse V1 certificates from the APK itself (no validation, extraction only); fall back to the placeholder signature on failure
         if (digestEnabled) {
             var jarFile: Any? = null
             try {
-                jarFile = jarFileCtor.newInstance(apkPath, true, false)
-                val manifestEntry = findEntry.invoke(jarFile, "AndroidManifest.xml") as ZipEntry?
+                jarFile = support.strictJarFileCtor.newInstance(apkPath, true, false)
+                val manifestEntry = support.findEntry.invoke(jarFile, "AndroidManifest.xml") as ZipEntry?
                 if (manifestEntry != null) {
-                    val certsResult = loadCertificates.invoke(null, parseInput, jarFile, manifestEntry)
-                    if (certsResult != null && !(isError.invoke(certsResult) as Boolean)) {
-                        val certs = getResult.invoke(certsResult) as? Array<*>
+                    val certsResult = support.loadCertificates.invoke(null, parseInput, jarFile, manifestEntry)
+                    if (certsResult != null && !(support.isError.invoke(certsResult) as Boolean)) {
+                        val certs = support.getResult.invoke(certsResult) as? Array<*>
                         if (!certs.isNullOrEmpty()) {
                             @Suppress("UNCHECKED_CAST")
-                            return convertToSignatures.invoke(null, certs) as Array<Signature>
+                            return support.convertToSignatures.invoke(null, certs) as Array<Signature>
                         }
                     }
                 }
             } catch (t: Throwable) {
                 logger.error("Failed parsing certificates from $apkPath", t)
             } finally {
-                runCatching { close.invoke(jarFile) }
+                runCatching { support.closeJarFile.invoke(jarFile) }
             }
         }
         return arrayOf(Signature(FALLBACK_SIGNATURE_HEX))
     }
 
+    /**
+     * Reflective handles required by the V1 signature recovery hook.
+     */
+    private class V1RecoverySupport(
+        val isError: Method,
+        val getErrorCode: Method,
+        val getResult: Method,
+        val success: Method,
+        val resetParseInput: Method,
+        val signingDetailsCtor: Constructor<*>,
+        val withDigestsCtor: Constructor<*>,
+        val strictJarFileCtor: Constructor<*>,
+        val findEntry: Method,
+        val closeJarFile: Method,
+        val loadCertificates: Method,
+        val convertToSignatures: Method,
+        val verifyV1Signature: Method
+    )
+
     companion object {
         private const val INSTALL_PARSE_FAILED_NO_CERTIFICATES = -103
+
+        private const val PARSE_TYPE_IMPL_CLASS = "android.content.pm.parsing.result.ParseTypeImpl"
 
         // Placeholder signature (not a real certificate): when V1 fails and no certificate
         // can be extracted from the APK, gives signature-related logic a stable comparable value

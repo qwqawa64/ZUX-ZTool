@@ -234,15 +234,28 @@ private fun systemUiMiscSettingsSections(
                         key = "system_ui_misc_aosp_scroll_capture"
                     )
                 )
-                add(
-                    SettingItem.Switch(
-                        title = stringResource(R.string.system_ui_misc_shade_rebound_fix_title),
-                        summary = stringResource(R.string.system_ui_misc_shade_rebound_fix_summary),
-                        checked = state.shadeReboundFix,
-                        onCheckedChange = onShadeReboundFixChanged,
-                        key = "system_ui_misc_shade_rebound_fix"
+                if (state.shadeReboundFixFixed) {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_misc_shade_rebound_fix_title),
+                            summary = stringResource(R.string.system_ui_misc_shade_rebound_fix_fixed_summary),
+                            checked = false,
+                            onCheckedChange = {},
+                            enabled = false,
+                            key = "system_ui_misc_shade_rebound_fix"
+                        )
                     )
-                )
+                } else {
+                    add(
+                        SettingItem.Switch(
+                            title = stringResource(R.string.system_ui_misc_shade_rebound_fix_title),
+                            summary = stringResource(R.string.system_ui_misc_shade_rebound_fix_summary),
+                            checked = state.shadeReboundFix,
+                            onCheckedChange = onShadeReboundFixChanged,
+                            key = "system_ui_misc_shade_rebound_fix"
+                        )
+                    )
+                }
             }
         )
     )

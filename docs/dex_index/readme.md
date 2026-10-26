@@ -13,7 +13,7 @@ native 库并 mmap APK；热重载 replay 时对同一 APK 重复 create，nativ
 
 ```
 阶段 A（模块 app 进程）：
-  触发（DexIndexReceiver / ZToolApplication 启动指纹检查 / 设置页手动刷新）
+  触发（DexIndexReceiver / 首页入口 staleness 检查 `HomeViewModel.checkDexIndexOnEntry` / 设置页手动刷新）
     → DexIndexManager
         ├ 对每个作用域包：sourceDir + splitSourceDirs → DexKitBridge.create(...)
         ├ 跑该作用域唯一的 Indexer（原样迁移的查询代码）
@@ -46,7 +46,7 @@ com.qimian233.ztool.dexindex/
   MobileDesktopDexIndexer.kt // com.motorola.mobiledesktop 作用域（2 模块查询）
   DexIndexRegistry.kt    // indexers 注册表（作用域 → Indexer 唯一映射）
   DexIndexManager.kt     // app 侧执行器：bridge/原子写/指纹/异常隔离
-  DexIndexReceiver.kt    // 模块安装/更新触发
+  DexIndexReceiver.kt    // 模块安装/更新触发（先判 needsReindex，索引已新鲜则不重建）
 
 com.qimian233.ztool.hook.base/
   DexIndexStore.kt       // hook 侧只读工具（唯一依赖 libxposed 的索引类）
@@ -75,8 +75,9 @@ com.qimian233.ztool.hook.base/
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 4,
   "generatedAt": 1730000000000,
+  "systemFingerprint": "Lenovo/TB710FU/TB710FU:17/...:user/release-keys",
   "apk": { "path": "...", "lastUpdateTime": 123, "signatureHash": "sha256-hex" },
   "modules": {
     "clean_global_search": { "hotwordInitMethod": "K0", "hotwordDataMethod": "E0" }
@@ -84,13 +85,22 @@ com.qimian233.ztool.hook.base/
 }
 ```
 
-- `apk` 指纹（路径 + PackageInfo.lastUpdateTime + 签名 SHA-256）用于失效检测：
-  目标 app 更新（OTA）后 `ZToolApplication` 启动时自动重扫。
-- 写入为原子写（tmp + rename），避免 hook 侧读到半截 JSON。
+- 失效检测由 `DexIndexManager.needsReindex` 按顺序判断（目标包不可解析时直接返回“不需要”，
+  否则每次启动都会空扫全部作用域）：
+  1. `schemaVersion` 与 `DexIndexConstants.SCHEMA_VERSION` 不一致（结构升级）；
+  2. `systemFingerprint` 与当前 `Build.FINGERPRINT` 不一致（系统 OTA / 大版本升级）。预装系统应用的
+     `lastUpdateTime` 在 OTA 后不变（实测是 ROM 镜像里的常量），单靠 `apk` 指纹发现不了系统升级；
+  3. `apk` 指纹（路径 + `PackageInfo.lastUpdateTime` + 签名 SHA-256）不一致（目标 app 自身更新）。
+- 重建是整包级的：任一作用域 stale → `indexAll` 重跑全部 indexer 并原子写回（tmp + rename，
+  避免 hook 侧读到半截 JSON）。
+- Hook 侧 `DexIndexStore` **不校验** `schemaVersion`，只按 `modules` 的 key 取值；改动 module/field
+  key 时必须保留 hook 侧硬编码 fallback。
 
 ## 注意
 
 - 索引完成后需**重启目标进程或热重载**才生效（`handleLoadPackage` 仅在进程启动时执行一次）。
+- 升级 `SCHEMA_VERSION` 是对所有设备强制一次全量重建的手段（不看指纹），用于历史索引已经陈旧、
+  但指纹又发现不了的情况（例如系统 OTA 改写了目标 APK 内容却保留了 `lastUpdateTime`）。
 - 首次安装后目标进程可能先于索引启动 → 走硬编码 fallback（行为与改造前一致，不劣化）。
 - 不要在 hook lambda（`hookWithId` 回调）里读索引/做 IO；在 `handleLoadPackage` 阶段读好。
 - `DexIndexManager` 依赖 dexkit native 库（app 侧），索引失败不影响 app 使用。

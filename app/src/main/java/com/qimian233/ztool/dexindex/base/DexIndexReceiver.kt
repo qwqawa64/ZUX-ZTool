@@ -6,25 +6,36 @@ import android.content.Intent
 import android.util.Log
 
 /**
- * Triggers offline indexing after the module is installed/updated.
+ * Triggers offline indexing when the module is installed/updated.
  *
- * Note: on Android 8+ a statically registered `PACKAGE_ADDED` receiver may not
- * receive the broadcast; the first-install scenario is covered by the startup
- * fingerprint check in [com.qimian233.ztool.ZToolApplication].
+ * Honors the same staleness rules as the home-entry check: a fresh index is left untouched, and
+ * indexer output changes still require a `SCHEMA_VERSION` bump. The broadcast can be missed
+ * (receiver is not direct-boot aware, process killed during boot); the home-entry check in
+ * `HomeViewModel.checkDexIndexOnEntry` covers that case.
  */
 class DexIndexReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
         if (action != Intent.ACTION_MY_PACKAGE_REPLACED && action != Intent.ACTION_PACKAGE_ADDED) return
-        val pkg = intent.data?.schemeSpecificPart ?: return
+        // MY_PACKAGE_REPLACED carries no data URI; it is only delivered to this package.
+        val pkg = intent.data?.schemeSpecificPart ?: context.packageName
         if (pkg != context.packageName) return
 
-        Log.i(TAG, "triggered by $action, starting offline dex index")
+        Log.i(TAG, "triggered by $action, checking the offline dex index")
         val pending = goAsync()
         Thread {
             try {
-                DexIndexManager.indexAll(context.applicationContext)
+                val ctx = context.applicationContext
+                val stale = DexIndexRegistry.indexers.filter {
+                    DexIndexManager.needsReindex(ctx, it.scopePackage)
+                }
+                if (stale.isEmpty()) {
+                    Log.i(TAG, "index is fresh, skipping")
+                    return@Thread
+                }
+                Log.i(TAG, "stale scopes: ${stale.map { it.scopePackage }}")
+                DexIndexManager.indexAll(ctx)
             } catch (t: Throwable) {
                 Log.e(TAG, "background index failed", t)
             } finally {

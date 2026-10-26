@@ -2,6 +2,7 @@ package com.qimian233.ztool.hook.modules.launcher.grid
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.hook.base.AppHookModule
@@ -28,28 +29,22 @@ class CustomGridSize : AppHookModule() {
             prefs.getInt(PreferenceKeys.CUSTOM_LAUNCHER_COLUMN.name, 6)
         try {
             val gridOptionClass: Class<*> = classLoader.loadClass($$"com.android.launcher3.InvariantDeviceProfile$GridOption")
-            // Find arg class to construct correct method signature
-            val contextClass: Class<*> = Context::class.java
-            val attributeSetClass = classLoader.loadClass("android.util.AttributeSet")
-            val displayInfoClass: Class<*> = classLoader.loadClass($$"com.android.launcher3.util.DisplayController$Info")
-            var ctor: Constructor<*>?
-            try {
-                ctor = gridOptionClass.getDeclaredConstructor(
-                    contextClass, attributeSetClass, displayInfoClass
-                )
-            } catch (e: Exception) {
-                logger.error(
-                    $$"Exception happened when trying to find GridOption class with constructor signature Context, AttributeSet, DisplayController$Info: ",
-                    e
-                )
-                try {
-                    ctor = gridOptionClass.getDeclaredConstructor(
-                        contextClass, attributeSetClass
+
+            val ctor: Constructor<*> = when (Build.VERSION.SDK_INT) {
+                Build.VERSION_CODES.CINNAMON_BUN -> gridOptionClass.getDeclaredConstructor(
+                    Context::class.java,
+                    classLoader.loadClass("com.android.launcher3.util.XmlElement"),
+                    classLoader.loadClass("com.android.launcher3.display.LauncherDisplayInfo")
                     )
-                } catch (_: Exception) {
-                    logger.error("Failed to get constructor with alternate way, exiting.")
-                    return
-                }
+                Build.VERSION_CODES.BAKLAVA -> gridOptionClass.getDeclaredConstructor(
+                    Context::class.java,
+                    classLoader.loadClass("android.util.AttributeSet"),
+                    classLoader.loadClass($$"com.android.launcher3.util.DisplayController$Info")
+                )
+                else -> gridOptionClass.getDeclaredConstructor(
+                    Context::class.java,
+                    classLoader.loadClass("android.util.AttributeSet")
+                )
             }
             // High priority: grid dimensions must be applied before other GridOption-
             // or DeviceProfile-dependent hooks (e.g. LauncherWideGridHook) recompute

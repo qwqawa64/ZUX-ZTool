@@ -1,6 +1,7 @@
 package com.qimian233.ztool.hook.modules.systemui.statusbar
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -38,7 +39,7 @@ class NetworkSpeedHideSlowHook : AppHookModule() {
     companion object {
         /** System setting key SystemUI uses to decide network speed indicator visibility */
         private const val NETWORK_SPEED_STATE_KEY = "network_realtime_speed_state"
-        private const val NETWORK_SPEED_VIEW_CLASS = "com.android.systemui.zui.NetworkSpeedView"
+        private var NETWORK_SPEED_VIEW_CLASS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) "com.android.systemui.statusbar.view.NetworkSpeedView" else "com.android.systemui.zui.NetworkSpeedView"
         private const val KB = 1024L
 
         /** TrafficStats minimum sampling interval (ms); the previous decision is reused within it */

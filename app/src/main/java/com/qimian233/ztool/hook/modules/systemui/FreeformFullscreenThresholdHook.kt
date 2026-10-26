@@ -10,13 +10,14 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import java.lang.reflect.Field
+import java.lang.reflect.Method
 
 /**
  * Replaces the SystemUI freeform corner-resize fullscreen trigger with user percentages.
  *
- * SystemUI 17.5.27 hosts `OvfDpcUtility` and the live `changeBounds` logic in
- * `DragPositioningCallbackUtility`; this hook raises the max bounds and replaces the
- * stable/safe-margin rect with the full display, then rewrites the trigger result.
+ * On Android 17 the live logic runs inside DragPositioningCallbackUtility.changeBounds and
+ * reaches OvfDpcUtility through WindowDecorationWrapper.ovWindowDecor; the legacy
+ * WindowDecoration + seven-argument signature stays supported as a fallback.
  */
 @SuppressLint("PrivateApi")
 class FreeformFullscreenThresholdHook : AppHookModule() {
@@ -31,6 +32,9 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
 
     @Volatile
     private var bottomResizeLogged = false
+
+    @Volatile
+    private var utilityMissingLogged = false
 
     override fun getModuleName(): String =
         PreferenceKeys.LAUNCHER_FREEFORM_FULLSCREEN_THRESHOLD.name
@@ -57,12 +61,6 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         val dragUtilityClass = loadClass(loader, DRAG_UTILITY_CLASS) ?: return
         val displayControllerClass =
             loadClass(loader, "com.android.wm.shell.common.DisplayController") ?: return
-        val windowDecorationClass =
-            loadClass(loader, "com.android.wm.shell.windowdecor.WindowDecoration") ?: return
-        val decorClass = loadClass(
-            loader,
-            "com.android.wm.shell.windowdecor.DesktopModeWindowDecoration"
-        ) ?: return
         val layoutInfoClass = loadClass(loader, "com.android.internal.ov.OvfDragLayoutInfo") ?: return
 
         val prefs = remotePreferences
@@ -88,22 +86,25 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
                 "height=$heightPercent% (${if (heightEnabled) "on" else "off"})"
         )
 
-        val changeBounds = try {
-            findMethod(
-                dragUtilityClass,
-                "changeBounds",
-                Int::class.javaPrimitiveType,
-                Rect::class.java,
-                Rect::class.java,
-                Rect::class.java,
-                PointF::class.java,
-                displayControllerClass,
-                windowDecorationClass
-            )
-        } catch (t: Throwable) {
-            logger.error("DragPositioningCallbackUtility.changeBounds not found", t)
+        val target = resolveChangeBounds(loader, dragUtilityClass, displayControllerClass)
+            ?: return
+        val wrapperClass = if (target.usesWrapper) {
+            loadClass(loader, WRAPPER_CLASS) ?: return
+        } else {
+            null
+        }
+        val ownerClass = if (target.usesWrapper) {
+            loadClass(loader, OV_DECOR_CLASS) ?: return
+        } else {
+            loadClass(loader, DECOR_CLASS) ?: return
+        }
+        val wrapperDecorField = wrapperClass?.let { field(it, "ovWindowDecor") }
+        if (target.usesWrapper && wrapperDecorField == null) {
+            logger.error("WindowDecorationWrapper.ovWindowDecor field missing")
             return
         }
+        val utilityField = field(ownerClass, "ovfDpcUtility") ?: return
+        val hideVeil = method(ownerClass, "ovfHideFullBlackVeil")
 
         val triggerResultField = field(utilityClass, "triggerResult") ?: return
         val veilAddedField = field(utilityClass, "blackVeilAdded")
@@ -114,8 +115,6 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
             return
         }
         dragLayoutInfoField.isAccessible = true
-        val utilityField = field(decorClass, "ovfDpcUtility") ?: return
-        val hideVeil = method(decorClass, "ovfHideFullBlackVeil")
         val maxField = field(layoutInfoClass, "maxWinSizeWhEdge") ?: return
         val safeMarginField = field(layoutInfoClass, "safeMargin")
         val taskStartField = field(utilityClass, "mTaskBoundsAtDragStart")
@@ -123,12 +122,20 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         val minWinField = field(layoutInfoClass, "minWinSize")
         val minReboundField = field(layoutInfoClass, "minReboundWinSize")
 
-        hookWithId(changeBounds, "freeform_fullscreen_systemui") { chain ->
+        hookWithId(target.method, "freeform_fullscreen_systemui") { chain ->
             try {
-                val decor = chain.args.getOrNull(6)
-                val utility = decor?.let { utilityField.get(it) }
-                if (decor == null || utility == null) {
-                    logger.warn("Freeform fullscreen changeBounds has null decor/utility")
+                val decorationArg = chain.args.getOrNull(6)
+                val owner = if (target.usesWrapper) {
+                    decorationArg?.let { wrapperDecorField?.get(it) }
+                } else {
+                    decorationArg
+                }
+                val utility = if (owner != null) utilityField.get(owner) else null
+                if (owner == null || utility == null) {
+                    if (!utilityMissingLogged) {
+                        utilityMissingLogged = true
+                        logger.warn("Freeform fullscreen changeBounds has null decor/utility")
+                    }
                     return@hookWithId chain.proceed()
                 }
                 val rect = chain.args.getOrNull(1) as? Rect
@@ -238,7 +245,7 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
                     veilAddedField.getBoolean(utility)
                 ) {
                     try {
-                        hideVeil?.invoke(decor)
+                        hideVeil?.invoke(owner)
                         veilAddedField.setBoolean(utility, false)
                     } catch (t: Throwable) {
                         logger.warn("Failed to hide freeform fullscreen veil: ${t.message}")
@@ -286,6 +293,64 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         )
     }
 
+    /**
+     * Resolves changeBounds with the Android 17 nine-argument signature first, then the legacy
+     * seven-argument one. [DragTarget.usesWrapper] reports which decoration argument to expect.
+     */
+    private fun resolveChangeBounds(
+        loader: ClassLoader,
+        dragUtilityClass: Class<*>,
+        displayControllerClass: Class<*>
+    ): DragTarget? {
+        val wrapperClass = runCatching { loader.loadClass(WRAPPER_CLASS) }.getOrNull()
+        val resultClass = runCatching { loader.loadClass(CHANGE_BOUNDS_RESULT_CLASS) }.getOrNull()
+        if (wrapperClass != null && resultClass != null) {
+            val method = runCatching {
+                findMethod(
+                    dragUtilityClass,
+                    "changeBounds",
+                    Int::class.javaPrimitiveType,
+                    Rect::class.java,
+                    Rect::class.java,
+                    Rect::class.java,
+                    PointF::class.java,
+                    displayControllerClass,
+                    wrapperClass,
+                    Boolean::class.javaPrimitiveType!!,
+                    resultClass
+                )
+            }.getOrNull()
+            if (method != null) {
+                logger.debug("Freeform fullscreen using changeBounds/WindowDecorationWrapper")
+                return DragTarget(method, true)
+            }
+        }
+        val windowDecorationClass = runCatching {
+            loader.loadClass("com.android.wm.shell.windowdecor.WindowDecoration")
+        }.getOrNull()
+        if (windowDecorationClass != null) {
+            val method = runCatching {
+                findMethod(
+                    dragUtilityClass,
+                    "changeBounds",
+                    Int::class.javaPrimitiveType,
+                    Rect::class.java,
+                    Rect::class.java,
+                    Rect::class.java,
+                    PointF::class.java,
+                    displayControllerClass,
+                    windowDecorationClass
+                )
+            }.getOrNull()
+            if (method != null) {
+                logger.debug("Freeform fullscreen using legacy changeBounds/WindowDecoration")
+                return DragTarget(method, false)
+            }
+        }
+        logger.error("DragPositioningCallbackUtility.changeBounds not found")
+        return null
+    }
+
     private fun loadClass(loader: ClassLoader, name: String): Class<*>? {
         return try {
             loader.loadClass(name)
@@ -304,7 +369,7 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         }
     }
 
-    private fun method(owner: Class<*>, name: String): java.lang.reflect.Method? {
+    private fun method(owner: Class<*>, name: String): Method? {
         return try {
             findMethod(owner, name).apply { isAccessible = true }
         } catch (t: Throwable) {
@@ -324,10 +389,18 @@ class FreeformFullscreenThresholdHook : AppHookModule() {
         }
     }
 
+    /** Resolved changeBounds entry point plus the decoration argument flavour it expects. */
+    private class DragTarget(val method: Method, val usesWrapper: Boolean)
+
     private companion object {
         const val UTILITY_CLASS = "com.android.wm.shell.windowdecor.OvfDpcUtility"
         const val DRAG_UTILITY_CLASS =
             "com.android.wm.shell.windowdecor.DragPositioningCallbackUtility"
+        const val WRAPPER_CLASS = "com.android.wm.shell.windowdecor.WindowDecorationWrapper"
+        const val OV_DECOR_CLASS = "com.android.wm.shell.windowdecor.OvWindowDecoration"
+        const val DECOR_CLASS = "com.android.wm.shell.windowdecor.DesktopModeWindowDecoration"
+        const val CHANGE_BOUNDS_RESULT_CLASS =
+            $$"com.android.wm.shell.windowdecor.DragPositioningCallbackUtility$ChangeBoundsResult"
         const val MIN_PERCENT = 50
         const val MAX_PERCENT = 100
     }
