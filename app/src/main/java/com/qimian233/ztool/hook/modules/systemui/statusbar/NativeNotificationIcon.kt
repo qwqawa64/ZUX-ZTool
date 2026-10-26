@@ -52,9 +52,13 @@ class NativeNotificationIcon : AppHookModule() {
 
     private fun hookXSystemUtil(classLoader: ClassLoader) {
         try {
-            logger.info("Hooking com.android.systemui.util.XSystemUtil...")
+            val xSystemUtilClassPath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN)
+                "com.android.systemui.utils.XSystemUtil"
+            else
+                "com.android.systemui.util.XSystemUtil"
+            logger.info("Hooking $xSystemUtilClassPath...")
             val isCTSGTSTestMethod: Method = classLoader
-                .loadClass("com.android.systemui.util.XSystemUtil")
+                .loadClass(xSystemUtilClassPath)
                 .getDeclaredMethod("isCTSGTSTest")
             hookWithId(isCTSGTSTestMethod, "is_ctsgts_test") { chain ->
                 val mode = isCtsMode.get()
@@ -63,9 +67,9 @@ class NativeNotificationIcon : AppHookModule() {
                 }
                 chain.proceed()
             }
-            logger.info("Successfully hooked com.android.systemui.util.XSystemUtil. [1/6]")
+            logger.info("Successfully hooked $xSystemUtilClassPath. [1/6]")
         } catch (e: Exception) {
-            logger.error("Failed to hook com.android.systemui.util.XSystemUtil.", e)
+            logger.error("Failed to hook target method isCTSGTSTest, see the stacktrace for more info.", e)
         }
     }
 
