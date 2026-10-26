@@ -11,7 +11,6 @@ import com.qimian233.ztool.data.keys.PreferenceKeys
 import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
-import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
@@ -52,12 +51,6 @@ class LauncherWideGridHook : AppHookModule() {
             logger.error("WideGrid: Workspace class not found, aborting", th)
             return
         }
-        val dpClass = try {
-            classLoader.loadClass("com.android.launcher3.DeviceProfile")
-        } catch (th: Throwable) {
-            logger.error("WideGrid: DeviceProfile class not found, aborting", th)
-            return
-        }
         val setInsets = try {
             findMethod(workspaceClass, "setInsets", Rect::class.java)
         } catch (th: Throwable) {
@@ -78,25 +71,16 @@ class LauncherWideGridHook : AppHookModule() {
             logger.error("WideGrid: ActivityContext#getDeviceProfile not found, aborting", th)
             return
         }
-        val marginField = try {
-            findField(dpClass, "desiredWorkspaceHorizontalMarginPx")
-        } catch (th: Throwable) {
-            logger.error("WideGrid: desiredWorkspaceHorizontalMarginPx missing, aborting", th)
-            return
-        }
-        val cellPaddingField = try {
-            findField(dpClass, "cellLayoutPaddingPx")
-        } catch (th: Throwable) {
-            logger.error("WideGrid: cellLayoutPaddingPx missing, aborting", th)
+        // Shared geometry object; the big-folder hook reads the same measured cell. It owns
+        // the DeviceProfile/WorkspaceProfile access used below, so it must resolve first.
+        if (!LauncherGridMetrics.install(classLoader, logger)) {
+            logger.error("WideGrid: launcher grid geometry unavailable, aborting")
             return
         }
         // Square-mode members: optional; missing any of them degrades to slider mode.
-        val squareFields = resolveSquareFields(classLoader, dpClass)
+        val squareFields = resolveSquareFields(classLoader)
 
-        // Shared geometry object; the big-folder hook reads the same measured cell.
-        LauncherGridMetrics.install(classLoader, logger)
-
-        val resolver = ProfileResolver(getDeviceProfile, activityContextClass, marginField, cellPaddingField)
+        val resolver = ProfileResolver(getDeviceProfile, activityContextClass)
 
         // Read once: the page measure hook runs on every layout pass, and changing these
         // requires a launcher restart anyway.
@@ -141,7 +125,7 @@ class LauncherWideGridHook : AppHookModule() {
                     return@hookWithId null
                 }
                 val sideInsetPx = (insetDp * workspace.resources.displayMetrics.density).roundToInt()
-                applySideInset(dp, sideInsetPx, resolver)
+                applySideInset(dp, sideInsetPx)
                 // Re-run with the rewritten profile so setPadding/requestLayout picks up the
                 // new values (guarded by inRewrite to avoid recursion).
                 reapplyInsets(workspace, if (chain.args.size > 0) chain.args[0] as? Rect else null)
@@ -194,7 +178,7 @@ class LauncherWideGridHook : AppHookModule() {
                         val cols = callInt(square.getCountX, page)
                         val rows = callInt(square.getCountY, page)
                         val dp = resolver.resolve(page.context)
-                        val border = dp?.let { square.borderSpace.get(it) as? Point }
+                        val border = LauncherGridMetrics.cellLayoutBorderSpacePx(dp)
                         // The icon box is the cell the page handed to its container, so the
                         // decision reads that cell instead of re-deriving it from the raw box.
                         val cellWidth = callInt(square.getCellWidth, page)
@@ -243,7 +227,7 @@ class LauncherWideGridHook : AppHookModule() {
                         var relayout = false
                         // The profile padding survives page relayouts but not a profile
                         // rebuild, so it is synced on every pass, outside the solve guard.
-                        val profilePadding = resolver.cellPadding.get(dp) as? Rect
+                        val profilePadding = LauncherGridMetrics.cellLayoutPaddingPx(dp)
                         if (profilePadding != null &&
                             (profilePadding.left != padding || profilePadding.right != padding)
                         ) {
@@ -303,7 +287,7 @@ class LauncherWideGridHook : AppHookModule() {
      * Resolves every member square mode needs, once at install time. Returns null if any
      * required one is missing — square mode is then disabled and the slider path is used.
      */
-    private fun resolveSquareFields(classLoader: ClassLoader, dpClass: Class<*>): SquareFields? {
+    private fun resolveSquareFields(classLoader: ClassLoader): SquareFields? {
         val pageClass = try {
             classLoader.loadClass("com.android.launcher3.CellLayout")
         } catch (th: Throwable) {
@@ -316,7 +300,6 @@ class LauncherWideGridHook : AppHookModule() {
             logger.error("WideGrid: ShortcutAndWidgetContainer not found, square mode disabled", th)
             return null
         }
-        val borderSpace = tryField(dpClass, "cellLayoutBorderSpacePx") ?: return null
         val getCountX = tryMethod(pageClass, "getCountX") ?: return null
         val getCountY = tryMethod(pageClass, "getCountY") ?: return null
         // The icon box is the cell the page handed to its container; these are that cell.
@@ -335,16 +318,9 @@ class LauncherWideGridHook : AppHookModule() {
             return null
         }
         return SquareFields(
-            pageClass, borderSpace, getCountX, getCountY, getCellWidth, getCellHeight,
+            pageClass, getCountX, getCountY, getCellWidth, getCellHeight,
             getContainer, setCellDimensions
         )
-    }
-
-    private fun tryField(owner: Class<*>, name: String): Field? = try {
-        findField(owner, name)
-    } catch (th: Throwable) {
-        logger.error("WideGrid: field '$name' missing, square mode disabled", th)
-        null
     }
 
     private fun tryMethod(owner: Class<*>, name: String): Method? = try {
@@ -404,24 +380,32 @@ class LauncherWideGridHook : AppHookModule() {
         return sb.toString()
     }
 
-    private fun applySideInset(dp: Any, sideInsetPx: Int, resolver: ProfileResolver) {
-        val beforeMargin = resolver.margin.getInt(dp)
-        resolver.margin.setInt(dp, sideInsetPx)
-        val cellPadding = resolver.cellPadding.get(dp) as Rect
+    /**
+     * Writes the configured side inset into the live workspace profile: the margin feeds the
+     * host's derived workspace padding, while the page padding is what the host re-applies.
+     */
+    private fun applySideInset(dp: Any, sideInsetPx: Int) {
+        val beforeMargin = LauncherGridMetrics.desiredWorkspaceHorizontalMarginPx(dp)
+        val marginWritten = LauncherGridMetrics.writeDesiredWorkspaceHorizontalMarginPx(dp, sideInsetPx)
+        val cellPadding = LauncherGridMetrics.cellLayoutPaddingPx(dp)
+        if (cellPadding == null) {
+            logger.warn("WideGrid: workspace padding unavailable, side inset not applied")
+            return
+        }
         val before = "L${cellPadding.left} T${cellPadding.top} R${cellPadding.right} B${cellPadding.bottom}"
         cellPadding.left = sideInsetPx
         cellPadding.right = sideInsetPx
         logger.info(
             "WideGrid: applied sideInsetPx=$sideInsetPx " +
-                "marginPx $beforeMargin->$sideInsetPx cellLayoutPadding $before->" +
-                "L${cellPadding.left} T${cellPadding.top} R${cellPadding.right} B${cellPadding.bottom}"
+                "marginPx $beforeMargin->$sideInsetPx written=$marginWritten cellLayoutPadding " +
+                "$before->L${cellPadding.left} T${cellPadding.top} R${cellPadding.right} " +
+                "B${cellPadding.bottom}"
         )
     }
 
     /** Reflection members resolved at install time for square mode. */
     private class SquareFields(
         val pageClass: Class<*>,
-        val borderSpace: Field,
         val getCountX: Method,
         val getCountY: Method,
         val getCellWidth: Method,
@@ -433,9 +417,7 @@ class LauncherWideGridHook : AppHookModule() {
     /** Reflection entry points resolved once at install time. */
     private class ProfileResolver(
         val getDeviceProfile: Method,
-        val activityContextClass: Class<*>,
-        val margin: Field,
-        val cellPadding: Field
+        val activityContextClass: Class<*>
     ) {
         fun resolve(context: Context): Any? {
             if (activityContextClass.isInstance(context)) return getDeviceProfile.invoke(context)
