@@ -46,8 +46,9 @@ class SkipInstallWarnPage : AppHookModule() {
                     } catch (_: Exception) {
                         // If the method above does not exist, try onDirectInstall
                         try {
-                            activity.javaClass.getDeclaredMethod("onDirectInstall")
-                                .invoke(activity)
+                            val onDirectInstallMethod = activity.javaClass.getDeclaredMethod("onDirectInstall")
+                            onDirectInstallMethod.isAccessible = true
+                            onDirectInstallMethod.invoke(activity)
                             logger.debug("Successfully called onDirectInstall")
                         } catch (e2: Exception) {
                             logger.error("Both installation methods failed", e2)
