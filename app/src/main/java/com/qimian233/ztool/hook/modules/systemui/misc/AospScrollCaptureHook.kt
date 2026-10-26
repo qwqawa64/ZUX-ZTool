@@ -18,6 +18,7 @@ import com.qimian233.ztool.data.keys.ScopeKeys
 import com.qimian233.ztool.hook.base.AppHookModule
 import io.github.libxposed.api.XposedModuleInterface
 import java.lang.ref.WeakReference
+import java.lang.reflect.Field
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
@@ -26,28 +27,22 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Reroutes the SystemUI screenshot overlay's long screenshot chip
- * (mScrollChip / share_long_screenshot) from the Moto private
- * IApplicationThread chain to the dormant AOSP ScrollCapture pipeline that is
- * fully present in this ROM:
+ * Reroutes the SystemUI long-screenshot chip from the Moto/private chain to the
+ * AOSP ScrollCapture pipeline, when that pipeline still exists in the ROM.
  *
- *   WMS.requestScrollCapture -> ScrollCaptureResponse
- *     -> ScrollCaptureClient.SessionWrapper(startCapture/requestImage/endCapture)
- *     -> ScrollCaptureController tile loop (stock code, driven reflectively)
- *     -> LongScreenshot -> stock LongScreenshotActivity (native crop UI)
- *
- * Gated by PreferenceKeys.FORCE_LONG_SCREENSHOT_AOSP; enabling
- * FORCE_LONG_SCREENSHOT in the UI also enables this switch (one-way link).
- * Everything runs inside the com.android.systemui process against classes from
- * its own classloader. Risky points (reflection misses, binder failures, async
- * timeouts) all log through both the module logger and android.util.Log with
- * tag [TAG] for on-device debugging via logcat.
+ * ZUXOS 2.5 ships only empty scroll-capture stubs and no LongScreenshot class;
+ * the capability probe then logs one warning and leaves the stock chip path.
  */
 @SuppressLint("WrongConstant", "PrivateApi")
 class AospScrollCaptureHook : AppHookModule() {
 
     companion object {
         private val SYSTEMUI_PACKAGE = ScopeKeys.SYSTEM_UI.packageName
+
+        private const val LONG_SCREENSHOT_ACTIVITY =
+            "com.android.systemui.screenshot.scroll.LongScreenshotActivity"
+        private const val LONG_SCREENSHOT_CLASS =
+            "com.android.systemui.screenshot.scroll.LongScreenshot"
 
         private const val ID_CAN_LONG_SCREENSHOT = "aosp_scroll_can_long_screenshot"
         private const val ID_INIT_APPLICATION_THREAD = "aosp_scroll_init_application_thread"
@@ -63,7 +58,7 @@ class AospScrollCaptureHook : AppHookModule() {
         private const val LONG_SCREENSHOT_TIMEOUT_MS = 120_000L
         private const val LISTENER_TAKEOVER_DELAY_MS = 250L
 
-        /** Active LegacyScreenshotController, captured on every screenshot request. */
+        /** Active ScreenshotController, captured on every screenshot request. */
         private val activeController = AtomicReference<WeakReference<Any>?>(null)
     }
 
@@ -73,51 +68,84 @@ class AospScrollCaptureHook : AppHookModule() {
 
     override fun handleLoadPackage(param: XposedModuleInterface.PackageLoadedParam) {
         if (param.packageName != SYSTEMUI_PACKAGE) return
-        logI("Loading AospScrollCaptureHook (test hook).")
+        logI("Loading AospScrollCaptureHook.")
 
         val cl = param.defaultClassLoader
         val screenshotViewClass = loadClass(cl, "com.android.systemui.screenshot.ScreenshotView") ?: return
-        val legacyControllerClass =
-            loadClass(cl, "com.android.systemui.screenshot.LegacyScreenshotController")
-        val executorClass = loadClass(cl, "com.android.systemui.screenshot.scroll.ScrollCaptureExecutor")
 
-        hookCanLongScreenshot(screenshotViewClass)
-        hookInitApplicationThread(screenshotViewClass)
         hookLongScreenshotActivityTracing(cl)
         hookPatchEnterTransition(cl)
         hookFatalExceptionTracing()
-        if (legacyControllerClass != null) {
-            hookCaptureControllerRef(legacyControllerClass)
-        } else {
-            logE("LegacyScreenshotController class not found — chip click will fall back to stock broadcast.")
+
+        val controllerClass = resolveControllerClass(cl)
+        if (controllerClass == null) {
+            logger.warn("AospScroll: no ScreenshotController class found; AOSP reroute skipped, chip stays stock.")
+            return
         }
-        if (executorClass != null && legacyControllerClass != null) {
-            hookReplaceChipListener(screenshotViewClass)
-        } else {
-            logE("ScrollCaptureExecutor or controller missing — AOSP rerouting disabled.")
+        if (!hasAospScrollPipeline(cl, controllerClass)) {
+            logger.warn(
+                "AospScroll: AOSP ScrollCapture pipeline is absent in this build " +
+                    "(${controllerClass.simpleName} has no usable scroll-capture executor); " +
+                    "chip stays on the stock ZUX long-screenshot path."
+            )
+            return
         }
+
+        hookCanLongScreenshot(screenshotViewClass)
+        hookInitApplicationThread(screenshotViewClass)
+        hookCaptureControllerRef(controllerClass)
+        hookReplaceChipListener(screenshotViewClass)
     }
 
-    private fun loadClass(cl: ClassLoader, name: String): Class<*>? = try {
+    private fun loadClass(cl: ClassLoader, name: String, logMissing: Boolean = true): Class<*>? = try {
         cl.loadClass(name)
     } catch (e: Throwable) {
-        logE("Class not found: $name", e)
+        if (logMissing) logE("Class not found: $name", e)
+        else logger.debug("AospScroll: class absent: $name")
         null
     }
 
+    private fun tryLoadClass(cl: ClassLoader, name: String): Class<*>? = try {
+        cl.loadClass(name)
+    } catch (_: Throwable) {
+        null
+    }
+
+    /** Legacy builds use LegacyScreenshotController; current ZUXOS uses the merged ScreenshotController. */
+    private fun resolveControllerClass(cl: ClassLoader): Class<*>? {
+        tryLoadClass(cl, "com.android.systemui.screenshot.LegacyScreenshotController")?.let {
+            logger.debug("AospScroll: controller=LegacyScreenshotController.")
+            return it
+        }
+        val merged = tryLoadClass(cl, "com.android.systemui.screenshot.ScreenshotController")
+        if (merged != null) {
+            logger.debug("AospScroll: controller=ScreenshotController (merged replacement).")
+        }
+        return merged
+    }
+
     /**
-     * The stock gate keeps the chip disabled for apps that never report the Moto
-     * ability. Force it open so the AOSP path can be exercised everywhere; the
-     * ScrollCapture handshake itself decides per-window support.
+     * The AOSP driver needs a real ScrollCaptureExecutor (client/controller
+     * fields) plus LongScreenshot. ZUXOS 2.5 keeps only empty stubs.
      */
+    private fun hasAospScrollPipeline(cl: ClassLoader, controllerClass: Class<*>): Boolean {
+        val executorField = findFieldOrNull(controllerClass, "mScrollCaptureExecutor", quiet = true)
+            ?: findFieldOrNull(controllerClass, "scrollCaptureExecutor", quiet = true)
+            ?: return false
+        val executorClass = executorField.type
+        if (findFieldOrNull(executorClass, "scrollCaptureClient", quiet = true) == null) return false
+        if (findFieldOrNull(executorClass, "scrollCaptureController", quiet = true) == null) return false
+        return tryLoadClass(cl, LONG_SCREENSHOT_CLASS) != null
+    }
+
     /**
-     * LongScreenshotActivity crashes with no module-side evidence, so trace its
-     * lifecycle: log onCreate (with intent extras sanity), onStart entry/exit.
-     * Pure logging; exceptions inside are rethrown by proceed() as usual.
+     * LongScreenshotActivity has no module-side crash evidence, so trace its
+     * lifecycle (onCreate/onStart/onStop). Logging only; proceed() rethrows.
      */
     private fun hookLongScreenshotActivityTracing(cl: ClassLoader) {
-        val activityClass = loadClass(cl, "com.android.systemui.screenshot.scroll.LongScreenshotActivity")
-            ?: return
+        val activityClass = loadClass(
+            cl, LONG_SCREENSHOT_ACTIVITY, logMissing = false
+        ) ?: return
 
         try {
             val onCreate = activityClass.declaredMethods
@@ -178,21 +206,18 @@ class AospScrollCaptureHook : AppHookModule() {
     }
 
     /**
-     * The native enter-transition lambda (case 1) reads the shelf transition
-     * callback from longScreenshotHolder.mTransitionDestinationCallback — a
-     * callback owned by the dormant AOSP ScreenshotController we never set.
-     * When it is null, that lambda NPEs and the crop entrance (case 2: crop
-     * boundary positions + setButtonsEnabled(true)) never runs.
-     *
-     * Patch: when the callback is missing, skip the shelf transition entirely
-     * and apply the essential part of case 2 directly (crop boundaries from
-     * the lambda's captured fractions, crop view visible, buttons enabled).
+     * Old builds decode the enter-transition lambda's $r8$classId (case 1 =
+     * shelf transition). Patch only when that exact lambda shape exists; 2.5
+     * removed it and leaves crop entrance to stock code.
      */
     private fun hookPatchEnterTransition(cl: ClassLoader) {
-        val lambdaClass = loadClass(cl,
-            $$$"com.android.systemui.screenshot.scroll.LongScreenshotActivity$$ExternalSyntheticLambda4"
-        )
-            ?: return
+        val lambdaClass = findEnterTransitionLambda(cl)
+        if (lambdaClass == null) {
+            logger.warn(
+                "AospScroll: no enter-transition lambda in this build; crop-entrance patch skipped."
+            )
+            return
+        }
         try {
             val runMethod = lambdaClass.declaredMethods.first { it.name == "run" }
             runMethod.isAccessible = true
@@ -230,6 +255,27 @@ class AospScrollCaptureHook : AppHookModule() {
     }
 
     /**
+     * Matches only the lambda carrying $r8$classId plus two float fractions;
+     * current export/view lambdas (e.g. Lambda4/Lambda5) do not qualify.
+     */
+    private fun findEnterTransitionLambda(cl: ClassLoader): Class<*>? {
+        for (index in 0..15) {
+            val name = $$$"com.android.systemui.screenshot.scroll.LongScreenshotActivity$$ExternalSyntheticLambda" +
+                index
+            val candidate = tryLoadClass(cl, name) ?: continue
+            val fields = candidate.declaredFields
+            if (fields.none { it.name == $$"$r8$classId" && it.type == Int::class.javaPrimitiveType }) continue
+            val hasActivity = fields.any { it.name == $$"f$0" && it.type.name == LONG_SCREENSHOT_ACTIVITY }
+            if (!hasActivity) continue
+            if (fields.none { it.name == $$"f$1" && it.type == Float::class.javaPrimitiveType }) continue
+            if (fields.none { it.name == $$"f$2" && it.type == Float::class.javaPrimitiveType }) continue
+            if (candidate.declaredMethods.none { it.name == "run" && it.parameterCount == 0 }) continue
+            return candidate
+        }
+        return null
+    }
+
+    /**
      * Direct equivalent of the transition end handler: reveal the preview,
      * position the crop boundaries and enable the buttons — without the shelf
      * preview animation that requires the dormant ScreenshotController.
@@ -257,12 +303,27 @@ class AospScrollCaptureHook : AppHookModule() {
             val invalidate = cropViewClass.getMethod("invalidate")
             invalidate.invoke(cropView)
 
-            val setButtonsEnabled = findMethodDeep(activity.javaClass, "setButtonsEnabled",
-                Boolean::class.javaPrimitiveType)
-            setButtonsEnabled.invoke(activity, true)
+            val setButtonsEnabled = try {
+                findMethodDeep(activity.javaClass, "setButtonsEnabled", Boolean::class.javaPrimitiveType)
+            } catch (_: Throwable) {
+                null
+            }
+            if (setButtonsEnabled != null) {
+                setButtonsEnabled.invoke(activity, true)
+            } else {
+                enableCropButtons(activity)
+            }
             logI("Direct crop entrance applied: crop view visible, buttons enabled.")
         } catch (e: Throwable) {
             logE("Direct crop entrance failed — crop view/buttons may stay unusable", e)
+        }
+    }
+
+    /** Current LongScreenshotActivity enables mSave/mEdit/mShare directly. */
+    private fun enableCropButtons(activity: Any) {
+        for (name in arrayOf("mSave", "mEdit", "mShare")) {
+            val button = findFieldOrNull(activity.javaClass, name, quiet = true)?.get(activity) as? android.view.View
+            button?.isEnabled = true
         }
     }
 
@@ -292,23 +353,23 @@ class AospScrollCaptureHook : AppHookModule() {
     }
 
     /**
-     * This hook owns a click listener takeover on mScrollChip, so the chip
-     * must be clickable for it to work. The stock gate (canLongScreenshot)
-     * depends on the async Moto ability report and disables the chip
-     * (disabled icon + setClickable(false)) whenever the report is missing
-     * or late; ForceLongScreenshot's own force hook is only installed when
-     * that module's switch was already on at SystemUI load time. Force it
-     * open here too so this hook is self-sufficient regardless of the other
-     * switch, and so the disabled-but-clickable mismatch cannot happen.
-     *
-     * Short-circuit: return true without proceeding, skipping the original
-     * probe queries and their logs entirely.
+     * The takeover owns the chip click, so the stock gate must not disable it.
+     * Try the current canLongScreenshot(Context) first, then the legacy no-arg.
      */
     private fun hookCanLongScreenshot(screenshotViewClass: Class<*>) {
+        val contextClass = android.content.Context::class.java
+        val method = runCatching {
+            findMethod(screenshotViewClass, "canLongScreenshot", contextClass)
+        }.getOrNull() ?: runCatching {
+            findMethod(screenshotViewClass, "canLongScreenshot")
+        }.getOrNull()
+        if (method == null) {
+            logE("canLongScreenshot(Context) / canLongScreenshot() not found; chip gate left stock.")
+            return
+        }
         try {
-            val method = findMethod(screenshotViewClass, "canLongScreenshot")
             hookWithId(method, ID_CAN_LONG_SCREENSHOT) { _ -> true }
-            logI("canLongScreenshot short-circuit true installed (chip clickability for this hook).")
+            logI("canLongScreenshot short-circuit true installed (params=${method.parameterCount}).")
         } catch (e: Throwable) {
             logE("Failed to hook canLongScreenshot", e)
         }
@@ -342,62 +403,48 @@ class AospScrollCaptureHook : AppHookModule() {
     }
 
     /**
-     * Grab the live LegacyScreenshotController as early as possible.
-     *
-     * Primary: the constructor — the controller is created inside
-     * TakeScreenshotExecutorImpl.getLenovoScreenshotController on the first
-     * request, so every active instance passes through it. Backup entries:
-     * takeScreenshotFullscreen (the ROM's actual dispatch entry from
-     * handleLenovoScreenRequest) and handleScreenshot (AOSP-style entry).
+     * Captures the live controller: constructor when declared, then the stock
+     * entry points (takeScreenshotFullscreen on legacy, handleScreenshot on both).
      */
-    private fun hookCaptureControllerRef(legacyControllerClass: Class<*>) {
+    private fun hookCaptureControllerRef(controllerClass: Class<*>) {
+        val ctor = controllerClass.declaredConstructors
+            .firstOrNull { it.parameterCount > 0 }
+            ?: controllerClass.declaredConstructors.firstOrNull()
+        if (ctor == null) {
+            logger.debug("AospScroll: no declared constructor on ${controllerClass.simpleName}.")
+        } else {
+            try {
+                ctor.isAccessible = true
+                hookWithId(ctor, ID_CAPTURE_CONTROLLER_CTOR) { chain ->
+                    chain.proceed()
+                    activeController.set(WeakReference(chain.thisObject))
+                    logI("Captured ${controllerClass.simpleName} via constructor.")
+                }
+                logI("Controller constructor capture installed (${ctor.parameterTypes.size} params).")
+            } catch (e: Throwable) {
+                logE("Failed to hook controller constructor", e)
+            }
+        }
+        hookControllerEntry(controllerClass, "takeScreenshotFullscreen", ID_CAPTURE_CONTROLLER_HANDLE)
+        hookControllerEntry(controllerClass, "handleScreenshot", ID_CAPTURE_CONTROLLER_HANDLE + "_hs")
+    }
+
+    private fun hookControllerEntry(controllerClass: Class<*>, name: String, id: String) {
+        val method = controllerClass.declaredMethods.firstOrNull { it.name == name }
+        if (method == null) {
+            logger.debug("AospScroll: $name absent on ${controllerClass.simpleName}.")
+            return
+        }
         try {
-            val ctor = legacyControllerClass.declaredConstructors
-                .first { it.parameterCount > 0 }
-            ctor.isAccessible = true
-            hookWithId(ctor, ID_CAPTURE_CONTROLLER_CTOR) { chain ->
+            method.isAccessible = true
+            hookWithId(method, id) { chain ->
                 chain.proceed()
                 activeController.set(WeakReference(chain.thisObject))
-                logI("Captured LegacyScreenshotController via constructor: ${chain.thisObject}")
+                logI("Captured controller via $name.")
             }
-            logI("LegacyScreenshotController constructor capture hook installed " +
-                "(${ctor.parameterTypes.size} params).")
+            logI("$name capture hook installed.")
         } catch (e: Throwable) {
-            logE("Failed to hook LegacyScreenshotController constructor", e)
-        }
-        try {
-            val fullscreen = legacyControllerClass.declaredMethods
-                .firstOrNull { it.name == "takeScreenshotFullscreen" }
-            if (fullscreen != null) {
-                fullscreen.isAccessible = true
-                hookWithId(fullscreen, ID_CAPTURE_CONTROLLER_HANDLE) { chain ->
-                    chain.proceed()
-                    activeController.set(WeakReference(chain.thisObject))
-                    logI("Captured controller via takeScreenshotFullscreen.")
-                }
-                logI("takeScreenshotFullscreen capture hook installed.")
-            } else {
-                logE("takeScreenshotFullscreen not found on LegacyScreenshotController.")
-            }
-        } catch (e: Throwable) {
-            logE("Failed to hook takeScreenshotFullscreen", e)
-        }
-        try {
-            val method = legacyControllerClass.declaredMethods
-                .firstOrNull { it.name == "handleScreenshot" }
-            if (method != null) {
-                method.isAccessible = true
-                hookWithId(method, ID_CAPTURE_CONTROLLER_HANDLE + "_hs") { chain ->
-                    chain.proceed()
-                    activeController.set(WeakReference(chain.thisObject))
-                    logI("Captured controller via handleScreenshot.")
-                }
-                logI("handleScreenshot capture hook installed.")
-            } else {
-                logE("handleScreenshot not found on LegacyScreenshotController.")
-            }
-        } catch (e: Throwable) {
-            logE("Failed to hook handleScreenshot", e)
+            logE("Failed to hook $name", e)
         }
     }
 
@@ -422,6 +469,7 @@ class AospScrollCaptureHook : AppHookModule() {
                 } else {
                     Handler(Looper.getMainLooper()).postDelayed({
                         try {
+                            captureControllerFromView(view)
                             val chipNow = chipField.get(view)
                             if (chipNow == null) {
                                 logE("mScrollChip became null before listener takeover.")
@@ -450,6 +498,20 @@ class AospScrollCaptureHook : AppHookModule() {
             logI("createScreenshotActionsShadeAnimation hook installed (chip listener takeover).")
         } catch (e: Throwable) {
             logE("Failed to hook createScreenshotActionsShadeAnimation", e)
+        }
+    }
+
+    /** Fallback capture: mControlCallBack is an anonymous class holding the controller in this$0. */
+    private fun captureControllerFromView(view: Any?) {
+        if (view == null) return
+        try {
+            val callback = findFieldOrNull(view.javaClass, "mControlCallBack", quiet = true)
+                ?.get(view) ?: return
+            val controller = findFieldOrNull(callback.javaClass, $$"this$0", quiet = true)
+                ?.get(callback) ?: return
+            activeController.set(WeakReference(controller))
+        } catch (_: Throwable) {
+            // Fallback only; constructor/entry hooks remain the primary capture path.
         }
     }
 
@@ -482,13 +544,11 @@ class AospScrollCaptureHook : AppHookModule() {
     private fun runAospPipeline(screenshotView: Any): Boolean {
         val controller = activeController.get()?.get()
         if (controller == null) {
-            logE("No active LegacyScreenshotController — take a screenshot first, then click the chip.")
+            logE("No active ScreenshotController — take a screenshot first, then click the chip.")
             return false
         }
-        val controllerField = findFieldOrNull(controller.javaClass, "mScrollCaptureExecutor")
-            ?: run { logE("Field mScrollCaptureExecutor missing on LegacyScreenshotController"); return false }
-        val executor = controllerField.get(controller) ?: run {
-            logE("mScrollCaptureExecutor is null"); return false
+        val executor = resolveScrollCaptureExecutor(controller) ?: run {
+            logE("scroll-capture executor is null on ${controller.javaClass.simpleName}"); return false
         }
         val executorClass = executor.javaClass
         val client = findFieldOrNull(executorClass, "scrollCaptureClient")?.get(executor) ?: run {
@@ -505,8 +565,8 @@ class AospScrollCaptureHook : AppHookModule() {
         logI("Resolved controller=$captureController")
 
         // Host window token: the screenshot overlay's own decor view.
-        val phoneWindow = findFieldOrNull(controller.javaClass, "mWindow")?.get(controller) ?: run {
-            logE("mWindow is null on LegacyScreenshotController"); return false
+        val phoneWindow = resolveControllerWindow(controller) ?: run {
+            logE("Overlay window is null on ${controller.javaClass.simpleName}"); return false
         }
         val decorView = phoneWindow.javaClass.getMethod("getDecorView").invoke(phoneWindow) as android.view.View
         val windowToken = decorView.windowToken
@@ -514,11 +574,7 @@ class AospScrollCaptureHook : AppHookModule() {
             logE("Overlay decorView windowToken is null — window not attached?")
             return false
         }
-        val displayId = findFieldOrNull(controller.javaClass, "mDisplayId")?.let {
-            try { it.getInt(controller) } catch (e: Throwable) {
-                logE("mDisplayId read failed, falling back to display 0", e); 0
-            }
-        } ?: 0
+        val displayId = resolveControllerDisplayId(controller)
         logI("Host token=$windowToken displayId=$displayId")
 
         val wms = findFieldOrNull(clientClass, "mWindowManagerService")?.get(client) ?: run {
@@ -709,7 +765,7 @@ class AospScrollCaptureHook : AppHookModule() {
         response: Any
     ): Boolean {
         val cl = controller.javaClass.classLoader!!
-        if (loadClass(cl, "com.android.systemui.screenshot.scroll.LongScreenshotActivity") == null) {
+        if (loadClass(cl, LONG_SCREENSHOT_ACTIVITY) == null) {
             logE("LongScreenshotActivity class not found.")
             return false
         }
@@ -720,8 +776,7 @@ class AospScrollCaptureHook : AppHookModule() {
         val viewContext = (screenshotView as android.view.View).context
         val appContext = viewContext.applicationContext
         val intent = Intent()
-        intent.setClassName(appContext.packageName,
-            "com.android.systemui.screenshot.scroll.LongScreenshotActivity")
+        intent.setClassName(appContext.packageName, LONG_SCREENSHOT_ACTIVITY)
         intent.putExtra("capture-response", response)
         intent.putExtra("screenshot-userhandle", android.os.Process.myUserHandle())
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -731,9 +786,12 @@ class AospScrollCaptureHook : AppHookModule() {
             true
         } catch (e: Throwable) {
             logE("startActivity from app context failed; retrying with controller window context.", e)
+            val controllerContext = resolveControllerContext(controller)
+            if (controllerContext == null) {
+                logE("No controller context available for LongScreenshotActivity launch.")
+                return false
+            }
             try {
-                val controllerContext = findField(controller.javaClass, "mContext")
-                    .get(controller) as android.content.Context
                 controllerContext.startActivity(intent)
                 logI("startActivity(LongScreenshotActivity) ok from controller context.")
                 true
@@ -913,15 +971,47 @@ class AospScrollCaptureHook : AppHookModule() {
     }
 
     private fun mainExecutor(controller: Any): java.util.concurrent.Executor {
-        val context = findField(controller.javaClass, "mContext").get(controller) as android.content.Context
+        val context = resolveControllerContext(controller)
+            ?: error("controller context missing")
         return context.mainExecutor
     }
 
-    private fun findFieldOrNull(origin: Class<*>, name: String) = try {
+    private fun findFieldOrNull(origin: Class<*>, name: String, quiet: Boolean = false): Field? = try {
         findField(origin, name)
     } catch (e: Throwable) {
-        logE("Field not found: ${origin.simpleName}.$name", e)
+        if (quiet) logger.debug("AospScroll: no field ${origin.simpleName}.$name")
+        else logE("Field not found: ${origin.simpleName}.$name", e)
         null
+    }
+
+    private fun resolveScrollCaptureExecutor(controller: Any): Any? =
+        findFieldOrNull(controller.javaClass, "mScrollCaptureExecutor", quiet = true)?.get(controller)
+            ?: findFieldOrNull(controller.javaClass, "scrollCaptureExecutor", quiet = true)?.get(controller)
+
+    private fun resolveControllerWindow(controller: Any): Any? {
+        findFieldOrNull(controller.javaClass, "mWindow", quiet = true)?.get(controller)?.let { return it }
+        val holder = findFieldOrNull(controller.javaClass, "window", quiet = true)?.get(controller)
+            ?: return null
+        return findFieldOrNull(holder.javaClass, "window", quiet = true)?.get(holder)
+    }
+
+    private fun resolveControllerDisplayId(controller: Any): Int {
+        findFieldOrNull(controller.javaClass, "mDisplayId", quiet = true)?.let { field ->
+            return runCatching { field.getInt(controller) }.getOrDefault(0)
+        }
+        val display = findFieldOrNull(controller.javaClass, "display", quiet = true)?.get(controller)
+            ?: return 0
+        return runCatching {
+            display.javaClass.getMethod("getDisplayId").invoke(display) as Int
+        }.getOrDefault(0)
+    }
+
+    private fun resolveControllerContext(controller: Any): android.content.Context? {
+        for (name in arrayOf("mContext", "context", "appContext")) {
+            val field = findFieldOrNull(controller.javaClass, name, quiet = true) ?: continue
+            (field.get(controller) as? android.content.Context)?.let { return it }
+        }
+        return null
     }
 
     private fun setField(origin: Class<*>, target: Any, name: String, value: Any?) {
