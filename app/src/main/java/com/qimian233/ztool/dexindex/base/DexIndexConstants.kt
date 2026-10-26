@@ -12,17 +12,20 @@ import com.qimian233.ztool.data.keys.PreferenceKeys
 object DexIndexConstants {
 
     /**
-     * Index files live at the module filesDir root: Remote Files does not support
-     * subdirectories, so the name is `<scopePackage>.json`.
+     * Bumped whenever the file layout or an indexer's output keys change: `needsReindex` rebuilds
+     * only on a bump, a system fingerprint change, or an apk fingerprint change, so adding an
+     * output key to an existing indexer requires one.
      *
-     * v3: added the DisableDockBackground field query; v2: plain modules map (v1 nested it,
-     * and the v1 reader NPE'd on a null value). `needsReindex` only rebuilds on a bump or an
-     * apk fingerprint change, so adding an output key to an existing indexer requires one.
+     * v4: added `systemFingerprint` (OTA detection); v3: DisableDockBackground query;
+     * v2: flat modules map (v1 nested it and the reader NPE'd on a null value).
      */
-    const val SCHEMA_VERSION = 3
+    const val SCHEMA_VERSION = 4
 
     const val JSON_SCHEMA_VERSION = "schemaVersion"
     const val JSON_GENERATED_AT = "generatedAt"
+
+    /** `Build.FINGERPRINT` captured at index time; an OTA replaces it and invalidates every scope. */
+    const val JSON_SYSTEM_FINGERPRINT = "systemFingerprint"
     const val JSON_APK = "apk"
     const val JSON_PATH = "path"
     const val JSON_LAST_UPDATE_TIME = "lastUpdateTime"

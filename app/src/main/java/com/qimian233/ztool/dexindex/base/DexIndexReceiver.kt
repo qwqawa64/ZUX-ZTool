@@ -9,8 +9,8 @@ import android.util.Log
  * Triggers offline indexing after the module is installed/updated.
  *
  * Note: on Android 8+ a statically registered `PACKAGE_ADDED` receiver may not
- * receive the broadcast; the first-install scenario is covered by the startup
- * fingerprint check in [com.qimian233.ztool.ZToolApplication].
+ * receive the broadcast; the first-install scenario is covered by the home-entry
+ * staleness check in `HomeViewModel.checkDexIndexOnEntry`.
  */
 class DexIndexReceiver : BroadcastReceiver() {
 
