@@ -2,6 +2,7 @@ package com.qimian233.ztool
 
 import android.app.Application
 import android.content.Context
+import com.qimian233.ztool.data.settings.LauncherIconAliasController
 import com.qimian233.ztool.data.theme.ThemePreferencesRepository
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
@@ -77,6 +78,7 @@ class ZToolApplication : Application(), XposedServiceHelper.OnServiceListener {
      */
     override fun onCreate() {
         super.onCreate()
+        LauncherIconAliasController.install(this)
 
         startupScope.launch(EnhancedShellExecutor.shellWorkDispatcher) {
             EnhancedShellExecutor.getInstance().checkRootAccess()

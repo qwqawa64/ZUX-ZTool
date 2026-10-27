@@ -158,8 +158,8 @@ class SettingsRepository(
      * reboots and app updates, so no preference entry is needed.
      *
      * Two aliases exist: the default-icon one and [.LAUNCHER_ALIAS_ALT_CLASS]
-     * (the "使用替代图标" artwork). Exactly one of them is enabled while the icon
-     * is visible, so "hidden" means *both* are disabled.
+     * (the "使用替代图标" artwork). At rest exactly one of them is enabled while the
+     * icon is visible, so "hidden" means *both* are disabled.
      */
     fun isLauncherIconHidden(): Boolean {
         return !isAliasActive(launcherAliasComponent(), manifestDefault = true) &&
@@ -182,14 +182,6 @@ class SettingsRepository(
     }
 
     /**
-     * Show exactly the alias matching the persisted icon choice (or hide both
-     * when the launcher icon is hidden).
-     */
-    private fun applyLauncherIconAlias() {
-        applyLauncherIconAlias(isLauncherIconHidden())
-    }
-
-    /**
      * Overload taking an already-read [isLauncherIconHidden] result. Every such
      * read is two PackageManager transactions, so callers that need the answer
      * anyway must not let this re-read it.
@@ -200,8 +192,12 @@ class SettingsRepository(
             return
         }
         val useAlternativeIcon = themePreferences.loadSettings().useAlternativeIcon
-        setAliasEnabled(launcherAliasComponent(), !useAlternativeIcon)
-        setAliasEnabled(launcherAliasAltComponent(), useAlternativeIcon)
+        val target = if (useAlternativeIcon) launcherAliasAltComponent() else launcherAliasComponent()
+        val stale = if (useAlternativeIcon) launcherAliasComponent() else launcherAliasAltComponent()
+        // Enable before disabling: the process can be killed once the alias that hosts
+        // the existing task is disabled, which must never leave the launcher with no icon.
+        setAliasEnabled(target, true)
+        setAliasEnabled(stale, false)
     }
 
     /** The icon is hidden exactly when neither alias is enabled. */
@@ -342,13 +338,14 @@ class SettingsRepository(
     }
 
     /**
-     * Persist the alternative-icon choice and re-point the launcher alias at the
-     * matching adaptive icon. The in-app logo follows the preference through
+     * Persist the alternative-icon choice. The launcher alias pair is re-pointed once the
+     * app is backgrounded, because swapping the alias that launched the current task
+     * closes it. The in-app logo follows the preference through
      * [com.qimian233.ztool.ui.theme.LocalUseAlternativeIcon].
      */
     fun setUseAlternativeIcon(enabled: Boolean) {
         themePreferences.saveUseAlternativeIcon(enabled)
-        applyLauncherIconAlias()
+        LauncherIconAliasController.requestApply(context)
     }
 
     fun setPredictiveBackGestureEnabled(enabled: Boolean) {
