@@ -1,8 +1,6 @@
 name: Android CI
 
 on:
-  schedule:
-    - cron: '0 16 * * *'         # UTC 16:00 = 北京时间 (UTC+8) 次日 0:00
   workflow_dispatch:              # 手动触发（总是构建）
   workflow_call:                  # 供其他工作流复用（如 Draft a Release）
     inputs:
