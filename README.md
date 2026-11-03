@@ -10,6 +10,9 @@
   </a>
 </div>
 
+> [!warning]
+> 为方便项目管理，我们已迁移至 [ZTool-Project](https://github.com/ZTool-Project/ZUX-ZTool) 进行工作。本仓库将不再进行功能推送和测试版构建，并不再受理新的问题。已有问题将移交至新仓库解决。
+
 > "Make ZUXOS Great, Not 'Again'."
 
 > [!tip]
